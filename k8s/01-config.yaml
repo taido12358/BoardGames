@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backend-config
+  namespace: boardgame
+data:
+  ASPNETCORE_ENVIRONMENT: "Production"
+  ConnectionStrings__Postgres: "Host=postgres;Port=5432;Database=boardgame;Username=postgres;Password=postgres"
+  ConnectionStrings__Redis: "redis:6379"
+  ConnectionStrings__RabbitMq: "amqp://guest:guest@rabbitmq:5672/"
+  ConnectionStrings__OpenSearch: "http://opensearch:9200"
+  Minio__Endpoint: "minio:9000"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: backend-secret
+  namespace: boardgame
+type: Opaque
+stringData:
+  Minio__AccessKey: "minioadmin"
+  Minio__SecretKey: "minioadmin"
