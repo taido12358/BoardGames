@@ -13,8 +13,15 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 // --- Cache: Redis ---
 builder.Services.AddSingleton<IConnectionMultiplexer>(_ =>
-    ConnectionMultiplexer.Connect(builder.Configuration.GetConnectionString("Redis")
-        ?? "localhost:6379"));
+{
+    var conn = builder.Configuration.GetConnectionString("Redis") ?? "localhost:6379";
+    var options = ConfigurationOptions.Parse(conn);
+    // Không ném lỗi nếu Redis chưa sẵn sàng lúc khởi động — tự kết nối lại ngầm.
+    options.AbortOnConnectFail = false;
+    options.ConnectRetry = 5;
+    options.ConnectTimeout = 5000;
+    return ConnectionMultiplexer.Connect(options);
+});
 builder.Services.AddSingleton<RedisCacheService>();
 
 // --- Queue: RabbitMQ ---

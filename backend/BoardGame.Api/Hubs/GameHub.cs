@@ -21,15 +21,17 @@ public class GameHub : Hub
     private readonly RabbitMqPublisher _queue;
     private readonly OpenSearchService _search;
     private readonly MinioStorageService _storage;
+    private readonly ILogger<GameHub> _log;
 
     public GameHub(AppDbContext db, RedisCacheService cache, RabbitMqPublisher queue,
-        OpenSearchService search, MinioStorageService storage)
+        OpenSearchService search, MinioStorageService storage, ILogger<GameHub> log)
     {
         _db = db;
         _cache = cache;
         _queue = queue;
         _search = search;
         _storage = storage;
+        _log = log;
     }
 
     // ----- Hello World demo (giữ nguyên) -----
@@ -99,13 +101,23 @@ public class GameHub : Hub
         room.UpdatedAt = DateTime.UtcNow;
         await _db.SaveChangesAsync();
 
-        await _cache.SetAsync($"game:{id}:state", room.StateJson);      // Redis
-        _queue.PublishGameEvent(GameJson.Serialize(new                  // RabbitMQ
-        {
-            type = "Move", roomId, pieceId, from, to = toNode, side, winner = state.Winner
-        }));
+        await _cache.SetAsync($"game:{id}:state", room.StateJson);      // Redis (cốt lõi)
 
-        if (state.Winner is not null) await FinishGame(room, id);       // OpenSearch + MinIO
+        // Side-effect best-effort — không chặn nước đi nếu dịch vụ phụ trục trặc.
+        try
+        {
+            _queue.PublishGameEvent(GameJson.Serialize(new              // RabbitMQ
+            {
+                type = "Move", roomId, pieceId, from, to = toNode, side, winner = state.Winner
+            }));
+        }
+        catch (Exception ex) { _log.LogWarning(ex, "Publish Move thất bại"); }
+
+        if (state.Winner is not null)
+        {
+            try { await FinishGame(room, id); }                         // OpenSearch + MinIO
+            catch (Exception ex) { _log.LogWarning(ex, "Lưu kết quả/replay thất bại"); }
+        }
 
         await Clients.Group(roomId).SendAsync("GameStateUpdated", GameMapper.ToDto(room));
     }

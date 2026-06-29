@@ -19,14 +19,16 @@ public class GamesController : ControllerBase
     private readonly RedisCacheService _cache;
     private readonly RabbitMqPublisher _queue;
     private readonly OpenSearchService _search;
+    private readonly ILogger<GamesController> _log;
 
     public GamesController(AppDbContext db, RedisCacheService cache,
-        RabbitMqPublisher queue, OpenSearchService search)
+        RabbitMqPublisher queue, OpenSearchService search, ILogger<GamesController> log)
     {
         _db = db;
         _cache = cache;
         _queue = queue;
         _search = search;
+        _log = log;
     }
 
     /// <summary>Tạo phòng mới (đi qua PostgreSQL → Redis → RabbitMQ → OpenSearch).</summary>
@@ -46,11 +48,15 @@ public class GamesController : ControllerBase
             StateJson = GameJson.Serialize(state),
         };
 
-        _db.GameRooms.Add(room);                                   // 1. PostgreSQL
+        _db.GameRooms.Add(room);                                   // 1. PostgreSQL (cốt lõi)
         await _db.SaveChangesAsync();
-        await _cache.SetAsync($"game:{room.Id}:state", room.StateJson); // 2. Redis
-        _queue.PublishGameEvent(GameJson.Serialize(new { type = "RoomCreated", roomId = room.Id })); // 3. RabbitMQ
-        await _search.IndexGameAsync(ToRecord(room, 0));           // 4. OpenSearch
+        await _cache.SetAsync($"game:{room.Id}:state", room.StateJson); // 2. Redis (cốt lõi)
+
+        // 3-4. RabbitMQ + OpenSearch là side-effect best-effort — không chặn tạo phòng.
+        try { _queue.PublishGameEvent(GameJson.Serialize(new { type = "RoomCreated", roomId = room.Id })); }
+        catch (Exception ex) { _log.LogWarning(ex, "Publish RoomCreated thất bại"); }
+        try { await _search.IndexGameAsync(ToRecord(room, 0)); }
+        catch (Exception ex) { _log.LogWarning(ex, "Index OpenSearch thất bại"); }
 
         return Ok(GameMapper.ToDto(room));
     }
