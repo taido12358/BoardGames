@@ -9,6 +9,7 @@ namespace BoardGame.Api.Services;
 public class RabbitMqPublisher : IDisposable
 {
     public const string ExchangeName = "boardgame.greetings";
+    public const string GamesExchange = "boardgame.games";
 
     private readonly IConnection _connection;
     private readonly IModel _channel;
@@ -25,12 +26,20 @@ public class RabbitMqPublisher : IDisposable
         _connection = factory.CreateConnection();
         _channel = _connection.CreateModel();
         _channel.ExchangeDeclare(ExchangeName, ExchangeType.Fanout, durable: true);
+        _channel.ExchangeDeclare(GamesExchange, ExchangeType.Fanout, durable: true);
     }
 
     public void Publish(string message)
     {
         var body = Encoding.UTF8.GetBytes(message);
         _channel.BasicPublish(ExchangeName, routingKey: string.Empty, basicProperties: null, body: body);
+    }
+
+    /// <summary>Phát event của ván chơi (move/finish) ra exchange games.</summary>
+    public void PublishGameEvent(string jsonPayload)
+    {
+        var body = Encoding.UTF8.GetBytes(jsonPayload);
+        _channel.BasicPublish(GamesExchange, routingKey: string.Empty, basicProperties: null, body: body);
     }
 
     public void Dispose()

@@ -9,6 +9,7 @@ namespace BoardGame.Api.Services;
 public class OpenSearchService
 {
     public const string IndexName = "greetings";
+    public const string GamesIndex = "games";
 
     private readonly IOpenSearchClient _client;
 
@@ -27,6 +28,27 @@ public class OpenSearchService
     {
         var response = await _client.SearchAsync<Greeting>(s => s
             .Query(q => q.Match(m => m.Field(f => f.Message).Query(term))));
+        return response.Documents;
+    }
+
+    // ----- Games -----
+
+    public Task IndexGameAsync(GameRecord record)
+        => _client.IndexAsync(record, i => i.Index(GamesIndex).Id(record.Id));
+
+    public async Task<IReadOnlyCollection<GameRecord>> SearchGamesAsync(string term)
+    {
+        var response = await _client.SearchAsync<GameRecord>(s => s
+            .Index(GamesIndex)
+            .Query(q => string.IsNullOrWhiteSpace(term)
+                ? q.MatchAll()
+                : q.MultiMatch(m => m
+                    .Fields(f => f
+                        .Field(x => x.Winner)
+                        .Field(x => x.RedPlayer)
+                        .Field(x => x.WhitePlayer)
+                        .Field(x => x.Status))
+                    .Query(term))));
         return response.Documents;
     }
 }

@@ -104,6 +104,48 @@ curl http://localhost:5000/api/hello
 curl "http://localhost:5000/api/hello/search?q=chào"
 ```
 
+## 🎯 Game 001 — Vây Bắt Trên Đồ Thị (online, server-authoritative)
+
+Game thật đầu tiên, chạy xuyên suốt toàn bộ hạ tầng giống mẫu Hello World:
+
+> Client gửi ý định đi → **Backend (C# Rule Engine validate)** → **PostgreSQL**
+> (room + replay) → **Redis** (cache state) → **RabbitMQ** (event) → *(khi kết
+> thúc)* **OpenSearch** (index) + **MinIO** (replay) → **SignalR** (broadcast
+> state cho cả phòng) → **React** board.
+
+**Rule Engine chạy ở server** (`backend/.../Game/GameEngine.cs`) — chống gian
+lận và đảm bảo tất định. Client chỉ có bản engine "nhẹ" để gợi ý nước đi (UI),
+mọi nước đi đều được server validate lại.
+
+### Luật chơi
+- Phe **Đỏ** (3 quân, đi săn) vây bắt phe **Trắng** (1 quân, trốn chạy) trên đồ thị phi hướng.
+- Di chuyển theo cạnh nối tới đỉnh kề **còn trống**; không nhảy cóc, không ăn quân.
+- **Đỏ thắng**: vây Trắng tới mức hết nước đi (trước/đúng lượt thứ X).
+- **Trắng thắng**: sống sót qua X lượt Đỏ, hoặc Đỏ rơi vào stalemate.
+
+### Cách thử
+1. Mở 2 tab trình duyệt tại http://localhost:5173 (tab Game).
+2. Tab 1: đặt tên → **Tạo phòng** (bạn cầm Đỏ).
+3. Tab 2: đặt tên khác → bấm **Vào** phòng đó (bạn cầm Trắng) → trận bắt đầu.
+4. Click quân của mình khi tới lượt → các đỉnh đi được sáng xanh → click để đi.
+
+> Bản demo offline 1 file (không cần backend, có cả AI để test một mình):
+> `taido/game001.html`.
+
+### API (lobby)
+```bash
+# Tạo phòng
+curl -X POST http://localhost:5000/api/games -H "Content-Type: application/json" \
+  -d '{"maxRedTurns":15,"playerName":"An"}'
+
+curl http://localhost:5000/api/games            # danh sách phòng đang mở
+curl http://localhost:5000/api/games/search?q=RED   # tìm lịch sử ván đã xong
+```
+Nước đi realtime đi qua SignalR hub `/hubs/game` (`JoinRoom`, `MakeMove`, `LeaveRoom`).
+
+> ⚠️ Nếu PostgreSQL của bạn đã chạy mẫu Hello World từ trước, các bảng game sẽ
+> được tạo tự động khi backend khởi động (idempotent), không cần reset volume.
+
 ## Triển khai Kubernetes
 
 ```bash
