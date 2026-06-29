@@ -1,4 +1,5 @@
 using BoardGame.Api.Models;
+using BoardGame.Api.Platform.Models;
 using OpenSearch.Client;
 
 namespace BoardGame.Api.Services;

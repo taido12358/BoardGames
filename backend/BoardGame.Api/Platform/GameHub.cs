@@ -1,18 +1,17 @@
 using BoardGame.Api.Data;
-using BoardGame.Api.Game;
-using BoardGame.Api.Models;
+using BoardGame.Api.Platform.Abstractions;
+using BoardGame.Api.Platform.Models;
 using BoardGame.Api.Services;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 
-namespace BoardGame.Api.Hubs;
+namespace BoardGame.Api.Platform;
 
 /// <summary>
-/// SignalR hub: vừa giữ demo Hello World ("GreetingCreated"), vừa điều phối
-/// game thời gian thực. Rule engine chạy tại đây (authoritative): client chỉ
-/// gửi ý định, server validate → áp dụng → lưu (PostgreSQL/Redis) → phát
-/// (RabbitMQ) → khi kết thúc index (OpenSearch) + lưu replay (MinIO) →
-/// broadcast state mới cho cả phòng.
+/// SignalR hub — GENERIC cho mọi game (giữ thêm demo Hello World).
+/// Engine của từng game được tra qua GameEngineRegistry theo room.GameKey, nên
+/// hub không hardcode luật game nào: chỉ điều phối room/persist/realtime và đẩy
+/// JSON nước đi cho đúng engine xử lý (authoritative).
 /// </summary>
 public class GameHub : Hub
 {
@@ -21,16 +20,19 @@ public class GameHub : Hub
     private readonly RabbitMqPublisher _queue;
     private readonly OpenSearchService _search;
     private readonly MinioStorageService _storage;
+    private readonly GameEngineRegistry _engines;
     private readonly ILogger<GameHub> _log;
 
     public GameHub(AppDbContext db, RedisCacheService cache, RabbitMqPublisher queue,
-        OpenSearchService search, MinioStorageService storage, ILogger<GameHub> log)
+        OpenSearchService search, MinioStorageService storage, GameEngineRegistry engines,
+        ILogger<GameHub> log)
     {
         _db = db;
         _cache = cache;
         _queue = queue;
         _search = search;
         _storage = storage;
+        _engines = engines;
         _log = log;
     }
 
@@ -49,7 +51,6 @@ public class GameHub : Hub
 
         await Groups.AddToGroupAsync(Context.ConnectionId, roomId);
 
-        // Gán ghế: giữ ghế cũ nếu trùng tên, không thì lấp chỗ trống, còn lại là khán giả.
         string? side = null;
         if (room.RedPlayer == playerName) side = "RED";
         else if (room.WhitePlayer == playerName) side = "WHITE";
@@ -69,53 +70,43 @@ public class GameHub : Hub
     public Task LeaveRoom(string roomId)
         => Groups.RemoveFromGroupAsync(Context.ConnectionId, roomId);
 
-    /// <summary>Thực hiện một nước đi — toàn bộ luồng authoritative.</summary>
-    public async Task MakeMove(string roomId, string pieceId, int toNode, string playerName)
+    /// <summary>
+    /// Thực hiện một nước đi. moveJson là payload tuỳ game; hub xác định ghế của
+    /// người chơi rồi giao cho engine tương ứng validate &amp; áp dụng.
+    /// </summary>
+    public async Task MakeMove(string roomId, string moveJson, string playerName)
     {
         if (!Guid.TryParse(roomId, out var id)) { await Err("roomId không hợp lệ"); return; }
         var room = await _db.GameRooms.FindAsync(id);
         if (room is null || room.Status != "Playing") { await Err("Phòng chưa thể chơi"); return; }
 
-        var map = GameJson.Deserialize<MapDefinition>(room.MapJson);
-        var state = GameJson.Deserialize<GameState>(room.StateJson);
-        var adj = GameEngine.BuildAdjacency(map);
+        string? side = room.RedPlayer == playerName ? "RED"
+                     : room.WhitePlayer == playerName ? "WHITE" : null;
+        if (side is null) { await Err("Bạn không phải người chơi trong phòng này"); return; }
 
-        var side = GameEngine.Side(pieceId);
-        var owner = side == "RED" ? room.RedPlayer : room.WhitePlayer;
-        if (owner != playerName) { await Err("Không phải quân của bạn"); return; }
-        if (!GameEngine.ValidMove(state, adj, pieceId, toNode)) { await Err("Nước đi không hợp lệ"); return; }
+        var engine = _engines.Get(room.GameKey);
+        var outcome = engine.ApplyMove(room.MapJson, room.StateJson, side, moveJson);
+        if (!outcome.Ok) { await Err(outcome.Error ?? "Nước đi không hợp lệ"); return; }
 
-        var from = state.Pieces[pieceId];
-        GameEngine.ApplyMove(state, adj, pieceId, toNode);
-
-        // Lưu replay + cập nhật state (PostgreSQL)
         var moveNumber = await _db.GameMoves.CountAsync(m => m.RoomId == id) + 1;
         _db.GameMoves.Add(new GameMove
         {
-            RoomId = id, MoveNumber = moveNumber, Side = side,
-            PieceId = pieceId, FromNode = from, ToNode = toNode,
+            RoomId = id, MoveNumber = moveNumber, Side = side, MoveJson = moveJson,
         });
 
-        room.StateJson = GameJson.Serialize(state);
-        if (state.Winner is not null) { room.Status = "Finished"; room.Winner = state.Winner; }
+        room.StateJson = outcome.StateJson;
+        if (outcome.Winner is not null) { room.Status = "Finished"; room.Winner = outcome.Winner; }
         room.UpdatedAt = DateTime.UtcNow;
-        await _db.SaveChangesAsync();
+        await _db.SaveChangesAsync();                                     // PostgreSQL (cốt lõi)
 
-        await _cache.SetAsync($"game:{id}:state", room.StateJson);      // Redis (cốt lõi)
+        await _cache.SetAsync($"game:{id}:state", room.StateJson);        // Redis (cốt lõi)
 
-        // Side-effect best-effort — không chặn nước đi nếu dịch vụ phụ trục trặc.
-        try
-        {
-            _queue.PublishGameEvent(GameJson.Serialize(new              // RabbitMQ
-            {
-                type = "Move", roomId, pieceId, from, to = toNode, side, winner = state.Winner
-            }));
-        }
+        try { _queue.PublishGameEvent(GameJson.Serialize(new { type = "Move", roomId, side, move = GameJson.Element(moveJson), winner = outcome.Winner })); }
         catch (Exception ex) { _log.LogWarning(ex, "Publish Move thất bại"); }
 
-        if (state.Winner is not null)
+        if (outcome.Winner is not null)
         {
-            try { await FinishGame(room, id); }                         // OpenSearch + MinIO
+            try { await FinishGame(room, id); }
             catch (Exception ex) { _log.LogWarning(ex, "Lưu kết quả/replay thất bại"); }
         }
 
@@ -129,12 +120,12 @@ public class GameHub : Hub
             .OrderBy(m => m.MoveNumber)
             .ToListAsync();
 
-        await _search.IndexGameAsync(new GameRecord                     // index để tìm kiếm
+        await _search.IndexGameAsync(new GameRecord                       // OpenSearch
         {
             Id = room.Id.ToString(),
+            GameKey = room.GameKey,
             Status = room.Status,
             Winner = room.Winner,
-            RedTurnsUsed = GameJson.Deserialize<GameState>(room.StateJson).RedTurnsUsed,
             MoveCount = moves.Count,
             RedPlayer = room.RedPlayer,
             WhitePlayer = room.WhitePlayer,
@@ -142,12 +133,12 @@ public class GameHub : Hub
             FinishedAt = room.UpdatedAt,
         });
 
-        await _storage.SaveReplayAsync($"replay-{room.Id}.json", GameJson.Serialize(new // artifact replay
+        await _storage.SaveReplayAsync($"replay-{room.Id}.json", GameJson.Serialize(new // MinIO
         {
-            room.Id, room.Winner, room.RedPlayer, room.WhitePlayer,
-            map = GameJson.Deserialize<MapDefinition>(room.MapJson),
-            finalState = GameJson.Deserialize<GameState>(room.StateJson),
-            moves,
+            room.Id, room.GameKey, room.Winner, room.RedPlayer, room.WhitePlayer,
+            map = GameJson.Element(room.MapJson),
+            finalState = GameJson.Element(room.StateJson),
+            moves = moves.Select(m => new { m.MoveNumber, m.Side, move = GameJson.Element(m.MoveJson) }),
         }));
     }
 

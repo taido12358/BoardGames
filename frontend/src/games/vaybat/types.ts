@@ -1,5 +1,5 @@
-// Helper phía client CHỈ phục vụ gợi ý UI (highlight nước đi). Server vẫn là
-// nguồn chân lý (authoritative) — mọi nước đi đều được backend validate lại.
+// Kiểu & helper RIÊNG của game Vây Bắt. Helper chỉ phục vụ gợi ý UI; server
+// vẫn là nguồn chân lý (mọi nước đi được backend validate lại).
 
 export interface NodeDef { id: number; x: number; y: number; }
 
@@ -22,17 +22,8 @@ export interface GameState {
   redStartPos: number[];
 }
 
-export interface RoomDto {
-  id: string;
-  status: "Waiting" | "Playing" | "Finished";
-  maxRedTurns: number;
-  redPlayer: string | null;
-  whitePlayer: string | null;
-  winner: string | null;
-  map: MapDef;
-  state: GameState;
-  createdAt: string;
-}
+/** Payload nước đi gửi lên hub. */
+export interface VayBatMove { pieceId: string; to: number; }
 
 export function side(pieceId: string): "RED" | "WHITE" {
   return pieceId[0] === "R" ? "RED" : "WHITE";

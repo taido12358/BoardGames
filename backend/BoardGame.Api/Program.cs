@@ -1,5 +1,7 @@
 using BoardGame.Api.Data;
-using BoardGame.Api.Hubs;
+using BoardGame.Api.Games.VayBat;
+using BoardGame.Api.Platform;
+using BoardGame.Api.Platform.Abstractions;
 using BoardGame.Api.Services;
 using Microsoft.EntityFrameworkCore;
 using StackExchange.Redis;
@@ -33,6 +35,10 @@ builder.Services.AddSingleton<OpenSearchService>();
 // --- Storage: MinIO ---
 builder.Services.AddSingleton<MinioStorageService>();
 
+// --- Game engines (mỗi boardgame = 1 IGameEngine; thêm game chỉ cần thêm 1 dòng) ---
+builder.Services.AddSingleton<IGameEngine, VayBatEngine>();
+builder.Services.AddSingleton<GameEngineRegistry>();
+
 // --- Realtime: SignalR ---
 builder.Services.AddSignalR();
 
@@ -60,8 +66,8 @@ using (var scope = app.Services.CreateScope())
     db.Database.ExecuteSqlRaw("""
         CREATE TABLE IF NOT EXISTS "GameRooms" (
             "Id" uuid PRIMARY KEY,
+            "GameKey" text NOT NULL,
             "Status" text NOT NULL,
-            "MaxRedTurns" integer NOT NULL,
             "RedPlayer" text NULL,
             "WhitePlayer" text NULL,
             "Winner" text NULL,
@@ -75,9 +81,7 @@ using (var scope = app.Services.CreateScope())
             "RoomId" uuid NOT NULL,
             "MoveNumber" integer NOT NULL,
             "Side" text NOT NULL,
-            "PieceId" text NOT NULL,
-            "FromNode" integer NOT NULL,
-            "ToNode" integer NOT NULL,
+            "MoveJson" jsonb NOT NULL,
             "CreatedAt" timestamp with time zone NOT NULL
         );
         CREATE INDEX IF NOT EXISTS "IX_GameMoves_RoomId_MoveNumber"

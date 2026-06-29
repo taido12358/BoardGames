@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import type { RoomDto } from "../game/engineClient";
+import type { EngineInfo, RoomDto } from "./types";
 
 function loadPlayerName(): string {
   const saved = localStorage.getItem("playerName");
@@ -11,25 +11,27 @@ function loadPlayerName(): string {
 
 interface GameStore {
   playerName: string;
+  engines: EngineInfo[];
   rooms: RoomDto[];
-  room: RoomDto | null;     // phòng đang chơi
+  room: RoomDto | null;
   mySide: "RED" | "WHITE" | null;
-  selected: string | null;  // pieceId đang chọn
+  selected: string | null;  // pieceId / ô đang chọn (tuỳ game)
   error: string;
 
   setPlayerName: (name: string) => void;
-  setRooms: (rooms: RoomDto[]) => void;
   setRoom: (room: RoomDto | null) => void;
   setMySide: (side: "RED" | "WHITE" | null) => void;
-  setSelected: (pieceId: string | null) => void;
+  setSelected: (sel: string | null) => void;
   setError: (msg: string) => void;
 
-  fetchRooms: () => Promise<void>;
-  createRoom: (maxRedTurns: number) => Promise<RoomDto | null>;
+  fetchEngines: () => Promise<void>;
+  fetchRooms: (gameKey?: string) => Promise<void>;
+  createRoom: (gameKey: string, options: Record<string, unknown>) => Promise<RoomDto | null>;
 }
 
 export const useGameStore = create<GameStore>((set, get) => ({
   playerName: loadPlayerName(),
+  engines: [],
   rooms: [],
   room: null,
   mySide: null,
@@ -40,22 +42,27 @@ export const useGameStore = create<GameStore>((set, get) => ({
     localStorage.setItem("playerName", name);
     set({ playerName: name });
   },
-  setRooms: (rooms) => set({ rooms }),
   setRoom: (room) => set({ room }),
   setMySide: (mySide) => set({ mySide }),
   setSelected: (selected) => set({ selected }),
   setError: (error) => set({ error }),
 
-  fetchRooms: async () => {
-    const res = await fetch("/api/games");
+  fetchEngines: async () => {
+    const res = await fetch("/api/games/engines");
+    set({ engines: await res.json() });
+  },
+
+  fetchRooms: async (gameKey?: string) => {
+    const url = gameKey ? `/api/games?gameKey=${gameKey}` : "/api/games";
+    const res = await fetch(url);
     set({ rooms: await res.json() });
   },
 
-  createRoom: async (maxRedTurns) => {
+  createRoom: async (gameKey, options) => {
     const res = await fetch("/api/games", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ maxRedTurns, playerName: get().playerName }),
+      body: JSON.stringify({ gameKey, options, playerName: get().playerName }),
     });
     if (!res.ok) {
       set({ error: "Không tạo được phòng" });

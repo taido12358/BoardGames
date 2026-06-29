@@ -1,6 +1,6 @@
 using BoardGame.Api.Data;
-using BoardGame.Api.Hubs;
 using BoardGame.Api.Models;
+using BoardGame.Api.Platform;
 using BoardGame.Api.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;

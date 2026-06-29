@@ -1,4 +1,5 @@
 using BoardGame.Api.Models;
+using BoardGame.Api.Platform.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace BoardGame.Api.Data;
@@ -18,14 +19,17 @@ public class AppDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
-        // Map & State lưu dạng JSONB cho linh hoạt.
+        // Map & State lưu dạng JSONB cho linh hoạt (shape tuỳ từng game).
         modelBuilder.Entity<GameRoom>(e =>
         {
             e.Property(r => r.MapJson).HasColumnType("jsonb");
             e.Property(r => r.StateJson).HasColumnType("jsonb");
         });
 
-        modelBuilder.Entity<GameMove>()
-            .HasIndex(m => new { m.RoomId, m.MoveNumber });
+        modelBuilder.Entity<GameMove>(e =>
+        {
+            e.Property(m => m.MoveJson).HasColumnType("jsonb");
+            e.HasIndex(m => new { m.RoomId, m.MoveNumber });
+        });
     }
 }

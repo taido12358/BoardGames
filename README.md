@@ -25,39 +25,51 @@ Mẫu **"hello world"** minh hoạ đầy đủ hạ tầng công nghệ của d
 
 ## Cấu trúc thư mục
 
+Kiến trúc tách **Platform** (hạ tầng dùng chung cho mọi game) khỏi **Games**
+(mỗi boardgame tự chứa). Platform chỉ làm việc qua `IGameEngine` nên thêm game
+mới **không phải sửa** platform.
+
 ```
 BoardGame/
 ├── README.md
 ├── docker-compose.yml          # Chạy toàn bộ stack bằng 1 lệnh
-├── .gitignore
 ├── backend/                    # ASP.NET Core Web API
-│   ├── BoardGame.sln
 │   └── BoardGame.Api/
-│       ├── BoardGame.Api.csproj
-│       ├── Program.cs          # DI cho tất cả hạ tầng
-│       ├── appsettings*.json
-│       ├── Dockerfile
-│       ├── Controllers/        # HelloController — điều phối cả stack
-│       ├── Hubs/               # GameHub (SignalR)
+│       ├── Program.cs          # DI + đăng ký engine của từng game
 │       ├── Data/               # AppDbContext (EF Core / PostgreSQL)
-│       ├── Models/             # Greeting
-│       └── Services/           # Redis, RabbitMQ, OpenSearch, MinIO
+│       ├── Services/           # Redis, RabbitMQ, OpenSearch, MinIO (dùng chung)
+│       ├── Controllers/        # HelloController (demo hạ tầng)
+│       ├── Models/             # Greeting (demo)
+│       ├── Platform/           # ❖ Lõi dùng chung cho MỌI game
+│       │   ├── Abstractions/   #   IGameEngine, GameEngineRegistry, MoveOutcome
+│       │   ├── Models/         #   GameRoom, GameMove, GameRecord (generic, JSONB)
+│       │   ├── GamesController.cs  # REST lobby (game-agnostic)
+│       │   ├── GameHub.cs      #   SignalR realtime (dispatch theo gameKey)
+│       │   ├── RoomDto.cs / GameJson.cs
+│       └── Games/              # ❖ Mỗi game một thư mục tự chứa
+│           └── VayBat/         #   game001
+│               ├── VayBatTypes.cs   # Map/State/Move
+│               ├── VayBatRules.cs   # luật thuần (đã test)
+│               └── VayBatEngine.cs  # adapter implement IGameEngine
 ├── frontend/                   # React + TypeScript + Vite
-│   ├── package.json
-│   ├── tailwind.config.js
-│   ├── Dockerfile / nginx.conf
 │   └── src/
 │       ├── App.tsx
-│       ├── store/              # Zustand store
-│       └── hooks/              # useGameHub (SignalR client)
-└── k8s/                        # Manifests Kubernetes
-    ├── 00-namespace.yaml
-    ├── 01-config.yaml          # ConfigMap + Secret
-    ├── 10..14-*.yaml           # postgres / redis / rabbitmq / opensearch / minio
-    ├── 20-backend.yaml
-    ├── 21-frontend.yaml
-    └── 30-ingress.yaml
+│       ├── platform/           # ❖ store/hub/lobby/types dùng chung
+│       ├── games/              # ❖ mỗi game một thư mục
+│       │   └── vaybat/         #   types.ts + VayBatBoard.tsx
+│       ├── components/         # GameView (route theo gameKey)
+│       ├── store/ · hooks/     # helloStore, useGameHub (demo)
+└── k8s/                        # Manifests Kubernetes (không đổi)
 ```
+
+### ➕ Thêm một boardgame mới
+1. **Backend** — tạo `Games/<Tên>/`: định nghĩa Map/State/Move, viết luật thuần,
+   và một lớp `…Engine : IGameEngine`. Đăng ký 1 dòng ở `Program.cs`:
+   `builder.Services.AddSingleton<IGameEngine, TenEngine>();`
+2. **Frontend** — tạo `games/<ten>/` (types + Board component) và thêm 1 nhánh
+   `case "<key>"` trong `components/GameView.tsx`.
+
+Platform (room, lobby, hub, replay, persistence) **không cần đụng tới**.
 
 ## Chạy nhanh với Docker Compose
 
@@ -113,9 +125,9 @@ Game thật đầu tiên, chạy xuyên suốt toàn bộ hạ tầng giống m�
 > thúc)* **OpenSearch** (index) + **MinIO** (replay) → **SignalR** (broadcast
 > state cho cả phòng) → **React** board.
 
-**Rule Engine chạy ở server** (`backend/.../Game/GameEngine.cs`) — chống gian
-lận và đảm bảo tất định. Client chỉ có bản engine "nhẹ" để gợi ý nước đi (UI),
-mọi nước đi đều được server validate lại.
+**Rule Engine chạy ở server** (`backend/.../Games/VayBat/VayBatRules.cs`) — chống
+gian lận và đảm bảo tất định. Client chỉ có bản engine "nhẹ" để gợi ý nước đi
+(UI), mọi nước đi đều được server validate lại.
 
 ### Luật chơi
 - Phe **Đỏ** (3 quân, đi săn) vây bắt phe **Trắng** (1 quân, trốn chạy) trên đồ thị phi hướng.
@@ -132,19 +144,24 @@ mọi nước đi đều được server validate lại.
 > Bản demo offline 1 file (không cần backend, có cả AI để test một mình):
 > `taido/game001.html`.
 
-### API (lobby)
+### API (lobby — generic cho mọi game)
 ```bash
-# Tạo phòng
+curl http://localhost:5000/api/games/engines    # danh sách game được hỗ trợ
+
+# Tạo phòng (options tuỳ game; Vây Bắt dùng maxRedTurns)
 curl -X POST http://localhost:5000/api/games -H "Content-Type: application/json" \
-  -d '{"maxRedTurns":15,"playerName":"An"}'
+  -d '{"gameKey":"vaybat","options":{"maxRedTurns":15},"playerName":"An"}'
 
 curl http://localhost:5000/api/games            # danh sách phòng đang mở
-curl http://localhost:5000/api/games/search?q=RED   # tìm lịch sử ván đã xong
+curl "http://localhost:5000/api/games/search?q=RED"  # tìm lịch sử ván đã xong
 ```
-Nước đi realtime đi qua SignalR hub `/hubs/game` (`JoinRoom`, `MakeMove`, `LeaveRoom`).
+Nước đi realtime qua SignalR hub `/hubs/game`: `JoinRoom(roomId, name)`,
+`MakeMove(roomId, moveJson, name)` (moveJson tuỳ game, vd. `{"pieceId":"R0","to":5}`),
+`LeaveRoom(roomId)`.
 
-> ⚠️ Nếu PostgreSQL của bạn đã chạy mẫu Hello World từ trước, các bảng game sẽ
-> được tạo tự động khi backend khởi động (idempotent), không cần reset volume.
+> ⚠️ **Schema DB đã đổi** khi tách Platform/Games (bảng `GameRooms`/`GameMoves`
+> thành generic). Nếu trước đó bạn đã chạy bản cũ, hãy reset volume một lần:
+> `docker compose down -v` rồi `docker compose up --build`.
 
 ## Triển khai Kubernetes
 

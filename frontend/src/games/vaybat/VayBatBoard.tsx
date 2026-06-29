@@ -1,20 +1,20 @@
-import { useGameStore } from "../store/gameStore";
-import { legalMoves, occupancy, side } from "../game/engineClient";
+import { useGameStore } from "../../platform/gameStore";
+import { legalMoves, occupancy, side, type GameState, type MapDef } from "./types";
 
 interface Props {
-  makeMove: (roomId: string, pieceId: string, toNode: number) => void;
+  makeMove: (roomId: string, move: unknown) => void;
   onLeave: () => void;
 }
 
-/** Bàn chơi SVG. Server-authoritative: click chỉ gửi ý định, backend quyết. */
-export default function GameBoard({ makeMove, onLeave }: Props) {
+/** Bàn chơi SVG cho game Vây Bắt. Server-authoritative. */
+export default function VayBatBoard({ makeMove, onLeave }: Props) {
   const { room, mySide, selected, setSelected, error } = useGameStore();
   if (!room) return null;
 
-  const { map, state } = room;
+  const map = room.map as MapDef;
+  const state = room.state as GameState;
   const occ = occupancy(state);
-  const myTurn =
-    room.status === "Playing" && !state.winner && state.turn === mySide;
+  const myTurn = room.status === "Playing" && !state.winner && state.turn === mySide;
   const highlights =
     selected && myTurn ? new Set(legalMoves(map, state, selected)) : new Set<number>();
 
@@ -26,7 +26,7 @@ export default function GameBoard({ makeMove, onLeave }: Props) {
       return;
     }
     if (selected && highlights.has(nodeId)) {
-      makeMove(room.id, selected, nodeId);
+      makeMove(room.id, { pieceId: selected, to: nodeId });
       setSelected(null);
       return;
     }

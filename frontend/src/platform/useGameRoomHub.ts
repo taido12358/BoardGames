@@ -1,12 +1,11 @@
 import { useEffect, useRef } from "react";
 import { HubConnection, HubConnectionBuilder } from "@microsoft/signalr";
-import { useGameStore } from "../store/gameStore";
-import type { RoomDto } from "../game/engineClient";
+import { useGameStore } from "./gameStore";
+import type { RoomDto } from "./types";
 
 /**
- * Mở kết nối SignalR tới GameHub và cung cấp các hành động realtime
- * (joinRoom, makeMove, leaveRoom). Server là authoritative — mọi nước đi
- * được backend validate rồi broadcast lại "GameStateUpdated" cho cả phòng.
+ * Kết nối SignalR tới GameHub (GENERIC cho mọi game). makeMove gửi payload
+ * dạng JSON tuỳ game; server validate bằng đúng engine rồi broadcast lại.
  */
 export function useGameRoomHub() {
   const connRef = useRef<HubConnection | null>(null);
@@ -38,9 +37,10 @@ export function useGameRoomHub() {
     connRef.current?.invoke("JoinRoom", roomId, name).catch(console.error);
   };
 
-  const makeMove = (roomId: string, pieceId: string, toNode: number) => {
+  /** move: payload tuỳ game (vd. Vây Bắt = { pieceId, to }). */
+  const makeMove = (roomId: string, move: unknown) => {
     const name = useGameStore.getState().playerName;
-    connRef.current?.invoke("MakeMove", roomId, pieceId, toNode, name).catch(console.error);
+    connRef.current?.invoke("MakeMove", roomId, JSON.stringify(move), name).catch(console.error);
   };
 
   const leaveRoom = (roomId: string) => {

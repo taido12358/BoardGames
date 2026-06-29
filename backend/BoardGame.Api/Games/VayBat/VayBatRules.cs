@@ -1,15 +1,13 @@
-namespace BoardGame.Api.Game;
+namespace BoardGame.Api.Games.VayBat;
 
 /// <summary>
-/// Rule Engine THUẦN của Game 001 — Vây bắt trên đồ thị.
-/// Chạy phía server (authoritative): client chỉ gửi ý định di chuyển,
-/// server validate &amp; áp dụng ở đây. Đây là bản port C# của engine JS.
+/// Luật THUẦN của Game Vây Bắt trên đồ thị (không phụ thuộc hạ tầng).
+/// Phe Đỏ (đi săn) vây bắt phe Trắng (trốn chạy).
 /// </summary>
-public static class GameEngine
+public static class VayBatRules
 {
     public static string Side(string pieceId) => pieceId[0] == 'R' ? "RED" : "WHITE";
 
-    /// <summary>Dựng bảng kề từ danh sách cạnh phi hướng.</summary>
     public static Dictionary<int, HashSet<int>> BuildAdjacency(MapDefinition map)
     {
         var adj = map.Nodes.ToDictionary(n => n.Id, _ => new HashSet<int>());
@@ -24,7 +22,6 @@ public static class GameEngine
         return adj;
     }
 
-    /// <summary>Map nodeId -> pieceId đang chiếm giữ.</summary>
     public static Dictionary<int, string> Occupancy(GameState s)
     {
         var occ = new Dictionary<int, string>();
@@ -32,7 +29,6 @@ public static class GameEngine
         return occ;
     }
 
-    /// <summary>Các đỉnh đi được của một quân: kề trực tiếp và còn trống.</summary>
     public static List<int> LegalMoves(GameState s, Dictionary<int, HashSet<int>> adj, string pieceId)
     {
         var occ = Occupancy(s);
@@ -40,7 +36,6 @@ public static class GameEngine
         return adj[from].Where(nb => !occ.ContainsKey(nb)).ToList();
     }
 
-    /// <summary>Tất cả nước đi của một phe.</summary>
     public static List<(string PieceId, int To)> AllMoves(GameState s, Dictionary<int, HashSet<int>> adj, string side)
     {
         var outp = new List<(string, int)>();
@@ -52,10 +47,7 @@ public static class GameEngine
         return outp;
     }
 
-    /// <summary>
-    /// (2) VALID MOVE CHECKER: hợp lệ khi game chưa kết thúc, đúng lượt của phe
-    /// sở hữu quân, đỉnh đích kề trực tiếp và còn trống (không nhảy cóc/ăn quân).
-    /// </summary>
+    /// <summary>Nước đi hợp lệ: chưa kết thúc, đúng lượt, đỉnh đích kề &amp; còn trống.</summary>
     public static bool ValidMove(GameState s, Dictionary<int, HashSet<int>> adj, string pieceId, int toNode)
     {
         if (s.Winner != null) return false;
@@ -67,7 +59,6 @@ public static class GameEngine
         return true;
     }
 
-    /// <summary>Áp dụng nước đi (giả định đã ValidMove). Cập nhật lượt + winner.</summary>
     public static void ApplyMove(GameState s, Dictionary<int, HashSet<int>> adj, string pieceId, int toNode)
     {
         s.Pieces[pieceId] = toNode;
@@ -80,9 +71,7 @@ public static class GameEngine
         => AllMoves(s, adj, "WHITE").Count == 0;
 
     /// <summary>
-    /// (3) WIN/LOSS CHECKER.
-    /// ĐỎ thắng: vây bắt được Trắng (Trắng hết nước đi).
-    /// TRẮNG thắng: sống sót qua đủ X lượt Đỏ, hoặc Đỏ rơi vào stalemate.
+    /// Đỏ thắng: vây bắt được Trắng. Trắng thắng: sống qua X lượt Đỏ, hoặc Đỏ stalemate.
     /// </summary>
     public static string? CheckWinner(GameState s, Dictionary<int, HashSet<int>> adj)
     {
@@ -96,10 +85,9 @@ public static class GameEngine
         return null;
     }
 
-    /// <summary>Tạo state ban đầu; randomRed=true để random vị trí Đỏ.</summary>
     public static GameState CreateState(MapDefinition map, bool randomRed = true, List<int>? prevRed = null)
     {
-        BuildAdjacency(map); // validate cấu trúc map sớm
+        BuildAdjacency(map); // validate map sớm
         var pieces = new Dictionary<string, int>();
         for (int i = 0; i < map.WhiteCount; i++) pieces[$"W{i}"] = map.WhiteStart;
 
@@ -134,7 +122,6 @@ public static class GameEngine
         };
     }
 
-    /// <summary>Bản đồ mặc định (đồng bộ với bản demo HTML).</summary>
     public static MapDefinition DefaultMap() => new()
     {
         Nodes = new()
