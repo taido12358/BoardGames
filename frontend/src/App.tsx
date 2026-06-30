@@ -9,21 +9,20 @@ export default function App() {
   const [tab, setTab] = useState<Tab>("game");
 
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-100 p-6">
-      <div className="w-full max-w-4xl mx-auto space-y-6">
-        <header className="text-center">
-          <h1 className="text-3xl font-bold">🎲 BoardGame</h1>
-          <p className="text-slate-400 text-sm mt-1">
-            ASP.NET Core · SignalR · PostgreSQL · Redis · RabbitMQ · OpenSearch · MinIO
-          </p>
+    <div className="min-h-screen bg-slate-900 text-slate-100">
+      <div className="w-full max-w-lg mx-auto flex flex-col min-h-screen">
+        <header className="px-4 pt-4 pb-2 text-center shrink-0">
+          <h1 className="text-2xl font-bold tracking-tight">🎲 BoardGame</h1>
         </header>
 
-        <nav className="flex justify-center gap-2">
+        <nav className="flex px-4 pb-3 gap-2 shrink-0">
           <TabButton active={tab === "game"} onClick={() => setTab("game")}>🎯 Game</TabButton>
-          <TabButton active={tab === "hello"} onClick={() => setTab("hello")}>👋 Hello demo</TabButton>
+          <TabButton active={tab === "hello"} onClick={() => setTab("hello")}>👋 Hello</TabButton>
         </nav>
 
-        {tab === "game" ? <GameView /> : <HelloPanel />}
+        <main className="flex-1 px-4 pb-6">
+          {tab === "game" ? <GameView /> : <HelloPanel />}
+        </main>
       </div>
     </div>
   );
@@ -34,14 +33,14 @@ function TabButton({ active, onClick, children }: {
 }) {
   return (
     <button onClick={onClick}
-      className={`px-4 py-2 rounded-lg font-medium ${
-        active ? "bg-emerald-600" : "bg-slate-700 hover:bg-slate-600"}`}>
+      className={`flex-1 py-2.5 rounded-xl font-medium text-sm transition-colors ${
+        active ? "bg-emerald-600" : "bg-slate-700 hover:bg-slate-600 active:bg-slate-500"
+      }`}>
       {children}
     </button>
   );
 }
 
-/** Demo Hello World gốc — minh hoạ một bản ghi đi qua toàn stack. */
 function HelloPanel() {
   const { latest, source, feed, loading, fetchLatest, createGreeting } = useHelloStore();
   const [draft, setDraft] = useState("Hello, World!");
@@ -50,8 +49,8 @@ function HelloPanel() {
   useEffect(() => { fetchLatest(); }, [fetchLatest]);
 
   return (
-    <div className="max-w-xl mx-auto space-y-6">
-      <div className="bg-slate-800 rounded-2xl p-6 shadow-lg space-y-4">
+    <div className="space-y-4">
+      <div className="bg-slate-800 rounded-2xl p-4 shadow-lg space-y-4">
         <div>
           <span className="text-slate-400 text-sm">Latest greeting</span>
           <p className="text-2xl font-semibold">{latest || "…"}</p>
@@ -63,20 +62,20 @@ function HelloPanel() {
         </div>
         <div className="flex gap-2">
           <input
-            className="flex-1 rounded-lg bg-slate-700 px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-500"
+            className="flex-1 rounded-xl bg-slate-700 px-3 py-2.5 outline-none focus:ring-2 focus:ring-emerald-500 text-sm"
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             placeholder="Type a greeting…"
           />
           <button disabled={loading} onClick={() => createGreeting(draft)}
-            className="rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 px-4 py-2 font-medium">
+            className="rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 px-4 py-2.5 font-medium text-sm">
             Send
           </button>
         </div>
       </div>
 
-      <div className="bg-slate-800 rounded-2xl p-6 shadow-lg">
-        <h2 className="text-sm text-slate-400 mb-2">Realtime feed (SignalR ← RabbitMQ)</h2>
+      <div className="bg-slate-800 rounded-2xl p-4 shadow-lg">
+        <h2 className="text-xs text-slate-400 mb-2 uppercase tracking-wide">Realtime feed (SignalR ← RabbitMQ)</h2>
         <ul className="space-y-1 max-h-48 overflow-auto">
           {feed.length === 0 && <li className="text-slate-500 text-sm">No events yet…</li>}
           {feed.map((m, i) => (
