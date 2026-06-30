@@ -18,6 +18,7 @@ public class HelloController : ControllerBase
     private readonly OpenSearchService _search;
     private readonly MinioStorageService _storage;
     private readonly IHubContext<GameHub> _hub;
+    private readonly ILogger<HelloController> _log;
 
     public HelloController(
         AppDbContext db,
@@ -25,7 +26,8 @@ public class HelloController : ControllerBase
         RabbitMqPublisher queue,
         OpenSearchService search,
         MinioStorageService storage,
-        IHubContext<GameHub> hub)
+        IHubContext<GameHub> hub,
+        ILogger<HelloController> log)
     {
         _db = db;
         _cache = cache;
@@ -33,6 +35,7 @@ public class HelloController : ControllerBase
         _search = search;
         _storage = storage;
         _hub = hub;
+        _log = log;
     }
 
     /// <summary>Returns the latest greeting, served from Redis when warm.</summary>
@@ -72,7 +75,8 @@ public class HelloController : ControllerBase
         await _cache.SetAsync("latest-greeting", greeting.Message);
 
         // 3. Announce (RabbitMQ)
-        _queue.Publish(greeting.Message);
+        try { _queue.Publish(greeting.Message); }
+        catch (Exception ex) { _log.LogWarning(ex, "Publish greeting thất bại"); }
 
         // 4. Index (OpenSearch)
         await _search.IndexAsync(greeting);

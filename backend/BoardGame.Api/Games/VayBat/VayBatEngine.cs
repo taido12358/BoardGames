@@ -31,9 +31,23 @@ public class VayBatEngine : IGameEngine
 
     public MoveOutcome ApplyMove(string mapJson, string stateJson, string side, string moveJson)
     {
-        var map = GameJson.Deserialize<MapDefinition>(mapJson);
-        var state = GameJson.Deserialize<GameState>(stateJson);
-        var move = GameJson.Deserialize<VayBatMove>(moveJson);
+        MapDefinition map;
+        GameState state;
+        VayBatMove move;
+        try
+        {
+            map   = GameJson.Deserialize<MapDefinition>(mapJson);
+            state = GameJson.Deserialize<GameState>(stateJson);
+            move  = GameJson.Deserialize<VayBatMove>(moveJson);
+        }
+        catch (Exception ex)
+        {
+            return new MoveOutcome(false, $"moveJson không hợp lệ: {ex.Message}", stateJson, null);
+        }
+
+        if (string.IsNullOrEmpty(move.PieceId))
+            return new MoveOutcome(false, "moveJson thiếu pieceId", stateJson, null);
+
         var adj = VayBatRules.BuildAdjacency(map);
 
         if (VayBatRules.Side(move.PieceId) != side)

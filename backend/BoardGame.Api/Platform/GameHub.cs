@@ -46,8 +46,13 @@ public class GameHub : Hub
     public async Task JoinRoom(string roomId, string playerName)
     {
         if (!Guid.TryParse(roomId, out var id)) { await Err("roomId không hợp lệ"); return; }
-        var room = await _db.GameRooms.FindAsync(id);
-        if (room is null) { await Err("Không tìm thấy phòng"); return; }
+
+        // SELECT FOR UPDATE: serialize concurrent joins để hai người không cùng lấy một ghế.
+        await using var tx = await _db.Database.BeginTransactionAsync();
+        var room = (await _db.GameRooms
+            .FromSqlRaw("SELECT * FROM \"GameRooms\" WHERE \"Id\" = {0} FOR UPDATE", id)
+            .ToListAsync()).FirstOrDefault();
+        if (room is null) { await tx.RollbackAsync(); await Err("Không tìm thấy phòng"); return; }
 
         await Groups.AddToGroupAsync(Context.ConnectionId, roomId);
 
@@ -62,6 +67,7 @@ public class GameHub : Hub
 
         room.UpdatedAt = DateTime.UtcNow;
         await _db.SaveChangesAsync();
+        await tx.CommitAsync();
 
         await Clients.Caller.SendAsync("Seated", new { side });
         await Clients.Group(roomId).SendAsync("GameStateUpdated", GameMapper.ToDto(room));
@@ -77,16 +83,25 @@ public class GameHub : Hub
     public async Task MakeMove(string roomId, string moveJson, string playerName)
     {
         if (!Guid.TryParse(roomId, out var id)) { await Err("roomId không hợp lệ"); return; }
-        var room = await _db.GameRooms.FindAsync(id);
-        if (room is null || room.Status != "Playing") { await Err("Phòng chưa thể chơi"); return; }
+
+        // SELECT FOR UPDATE: serialize concurrent moves trên cùng phòng.
+        // Đảm bảo (1) state đọc là mới nhất, (2) moveNumber không bị duplicate.
+        await using var tx = await _db.Database.BeginTransactionAsync();
+        var room = (await _db.GameRooms
+            .FromSqlRaw("SELECT * FROM \"GameRooms\" WHERE \"Id\" = {0} FOR UPDATE", id)
+            .ToListAsync()).FirstOrDefault();
+        if (room is null || room.Status != "Playing") { await tx.RollbackAsync(); await Err("Phòng chưa thể chơi"); return; }
 
         string? side = room.RedPlayer == playerName ? "RED"
                      : room.WhitePlayer == playerName ? "WHITE" : null;
-        if (side is null) { await Err("Bạn không phải người chơi trong phòng này"); return; }
+        if (side is null) { await tx.RollbackAsync(); await Err("Bạn không phải người chơi trong phòng này"); return; }
 
+        if (!_engines.Has(room.GameKey)) { await tx.RollbackAsync(); await Err($"Game '{room.GameKey}' không được hỗ trợ"); return; }
         var engine = _engines.Get(room.GameKey);
-        var outcome = engine.ApplyMove(room.MapJson, room.StateJson, side, moveJson);
-        if (!outcome.Ok) { await Err(outcome.Error ?? "Nước đi không hợp lệ"); return; }
+        MoveOutcome outcome;
+        try { outcome = engine.ApplyMove(room.MapJson, room.StateJson, side, moveJson); }
+        catch (Exception ex) { await tx.RollbackAsync(); _log.LogWarning(ex, "ApplyMove ném exception"); await Err("Nước đi không hợp lệ"); return; }
+        if (!outcome.Ok) { await tx.RollbackAsync(); await Err(outcome.Error ?? "Nước đi không hợp lệ"); return; }
 
         var moveNumber = await _db.GameMoves.CountAsync(m => m.RoomId == id) + 1;
         _db.GameMoves.Add(new GameMove
@@ -97,7 +112,8 @@ public class GameHub : Hub
         room.StateJson = outcome.StateJson;
         if (outcome.Winner is not null) { room.Status = "Finished"; room.Winner = outcome.Winner; }
         room.UpdatedAt = DateTime.UtcNow;
-        await _db.SaveChangesAsync();                                     // PostgreSQL (cốt lõi)
+        await _db.SaveChangesAsync();
+        await tx.CommitAsync();                                           // PostgreSQL (cốt lõi)
 
         await _cache.SetAsync($"game:{id}:state", room.StateJson);        // Redis (cốt lõi)
 

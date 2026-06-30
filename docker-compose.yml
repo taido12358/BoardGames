@@ -35,10 +35,13 @@ services:
       - "5672:5672"    # AMQP
       - "15672:15672"  # management UI
     healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      # check_port_connectivity xác nhận port AMQP 5672 thực sự chấp nhận kết nối
+      # (khác với 'ping' chỉ kiểm tra Erlang node còn sống)
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "check_port_connectivity"]
       interval: 10s
-      timeout: 5s
+      timeout: 10s
       retries: 10
+      start_period: 30s
 
   opensearch:
     image: opensearchproject/opensearch:2.15.0
@@ -80,11 +83,19 @@ services:
       ASPNETCORE_ENVIRONMENT: Production
     ports:
       - "5000:8080"
+    restart: on-failure
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 15s
 
   frontend:
     build: ./frontend
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     ports:
       - "5173:80"
 

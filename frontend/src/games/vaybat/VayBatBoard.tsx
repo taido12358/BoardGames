@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useGameStore } from "../../platform/gameStore";
 import { legalMoves, occupancy, side, type GameState, type MapDef } from "./types";
 
@@ -13,17 +13,26 @@ export default function VayBatBoard({ makeMove, onLeave }: Props) {
   const { room, mySide, selected, setSelected, error } = useGameStore();
   const svgRef = useRef<SVGSVGElement>(null);
   const [drag, setDrag] = useState<DragState | null>(null);
+  const pressRef = useRef<DragState | null>(null);
   const didDrag = useRef(false);
 
   if (!room) return null;
 
   const map = room.map as MapDef;
   const state = room.state as GameState;
-  const occ = occupancy(state);
   const myTurn = room.status === "Playing" && !state.winner && state.turn === mySide;
-  const highlights = selected && myTurn
-    ? new Set(legalMoves(map, state, selected))
-    : new Set<number>();
+
+  // Tính lại khi state/selected thay đổi, không tính lại khi chỉ drag thay đổi
+  const occ = useMemo(() => occupancy(state), [state]);
+  const highlights = useMemo(
+    () => selected && myTurn ? new Set(legalMoves(map, state, selected)) : new Set<number>(),
+    [selected, myTurn, map, state]
+  );
+  // Lookup O(1) thay vì O(N) linear scan trong mỗi edge render
+  const nodeById = useMemo(
+    () => new Map(map.nodes.map(n => [n.id, n])),
+    [map]
+  );
 
   function toSvg(clientX: number, clientY: number) {
     const svg = svgRef.current!;
@@ -50,11 +59,11 @@ export default function VayBatBoard({ makeMove, onLeave }: Props) {
     const pid = occ.get(nodeId);
 
     if (myTurn && pid && side(pid) === mySide) {
-      // Nhấc quân của mình — bắt đầu kéo
+      // Nhấc quân của mình — ghi nhận điểm bắt đầu, ghost chỉ hiện sau khi kéo > 8px
       svgRef.current?.setPointerCapture(e.pointerId);
       didDrag.current = false;
       setSelected(pid);
-      setDrag({ pieceId: pid, svgX: pos.x, svgY: pos.y });
+      pressRef.current = { pieceId: pid, svgX: pos.x, svgY: pos.y };
     } else if (myTurn && selected && highlights.has(nodeId)) {
       // Tap vào ô đích hợp lệ — đi ngay
       makeMove(room!.id, { pieceId: selected, to: nodeId });
@@ -65,18 +74,26 @@ export default function VayBatBoard({ makeMove, onLeave }: Props) {
   }
 
   function onSvgPointerMove(e: React.PointerEvent<SVGSVGElement>) {
-    if (!drag) return;
+    const press = pressRef.current;
+    if (!press) return;
     e.preventDefault();
-    didDrag.current = true;
     const pos = toSvg(e.clientX, e.clientY);
-    setDrag(d => d ? { ...d, svgX: pos.x, svgY: pos.y } : null);
+    const dist = Math.hypot(pos.x - press.svgX, pos.y - press.svgY);
+    if (dist > 8) {
+      // Vượt ngưỡng → kích hoạt ghost drag
+      didDrag.current = true;
+      setDrag({ pieceId: press.pieceId, svgX: pos.x, svgY: pos.y });
+    } else if (drag) {
+      setDrag(d => d ? { ...d, svgX: pos.x, svgY: pos.y } : null);
+    }
   }
 
   function onSvgPointerUp(e: React.PointerEvent<SVGSVGElement>) {
-    if (!drag) return;
-    if (didDrag.current) {
+    // Đọc press trước khi null hoá — tránh stale closure nếu setDrag chưa trigger re-render
+    const press = pressRef.current;
+    pressRef.current = null;
+    if (didDrag.current && press) {
       const pos = toSvg(e.clientX, e.clientY);
-      // Chỉ snap vào ô hợp lệ
       let best: number | null = null, bestDist = 40;
       for (const n of map.nodes) {
         if (!highlights.has(n.id)) continue;
@@ -84,7 +101,7 @@ export default function VayBatBoard({ makeMove, onLeave }: Props) {
         if (d < bestDist) { bestDist = d; best = n.id; }
       }
       if (best !== null) {
-        makeMove(room!.id, { pieceId: drag.pieceId, to: best });
+        makeMove(room!.id, { pieceId: press.pieceId, to: best });
         setSelected(null);
       }
     }
@@ -137,12 +154,12 @@ export default function VayBatBoard({ makeMove, onLeave }: Props) {
           onPointerDown={onSvgPointerDown}
           onPointerMove={onSvgPointerMove}
           onPointerUp={onSvgPointerUp}
-          onPointerCancel={() => { setDrag(null); didDrag.current = false; }}
+          onPointerCancel={() => { pressRef.current = null; setDrag(null); didDrag.current = false; }}
         >
           {/* Cạnh đồ thị */}
           {map.edges.map(([a, b], i) => {
-            const na = map.nodes.find(n => n.id === a)!;
-            const nb = map.nodes.find(n => n.id === b)!;
+            const na = nodeById.get(a)!;
+            const nb = nodeById.get(b)!;
             return (
               <line key={i} x1={na.x} y1={na.y} x2={nb.x} y2={nb.y}
                 stroke="#3d4a6b" strokeWidth={3} strokeLinecap="round" />

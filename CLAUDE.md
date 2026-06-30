@@ -70,6 +70,16 @@ ALTER TABLE "GameMoves" ADD COLUMN IF NOT EXISTS "MoveNumber" integer NOT NULL D
 
 **Nguyên tắc chung khi thêm cột mới vào bất kỳ bảng nào:** Luôn kèm `ALTER TABLE ... ADD COLUMN IF NOT EXISTS` vào block bootstrap để idempotent với DB cũ.
 
+### `null value in column "PieceId" of relation "GameMoves" violates not-null constraint` (2026-06-30)
+**Nguyên nhân:** Cột `PieceId` bị thêm trực tiếp vào bảng `GameMoves` trong DB từ schema cũ. Entity `GameMove` không có property này (dữ liệu nằm trong `MoveJson` JSONB), nên EF Core không đưa nó vào INSERT — PostgreSQL báo lỗi NOT NULL.
+
+**Fix:** Thêm vào block raw SQL trong `Program.cs`:
+```sql
+ALTER TABLE "GameMoves" DROP COLUMN IF EXISTS "PieceId";
+```
+
+**Nguyên tắc:** Dữ liệu game-specific (như `PieceId`) thuộc về `MoveJson` JSONB, không được thêm thành cột riêng trong `GameMoves`.
+
 ### `null value in column "MaxRedTurns" violates not-null constraint` (2026-06-30)
 **Nguyên nhân:** Cột `MaxRedTurns` bị thêm trực tiếp vào bảng `GameRooms` trong DB từ schema cũ. Entity `GameRoom` hiện tại không có property này (dữ liệu nằm trong `MapJson` JSONB), nên EF Core không đưa nó vào câu INSERT — PostgreSQL báo lỗi NOT NULL.
 
@@ -96,6 +106,22 @@ ALTER TABLE "GameRooms" DROP COLUMN IF EXISTS "MaxRedTurns";
 1. Tạo thư mục `Games/<TênGame>/` với `<TênGame>Engine.cs` implement `IGameEngine`
 2. Đăng ký trong `Program.cs`: `builder.Services.AddSingleton<IGameEngine, <TênGame>Engine>();`
 3. Engine phải trả về `(mapJson, stateJson)` từ `NewGame()` — shape tuỳ game, lưu JSONB
+
+### `RabbitMqPublisher`: không dùng `AutomaticRecoveryEnabled = true` cùng với `GetChannel()` thủ công
+Hai cơ chế reconnect tranh nhau Dispose/recreate cùng một connection object → `ObjectDisposedException`. Dùng một trong hai: hoặc auto-recovery (bỏ GetChannel), hoặc GetChannel thủ công (tắt AutomaticRecoveryEnabled). Hiện tại dùng GetChannel thủ công, `AutomaticRecoveryEnabled = false`.
+
+### `RabbitMqPublisher`: dùng `Volatile.Read/Write` thay vì từ khoá `volatile` cho DCLP
+Field `_channel` dùng `Volatile.Read(ref _channel)` bên ngoài lock và `Volatile.Write(ref _channel, newCh)` bên trong lock để tránh torn read trên ARM (Apple Silicon / AWS Graviton).
+
+### `VayBatEngine.ApplyMove`: bọc deserialization trong try-catch
+`GameJson.Deserialize<VayBatMove>(moveJson)` có thể throw `JsonException` (JSON sai cú pháp) hoặc `NullReferenceException` (`PieceId: null` → `pieceId[0]`). Bọc trong try-catch, trả về `MoveOutcome(false, ...)` thay vì để exception propagate qua hub.
+
+### `FormatException: Expected an ASCII digit` trên SQL có `'{}'::jsonb` (2026-06-30)
+**Nguyên nhân:** EF Core's `ExecuteSqlRaw` parse `{N}` trong SQL string làm parameter placeholder. `'{}'::jsonb` chứa `{}` (brace rỗng) khiến EF Core throw `FormatException: Expected an ASCII digit` client-side, trước khi gửi SQL lên DB.
+
+**Fix:** Dùng `'{{}}'::jsonb` trong tất cả raw SQL string truyền vào `ExecuteSqlRaw`. EF Core dùng `{{`/`}}` làm escape sequence cho literal `{`/`}`, PostgreSQL nhận được `'{}'::jsonb` đúng cú pháp.
+
+**Nguyên tắc:** Mọi SQL có `{}` (jsonb empty object literal) truyền vào `ExecuteSqlRaw` phải viết là `{{}}`.
 
 ## Chạy local
 

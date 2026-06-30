@@ -76,8 +76,18 @@ public class GamesController : ControllerBase
     {
         var q = _db.GameRooms.Where(r => r.Status != "Finished");
         if (!string.IsNullOrWhiteSpace(gameKey)) q = q.Where(r => r.GameKey == gameKey);
-        var rooms = await q.OrderByDescending(r => r.CreatedAt).Take(50).ToListAsync();
-        return Ok(rooms.Select(GameMapper.ToDto));
+        // Chỉ SELECT metadata — bỏ qua MapJson/StateJson (có thể vài KB mỗi phòng)
+        // vì lobby không cần state chi tiết của từng ván.
+        var rows = await q
+            .OrderByDescending(r => r.CreatedAt)
+            .Take(50)
+            .Select(r => new { r.Id, r.GameKey, r.Status, r.RedPlayer, r.WhitePlayer, r.Winner, r.CreatedAt })
+            .ToListAsync();
+        var empty = GameJson.Element("{}");
+        return Ok(rows.Select(r => new RoomDto(
+            r.Id, r.GameKey, r.Status,
+            r.RedPlayer, r.WhitePlayer, r.Winner,
+            empty, empty, r.CreatedAt)));
     }
 
     /// <summary>Chi tiết phòng; state nóng ưu tiên đọc từ Redis.</summary>

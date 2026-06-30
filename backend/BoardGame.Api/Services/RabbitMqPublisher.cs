@@ -4,42 +4,62 @@ using RabbitMQ.Client;
 namespace BoardGame.Api.Services;
 
 /// <summary>
-/// Publishes greeting events to a RabbitMQ fanout exchange.
+/// Publishes game events to RabbitMQ fanout exchanges.
+/// Kết nối được tạo lazily (lần đầu dùng) và tự reconnect nếu channel bị đóng —
+/// tránh crash khi RabbitMQ chưa sẵn sàng lúc backend khởi động.
 /// </summary>
 public class RabbitMqPublisher : IDisposable
 {
     public const string ExchangeName = "boardgame.greetings";
     public const string GamesExchange = "boardgame.games";
 
-    private readonly IConnection _connection;
-    private readonly IModel _channel;
+    private readonly ConnectionFactory _factory;
+    private IConnection? _connection;
+    private IModel? _channel;
+    private readonly object _lock = new();
 
     public RabbitMqPublisher(IConfiguration config)
     {
-        var factory = new ConnectionFactory
+        _factory = new ConnectionFactory
         {
             Uri = new Uri(config.GetConnectionString("RabbitMq")
                           ?? "amqp://guest:guest@localhost:5672/"),
-            DispatchConsumersAsync = true
+            DispatchConsumersAsync = true,
+            // Tắt auto-recovery của thư viện — GetChannel() tự reconnect khi channel đóng.
+            // Hai cơ chế cùng tồn tại sẽ race nhau dispose/recreate cùng connection object.
+            AutomaticRecoveryEnabled = false,
         };
+    }
 
-        _connection = factory.CreateConnection();
-        _channel = _connection.CreateModel();
-        _channel.ExchangeDeclare(ExchangeName, ExchangeType.Fanout, durable: true);
-        _channel.ExchangeDeclare(GamesExchange, ExchangeType.Fanout, durable: true);
+    private IModel GetChannel()
+    {
+        // Volatile.Read đảm bảo không đọc torn reference trên ARM/non-x86
+        var ch = Volatile.Read(ref _channel);
+        if (ch is { IsOpen: true }) return ch;
+        lock (_lock)
+        {
+            if (_channel is { IsOpen: true }) return _channel;
+            _channel?.Dispose();
+            _connection?.Dispose();
+            _connection = _factory.CreateConnection();
+            var newCh = _connection.CreateModel();
+            newCh.ExchangeDeclare(ExchangeName, ExchangeType.Fanout, durable: true);
+            newCh.ExchangeDeclare(GamesExchange, ExchangeType.Fanout, durable: true);
+            Volatile.Write(ref _channel, newCh);
+            return newCh;
+        }
     }
 
     public void Publish(string message)
     {
         var body = Encoding.UTF8.GetBytes(message);
-        _channel.BasicPublish(ExchangeName, routingKey: string.Empty, basicProperties: null, body: body);
+        GetChannel().BasicPublish(ExchangeName, routingKey: string.Empty, basicProperties: null, body: body);
     }
 
-    /// <summary>Phát event của ván chơi (move/finish) ra exchange games.</summary>
     public void PublishGameEvent(string jsonPayload)
     {
         var body = Encoding.UTF8.GetBytes(jsonPayload);
-        _channel.BasicPublish(GamesExchange, routingKey: string.Empty, basicProperties: null, body: body);
+        GetChannel().BasicPublish(GamesExchange, routingKey: string.Empty, basicProperties: null, body: body);
     }
 
     public void Dispose()
