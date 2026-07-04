@@ -100,6 +100,20 @@ ALTER TABLE "GameRooms" DROP COLUMN IF EXISTS "MaxRedTurns";
 - `useGameRoomHub`: lỗi `invoke` (mất kết nối SignalR) hiện lên UI qua `setError` thay vì chỉ `console.error`.
 - `VayBatBoard`: hiển thị rõ trạng thái khi không đi được — "⏳ Chờ đối thủ đi…", "👁 đang xem", banner Waiting kèm ghi chú hai tab dùng chung tên.
 
+## Đăng nhập (OTP qua Gmail, 2026-07-05)
+
+Đăng nhập không mật khẩu: nhập email → backend gửi mã 6 số qua Gmail SMTP → nhập mã → JWT đặt trong **cookie HttpOnly** (`bg_auth`, SameSite=Lax; JS không đọc được token — không dùng localStorage).
+
+**Backend** (`Platform/Auth/` + `Services/GmailOtpSender.cs`):
+- `POST /api/auth/request-otp` — tạo OTP (chỉ lưu SHA-256 hash trong bảng `AuthOtps`), gửi mail. Rate limit: 60s giữa 2 lần, tối đa 5 lần/giờ/email. Mã mới vô hiệu mã cũ.
+- `POST /api/auth/verify-otp` — hết hạn 5 phút, tối đa 5 lần nhập sai, so sánh fixed-time. Thành công → tạo/tìm `Users` (unique theo email), set cookie JWT.
+- `GET /api/auth/me` — khôi phục phiên từ cookie. `PUT /api/auth/display-name`, `POST /api/auth/logout`.
+- JWT config `Jwt:Secret` (dev default trong `appsettings.Development.json`; production đặt `Jwt__Secret` qua env). JwtBearer đọc token từ cookie qua `OnMessageReceived` (vẫn nhận Authorization header cho tool/test).
+
+**Gửi mail**: MailKit → `smtp.gmail.com:587` STARTTLS. Cấu hình `Gmail:User` + `Gmail:AppPassword` (**App Password** của Google, không phải mật khẩu Gmail — tạo tại https://myaccount.google.com/apppasswords, cần bật 2FA). Chưa cấu hình: Development log OTP ra console (test local không cần Gmail thật); ngoài Development trả 503.
+
+**Frontend**: `platform/authStore.ts` (zustand) + `platform/LoginPage.tsx`. `App.tsx` gọi `restoreSession()` khi mở trang; chưa đăng nhập → hiện LoginPage. Đăng nhập xong `displayName` được sync vào `gameStore.playerName` (email là định danh duy nhất → hết lớp bug hai tab trùng tên ngẫu nhiên, nhưng hai tab cùng trình duyệt vẫn chung phiên/tên — test 2 người vẫn cần 2 trình duyệt/profile).
+
 ## Giao diện game (VayBatBoard)
 
 **Drag & drop (2026-06-30):** Dùng Pointer Events API (không phải HTML5 DnD — không hoạt động với SVG):
