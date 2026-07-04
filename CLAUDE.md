@@ -90,6 +90,16 @@ ALTER TABLE "GameRooms" DROP COLUMN IF EXISTS "MaxRedTurns";
 
 **Nguyên tắc:** Dữ liệu game-specific (như `MaxRedTurns`) thuộc về `MapJson`/`StateJson` JSONB, không được thêm thành cột riêng trong `GameRooms`.
 
+### "Không thể di chuyển quân" dù đã vào ván (2026-07-03)
+**Chẩn đoán (đã verify end-to-end bằng 2 client SignalR + Chromium/Playwright):** logic đi quân (tap-tap & kéo-thả) hoạt động đúng. Triệu chứng xảy ra khi ván **chưa thực sự bắt đầu** (`Status` kẹt `Waiting`) hoặc người chơi là khán giả — UI cũ im lặng nuốt click, không báo gì.
+
+**Nguyên nhân gốc thường gặp:** `playerName` lưu trong `localStorage` → **mọi tab cùng trình duyệt dùng chung tên**. Tab thứ hai vào phòng bị backend coi là reconnect của người chơi cũ (`room.RedPlayer == playerName` → seated RED lần nữa), ghế Trắng không bao giờ được lấp, `Status` mãi `Waiting`, `myTurn` luôn false. Test 2 người trên cùng máy phải dùng **tên khác nhau** (đổi tên trong sảnh) hoặc trình duyệt khác/tab ẩn danh. Biến thể: đổi tên rồi vào lại phòng cũ → cả 2 ghế mang tên cũ → thành khán giả (👁 Xem).
+
+**Các fix đã áp dụng:**
+- `GameHub.MakeMove` / `GamesController`: bọc mọi thao tác Redis trong try-catch — Redis chỉ là cache, lỗi Redis không được chặn broadcast `GameStateUpdated` (triệu chứng cũ: nước đi lưu DB nhưng client không nhận update → tưởng không đi được).
+- `useGameRoomHub`: lỗi `invoke` (mất kết nối SignalR) hiện lên UI qua `setError` thay vì chỉ `console.error`.
+- `VayBatBoard`: hiển thị rõ trạng thái khi không đi được — "⏳ Chờ đối thủ đi…", "👁 đang xem", banner Waiting kèm ghi chú hai tab dùng chung tên.
+
 ## Giao diện game (VayBatBoard)
 
 **Drag & drop (2026-06-30):** Dùng Pointer Events API (không phải HTML5 DnD — không hoạt động với SVG):
