@@ -27,19 +27,17 @@ public partial class AuthController : ControllerBase
     private static partial Regex EmailRegex();
 
     private readonly AppDbContext _db;
-    private readonly GmailOtpSender _mailer;
+    private readonly SmtpOtpSender _mailer;
     private readonly TokenService _tokens;
     private readonly ILogger<AuthController> _logger;
-    private readonly IHostEnvironment _env;
 
-    public AuthController(AppDbContext db, GmailOtpSender mailer, TokenService tokens,
-        ILogger<AuthController> logger, IHostEnvironment env)
+    public AuthController(AppDbContext db, SmtpOtpSender mailer, TokenService tokens,
+        ILogger<AuthController> logger)
     {
         _db = db;
         _mailer = mailer;
         _tokens = tokens;
         _logger = logger;
-        _env = env;
     }
 
     /// <summary>Bước 1: nhận email, tạo OTP 6 số và gửi qua Gmail.</summary>
@@ -50,7 +48,7 @@ public partial class AuthController : ControllerBase
         if (email is null)
             return BadRequest(new { error = "Địa chỉ email không hợp lệ." });
 
-        if (!_mailer.IsConfigured && !_env.IsDevelopment())
+        if (!_mailer.IsConfigured && !_mailer.DevLogOtpEnabled)
             return StatusCode(503, new { error = "Hệ thống gửi email chưa được cấu hình. Liên hệ quản trị viên." });
 
         var now = DateTimeOffset.UtcNow;
@@ -201,8 +199,9 @@ public partial class AuthController : ControllerBase
     {
         HttpOnly = true,
         SameSite = SameSiteMode.Lax,
-        // Localhost chạy http nên Secure chỉ bật ngoài Development.
-        Secure = !_env.IsDevelopment(),
+        // Secure theo scheme thật: https → Secure. Không gắn theo environment —
+        // compose local chạy Production trên http, cookie Secure sẽ bị browser bỏ qua.
+        Secure = Request.IsHttps,
         Path = "/",
     };
 

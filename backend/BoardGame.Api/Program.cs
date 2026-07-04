@@ -8,6 +8,10 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using StackExchange.Redis;
 
+// Nạp .env ở root repo vào biến môi trường TRƯỚC khi build config,
+// để chạy local bằng `dotnet run` cũng đọc được cấu hình như docker compose.
+DotEnv.Load();
+
 var builder = WebApplication.CreateBuilder(args);
 
 // --- Database: PostgreSQL via EF Core ---
@@ -40,15 +44,17 @@ builder.Services.AddSingleton<MinioStorageService>();
 builder.Services.AddSingleton<IGameEngine, VayBatEngine>();
 builder.Services.AddSingleton<GameEngineRegistry>();
 
-// --- Auth: đăng nhập OTP qua Gmail, JWT trong cookie HttpOnly ---
-builder.Services.AddSingleton<GmailOtpSender>();
-builder.Services.AddSingleton<TokenService>();
+// --- Auth: đăng nhập OTP qua email (SMTP), JWT trong cookie HttpOnly ---
+builder.Services.AddSingleton<SmtpOtpSender>();
+// Khởi tạo ngay tại đây (không lazy qua DI) để thiếu Jwt:Secret là fail ngay lúc boot
+// với message rõ ràng, thay vì nổ ở request đầu tiên.
+var tokenService = new TokenService(builder.Configuration);
+builder.Services.AddSingleton(tokenService);
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
-        var tokens = new TokenService(builder.Configuration);
-        options.TokenValidationParameters = tokens.ValidationParameters;
+        options.TokenValidationParameters = tokenService.ValidationParameters;
         options.Events = new JwtBearerEvents
         {
             // Token nằm trong cookie HttpOnly (JS không đọc được — chống XSS).
@@ -71,9 +77,15 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// CORS: frontend dev mặc định + WEB_BASE_URL từ .env (nếu frontend chạy port/host khác).
+var corsOrigins = new List<string> { "http://localhost:5173" };
+var webBaseUrl = builder.Configuration["WEB_BASE_URL"]?.TrimEnd('/');
+if (!string.IsNullOrWhiteSpace(webBaseUrl) && !corsOrigins.Contains(webBaseUrl))
+    corsOrigins.Add(webBaseUrl);
+
 builder.Services.AddCors(options =>
     options.AddDefaultPolicy(policy => policy
-        .WithOrigins("http://localhost:5173")
+        .WithOrigins(corsOrigins.ToArray())
         .AllowAnyHeader()
         .AllowAnyMethod()
         .AllowCredentials()));

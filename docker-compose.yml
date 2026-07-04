@@ -81,6 +81,19 @@ services:
         condition: service_started
     environment:
       ASPNETCORE_ENVIRONMENT: Production
+      # --- Auth (đọc từ file .env ở root — mẫu: .env.example) ---
+      # JWT_SECRET: bắt buộc ≥ 32 ký tự; default dev chỉ chấp nhận được trên máy local.
+      JWT_SECRET: ${JWT_SECRET:-compose-dev-secret-change-me-0123456789abcdef}
+      # EMAIL_PROVIDER=smtp → gửi OTP thật qua SMTP; để trống → OTP in ra log container
+      # (docker compose logs backend). Deploy thật: bắt buộc smtp + AUTH_DEV_LOG_OTP=false.
+      EMAIL_PROVIDER: ${EMAIL_PROVIDER:-}
+      WEB_BASE_URL: ${WEB_BASE_URL:-http://localhost:5173}
+      SMTP_HOST: ${SMTP_HOST:-smtp.gmail.com}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      SMTP_FROM: ${SMTP_FROM:-}
+      Auth__DevLogOtp: ${AUTH_DEV_LOG_OTP:-true}
     ports:
       - "5000:8080"
     restart: on-failure

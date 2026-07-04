@@ -17,11 +17,20 @@ public class TokenService
 
     public TokenService(IConfiguration config)
     {
-        // Secret bắt buộc ≥ 32 byte cho HS256. Dev default nằm ở appsettings.Development.json;
-        // production đặt qua biến môi trường Jwt__Secret (xem rule-security.md).
-        var secret = config["Jwt:Secret"]
-            ?? throw new InvalidOperationException("Jwt:Secret chưa được cấu hình.");
-        _key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret));
+        // Secret bắt buộc ≥ 32 byte cho HS256. Nguồn: JWT_SECRET trong .env (ưu tiên),
+        // fallback Jwt:Secret trong appsettings (dev default ở appsettings.Development.json).
+        // Check IsNullOrWhiteSpace chứ không chỉ null: .env/appsettings chứa "" làm placeholder.
+        var secret = config["JWT_SECRET"];
+        if (string.IsNullOrWhiteSpace(secret)) secret = config["Jwt:Secret"];
+        if (string.IsNullOrWhiteSpace(secret))
+            throw new InvalidOperationException(
+                "JWT secret chưa được cấu hình. Đặt JWT_SECRET trong file .env (chuỗi ngẫu nhiên ≥ 32 ký tự) " +
+                "— không dùng giá trị mặc định cho production.");
+        var keyBytes = Encoding.UTF8.GetBytes(secret);
+        if (keyBytes.Length < 32)
+            throw new InvalidOperationException(
+                $"Jwt:Secret quá ngắn ({keyBytes.Length} byte) — HS256 cần ≥ 32 byte.");
+        _key = new SymmetricSecurityKey(keyBytes);
         _lifetime = TimeSpan.FromDays(double.TryParse(config["Jwt:ExpireDays"], out var d) ? d : 7);
     }
 

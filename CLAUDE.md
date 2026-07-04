@@ -90,6 +90,18 @@ ALTER TABLE "GameRooms" DROP COLUMN IF EXISTS "MaxRedTurns";
 
 **Nguyên tắc:** Dữ liệu game-specific (như `MaxRedTurns`) thuộc về `MapJson`/`StateJson` JSONB, không được thêm thành cột riêng trong `GameRooms`.
 
+### `IDX10703: Cannot create a SymmetricSecurityKey, key length is zero` (2026-07-05)
+**Nguyên nhân:** `appsettings.json` chứa `"Jwt": { "Secret": "" }` làm placeholder. `config["Jwt:Secret"]` trả về `""` (không phải `null`) nên guard `?? throw` không bắt được; trong Docker (`ASPNETCORE_ENVIRONMENT=Production`) không load `appsettings.Development.json` (nơi có dev secret) → tạo key rỗng, nổ ở request đầu tiên.
+
+**Fix (3 phần):**
+1. `TokenService`: validate bằng `string.IsNullOrWhiteSpace` + kiểm tra ≥ 32 byte, message chỉ rõ cách đặt `Jwt__Secret`.
+2. `Program.cs`: khởi tạo `TokenService` ngay lúc boot (không lazy qua DI) → config sai là app chết ngay khi start với message rõ, không đợi request.
+3. `docker-compose.yml`: backend nhận `Jwt__Secret` (default dev), `Auth__DevLogOtp` (default true), `Gmail__User/AppPassword` từ `.env`.
+
+**Nguyên tắc:** Config placeholder trong appsettings là chuỗi rỗng, không phải null — mọi validate config bắt buộc dùng `IsNullOrWhiteSpace`, và secret bắt buộc thì validate lúc boot (fail-fast), không để lazy đến request đầu.
+
+**Bug cùng cụm đã sửa kèm:** cookie auth từng đặt `Secure = !IsDevelopment()` → compose (Production, http://localhost) browser sẽ từ chối cookie → đăng nhập hỏng im lặng. Đổi thành `Secure = Request.IsHttps`.
+
 ### "Không thể di chuyển quân" dù đã vào ván (2026-07-03)
 **Chẩn đoán (đã verify end-to-end bằng 2 client SignalR + Chromium/Playwright):** logic đi quân (tap-tap & kéo-thả) hoạt động đúng. Triệu chứng xảy ra khi ván **chưa thực sự bắt đầu** (`Status` kẹt `Waiting`) hoặc người chơi là khán giả — UI cũ im lặng nuốt click, không báo gì.
 
@@ -104,13 +116,15 @@ ALTER TABLE "GameRooms" DROP COLUMN IF EXISTS "MaxRedTurns";
 
 Đăng nhập không mật khẩu: nhập email → backend gửi mã 6 số qua Gmail SMTP → nhập mã → JWT đặt trong **cookie HttpOnly** (`bg_auth`, SameSite=Lax; JS không đọc được token — không dùng localStorage).
 
-**Backend** (`Platform/Auth/` + `Services/GmailOtpSender.cs`):
+**Cấu hình qua file `.env` ở root** (mẫu: `.env.example` — file example nằm trong git, KHÔNG điền credential thật vào đó): `JWT_SECRET`, `EMAIL_PROVIDER=smtp`, `SMTP_HOST/PORT/USER/PASS/FROM`, `WEB_BASE_URL`. Docker compose tự đọc `.env`; chạy `dotnet run` local thì `Services/DotEnv.cs` nạp `.env` vào biến môi trường lúc boot (biến môi trường có sẵn luôn thắng). `WEB_BASE_URL` được thêm vào CORS origins và gắn link trong email.
+
+**Backend** (`Platform/Auth/` + `Services/SmtpOtpSender.cs`):
 - `POST /api/auth/request-otp` — tạo OTP (chỉ lưu SHA-256 hash trong bảng `AuthOtps`), gửi mail. Rate limit: 60s giữa 2 lần, tối đa 5 lần/giờ/email. Mã mới vô hiệu mã cũ.
 - `POST /api/auth/verify-otp` — hết hạn 5 phút, tối đa 5 lần nhập sai, so sánh fixed-time. Thành công → tạo/tìm `Users` (unique theo email), set cookie JWT.
 - `GET /api/auth/me` — khôi phục phiên từ cookie. `PUT /api/auth/display-name`, `POST /api/auth/logout`.
-- JWT config `Jwt:Secret` (dev default trong `appsettings.Development.json`; production đặt `Jwt__Secret` qua env). JwtBearer đọc token từ cookie qua `OnMessageReceived` (vẫn nhận Authorization header cho tool/test).
+- JWT secret: `JWT_SECRET` trong `.env` (ưu tiên) hoặc `Jwt:Secret` (dev default trong `appsettings.Development.json`). JwtBearer đọc token từ cookie qua `OnMessageReceived` (vẫn nhận Authorization header cho tool/test).
 
-**Gửi mail**: MailKit → `smtp.gmail.com:587` STARTTLS. Cấu hình `Gmail:User` + `Gmail:AppPassword` (**App Password** của Google, không phải mật khẩu Gmail — tạo tại https://myaccount.google.com/apppasswords, cần bật 2FA). Chưa cấu hình: Development log OTP ra console (test local không cần Gmail thật); ngoài Development trả 503.
+**Gửi mail**: MailKit → SMTP theo `SMTP_HOST:SMTP_PORT` (mặc định `smtp.gmail.com:587` STARTTLS; port 465 tự chuyển SslOnConnect). Với Gmail, `SMTP_PASS` là **App Password** của Google (https://myaccount.google.com/apppasswords, cần bật 2FA), `SMTP_FROM` dạng `Tên <email>` — email phải trùng `SMTP_USER`. Chưa cấu hình (`EMAIL_PROVIDER` trống): nếu `Auth:DevLogOtp` bật (mặc định ở Development và trong docker-compose) thì OTP log ra console/`docker compose logs backend`; ngược lại trả 503.
 
 **Frontend**: `platform/authStore.ts` (zustand) + `platform/LoginPage.tsx`. `App.tsx` gọi `restoreSession()` khi mở trang; chưa đăng nhập → hiện LoginPage. Đăng nhập xong `displayName` được sync vào `gameStore.playerName` (email là định danh duy nhất → hết lớp bug hai tab trùng tên ngẫu nhiên, nhưng hai tab cùng trình duyệt vẫn chung phiên/tên — test 2 người vẫn cần 2 trình duyệt/profile).
 
