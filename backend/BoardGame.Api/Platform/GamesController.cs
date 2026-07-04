@@ -59,7 +59,10 @@ public class GamesController : ControllerBase
 
         _db.GameRooms.Add(room);                                          // PostgreSQL (cốt lõi)
         await _db.SaveChangesAsync();
-        await _cache.SetAsync($"game:{room.Id}:state", room.StateJson);   // Redis (cốt lõi)
+
+        // Redis chỉ là cache — lỗi Redis không được chặn tạo phòng.
+        try { await _cache.SetAsync($"game:{room.Id}:state", room.StateJson); }
+        catch (Exception ex) { _log.LogWarning(ex, "Ghi Redis cache thất bại"); }
 
         // Side-effect best-effort — không chặn tạo phòng.
         try { _queue.PublishGameEvent(GameJson.Serialize(new { type = "RoomCreated", roomId = room.Id, gameKey = room.GameKey })); }
@@ -97,8 +100,12 @@ public class GamesController : ControllerBase
         var room = await _db.GameRooms.FindAsync(id);
         if (room is null) return NotFound();
 
-        var cachedState = await _cache.GetAsync($"game:{id}:state");
-        if (cachedState is not null) room.StateJson = cachedState;
+        try
+        {
+            var cachedState = await _cache.GetAsync($"game:{id}:state");
+            if (cachedState is not null) room.StateJson = cachedState;
+        }
+        catch (Exception ex) { _log.LogWarning(ex, "Đọc Redis cache thất bại — dùng state từ DB"); }
 
         return Ok(GameMapper.ToDto(room));
     }

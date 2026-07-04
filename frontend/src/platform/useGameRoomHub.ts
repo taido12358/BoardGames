@@ -32,15 +32,22 @@ export function useGameRoomHub() {
     };
   }, [setRoom, setMySide, setError]);
 
+  // Lỗi invoke phải hiện lên UI — nếu chỉ console.error, người chơi thấy
+  // "không đi được quân" mà không biết vì sao (vd. mất kết nối SignalR).
+  const surface = (err: unknown) => {
+    console.error(err);
+    setError(err instanceof Error ? `Mất kết nối tới server: ${err.message}` : "Mất kết nối tới server");
+  };
+
   const joinRoom = (roomId: string) => {
     const name = useGameStore.getState().playerName;
-    connRef.current?.invoke("JoinRoom", roomId, name).catch(console.error);
+    connRef.current?.invoke("JoinRoom", roomId, name).catch(surface);
   };
 
   /** move: payload tuỳ game (vd. Vây Bắt = { pieceId, to }). */
   const makeMove = (roomId: string, move: unknown) => {
     const name = useGameStore.getState().playerName;
-    connRef.current?.invoke("MakeMove", roomId, JSON.stringify(move), name).catch(console.error);
+    connRef.current?.invoke("MakeMove", roomId, JSON.stringify(move), name).catch(surface);
   };
 
   const leaveRoom = (roomId: string) => {

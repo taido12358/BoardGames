@@ -139,6 +139,17 @@ export default function VayBatBoard({ makeMove, onLeave }: Props) {
             → Tới lượt bạn! {selected ? "Chọn ô đích hoặc kéo quân" : "Nhấn hoặc kéo quân của bạn"}
           </div>
         )}
+        {/* Nói rõ vì sao chưa đi được quân — im lặng khiến người chơi tưởng game lỗi */}
+        {!myTurn && room.status === "Playing" && !state.winner && mySide && (
+          <div className="mt-2 text-center text-slate-400 font-medium text-sm">
+            ⏳ Chờ đối thủ đi…
+          </div>
+        )}
+        {room.status === "Playing" && !mySide && (
+          <div className="mt-2 text-center text-amber-400 font-medium text-sm">
+            👁 Hai ghế đã có người — bạn đang xem, không thể đi quân
+          </div>
+        )}
         <div className="mt-1 text-center text-slate-500 text-xs">
           Phòng: <span className="font-mono">{room.id.slice(0, 8)}</span>
           {" · "}🔴 {room.redPlayer ?? "—"} vs ⚪ {room.whitePlayer ?? "—"}
@@ -232,8 +243,12 @@ export default function VayBatBoard({ makeMove, onLeave }: Props) {
         </div>
       )}
       {room.status === "Waiting" && (
-        <div className="rounded-2xl p-3 text-center bg-amber-900/30 text-amber-300 text-sm border border-amber-800/50">
-          Đang chờ đối thủ vào phòng…
+        <div className="rounded-2xl p-3 text-center bg-amber-900/30 text-amber-300 text-sm border border-amber-800/50 space-y-1">
+          <div>Đang chờ đối thủ vào phòng… (chưa đi được quân)</div>
+          <div className="text-amber-500/80 text-xs">
+            Lưu ý: người chơi thứ hai phải dùng <b>tên khác</b> — hai tab cùng trình duyệt
+            dùng chung tên nên sẽ vào lại cùng một ghế.
+          </div>
         </div>
       )}
       {error && (

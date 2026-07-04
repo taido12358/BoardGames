@@ -115,7 +115,10 @@ public class GameHub : Hub
         await _db.SaveChangesAsync();
         await tx.CommitAsync();                                           // PostgreSQL (cốt lõi)
 
-        await _cache.SetAsync($"game:{id}:state", room.StateJson);        // Redis (cốt lõi)
+        // Redis chỉ là cache — không được để lỗi Redis chặn broadcast GameStateUpdated
+        // (nếu không client sẽ thấy "không đi được quân" dù nước đi đã lưu DB).
+        try { await _cache.SetAsync($"game:{id}:state", room.StateJson); }
+        catch (Exception ex) { _log.LogWarning(ex, "Ghi Redis cache thất bại"); }
 
         try { _queue.PublishGameEvent(GameJson.Serialize(new { type = "Move", roomId, side, move = GameJson.Element(moveJson), winner = outcome.Winner })); }
         catch (Exception ex) { _log.LogWarning(ex, "Publish Move thất bại"); }
