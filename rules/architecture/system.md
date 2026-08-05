@@ -59,11 +59,12 @@ BoardGames/
 │       └── Bang/                   game 2 (4-8 người, hidden-role): BangTypes/Cards/Characters/Roles/Deck/Rules/Engine.cs
 └── frontend/src/
     ├── App.tsx
-    ├── platform/                 — ❖ store/hub/lobby/auth dùng chung
-    ├── games/                    — ❖ mỗi game một thư mục (vd `vaybat/`)
-    ├── components/                 GameView (route theo gameKey)
-    ├── hooks/ · store/              legacy demo (useGameHub/helloStore)
+    ├── platform/                 — ❖ store/hub/auth/Thư viện trò chơi dùng chung
+    ├── games/                    — ❖ mỗi game một thư mục (vd `vaybat/`, `bang/`)
+    └── components/                 GameView, GameLibrary, GameDetails, GameCard…
 ```
+
+> `hooks/useGameHub.ts` + `store/helloStore.ts` (demo "Hello World" phía frontend) đã xoá 2026-08-05. Backend demo (`Controllers/HelloController.cs`, `/api/hello`, hub method `SendHello`) vẫn còn — xem [`../references/important-files.md`](../references/important-files.md).
 
 ## Nguyên tắc phân tầng (bắt buộc)
 

@@ -53,7 +53,7 @@ Mọi đường dẫn dưới đây đã xác nhận tồn tại trong repo (202
 - Thư viện trò chơi: `frontend/src/components/{GameLibrary,GameCard,GameDetails,GameInstructions}.tsx`.
 - Game VayBat: `frontend/src/games/vaybat/` — `types.ts`, `metadata.ts` (thẻ + hướng dẫn), `VayBatBoard.tsx`.
 - Game Bang: `frontend/src/games/bang/` — `types.ts`, `metadata.ts` (thẻ + hướng dẫn), `BangBoard.tsx`, `components/`.
-- Legacy demo (Hello World stack): `frontend/src/hooks/useGameHub.ts`, `frontend/src/store/helloStore.ts`.
+- Trang demo "Hello World" phía frontend đã xoá (2026-08-05, theo yêu cầu người dùng) — `hooks/useGameHub.ts`, `store/helloStore.ts` không còn trong repo. Backend demo (`Controllers/HelloController.cs`, model `Greeting`, bảng `Greetings`, hub method `GameHub.SendHello`, endpoint `/api/hello`) **vẫn còn nguyên** — chỉ trang UI bị xoá, chưa ai yêu cầu dọn phần backend.
 - Asset tĩnh game chưa có code: `frontend/public/assets/games/zodiac/` — xem [`../tasks/backlog.md`](../tasks/backlog.md).
 
 ## Tests
