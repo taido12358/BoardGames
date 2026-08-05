@@ -2,17 +2,18 @@
 
 ## Objective
 
-Không có task tính năng nào đang dang dở. Task gần nhất — game thứ hai **BANG!** (hidden-role, 4-8 người) — đã hoàn tất, xem [`../logs/2026-08-05.md`](../logs/2026-08-05.md) (phiên 2) và [`../history/milestones.md`](../history/milestones.md).
+Không có task tính năng nào đang dang dở. Task gần nhất — **Thư viện trò chơi** (thay `<select>` chọn game bằng lưới thẻ + trang chi tiết có hướng dẫn) — đã hoàn tất, xem [`../logs/2026-08-05.md`](../logs/2026-08-05.md) (phiên 3) và [`../history/milestones.md`](../history/milestones.md).
 
 ## Status
 
-NONE — sẵn sàng nhận task tiếp theo. Xem [`backlog.md`](./backlog.md) cho việc chưa làm (đơn giản hoá có chủ đích trong Bang chưa hoàn thiện, nợ kỹ thuật khác).
+NONE — sẵn sàng nhận task tiếp theo. Xem [`backlog.md`](./backlog.md) cho việc chưa làm (đơn giản hoá có chủ đích, nợ kỹ thuật khác).
 
 ## Ghi chú môi trường
 
-- Stack Docker Compose đang **chạy** trên máy dev sau khi verify (`docker compose ps` để xem, `docker compose down` để tắt khi không cần nữa) — cổng Postgres/Redis theo remap cục bộ 5433/6380 (xem dưới).
-- `docker-compose.yml`, `backend/BoardGame.Api/appsettings.Development.json` vẫn có thay đổi cục bộ chưa commit — map Postgres/Redis sang port `5433`/`6380` để tránh xung đột với project khác (`taskflow`) trên máy dev này. Xem [`../workflow/development.md`](../workflow/development.md#xung-đột-port-cục-bộ-ghi-chú-không-phải-chuẩn-dự-án). Quyết định giữ hay commit thay đổi này thuộc về người dùng.
-- `van-de.md` (spec Bang, root) vẫn **chưa commit** — giữ nguyên làm tài liệu tham chiếu, không tự ý xoá/commit thay người dùng.
+- Stack Docker Compose đang **chạy** trên máy dev (`docker compose ps` để xem, `docker compose down` để tắt) — cổng Postgres/Redis remap cục bộ 5433/6380 (xem [`../workflow/development.md`](../workflow/development.md#xung-đột-port-cục-bộ-ghi-chú-không-phải-chuẩn-dự-án)).
+- `docker-compose.yml`, `backend/BoardGame.Api/appsettings.Development.json` có thể vẫn còn thay đổi cục bộ chưa commit (port remap) — quyết định giữ/commit thuộc về người dùng.
+- `van-de.md` (spec Bang, root) — trạng thái commit tuỳ người dùng, không tự ý xoá/commit thay.
+- DB dev hiện có vài phòng test (từ các phiên smoke-test trước) — dữ liệu vô hại, không cần dọn trừ khi muốn DB sạch.
 
 ## Template cho task tiếp theo
 

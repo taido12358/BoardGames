@@ -30,3 +30,11 @@ Rút trực tiếp từ `git log` (nhánh `master`). Ngày là ngày commit th�
 - Tạo project test đầu tiên của repo (`backend/BoardGame.Api.Tests`, xUnit) — 85 test phủ luật Bang, bao gồm test bảo vệ thông tin ẩn bằng cách soi chuỗi JSON đã serialize.
 - Verify sống: `dotnet build`/`dotnet test` xanh, `npm run build` xanh, `docker compose up --build` chạy được, 4 SignalR client thật join một phòng Bang → server tự chia bài → không client nào nhận được bài người khác → nước đi ngoài tầm bị từ chối đúng thiết kế.
 - Theme nhân vật: Western gốc theo spec (không dùng asset 12-cung-hoàng-đạo đã có sẵn trong repo — quyết định của người dùng, xem [`../tasks/backlog.md`](../tasks/backlog.md)).
+
+## 2026-08-05 — Thư viện trò chơi (thay `<select>` chọn game)
+
+- Thay giao diện chọn game kiểu `<select>` (`platform/Lobby.tsx`, đã xoá) bằng Thư viện trò chơi dạng thẻ trực quan: `GameLibrary` (tìm kiếm + lọc + lưới thẻ) → `GameDetails` (hướng dẫn theo tab + tạo/vào phòng) — UI 100% tiếng Việt.
+- Thêm `react-router-dom` v6 — dự án lần đầu có router thật (`/games`, `/games/:gameKey`); trước đó điều hướng chỉ bằng state. Chi tiết quyết định: [`decisions.md`](./decisions.md).
+- Kiến trúc metadata/hướng dẫn generic theo `gameKey` (`platform/gameLibraryTypes.ts` + `platform/gameRegistry.ts` + `games/<ten>/{metadata,instructions}.ts`) — thêm game mới vào thư viện không phải sửa `GameLibrary`/`GameDetails`.
+- Tái sử dụng nguyên vẹn API/hub hiện có: `GET /api/games/engines`, `GET /api/games`, `POST /api/games`, `joinRoom` qua SignalR — không thêm API mới.
+- Verify sống qua Chrome (Docker Compose thật, không mock): tìm kiếm, bộ lọc, mở chi tiết game, tạo phòng Bang, vào lại phòng Vây Bắt cũ và chơi thật (board render đúng, không đổi hành vi ván đấu), nút back trình duyệt hoạt động đúng.

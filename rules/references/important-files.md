@@ -48,9 +48,11 @@ Mọi đường dẫn dưới đây đã xác nhận tồn tại trong repo (202
 
 ## Frontend
 
-- Platform (dùng chung mọi game): `frontend/src/platform/` — `authStore.ts`, `gameStore.ts`, `Lobby.tsx`, `LoginPage.tsx`, `useGameRoomHub.ts`, `types.ts`.
-- Điều hướng theo game: `frontend/src/components/GameView.tsx` — route theo `gameKey`.
-- Game VayBat: `frontend/src/games/vaybat/` — `types.ts`, `VayBatBoard.tsx`.
+- Platform (dùng chung mọi game): `frontend/src/platform/` — `authStore.ts`, `gameStore.ts`, `LoginPage.tsx`, `useGameRoomHub.ts`, `GameRoomHubContext.tsx`, `ScrollToTop.tsx`, `types.ts`, `gameLibraryTypes.ts`, `gameRegistry.ts`. (`Lobby.tsx` — `<select>` chọn game cũ — đã xoá 2026-08-05, thay bằng Thư viện trò chơi.)
+- Điều hướng theo game: `frontend/src/components/GameView.tsx` — có `room` thì render board theo `gameKey`; chưa có thì render `<Routes>` (`GameLibrary`/`GameDetails`).
+- Thư viện trò chơi: `frontend/src/components/{GameLibrary,GameCard,GameDetails,GameInstructions}.tsx`.
+- Game VayBat: `frontend/src/games/vaybat/` — `types.ts`, `metadata.ts` (thẻ + hướng dẫn), `VayBatBoard.tsx`.
+- Game Bang: `frontend/src/games/bang/` — `types.ts`, `metadata.ts` (thẻ + hướng dẫn), `BangBoard.tsx`, `components/`.
 - Legacy demo (Hello World stack): `frontend/src/hooks/useGameHub.ts`, `frontend/src/store/helloStore.ts`.
 - Asset tĩnh game chưa có code: `frontend/public/assets/games/zodiac/` — xem [`../tasks/backlog.md`](../tasks/backlog.md).
 

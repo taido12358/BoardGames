@@ -25,6 +25,22 @@ chưa gắn với game nào; có thể dùng cho game thứ ba hoặc reskin BAN
   sảnh, giống VayBat.
 - Debug panel (spec §51) chưa làm — có thể thêm sau nếu cần, chỉ nên bật ở Development.
 
+## Thư viện trò chơi — ĐÃ LÀM (2026-08-05)
+
+`<select>` chọn game cũ đã thay bằng Thư viện trò chơi dạng thẻ (`GameLibrary`/`GameDetails`).
+Chi tiết: [`../history/milestones.md`](../history/milestones.md), [`../architecture/frontend.md`](../architecture/frontend.md).
+
+**Đơn giản hoá có chủ đích:**
+- Artwork thẻ game là gradient CSS + emoji lớn (`accent`/`emblem` trong metadata), không phải
+  ảnh minh hoạ thật — repo chưa có asset artwork cho từng game (đúng tinh thần "không dùng
+  artwork bản quyền"; nếu sau này có ảnh thật, chỉ cần thay phần render artwork trong
+  `GameCard.tsx`/`GameDetails.tsx`, không đổi kiến trúc).
+- Chip lọc "Phổ biến"/"Mới" trong spec gốc **không làm** — không có dữ liệu backend thật để
+  tính (không bịa số liệu, theo đúng nguyên tắc dự án). Chip "Đang có người chơi" và các chip
+  số-người-chơi/thể-loại dùng dữ liệu thật (rooms/metadata).
+- Trang chi tiết game không có route riêng cho "đang trong ván" (`/games/bang/room/:id`) — vào
+  ván vẫn không có URL riêng, giữ đúng hành vi cũ (chỉ phần "trước khi vào ván" có URL mới).
+
 ## Việc kỹ thuật chưa làm
 
 - `/health` (`Program.cs`) chỉ trả `{ status: "healthy" }` tĩnh — không kiểm tra DB/Redis/RabbitMQ như mô tả mong muốn trong `rules/workflow/deployment.md`/monitoring cũ. Muốn đúng như tài liệu thì phải bổ sung health check thật (`Microsoft.Extensions.Diagnostics.HealthChecks` hoặc kiểm tra thủ công).

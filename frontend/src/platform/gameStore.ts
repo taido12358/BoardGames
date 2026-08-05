@@ -12,6 +12,9 @@ function loadPlayerName(): string {
 interface GameStore {
   playerName: string;
   engines: EngineInfo[];
+  enginesLoading: boolean;
+  /** Lỗi tải danh sách game — rỗng nghĩa là không có lỗi (khác `error` dùng cho lỗi trong ván/hub). */
+  enginesError: string;
   rooms: RoomDto[];
   room: RoomDto | null;
   // "RED"/"WHITE" (VayBat) hoặc "P0".."P7" (Bang — ghế generic); null = khán giả.
@@ -33,6 +36,8 @@ interface GameStore {
 export const useGameStore = create<GameStore>((set, get) => ({
   playerName: loadPlayerName(),
   engines: [],
+  enginesLoading: false,
+  enginesError: "",
   rooms: [],
   room: null,
   mySide: null,
@@ -49,14 +54,25 @@ export const useGameStore = create<GameStore>((set, get) => ({
   setError: (error) => set({ error }),
 
   fetchEngines: async () => {
-    const res = await fetch("/api/games/engines");
-    set({ engines: await res.json() });
+    set({ enginesLoading: true, enginesError: "" });
+    try {
+      const res = await fetch("/api/games/engines");
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      set({ engines: await res.json(), enginesLoading: false });
+    } catch {
+      set({ enginesLoading: false, enginesError: "Không thể tải danh sách trò chơi." });
+    }
   },
 
   fetchRooms: async (gameKey?: string) => {
-    const url = gameKey ? `/api/games?gameKey=${gameKey}` : "/api/games";
-    const res = await fetch(url);
-    set({ rooms: await res.json() });
+    try {
+      const url = gameKey ? `/api/games?gameKey=${gameKey}` : "/api/games";
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      set({ rooms: await res.json() });
+    } catch {
+      // Danh sách phòng chỉ là "best effort" hiển thị — không chặn UI, thử lại ở lần poll sau.
+    }
   },
 
   createRoom: async (gameKey, options) => {

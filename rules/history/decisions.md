@@ -1,5 +1,32 @@
 # Decisions (ADR)
 
+## ADR: Thêm `react-router-dom` v6 cho Thư viện trò chơi
+
+Date: 2026-08-05
+
+### Context
+
+Giao diện chọn game cũ là một `<select>` phẳng trong `Lobby.tsx`, không có URL riêng cho từng game. Cần trang "Thư viện trò chơi" + trang chi tiết mỗi game với URL chia sẻ được (`/games/bang`) và nút back trình duyệt hoạt động tự nhiên. Trước đó dự án **không có router nào** — `App.tsx` chỉ đổi `tab` bằng state, không đụng URL.
+
+### Decision
+
+Thêm `react-router-dom@^6.30` (không phải v7). `App.tsx` bọc `<BrowserRouter>`; `GameView.tsx` dùng `<Routes>` cho `/games` và `/games/:gameKey` khi chưa vào phòng nào.
+
+### Alternatives
+
+- Tự viết điều hướng bằng `history.pushState` + `popstate` thủ công (không thêm dependency) — bị loại vì phải tự xử lý lại các case router chuẩn đã giải quyết (nested route, `useParams`, `useSearchParams`, redirect) trong khi `react-router-dom` là lựa chọn tiêu chuẩn cho đúng nhu cầu này.
+- `react-router-dom` v7 (bản mới nhất lúc thêm) — bị loại: v7 có CVE mức high (RSC Mode CSRF Bypass) mà dù không áp dụng cho app này (SPA thuần, không dùng RSC/framework mode), gây nhiễu khi audit. v6 cũng có 2 CVE mức moderate (open-redirect qua backslash trong `Link`/`useNavigate`, SSR hydration injection) nhưng **cả hai đều không áp dụng**: app này không SSR, và mọi giá trị truyền vào `navigate()`/`Link` trong app đều là `gameKey` lấy từ backend (`engines` list), không phải input tự do của người dùng.
+
+### Reason
+
+v6 là API ổn định, tài liệu đầy đủ, đúng nhu cầu (SPA thuần phía client), khớp tinh thần "chọn dependency ổn định" đã có của dự án (React 18 chứ không phải 19, v.v.).
+
+### Consequences
+
+Mọi giá trị đưa vào `navigate()`/route path phải là dữ liệu **đã qua backend xác thực** (như `gameKey` từ `/api/games/engines`), không được nội suy trực tiếp input người dùng chưa kiểm tra vào đường dẫn — để không chạm vào lớp CVE open-redirect dù rủi ro thực tế đã thấp.
+
+---
+
 ## ADR: Ghế generic (SeatCount/SeatsJson) cho game > 2 người, song song với RedPlayer/WhitePlayer
 
 Date: 2026-08-05
