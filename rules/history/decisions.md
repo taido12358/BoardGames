@@ -1,5 +1,61 @@
 # Decisions (ADR)
 
+## ADR: Danh tính ghế lấy từ JWT (`Context.User`), không tin `playerName` client gửi
+
+Date: 2026-08-05
+
+### Context
+
+Rà soát luồng "ghép phòng/vào phòng" theo yêu cầu người dùng, phát hiện: `GameHub.JoinRoom`/`MakeMove` nhận `playerName` làm THAM SỐ từ client và dùng thẳng để gán/khớp ghế — dù app đã có đăng nhập JWT (từ 2026-07-05) và cookie đã có sẵn trên mọi request tới hub. Hệ quả: bất kỳ ai gọi hub trực tiếp (qua devtools/script) với đúng chuỗi tên là ngồi được vào ghế người khác hoặc gửi nước đi thay họ — dù đã đăng nhập hay chưa (Hub/Controller không có `[Authorize]`). Đây đúng là lớp lỗi mà việc thêm auth được kỳ vọng giải quyết (xem ADR "playerName tự nhập" bên dưới) nhưng `GameHub` chưa từng được cập nhật để thực sự dùng nó.
+
+### Decision
+
+Thêm `[Authorize]` cho `GameHub` và `GamesController`. `JoinRoom(roomId)`/`MakeMove(roomId, moveJson)` bỏ hẳn tham số `playerName` — danh tính (user id + display name) luôn lấy từ `Context.User`/`User` (JWT cookie, qua `ClaimsPrincipalExtensions` mới). `GameRoom` thêm cột song song: `RedPlayerId`/`WhitePlayerId`/`SeatUserIdsJson` (user id — nguồn xác thực) tách khỏi `RedPlayer`/`WhitePlayer`/`SeatsJson` (tên hiển thị, giữ nguyên cho UI).
+
+### Alternatives
+
+- Đổi hẳn `RedPlayer`/`SeatsJson` từ tên hiển thị sang user id, bỏ cột tên — bị loại vì UI (lobby, board, log) đang hiển thị trực tiếp các cột này; đổi kiểu dữ liệu sẽ phải sửa toàn bộ nơi hiển thị cùng lúc, rủi ro cao hơn nhiều so với thêm cột song song.
+- Chỉ thêm `[Authorize]` mà vẫn giữ `playerName` tham số (dùng JWT chỉ để xác nhận "đã đăng nhập", không dùng để xác định "đăng nhập với ai") — bị loại vì không giải quyết vấn đề gốc: request vẫn có thể tự xưng bất kỳ tên nào.
+
+### Reason
+
+Tách "tên hiển thị" (đổi được, trùng được, chỉ để UI đọc) khỏi "danh tính xác thực" (user id ổn định từ JWT, không đổi được) là đúng nguyên tắc bảo mật chuẩn — đồng thời không phá bất kỳ UI nào đang hiển thị tên, vì cột tên hiển thị vẫn còn nguyên, chỉ không còn là nguồn xác thực.
+
+### Consequences
+
+- Phòng tạo TRƯỚC bản fix này (không có `RedPlayerId`/`SeatUserIdsJson`) sẽ mất gắn kết chủ cũ — người join tiếp theo sẽ "chiếm" ghế vì cột id đang `null`. Chấp nhận được vì đây là dữ liệu test/dev tại thời điểm sửa, không có dữ liệu người dùng thật cần giữ.
+- Mọi lời gọi `POST /api/games`, `GET /api/games*`, `/hubs/game` giờ đều yêu cầu đăng nhập — đúng với thực tế app đã luôn yêu cầu đăng nhập trước khi vào màn game (`App.tsx`), không mất khả năng dùng nào.
+- Engine (`IGameEngine`) không cần biết gì về cơ chế này — vẫn chỉ nhận `side` dạng chuỗi như trước, không đổi contract.
+
+---
+
+## ADR: Dọn phòng "Waiting" bỏ dở + cho phép chủ phòng tự huỷ
+
+Date: 2026-08-05
+
+### Context
+
+Cùng đợt rà soát ghép phòng: DB thực tế có nhiều phòng `Waiting` tồn tại hàng giờ (từ các phiên test trước), không ai dọn, hiển thị lẫn với phòng thật trong sảnh gây nhiễu. Không có cách nào để chủ phòng tự huỷ phòng mình lỡ tạo.
+
+### Decision
+
+Thêm `StaleRoomCleanupService` (`BackgroundService`, chạy mỗi 5 phút): đánh dấu `Finished` mọi phòng `Waiting` không đổi gì quá 30 phút. Thêm `POST /api/games/{id}/cancel`: chủ phòng (so theo user id, không phải tên) huỷ được phòng của mình khi còn `Waiting` → cũng đánh dấu `Finished`.
+
+### Alternatives
+
+- Xoá hẳn phòng khỏi DB thay vì đánh dấu `Finished` — bị loại vì phá khả năng xem lại lịch sử/replay, và không cần thiết (đánh dấu `Finished` đã đủ để ẩn khỏi sảnh).
+- Dọn phòng ngay trong `GamesController.List()` (lazy, không cần BackgroundService) — cân nhắc nhưng chọn BackgroundService vì dọn được cả những phòng không ai bao giờ gọi `List()` nữa (game key hiếm người chơi), và tách trách nhiệm rõ ràng (đọc danh sách khác với dọn dữ liệu).
+
+### Reason
+
+Tái dùng status `Finished` có sẵn (không thêm giá trị status mới) giữ mọi nơi đã xử lý "phòng kết thúc" tự động đúng, không cần rà lại từng chỗ so sánh chuỗi status.
+
+### Consequences
+
+30 phút là ngưỡng cố định — nếu sau này có game chơi lâu hơn hoặc cần ngưỡng khác theo từng game, phải tham số hoá `StaleAfter` (hiện đang hard-code, generic cho mọi game).
+
+---
+
 ## ADR: Thêm `react-router-dom` v6 cho Thư viện trò chơi
 
 Date: 2026-08-05

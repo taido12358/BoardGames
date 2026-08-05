@@ -38,3 +38,22 @@ Rút trực tiếp từ `git log` (nhánh `master`). Ngày là ngày commit th�
 - Kiến trúc metadata/hướng dẫn generic theo `gameKey` (`platform/gameLibraryTypes.ts` + `platform/gameRegistry.ts` + `games/<ten>/{metadata,instructions}.ts`) — thêm game mới vào thư viện không phải sửa `GameLibrary`/`GameDetails`.
 - Tái sử dụng nguyên vẹn API/hub hiện có: `GET /api/games/engines`, `GET /api/games`, `POST /api/games`, `joinRoom` qua SignalR — không thêm API mới.
 - Verify sống qua Chrome (Docker Compose thật, không mock): tìm kiếm, bộ lọc, mở chi tiết game, tạo phòng Bang, vào lại phòng Vây Bắt cũ và chơi thật (board render đúng, không đổi hành vi ván đấu), nút back trình duyệt hoạt động đúng.
+
+## 2026-08-05 — Vá lỗ hổng danh tính ghế + dọn phòng rác
+
+Rà soát theo yêu cầu người dùng ("kiểm tra và đề xuất hướng làm về ghép phòng, vào phòng")
+phát hiện lỗ hổng bảo mật thật: `GameHub` vẫn tin `playerName` client tự gửi để gán ghế dù
+app đã có JWT — ai cũng "cướp" được ghế người khác. Đã vá triệt để:
+
+- `GameHub`/`GamesController` thêm `[Authorize]`; `JoinRoom`/`MakeMove` bỏ hẳn tham số
+  `playerName`, danh tính luôn lấy từ JWT (`Context.User`) qua `ClaimsPrincipalExtensions` mới.
+- `GameRoom` thêm `RedPlayerId`/`WhitePlayerId`/`SeatUserIdsJson` (user id — xác thực) song
+  song với các cột tên hiển thị cũ (không đổi UI). Chi tiết ADR: [`decisions.md`](./decisions.md).
+- `StaleRoomCleanupService` (mới) dọn phòng `Waiting` bỏ dở > 30 phút; thêm
+  `POST /api/games/{id}/cancel` cho chủ phòng tự huỷ phòng đang chờ.
+- Verify sống: unauthenticated request bị từ chối 401, tạo/vào/huỷ phòng qua Chrome trên
+  Docker Compose thật đều đúng, `dotnet test` 85/85 xanh, cleanup service tự chạy và dọn
+  đúng 1 phòng rác thật ngay khi container khởi động lại.
+- Đề xuất còn lại (chưa làm, xem [`../tasks/backlog.md`](../tasks/backlog.md)): ghép trận
+  nhanh (quick match), danh sách phòng cập nhật realtime qua SignalR thay vì polling, xử lý
+  mất kết nối/AFK giữa ván.

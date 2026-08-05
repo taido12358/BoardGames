@@ -27,18 +27,31 @@ Không để exception thô propagate qua hub: engine bọc deserialization tron
 
 `GameRoom` hỗ trợ song song hai mô hình ghế, chọn theo `engine.MaxPlayers` — **generic ở Platform**, không phải đặc thù của một game:
 
-- **≤ 2 người** (VayBat): `RedPlayer`/`WhitePlayer`, side `"RED"`/`"WHITE"` — đường gốc, không đổi hành vi.
-- **> 2 người** (Bang): cột `SeatCount`/`SeatsJson` (mảng tên theo ghế), side `"P0".."P{N-1}"`. Số ghế chọn lúc tạo phòng qua `options.seatCount` (kẹp trong `[MinPlayers, MaxPlayers]`), xem `GamesController.ResolveSeatCount`.
+- **≤ 2 người** (VayBat): `RedPlayer`/`WhitePlayer` (tên hiển thị) + `RedPlayerId`/`WhitePlayerId` (user id — xác thực), side `"RED"`/`"WHITE"` — đường gốc, không đổi hành vi hiển thị.
+- **> 2 người** (Bang): `SeatCount`/`SeatsJson` (tên hiển thị theo ghế) song song `SeatUserIdsJson` (user id theo ghế — xác thực), side `"P0".."P{N-1}"`. Số ghế chọn lúc tạo phòng qua `options.seatCount` (kẹp trong `[MinPlayers, MaxPlayers]`), xem `GamesController.ResolveSeatCount`.
 
-Khi ghế N-người đủ, `GameHub` gọi `engine.ApplyMove(...)` với **side đặc biệt `"SYSTEM"`** và moveJson `{"type":"__start_game__","seats":[...]}` — đây là quy ước Platform để engine tự chia state ban đầu (vai trò/nhân vật/bài với Bang) khi đã biết đủ tên người chơi thật (điều `NewGame()` chưa biết được, vì gọi trước khi ai vào phòng). Engine ≤2 người không cần hiểu quy ước này (Hub không bao giờ gửi cho chúng).
+Khi ghế N-người đủ, `GameHub` gọi `engine.ApplyMove(...)` với **side đặc biệt `"SYSTEM"`** và moveJson `{"type":"__start_game__","seats":[...]}` — đây là quy ước Platform để engine tự chia state ban đầu (vai trò/nhân vật/bài với Bang) khi đã biết đủ tên người chơi thật (điều `NewGame()` chưa biết được, vì gọi trước khi ai vào phòng). `seats` gửi cho engine là TÊN HIỂN THỊ (engine chỉ cần text để hiện, không cần user id). Engine ≤2 người không cần hiểu quy ước này (Hub không bao giờ gửi cho chúng).
+
+## Danh tính ghế: lấy từ JWT, không tin client (từ 2026-08-05)
+
+`GameHub` và `GamesController` đều có `[Authorize]`. `JoinRoom`/`MakeMove` **không nhận tham số `playerName`** — danh tính (`Guid` user id + display name) luôn lấy từ `Context.User` qua `ClaimsPrincipalExtensions.TryGetUserId()`/`GetDisplayName()` (`Platform/Auth/`).
+
+- Cột `RedPlayer`/`WhitePlayer`/`SeatsJson` (tên hiển thị) tách hẳn khỏi `RedPlayerId`/`WhitePlayerId`/`SeatUserIdsJson` (user id — nguồn xác thực thật). `GameHub.ResolveSide`/`JoinTwoSeat`/`JoinMultiSeat` so khớp bằng **id**, chỉ cập nhật tên hiển thị song song cho UI.
+- Bài học: trước đây hub tin `playerName` do client tự gửi trong mỗi lời gọi để gán/khớp ghế — dù app đã có JWT, hub chưa từng dùng nó. Bất kỳ ai gọi `JoinRoom`/`MakeMove` với đúng chuỗi tên là ngồi được ghế người khác hoặc đi quân thay họ. Chi tiết ADR: [`../history/decisions.md`](../history/decisions.md).
+- Áp dụng cho MỌI game (generic ở Platform) — engine không cần biết gì về cơ chế này.
 
 ## Thông tin ẩn: state RIÊNG cho từng người xem (từ khi có Bang, 2026-08-05)
 
 `GameHub` không còn broadcast một bản JSON y hệt cho cả phòng — mỗi connection nhận state đã qua `IGameEngine.RedactStateForViewer(stateJson, side)` (default interface method: trả nguyên state nếu engine không override, như VayBat). Cơ chế:
 
-- Hub giữ map tĩnh `connectionId -> (roomId, playerName)` (cập nhật lúc `JoinRoom`/`LeaveRoom`/`OnDisconnectedAsync`).
-- Sau mỗi thay đổi state, hub lặp qua các connection của phòng, tính `side` của từng người, gọi `RedactStateForViewer`, gửi riêng bằng `Clients.Client(connectionId)` thay vì `Clients.Group(roomId)`.
+- Hub giữ map tĩnh `connectionId -> (roomId, userId)` (cập nhật lúc `JoinRoom`/`LeaveRoom`/`OnDisconnectedAsync`) — **userId từ JWT**, không phải tên client tự gửi.
+- Sau mỗi thay đổi state, hub lặp qua các connection của phòng, tính `side` của từng người (theo user id), gọi `RedactStateForViewer`, gửi riêng bằng `Clients.Client(connectionId)` thay vì `Clients.Group(roomId)`.
 - Engine có thông tin ẩn (Bang) tự xây payload riêng (bài/vai trò của người khác không bao giờ được serialize ra, không chỉ ẩn bằng CSS) — xem `BangRules.BuildViewerPayload`.
+
+## Vòng đời phòng chơi: `Waiting` → `Playing` → `Finished` (từ 2026-08-05)
+
+- `Finished` không chỉ nghĩa "đã chơi xong" — còn dùng cho **phòng bị huỷ** (`POST /api/games/{id}/cancel`, chủ phòng huỷ khi còn `Waiting`) và **phòng bỏ dở tự dọn** (`Services/StaleRoomCleanupService`, `BackgroundService` chạy mỗi 5 phút, đánh dấu `Finished` mọi phòng `Waiting` không đổi gì quá 30 phút). Cả hai đều tái dùng đúng status có sẵn — `GamesController.List()` đã lọc `Status != Finished` nên phòng tự biến mất khỏi sảnh, không cần thêm status hay sửa chỗ khác.
+- Lý do chọn tái dùng `Finished` thay vì thêm status mới (`Cancelled`/`Abandoned`): giữ tập giá trị `Status` nhỏ, mọi nơi đã xử lý "phòng kết thúc" (ẩn khỏi sảnh, board hiện đúng trạng thái) tự động đúng luôn, không cần rà lại từng chỗ so sánh chuỗi status.
 
 ## Toàn bộ luồng qua hạ tầng (mẫu Hello World / VayBat)
 

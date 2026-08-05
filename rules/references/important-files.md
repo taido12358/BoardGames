@@ -30,7 +30,7 @@ Mọi đường dẫn dưới đây đã xác nhận tồn tại trong repo (202
 - `backend/BoardGame.Api/Platform/GameHub.cs` — SignalR hub (`/hubs/game`).
 - `backend/BoardGame.Api/Platform/GamesController.cs` — REST lobby (`/api/games`).
 - `backend/BoardGame.Api/Platform/RoomDto.cs`, `GameJson.cs`.
-- `backend/BoardGame.Api/Platform/Auth/` — `AuthController.cs`, `TokenService.cs` (JWT), OTP.
+- `backend/BoardGame.Api/Platform/Auth/` — `AuthController.cs`, `TokenService.cs` (JWT), `ClaimsPrincipalExtensions.cs` (đọc user id/display name từ `ClaimsPrincipal` — dùng ở `GameHub`/`GamesController` để xác thực ghế), OTP.
 
 ## Games
 
@@ -45,6 +45,7 @@ Mọi đường dẫn dưới đây đã xác nhận tồn tại trong repo (202
 - `backend/BoardGame.Api/Services/MinioStorageService.cs`
 - `backend/BoardGame.Api/Services/SmtpOtpSender.cs` — gửi OTP đăng nhập qua SMTP (MailKit).
 - `backend/BoardGame.Api/Services/DotEnv.cs` — nạp `.env` khi chạy `dotnet run` ngoài Docker.
+- `backend/BoardGame.Api/Services/StaleRoomCleanupService.cs` — `BackgroundService` dọn phòng `Waiting` bỏ dở quá 30 phút (đánh dấu `Finished`).
 
 ## Frontend
 

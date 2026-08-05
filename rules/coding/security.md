@@ -27,7 +27,7 @@
 - JWT: secret từ `JWT_SECRET` (env, ưu tiên) hoặc `Jwt:Secret` (dev default) — validate ≥ 32 byte lúc boot, không lazy.
 - Token **không** đưa vào `localStorage` (XSS đọc được) — chỉ cookie `HttpOnly`. `OnMessageReceived` của JwtBearer đọc token từ cookie; vẫn nhận Authorization header cho tool/test.
 - Cookie `Secure` phải theo `Request.IsHttps`, không phải `!IsDevelopment()` — compose chạy `Production` trên `http://localhost` cần cookie hoạt động (bài học đã sửa).
-- Định danh người chơi trong phòng dựa trên **user id ổn định** (từ email, unique trong bảng `Users`), không phải display name — display name được phép trùng. Đây là fix cho lớp bug cũ dựa vào `playerName` trong `localStorage` (xem [`../history/decisions.md`](../history/decisions.md)).
+- Định danh người chơi trong phòng dựa trên **user id lấy từ JWT đã xác thực** (`ClaimsPrincipal.TryGetUserId()`, `Platform/Auth/ClaimsPrincipalExtensions.cs`), không phải chuỗi tên do client tự gửi — display name được phép trùng. `GameHub`/`GamesController` đều có `[Authorize]`; `GameHub.JoinRoom`/`MakeMove` **không còn nhận tham số `playerName`** — danh tính luôn lấy từ `Context.User`. Đây là fix triệt để cho lớp bug cũ (2026-08-05): trước đó hub vẫn tin `playerName` client gửi dù app đã có JWT, ai cũng "cướp" được ghế người khác chỉ bằng cách gửi đúng chuỗi tên (xem [`../history/decisions.md`](../history/decisions.md)).
 - Auth endpoint có rate limit chống brute-force (đã áp dụng ở trên). Message lỗi chung chung, không tiết lộ tài khoản tồn tại hay không. Log sự kiện đăng nhập thất bại/thành công, không log mật khẩu/OTP/token.
 
 ## Phân quyền (roles trong game)
@@ -48,8 +48,9 @@ Nguyên tắc access control:
 2. Kiểm tra tối thiểu cho `MakeMove`: người gọi có ngồi ghế trong phòng này không (không phải spectator)? có đúng lượt của phe họ không? ván có đang ở trạng thái `Playing` không (không phải `Waiting`/`Finished`)?
 3. **Từ chối phải có lý do rõ gửi về client** — "Bạn đang là khán giả", "Chưa đến lượt bạn", "Ván chưa bắt đầu". Từ chối im lặng là bug (bài học "không thể di chuyển quân").
 4. Mặc định **deny**: trạng thái không khớp role nào → từ chối, không đoán.
-5. Reconnect: người chơi quay lại (đúng user id) được ngồi lại ghế cũ; người lạ không bao giờ chiếm được ghế đang có chủ.
-6. Role quản trị (khi thêm — vd xoá phòng bất kỳ, ban người chơi): định nghĩa ở tầng auth (claim trong token), kiểm tra bằng policy/`[Authorize(Roles=...)]` — không hard-code danh sách tên trong logic. Hành động quản trị phải được log kèm ai-làm-gì-lúc-nào.
+5. Reconnect: người chơi quay lại (đúng **user id từ JWT**, không phải tên trùng khớp) được ngồi lại ghế cũ; người lạ không bao giờ chiếm được ghế đang có chủ — xem `GameHub.JoinTwoSeat`/`JoinMultiSeat`.
+6. Huỷ phòng (`POST /api/games/{id}/cancel`): chỉ chủ phòng (ghế đầu tiên, so theo user id) mới huỷ được, chỉ khi còn `Waiting`. Frontend chỉ hiện nút "HUỶ" khi tên hiển thị trùng — đó là GỢI Ý UI, quyền thật luôn được server kiểm lại theo JWT.
+7. Role quản trị (khi thêm — vd xoá phòng bất kỳ, ban người chơi): định nghĩa ở tầng auth (claim trong token), kiểm tra bằng policy/`[Authorize(Roles=...)]` — không hard-code danh sách tên trong logic. Hành động quản trị phải được log kèm ai-làm-gì-lúc-nào.
 
 ## Encryption & transport
 

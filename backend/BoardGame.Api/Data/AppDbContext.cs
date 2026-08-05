@@ -28,6 +28,7 @@ public class AppDbContext : DbContext
             e.Property(r => r.MapJson).HasColumnType("jsonb");
             e.Property(r => r.StateJson).HasColumnType("jsonb");
             e.Property(r => r.SeatsJson).HasColumnType("jsonb");
+            e.Property(r => r.SeatUserIdsJson).HasColumnType("jsonb");
             // Concurrency token: EF Core thêm "WHERE UpdatedAt = @original" vào mọi UPDATE.
             // Nếu hai request đồng thời ghi vào cùng phòng, request thứ hai sẽ nhận
             // DbUpdateConcurrencyException thay vì silently ghi đè.

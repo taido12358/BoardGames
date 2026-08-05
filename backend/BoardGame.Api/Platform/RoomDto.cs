@@ -32,4 +32,11 @@ public static class GameMapper
         try { return GameJson.Deserialize<List<string?>>(r.SeatsJson) ?? new(); }
         catch { return new(); }
     }
+
+    /// <summary>Song song SeatsOf nhưng chứa user id (Guid string) — dùng để XÁC THỰC ghế, không phải hiển thị.</summary>
+    public static List<string?> SeatUserIdsOf(GameRoom r)
+    {
+        try { return GameJson.Deserialize<List<string?>>(r.SeatUserIdsJson) ?? new(); }
+        catch { return new(); }
+    }
 }

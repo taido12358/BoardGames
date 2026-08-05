@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -147,8 +146,8 @@ public partial class AuthController : ControllerBase
     [HttpGet("me")]
     public async Task<IActionResult> Me()
     {
-        var idClaim = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
-        if (!Guid.TryParse(idClaim, out var userId))
+        var userId = User.TryGetUserId();
+        if (userId is null)
             return Unauthorized(new { error = "Token không hợp lệ." });
 
         var user = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == userId);
@@ -169,8 +168,8 @@ public partial class AuthController : ControllerBase
         if (name.Length > 30)
             return BadRequest(new { error = "Tên hiển thị tối đa 30 ký tự." });
 
-        var idClaim = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
-        if (!Guid.TryParse(idClaim, out var userId)) return Unauthorized();
+        var userId = User.TryGetUserId();
+        if (userId is null) return Unauthorized();
 
         var user = await _db.Users.FirstOrDefaultAsync(u => u.Id == userId);
         if (user is null) return Unauthorized();

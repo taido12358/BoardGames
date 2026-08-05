@@ -41,6 +41,9 @@ builder.Services.AddSingleton<OpenSearchService>();
 // --- Storage: MinIO ---
 builder.Services.AddSingleton<MinioStorageService>();
 
+// --- Dọn phòng "Waiting" bỏ dở quá lâu (xem StaleRoomCleanupService) ---
+builder.Services.AddHostedService<StaleRoomCleanupService>();
+
 // --- Game engines ---
 builder.Services.AddSingleton<IGameEngine, VayBatEngine>();
 builder.Services.AddSingleton<IGameEngine, BangEngine>();
@@ -125,6 +128,9 @@ string[] schemaSqls =
     """ALTER TABLE "GameRooms" ADD COLUMN IF NOT EXISTS "UpdatedAt" timestamp with time zone NOT NULL DEFAULT now()""",
     """ALTER TABLE "GameRooms" ADD COLUMN IF NOT EXISTS "SeatCount" integer NOT NULL DEFAULT 2""",
     """ALTER TABLE "GameRooms" ADD COLUMN IF NOT EXISTS "SeatsJson" jsonb NOT NULL DEFAULT '[]'::jsonb""",
+    """ALTER TABLE "GameRooms" ADD COLUMN IF NOT EXISTS "RedPlayerId" uuid NULL""",
+    """ALTER TABLE "GameRooms" ADD COLUMN IF NOT EXISTS "WhitePlayerId" uuid NULL""",
+    """ALTER TABLE "GameRooms" ADD COLUMN IF NOT EXISTS "SeatUserIdsJson" jsonb NOT NULL DEFAULT '[]'::jsonb""",
     """ALTER TABLE "GameRooms" DROP COLUMN IF EXISTS "MaxRedTurns" """,
     """
     CREATE TABLE IF NOT EXISTS "GameMoves" (

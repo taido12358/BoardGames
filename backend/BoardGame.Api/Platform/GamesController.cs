@@ -1,8 +1,10 @@
 using System.Text.Json;
 using BoardGame.Api.Data;
 using BoardGame.Api.Platform.Abstractions;
+using BoardGame.Api.Platform.Auth;
 using BoardGame.Api.Platform.Models;
 using BoardGame.Api.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,7 +12,9 @@ namespace BoardGame.Api.Platform;
 
 /// <summary>
 /// REST cho sảnh chờ — GENERIC cho mọi game. Nước đi realtime đi qua GameHub.
+/// Yêu cầu đăng nhập (JWT cookie) — danh tính ghế lấy từ token, không tin client tự khai.
 /// </summary>
+[Authorize]
 [ApiController]
 [Route("api/[controller]")]
 public class GamesController : ControllerBase
@@ -33,21 +37,24 @@ public class GamesController : ControllerBase
         _log = log;
     }
 
-    /// <summary>Danh sách game đang hỗ trợ (cho lobby chọn game).</summary>
+    /// <summary>Danh sách game đang hỗ trợ (cho Thư viện trò chơi).</summary>
     [HttpGet("engines")]
     public ActionResult<object> Engines()
         => Ok(_engines.All.Select(e => new { e.Key, e.DisplayName, e.MinPlayers, e.MaxPlayers }));
 
-    /// <summary>Tạo phòng mới cho một game bất kỳ.</summary>
+    /// <summary>Tạo phòng mới cho một game bất kỳ. Người tạo tự động ngồi ghế đầu tiên.</summary>
     [HttpPost]
     public async Task<ActionResult<RoomDto>> Create([FromBody] CreateGameRequest req)
     {
+        var userId = User.TryGetUserId();
+        if (userId is null) return Unauthorized(new { error = "Phiên đăng nhập không hợp lệ." });
+        var displayName = User.GetDisplayName();
+
         var key = string.IsNullOrWhiteSpace(req.GameKey) ? "vaybat" : req.GameKey;
         if (!_engines.Has(key)) return BadRequest($"Game '{key}' chưa được hỗ trợ");
 
         var engine = _engines.Get(key);
         var (mapJson, stateJson) = engine.NewGame(req.Options);
-        var playerName = string.IsNullOrWhiteSpace(req.PlayerName) ? null : req.PlayerName;
 
         var room = new GameRoom
         {
@@ -59,16 +66,20 @@ public class GamesController : ControllerBase
 
         if (engine.MaxPlayers <= 2)
         {
-            // Game 2 người: đường cũ, không đổi hành vi.
-            room.RedPlayer = playerName;
+            // Game 2 người: đường cũ, không đổi hành vi hiển thị — chỉ thêm Id để xác thực.
+            room.RedPlayer = displayName;
+            room.RedPlayerId = userId;
         }
         else
         {
             // Game > 2 người: ghế generic. Người tạo phòng ngồi ghế 0 luôn.
             room.SeatCount = ResolveSeatCount(req.Options, engine.MinPlayers, engine.MaxPlayers);
             var seats = new string?[room.SeatCount];
-            if (playerName is not null) seats[0] = playerName;
+            var seatIds = new string?[room.SeatCount];
+            seats[0] = displayName;
+            seatIds[0] = userId.ToString();
             room.SeatsJson = GameJson.Serialize(seats);
+            room.SeatUserIdsJson = GameJson.Serialize(seatIds);
         }
 
         _db.GameRooms.Add(room);                                          // PostgreSQL (cốt lõi)
@@ -85,6 +96,29 @@ public class GamesController : ControllerBase
         catch (Exception ex) { _log.LogWarning(ex, "Index OpenSearch thất bại"); }
 
         return Ok(GameMapper.ToDto(room));
+    }
+
+    /// <summary>Huỷ phòng do chính mình tạo — chỉ khi còn "Waiting" (chưa đủ người/chưa bắt đầu).</summary>
+    [HttpPost("{id:guid}/cancel")]
+    public async Task<IActionResult> Cancel(Guid id)
+    {
+        var userId = User.TryGetUserId();
+        if (userId is null) return Unauthorized(new { error = "Phiên đăng nhập không hợp lệ." });
+
+        var room = await _db.GameRooms.FindAsync(id);
+        if (room is null) return NotFound(new { error = "Không tìm thấy phòng." });
+        if (room.Status != "Waiting") return BadRequest(new { error = "Chỉ huỷ được phòng đang chờ." });
+
+        var isOwner = _engines.Has(room.GameKey) && _engines.Get(room.GameKey).MaxPlayers <= 2
+            ? room.RedPlayerId == userId
+            : GameMapper.SeatUserIdsOf(room).FirstOrDefault() == userId.ToString();
+        if (!isOwner) return Forbid();
+
+        room.Status = "Finished";
+        room.UpdatedAt = DateTime.UtcNow;
+        await _db.SaveChangesAsync();
+
+        return Ok();
     }
 
     /// <summary>Danh sách phòng đang chờ/đang chơi.</summary>
@@ -162,4 +196,4 @@ public class GamesController : ControllerBase
     };
 }
 
-public record CreateGameRequest(string? GameKey, JsonElement? Options, string? PlayerName);
+public record CreateGameRequest(string? GameKey, JsonElement? Options);

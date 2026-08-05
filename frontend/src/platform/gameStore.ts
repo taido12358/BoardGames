@@ -31,9 +31,11 @@ interface GameStore {
   fetchEngines: () => Promise<void>;
   fetchRooms: (gameKey?: string) => Promise<void>;
   createRoom: (gameKey: string, options: Record<string, unknown>) => Promise<RoomDto | null>;
+  /** Huỷ phòng do chính mình tạo (chỉ khi còn "Waiting") — server tự kiểm tra quyền theo JWT. */
+  cancelRoom: (roomId: string) => Promise<boolean>;
 }
 
-export const useGameStore = create<GameStore>((set, get) => ({
+export const useGameStore = create<GameStore>((set) => ({
   playerName: loadPlayerName(),
   engines: [],
   enginesLoading: false,
@@ -76,15 +78,26 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   createRoom: async (gameKey, options) => {
+    // Tên người chơi trong phòng do SERVER gán từ JWT (Context.User) — không gửi
+    // playerName từ client nữa, xem GamesController.Create.
     const res = await fetch("/api/games", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ gameKey, options, playerName: get().playerName }),
+      body: JSON.stringify({ gameKey, options }),
     });
     if (!res.ok) {
       set({ error: "Không tạo được phòng" });
       return null;
     }
     return (await res.json()) as RoomDto;
+  },
+
+  cancelRoom: async (roomId) => {
+    const res = await fetch(`/api/games/${roomId}/cancel`, { method: "POST" });
+    if (!res.ok) {
+      set({ error: "Không huỷ được phòng." });
+      return false;
+    }
+    return true;
   },
 }));

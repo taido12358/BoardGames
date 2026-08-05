@@ -18,10 +18,11 @@ export default function GameDetails() {
   const { joinRoom } = useGameRoomHubActions();
   const {
     engines, enginesLoading, rooms, playerName, error,
-    fetchEngines, fetchRooms, createRoom, setError,
+    fetchEngines, fetchRooms, createRoom, cancelRoom, setError,
   } = useGameStore();
 
   const [creating, setCreating] = useState(false);
+  const [cancelingId, setCancelingId] = useState<string | null>(null);
   const [maxTurns, setMaxTurns] = useState(15);
   const [seatCount, setSeatCount] = useState(4);
   const roomPanelRef = useRef<HTMLDivElement>(null);
@@ -59,6 +60,14 @@ export default function GameDetails() {
     const room = await createRoom(gameKey, options);
     setCreating(false);
     if (room) joinRoom(room.id);
+  }
+
+  async function handleCancel(roomId: string) {
+    setError("");
+    setCancelingId(roomId);
+    const ok = await cancelRoom(roomId);
+    setCancelingId(null);
+    if (ok) fetchRooms(gameKey); // dọn khỏi danh sách ngay, không đợi vòng poll tiếp theo
   }
 
   if (enginesLoading || (!engine && engines.length === 0)) {
@@ -204,20 +213,36 @@ export default function GameDetails() {
             {waitingRooms.map((r) => {
               const occupied = r.seatCount > 2 ? r.seats.filter(Boolean).length : [r.redPlayer, r.whitePlayer].filter(Boolean).length;
               const total = r.seatCount > 2 ? r.seatCount : 2;
+              const owner = r.seatCount > 2 ? r.seats.find(Boolean) : r.redPlayer;
+              // Chỉ là GỢI Ý hiển thị (so tên) — quyền huỷ THẬT được server kiểm theo JWT,
+              // trùng tên hiển thị không đồng nghĩa được phép huỷ nếu không đúng chủ phòng.
+              const isMine = owner === playerName;
               return (
                 <li key={r.id} className="bg-slate-800/60 rounded-xl p-3 flex items-center justify-between gap-2">
                   <div className="min-w-0">
                     <div className="text-sm text-slate-200 truncate">
-                      Phòng của {r.redPlayer ?? r.seats.find(Boolean) ?? "Ẩn danh"}
+                      Phòng của {owner ?? "Ẩn danh"}
                     </div>
                     <div className="text-xs text-slate-500">👥 {occupied} / {total} · Trạng thái: Đang chờ</div>
                   </div>
-                  <button
-                    onClick={() => joinRoom(r.id)}
-                    className="shrink-0 rounded-lg bg-indigo-600 hover:bg-indigo-500 px-3.5 py-2 text-sm font-semibold text-white"
-                  >
-                    VÀO PHÒNG
-                  </button>
+                  <div className="shrink-0 flex items-center gap-1.5">
+                    {isMine && (
+                      <button
+                        onClick={() => handleCancel(r.id)}
+                        disabled={cancelingId === r.id}
+                        className="rounded-lg bg-slate-700 hover:bg-red-800 disabled:opacity-50 px-3 py-2 text-sm font-medium text-slate-300"
+                        title="Huỷ phòng"
+                      >
+                        {cancelingId === r.id ? "…" : "HUỶ"}
+                      </button>
+                    )}
+                    <button
+                      onClick={() => joinRoom(r.id)}
+                      className="rounded-lg bg-indigo-600 hover:bg-indigo-500 px-3.5 py-2 text-sm font-semibold text-white"
+                    >
+                      VÀO PHÒNG
+                    </button>
+                  </div>
                 </li>
               );
             })}

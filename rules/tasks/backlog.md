@@ -2,6 +2,26 @@
 
 Việc chưa làm, chưa có ai nhận. Không phải kế hoạch chi tiết — chỉ liệt kê để không quên.
 
+## Ghép phòng / vào phòng — Giai đoạn 2 & 3 (chưa làm, 2026-08-05)
+
+Giai đoạn 1 (bảo mật danh tính ghế + dọn phòng rác + huỷ phòng) đã xong — xem
+[`../history/milestones.md`](../history/milestones.md). Còn lại từ đề xuất ban đầu, người
+dùng chưa yêu cầu làm:
+
+- **Ghép trận nhanh ("Tìm trận")**: API/hub method tự chọn phòng `Waiting` còn ghế trống gần
+  nhất theo `gameKey`, hết thì tự tạo phòng mới — dùng cùng khoá `SELECT ... FOR UPDATE` đã
+  có ở `GameHub.JoinRoom` để tránh race. Hiện người chơi phải tự duyệt danh sách phòng ở
+  `GameDetails.tsx`.
+- **Danh sách phòng realtime**: `GameDetails.tsx` hiện chỉ polling `GET /api/games` mỗi 3s.
+  Có thể thay bằng broadcast SignalR (group `lobby:<gameKey>`) khi phòng tạo/đầy/huỷ — giảm
+  độ trễ, giảm số request định kỳ.
+- **Xử lý mất kết nối/AFK giữa ván**: `GameHub.OnDisconnectedAsync` hiện chỉ dọn map
+  connection nội bộ, không đánh dấu người chơi mất kết nối, không báo cho người còn lại,
+  không có cơ chế timeout. Nếu người giữ lượt rớt mạng, ván có thể kẹt vĩnh viễn (đặc biệt
+  Bang — lượt phải chờ đúng người phản hồi). Cần: đánh dấu "disconnected" trong state, thời
+  gian ân hạn reconnect, hết hạn thì xử lý (skip lượt/xử thua) — generic ở Platform, engine
+  tự quyết cách xử lý mất người.
+
 ## Game thứ hai — BANG! — ĐÃ LÀM (2026-08-05)
 
 ~~Game hidden-role kiểu BANG!~~ đã triển khai đầy đủ (`gameKey: "bang"`, 4-8 người, theme

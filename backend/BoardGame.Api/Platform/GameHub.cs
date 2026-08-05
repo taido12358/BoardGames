@@ -1,8 +1,10 @@
 using System.Collections.Concurrent;
 using BoardGame.Api.Data;
 using BoardGame.Api.Platform.Abstractions;
+using BoardGame.Api.Platform.Auth;
 using BoardGame.Api.Platform.Models;
 using BoardGame.Api.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 
@@ -14,23 +16,28 @@ namespace BoardGame.Api.Platform;
 /// hub không hardcode luật game nào: chỉ điều phối room/persist/realtime và đẩy
 /// JSON nước đi cho đúng engine xử lý (authoritative).
 ///
+/// Yêu cầu đăng nhập (JWT cookie — SignalR đọc tự động qua JwtBearerEvents.OnMessageReceived,
+/// xem Program.cs). Danh tính người gọi lấy từ Context.User (Claims), KHÔNG tin tham số
+/// client tự gửi nữa — bài học 2026-08-05: trước đây hub nhận "playerName" thẳng từ client
+/// để gán ghế, ai cũng giả được người khác chỉ bằng cách gửi đúng chuỗi tên.
+///
 /// Hỗ trợ hai mô hình ghế song song, chọn theo engine.MaxPlayers:
-///  - ≤ 2 người (vd VayBat): RedPlayer/WhitePlayer, side "RED"/"WHITE" — đường cũ,
-///    KHÔNG đổi hành vi so với trước.
-///  - > 2 người (vd Bang): SeatCount/SeatsJson generic, side "P0".."P{N-1}". Khi đủ
-///    ghế, hub gọi engine.ApplyMove với side "SYSTEM" (moveJson {"type":"__start_game__"})
-///    để engine tự chia vai trò/bài — đây là quy ước Platform, không phải luật riêng
-///    của Bang; engine nào không cần thì không phải xử lý gì (chỉ engine > 2 người mới
-///    nhận được lời gọi này).
+///  - ≤ 2 người (vd VayBat): RedPlayerId/WhitePlayerId (Guid, xác thực) + RedPlayer/WhitePlayer
+///    (tên hiển thị), side "RED"/"WHITE".
+///  - > 2 người (vd Bang): SeatUserIdsJson (Guid, xác thực) song song SeatsJson (tên hiển thị),
+///    side "P0".."P{N-1}". Khi đủ ghế, hub gọi engine.ApplyMove với side "SYSTEM" (moveJson
+///    {"type":"__start_game__"}) để engine tự chia vai trò/bài — quy ước Platform, không phải
+///    luật riêng của Bang; engine nào không cần thì không phải xử lý gì.
 /// </summary>
+[Authorize]
 public class GameHub : Hub
 {
     private const string SystemSide = "SYSTEM";
 
-    // Hub instance là transient (tạo mới mỗi lần gọi) nên map connection -> (room, tên)
+    // Hub instance là transient (tạo mới mỗi lần gọi) nên map connection -> (room, user id)
     // phải static để sống được giữa các lời gọi — cần cho việc gửi state RIÊNG theo
     // từng người xem (RedactStateForViewer) thay vì một bản y hệt cho cả nhóm.
-    private static readonly ConcurrentDictionary<string, (string RoomId, string PlayerName)> _connections = new();
+    private static readonly ConcurrentDictionary<string, (string RoomId, Guid UserId)> _connections = new();
 
     private readonly AppDbContext _db;
     private readonly RedisCacheService _cache;
@@ -63,12 +70,20 @@ public class GameHub : Hub
         return base.OnDisconnectedAsync(exception);
     }
 
+    /// <summary>Danh tính người gọi từ JWT cookie — null nếu token không hợp lệ (không nên xảy ra sau [Authorize], phòng thủ thêm).</summary>
+    private Guid? CallerUserId => Context.User?.TryGetUserId();
+    private string CallerDisplayName => Context.User?.GetDisplayName() ?? "Ẩn danh";
+
     // ----- Game realtime -----
 
-    /// <summary>Tham gia phòng: nhận ghế và subscribe nhóm phòng.</summary>
-    public async Task JoinRoom(string roomId, string playerName)
+    /// <summary>Tham gia phòng: nhận ghế và subscribe nhóm phòng. Danh tính lấy từ JWT, không nhận playerName từ client.</summary>
+    public async Task JoinRoom(string roomId)
     {
+        var userId = CallerUserId;
+        if (userId is null) { await Err("Phiên đăng nhập không hợp lệ."); return; }
         if (!Guid.TryParse(roomId, out var id)) { await Err("roomId không hợp lệ"); return; }
+
+        var displayName = CallerDisplayName;
 
         // SELECT FOR UPDATE: serialize concurrent joins để hai người không cùng lấy một ghế.
         await using var tx = await _db.Database.BeginTransactionAsync();
@@ -80,11 +95,11 @@ public class GameHub : Hub
         var engine = _engines.Get(room.GameKey);
 
         await Groups.AddToGroupAsync(Context.ConnectionId, roomId);
-        _connections[Context.ConnectionId] = (roomId, playerName);
+        _connections[Context.ConnectionId] = (roomId, userId.Value);
 
         string? side = engine.MaxPlayers <= 2
-            ? JoinTwoSeat(room, playerName)
-            : JoinMultiSeat(room, playerName);
+            ? JoinTwoSeat(room, userId.Value, displayName)
+            : JoinMultiSeat(room, userId.Value, displayName);
 
         if (room.Status == "Waiting" && IsRoomFull(room, engine))
         {
@@ -107,38 +122,43 @@ public class GameHub : Hub
         await BroadcastState(roomId, room, engine);
     }
 
-    private static string? JoinTwoSeat(GameRoom room, string playerName)
+    private static string? JoinTwoSeat(GameRoom room, Guid userId, string displayName)
     {
-        if (room.RedPlayer == playerName) return "RED";
-        if (room.WhitePlayer == playerName) return "WHITE";
-        if (room.RedPlayer is null) { room.RedPlayer = playerName; return "RED"; }
-        if (room.WhitePlayer is null) { room.WhitePlayer = playerName; return "WHITE"; }
+        if (room.RedPlayerId == userId) return "RED";
+        if (room.WhitePlayerId == userId) return "WHITE";
+        if (room.RedPlayerId is null) { room.RedPlayerId = userId; room.RedPlayer = displayName; return "RED"; }
+        if (room.WhitePlayerId is null) { room.WhitePlayerId = userId; room.WhitePlayer = displayName; return "WHITE"; }
         return null; // hai ghế đã có người khác — khán giả
     }
 
-    private static string? JoinMultiSeat(GameRoom room, string playerName)
+    private static string? JoinMultiSeat(GameRoom room, Guid userId, string displayName)
     {
+        var seatIds = GameMapper.SeatUserIdsOf(room);
         var seats = GameMapper.SeatsOf(room);
-        while (seats.Count < room.SeatCount) seats.Add(null); // phòng thủ với dữ liệu cũ/thiếu
+        while (seatIds.Count < room.SeatCount) seatIds.Add(null); // phòng thủ với dữ liệu cũ/thiếu
+        while (seats.Count < room.SeatCount) seats.Add(null);
 
-        var existingIdx = seats.IndexOf(playerName);
+        var userIdStr = userId.ToString();
+        var existingIdx = seatIds.IndexOf(userIdStr);
         if (existingIdx >= 0) return $"P{existingIdx}"; // reconnect — ngồi lại ghế cũ
 
         if (room.Status != "Waiting") return null; // ván đã chạy, không nhận ghế mới — khán giả
 
-        var emptyIdx = seats.FindIndex(s => s is null);
+        var emptyIdx = seatIds.FindIndex(s => s is null);
         if (emptyIdx < 0) return null; // đầy — khán giả
 
-        seats[emptyIdx] = playerName;
+        seatIds[emptyIdx] = userIdStr;
+        seats[emptyIdx] = displayName;
+        room.SeatUserIdsJson = GameJson.Serialize(seatIds);
         room.SeatsJson = GameJson.Serialize(seats);
         return $"P{emptyIdx}";
     }
 
     private static bool IsRoomFull(GameRoom room, IGameEngine engine)
     {
-        if (engine.MaxPlayers <= 2) return room.RedPlayer is not null && room.WhitePlayer is not null;
-        var seats = GameMapper.SeatsOf(room);
-        return seats.Count == room.SeatCount && seats.All(s => s is not null);
+        if (engine.MaxPlayers <= 2) return room.RedPlayerId is not null && room.WhitePlayerId is not null;
+        var seatIds = GameMapper.SeatUserIdsOf(room);
+        return seatIds.Count == room.SeatCount && seatIds.All(s => s is not null);
     }
 
     /// <summary>
@@ -177,10 +197,12 @@ public class GameHub : Hub
 
     /// <summary>
     /// Thực hiện một nước đi. moveJson là payload tuỳ game; hub xác định ghế của
-    /// người chơi rồi giao cho engine tương ứng validate &amp; áp dụng.
+    /// người chơi (theo JWT, không theo tham số client) rồi giao cho engine tương ứng.
     /// </summary>
-    public async Task MakeMove(string roomId, string moveJson, string playerName)
+    public async Task MakeMove(string roomId, string moveJson)
     {
+        var userId = CallerUserId;
+        if (userId is null) { await Err("Phiên đăng nhập không hợp lệ."); return; }
         if (!Guid.TryParse(roomId, out var id)) { await Err("roomId không hợp lệ"); return; }
 
         // SELECT FOR UPDATE: serialize concurrent moves trên cùng phòng.
@@ -194,7 +216,7 @@ public class GameHub : Hub
         if (!_engines.Has(room.GameKey)) { await tx.RollbackAsync(); await Err($"Game '{room.GameKey}' không được hỗ trợ"); return; }
         var engine = _engines.Get(room.GameKey);
 
-        var side = ResolveSide(room, engine, playerName);
+        var side = ResolveSide(room, engine, userId.Value);
         if (side is null) { await tx.RollbackAsync(); await Err("Bạn không phải người chơi trong phòng này"); return; }
 
         MoveOutcome outcome;
@@ -231,15 +253,15 @@ public class GameHub : Hub
         await BroadcastState(roomId, room, engine);
     }
 
-    /// <summary>Ghế của một người chơi trong phòng, theo đúng mô hình ghế của engine (2 hoặc N người).</summary>
-    private static string? ResolveSide(GameRoom room, IGameEngine engine, string playerName)
+    /// <summary>Ghế của một người chơi trong phòng — xác định theo user id đã xác thực (KHÔNG theo tên hiển thị).</summary>
+    private static string? ResolveSide(GameRoom room, IGameEngine engine, Guid userId)
     {
         if (engine.MaxPlayers <= 2)
-            return room.RedPlayer == playerName ? "RED"
-                 : room.WhitePlayer == playerName ? "WHITE" : null;
+            return room.RedPlayerId == userId ? "RED"
+                 : room.WhitePlayerId == userId ? "WHITE" : null;
 
-        var seats = GameMapper.SeatsOf(room);
-        var idx = seats.IndexOf(playerName);
+        var seatIds = GameMapper.SeatUserIdsOf(room);
+        var idx = seatIds.IndexOf(userId.ToString());
         return idx >= 0 ? $"P{idx}" : null;
     }
 
@@ -265,7 +287,7 @@ public class GameHub : Hub
 
         foreach (var (connectionId, info) in recipients)
         {
-            var side = ResolveSide(room, engine, info.PlayerName);
+            var side = ResolveSide(room, engine, info.UserId);
             var redacted = engine.RedactStateForViewer(room.StateJson, side);
             var dto = GameMapper.ToDto(room) with { State = GameJson.Element(redacted) };
             await Clients.Client(connectionId).SendAsync("GameStateUpdated", dto);
