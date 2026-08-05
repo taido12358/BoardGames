@@ -11,6 +11,9 @@ export interface RoomDto<TMap = unknown, TState = unknown> {
   map: TMap;
   state: TState;
   createdAt: string;
+  /** Ghế generic cho game > 2 người (vd Bang) — game 2 người (VayBat) để mảng rỗng. */
+  seatCount: number;
+  seats: (string | null)[];
 }
 
 export interface EngineInfo {

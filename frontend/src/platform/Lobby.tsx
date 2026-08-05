@@ -10,6 +10,7 @@ export default function Lobby({ onJoin }: Props) {
     useGameStore();
   const [gameKey, setGameKey] = useState("vaybat");
   const [maxTurns, setMaxTurns] = useState(15);
+  const [seatCount, setSeatCount] = useState(4);
 
   useEffect(() => {
     fetchEngines();
@@ -19,7 +20,10 @@ export default function Lobby({ onJoin }: Props) {
   }, [fetchEngines, fetchRooms]);
 
   const handleCreate = async () => {
-    const options = gameKey === "vaybat" ? { maxRedTurns: maxTurns } : {};
+    const options =
+      gameKey === "vaybat" ? { maxRedTurns: maxTurns }
+      : gameKey === "bang" ? { seatCount }
+      : {};
     const room = await createRoom(gameKey, options);
     if (room) onJoin(room.id);
   };
@@ -68,6 +72,23 @@ export default function Lobby({ onJoin }: Props) {
           </div>
         )}
 
+        {gameKey === "bang" && (
+          <div>
+            <label className="text-slate-400 text-xs uppercase tracking-wide">
+              Số người chơi (4-8)
+            </label>
+            <select
+              className="w-full mt-1 rounded-xl bg-slate-700 px-3 py-2.5 outline-none focus:ring-2 focus:ring-emerald-500 text-sm"
+              value={seatCount}
+              onChange={(e) => setSeatCount(parseInt(e.target.value))}
+            >
+              {[4, 5, 6, 7, 8].map((n) => (
+                <option key={n} value={n}>{n} người chơi</option>
+              ))}
+            </select>
+          </div>
+        )}
+
         <button
           onClick={handleCreate}
           className="w-full rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 px-4 py-3 font-semibold text-sm transition-colors"
@@ -100,7 +121,9 @@ export default function Lobby({ onJoin }: Props) {
                     </span>
                   </div>
                   <div className="text-sm mt-1 text-slate-300 truncate">
-                    🔴 {r.redPlayer ?? "—"} vs ⚪ {r.whitePlayer ?? "—"}
+                    {r.seatCount > 2
+                      ? `👥 ${r.seats.filter(Boolean).length}/${r.seatCount} người`
+                      : `🔴 ${r.redPlayer ?? "—"} vs ⚪ ${r.whitePlayer ?? "—"}`}
                   </div>
                   <div className="text-xs text-slate-500 font-mono mt-0.5">{r.id.slice(0, 12)}…</div>
                 </div>

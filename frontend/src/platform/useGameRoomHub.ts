@@ -20,7 +20,7 @@ export function useGameRoomHub() {
       .build();
 
     conn.on("GameStateUpdated", (room: RoomDto) => setRoom(room));
-    conn.on("Seated", (info: { side: "RED" | "WHITE" | null }) => setMySide(info.side));
+    conn.on("Seated", (info: { side: string | null }) => setMySide(info.side));
     conn.on("Error", (msg: string) => setError(msg));
 
     conn.start().catch((err) => console.error("SignalR error:", err));

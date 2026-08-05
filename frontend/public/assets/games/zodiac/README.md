@@ -17,7 +17,7 @@ Truy cập trong code qua URL: `/assets/games/zodiac/<thư-mục>/<file>`.
 | `dice/` | Xúc xắc | 1 | `dice.webp` (nếu cần từng mặt: `dice-face-1.webp` … `dice-face-6.webp`) |
 | `effects/` | Hiệu ứng | 10–20 | `effect-<tên>.webp` — vd `effect-stun.webp` |
 
-## Quy ước chung (theo `rule/rule-file.md`)
+## Quy ước chung (theo `rules/coding/general.md`)
 
 - Tên file **kebab-case, không dấu, không khoảng trắng**.
 - Số thứ tự đệm 0 khi bộ ≥ 10 file (`equipment-01`, không phải `equipment-1`) để sort đúng.

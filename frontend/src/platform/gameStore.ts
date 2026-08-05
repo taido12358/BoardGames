@@ -14,13 +14,14 @@ interface GameStore {
   engines: EngineInfo[];
   rooms: RoomDto[];
   room: RoomDto | null;
-  mySide: "RED" | "WHITE" | null;
+  // "RED"/"WHITE" (VayBat) hoặc "P0".."P7" (Bang — ghế generic); null = khán giả.
+  mySide: string | null;
   selected: string | null;  // pieceId / ô đang chọn (tuỳ game)
   error: string;
 
   setPlayerName: (name: string) => void;
   setRoom: (room: RoomDto | null) => void;
-  setMySide: (side: "RED" | "WHITE" | null) => void;
+  setMySide: (side: string | null) => void;
   setSelected: (sel: string | null) => void;
   setError: (msg: string) => void;
 

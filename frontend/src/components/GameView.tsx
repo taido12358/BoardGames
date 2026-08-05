@@ -2,6 +2,7 @@ import { useGameStore } from "../platform/gameStore";
 import { useGameRoomHub } from "../platform/useGameRoomHub";
 import Lobby from "../platform/Lobby";
 import VayBatBoard from "../games/vaybat/VayBatBoard";
+import BangBoard from "../games/bang/BangBoard";
 
 /**
  * Container giữ kết nối SignalR; hiển thị Sảnh chờ hoặc bàn chơi của ĐÚNG game
@@ -30,6 +31,8 @@ export default function GameView() {
   switch (room.gameKey) {
     case "vaybat":
       return <VayBatBoard makeMove={makeMove} onLeave={handleLeave} />;
+    case "bang":
+      return <BangBoard makeMove={makeMove} onLeave={handleLeave} />;
     default:
       return (
         <div className="bg-slate-800 rounded-2xl p-6 text-center space-y-4">

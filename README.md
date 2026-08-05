@@ -163,6 +163,52 @@ Nước đi realtime qua SignalR hub `/hubs/game`: `JoinRoom(roomId, name)`,
 > thành generic). Nếu trước đó bạn đã chạy bản cũ, hãy reset volume một lần:
 > `docker compose down -v` rồi `docker compose up --build`.
 
+## 🤠 Game 002 — BANG! (hidden-role, 4-8 người chơi, server-authoritative)
+
+Game bài Western vai trò ẩn lấy cảm hứng từ BANG! — chỉ tái hiện cơ chế luật chơi, không
+dùng tên thương hiệu/artwork của bản gốc (UI dùng icon Unicode + CSS, không có ảnh thẻ
+bài thật). Tích hợp vào ĐÚNG kiến trúc Platform hiện có, không tạo hạ tầng riêng — xem
+`rules/architecture/backend.md` cho chi tiết mở rộng Platform (ghế generic > 2 người +
+ẩn thông tin riêng tư).
+
+- **Người chơi**: 4-8, chọn số ghế lúc tạo phòng (`options.seatCount`).
+- **Vai trò** (ẩn, trừ Cảnh sát trưởng luôn công khai): Cảnh sát trưởng, Phó cảnh sát,
+  Kẻ ngoài vòng pháp luật, Kẻ phản bội — phân bố theo bảng chuẩn 4-8 người
+  (`Games/Bang/BangRoles.cs`).
+- **Nhân vật** (8, tên Western gốc theo yêu cầu, không dùng theme khác): Wyatt, Calamity,
+  Billy, Jesse, Doc, Jack, Rose, Morgan — mỗi người một khả năng riêng, cài đặt hoàn
+  toàn ở backend (`Games/Bang/BangCharacters.cs` + `BangRules.cs`), không hard-code ở React.
+- **Bài**: Bang!/Trượt!/Bia/Súng Gatling/Đấu súng/Hoảng loạn!/Cat Balou/Xe ngựa/Wells
+  Fargo/Người da đỏ!/vũ khí (Volcanic/Schofield/Remington)/Mustang/Thùng rượu — danh sách
+  đầy đủ + số lượng: `Games/Bang/BangCards.cs`.
+- **Khoảng cách**: tính quanh bàn tròn, chỉ đếm người còn sống, `BangRules.CalculateDistance`
+  — Mustang/Morgan cộng thêm khoảng cách người khác nhìn thấy mình.
+- **Luật server-authoritative**: mọi hành động (đánh bài, phản hồi Bang!, kết thúc lượt)
+  đi qua `BangRules.HandleMove`, client chỉ gửi Ý ĐỊNH — xem `rules/coding/security.md`.
+- **Thông tin ẩn**: server tính state RIÊNG cho từng người xem trước khi gửi qua SignalR
+  (`IGameEngine.RedactStateForViewer`) — bài/vai trò người khác không bao giờ có trong
+  response, không chỉ ẩn bằng CSS.
+- **Giao diện**: 100% tiếng Việt (thuật ngữ, log, lỗi, nút bấm) — code/tên biến tiếng Anh.
+
+### Cách thử
+
+1. Mở 4-8 tab trình duyệt (hoặc profile khác nhau) tại http://localhost:5173.
+2. Mỗi tab: đăng nhập, đặt tên → chọn game **BANG!**, chọn số người chơi → **Tạo phòng**
+   (tab đầu) / **Vào** phòng đó (các tab sau).
+3. Khi đủ ghế, server tự chia vai trò/nhân vật/bài — ván bắt đầu ngay (Cảnh sát trưởng
+   đi trước).
+
+### Test
+
+- Unit test luật chơi (không cần Docker): `dotnet test backend/BoardGame.Api.Tests` —
+  bao phủ phân vai, gán nhân vật, khoảng cách (đúng ví dụ 6 người), tầm vũ khí, Bang!/
+  Trượt!/Bia/Đấu súng/Người da đỏ!, loại người chơi, điều kiện thắng, và — quan trọng
+  nhất — bảo vệ thông tin ẩn (JSON gửi cho một người xem không bao giờ chứa bài của
+  người khác, kiểm bằng cách soi thẳng chuỗi JSON đã serialize).
+- Đã verify sống bằng 4 SignalR client thật qua Docker Compose: vào phòng → server tự
+  chia bài → không client nào nhận được bài người khác → nước đi ngoài tầm bị server
+  từ chối đúng như thiết kế.
+
 ## Triển khai Kubernetes
 
 ```bash

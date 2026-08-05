@@ -1,4 +1,5 @@
 using BoardGame.Api.Data;
+using BoardGame.Api.Games.Bang;
 using BoardGame.Api.Games.VayBat;
 using BoardGame.Api.Platform;
 using BoardGame.Api.Platform.Abstractions;
@@ -42,6 +43,7 @@ builder.Services.AddSingleton<MinioStorageService>();
 
 // --- Game engines ---
 builder.Services.AddSingleton<IGameEngine, VayBatEngine>();
+builder.Services.AddSingleton<IGameEngine, BangEngine>();
 builder.Services.AddSingleton<GameEngineRegistry>();
 
 // --- Auth: đăng nhập OTP qua email (SMTP), JWT trong cookie HttpOnly ---
@@ -121,6 +123,8 @@ string[] schemaSqls =
     """ALTER TABLE "GameRooms" ADD COLUMN IF NOT EXISTS "MapJson"   jsonb NOT NULL DEFAULT '{{}}'::jsonb""",
     """ALTER TABLE "GameRooms" ADD COLUMN IF NOT EXISTS "StateJson" jsonb NOT NULL DEFAULT '{{}}'::jsonb""",
     """ALTER TABLE "GameRooms" ADD COLUMN IF NOT EXISTS "UpdatedAt" timestamp with time zone NOT NULL DEFAULT now()""",
+    """ALTER TABLE "GameRooms" ADD COLUMN IF NOT EXISTS "SeatCount" integer NOT NULL DEFAULT 2""",
+    """ALTER TABLE "GameRooms" ADD COLUMN IF NOT EXISTS "SeatsJson" jsonb NOT NULL DEFAULT '[]'::jsonb""",
     """ALTER TABLE "GameRooms" DROP COLUMN IF EXISTS "MaxRedTurns" """,
     """
     CREATE TABLE IF NOT EXISTS "GameMoves" (

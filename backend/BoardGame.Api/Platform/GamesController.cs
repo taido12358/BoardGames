@@ -47,15 +47,29 @@ public class GamesController : ControllerBase
 
         var engine = _engines.Get(key);
         var (mapJson, stateJson) = engine.NewGame(req.Options);
+        var playerName = string.IsNullOrWhiteSpace(req.PlayerName) ? null : req.PlayerName;
 
         var room = new GameRoom
         {
             GameKey = engine.Key,
             Status = "Waiting",
-            RedPlayer = string.IsNullOrWhiteSpace(req.PlayerName) ? null : req.PlayerName,
             MapJson = mapJson,
             StateJson = stateJson,
         };
+
+        if (engine.MaxPlayers <= 2)
+        {
+            // Game 2 người: đường cũ, không đổi hành vi.
+            room.RedPlayer = playerName;
+        }
+        else
+        {
+            // Game > 2 người: ghế generic. Người tạo phòng ngồi ghế 0 luôn.
+            room.SeatCount = ResolveSeatCount(req.Options, engine.MinPlayers, engine.MaxPlayers);
+            var seats = new string?[room.SeatCount];
+            if (playerName is not null) seats[0] = playerName;
+            room.SeatsJson = GameJson.Serialize(seats);
+        }
 
         _db.GameRooms.Add(room);                                          // PostgreSQL (cốt lõi)
         await _db.SaveChangesAsync();
@@ -84,13 +98,32 @@ public class GamesController : ControllerBase
         var rows = await q
             .OrderByDescending(r => r.CreatedAt)
             .Take(50)
-            .Select(r => new { r.Id, r.GameKey, r.Status, r.RedPlayer, r.WhitePlayer, r.Winner, r.CreatedAt })
+            .Select(r => new { r.Id, r.GameKey, r.Status, r.RedPlayer, r.WhitePlayer, r.Winner, r.CreatedAt, r.SeatCount, r.SeatsJson })
             .ToListAsync();
         var empty = GameJson.Element("{}");
         return Ok(rows.Select(r => new RoomDto(
             r.Id, r.GameKey, r.Status,
             r.RedPlayer, r.WhitePlayer, r.Winner,
-            empty, empty, r.CreatedAt)));
+            empty, empty, r.CreatedAt,
+            r.SeatCount, SafeSeats(r.SeatsJson))));
+    }
+
+    private static List<string?> SafeSeats(string seatsJson)
+    {
+        try { return GameJson.Deserialize<List<string?>>(seatsJson) ?? new(); }
+        catch { return new(); }
+    }
+
+    /// <summary>Số ghế mong muốn cho game > 2 người: đọc options.seatCount (nếu hợp lệ), kẹp trong [min,max], mặc định max.</summary>
+    private static int ResolveSeatCount(JsonElement? options, int min, int max)
+    {
+        if (options is { ValueKind: JsonValueKind.Object } o &&
+            o.TryGetProperty("seatCount", out var sc) &&
+            sc.TryGetInt32(out var n) && n >= min && n <= max)
+        {
+            return n;
+        }
+        return max;
     }
 
     /// <summary>Chi tiết phòng; state nóng ưu tiên đọc từ Redis.</summary>
