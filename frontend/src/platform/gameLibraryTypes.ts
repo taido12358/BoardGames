@@ -51,3 +51,11 @@ export interface CharacterGuideEntry {
   ability: string;
   abilityName: string;
 }
+
+/** UI tuỳ chọn khi tạo phòng, do TỪNG GAME tự cung cấp (đăng ký qua gameRegistry.ts) — GameDetails
+ * chỉ render component này nếu có, không hard-code UI theo gameKey. */
+export interface CreateOptionsFormProps {
+  value: Record<string, unknown>;
+  onChange: (value: Record<string, unknown>) => void;
+}
+

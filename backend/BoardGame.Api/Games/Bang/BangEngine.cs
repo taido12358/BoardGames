@@ -61,8 +61,9 @@ public class BangEngine : IGameEngine
     }
 
     /// <summary>
-    /// Nước đi hệ thống do GameHub phát khi phòng đủ ghế — chia vai trò/nhân vật/bài.
-    /// Không phải nước đi của người chơi nên xử lý tách khỏi BangRules.HandleMove.
+    /// Nước đi hệ thống do GameHub phát khi phòng đủ ghế (quy ước cũ, side="SYSTEM") — vẫn giữ
+    /// nguyên vì có test hiện có gọi trực tiếp qua ApplyMove; nay chỉ là lớp mỏng parse moveJson
+    /// rồi giao cho OnRoomFull (entry point chính thức mới, dùng bởi RoomService).
     /// </summary>
     private MoveOutcome ApplyStartGameSystemMove(string stateJson, string moveJson)
     {
@@ -82,8 +83,46 @@ public class BangEngine : IGameEngine
         if (seats.Count < MinPlayers || seats.Count > MaxPlayers || seats.Any(s => string.IsNullOrWhiteSpace(s)))
             return new MoveOutcome(false, $"Cần đủ {MinPlayers}-{MaxPlayers} người chơi để bắt đầu BANG!.", stateJson, null);
 
-        var started = BangRules.StartGame(seats!, Random.Shared);
+        return OnRoomFull("{}", stateJson, seats!);
+    }
+
+    /// <summary>Entry point chính thức (IGameEngine) để chia vai trò/nhân vật/bài khi phòng đủ ghế.</summary>
+    public MoveOutcome OnRoomFull(string mapJson, string stateJson, IReadOnlyList<string> seatDisplayNames)
+    {
+        if (seatDisplayNames.Count < MinPlayers || seatDisplayNames.Count > MaxPlayers || seatDisplayNames.Any(string.IsNullOrWhiteSpace))
+            return new MoveOutcome(false, $"Cần đủ {MinPlayers}-{MaxPlayers} người chơi để bắt đầu BANG!.", stateJson, null);
+
+        var started = BangRules.StartGame(seatDisplayNames, Random.Shared);
         return new MoveOutcome(true, null, GameJson.Serialize(started), null);
+    }
+
+    /// <summary>
+    /// "side" mất kết nối quá lâu giữa ván: nếu đang là lượt hành động của họ → tự động kết
+    /// thúc lượt (END_TURN); nếu đang bị yêu cầu phản hồi (Bang!/Đấu súng/Người da đỏ/Gatling)
+    /// → tự động "không đáp trả" bằng cách gọi RESPOND không kèm lá bài — đúng luật mặc định
+    /// đã có sẵn (HandleRespond coi card=null là không đỡ được/thua ván đấu súng), không cần
+    /// luật riêng mới. Ngoài 2 trường hợp này (side không liên quan lượt/phản hồi hiện tại) →
+    /// no-op, SeatTimeoutService thử lại ở lần quét sau.
+    /// </summary>
+    public MoveOutcome OnSeatTimedOut(string mapJson, string stateJson, string side)
+    {
+        BangGameState state;
+        try { state = GameJson.Deserialize<BangGameState>(stateJson); }
+        catch { return new MoveOutcome(false, null, stateJson, null); }
+
+        BangMove? syntheticMove =
+            state.Phase == GamePhase.AwaitingResponse && state.PendingResponse is not null && state.PendingResponse.TargetIds.Contains(side)
+                ? new BangMove("RESPOND", null, null, null)
+            : state.Phase == GamePhase.Action && state.CurrentPlayerId == side
+                ? new BangMove("END_TURN", null, null, null)
+            : null;
+
+        if (syntheticMove is null) return new MoveOutcome(false, null, stateJson, null);
+
+        var (ok, error, winner) = BangRules.HandleMove(state, side, syntheticMove, Random.Shared);
+        return ok
+            ? new MoveOutcome(true, null, GameJson.Serialize(state), winner)
+            : new MoveOutcome(false, error, stateJson, null);
     }
 
     /// <summary>

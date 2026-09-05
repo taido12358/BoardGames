@@ -2,19 +2,24 @@
 // là backend (/api/games/engines qua gameStore.engines), file này chỉ cung cấp phần
 // TRÌNH BÀY (artwork/mô tả/hướng dẫn) cho từng gameKey đã biết. Thêm game mới = thêm
 // 1 dòng ở đây trỏ tới games/<ten>/metadata.ts — không phải sửa GameLibrary/GameDetails.
+import type { ComponentType } from "react";
 import type { EngineInfo } from "./types";
-import type { GameMetadata, InstructionSection } from "./gameLibraryTypes";
+import type { CreateOptionsFormProps, GameMetadata, InstructionSection } from "./gameLibraryTypes";
 import { vaybatMetadata, vaybatInstructions } from "../games/vaybat/metadata";
 import { bangMetadata, bangInstructions } from "../games/bang/metadata";
+import VayBatCreateOptions from "../games/vaybat/CreateOptions";
+import BangCreateOptions from "../games/bang/CreateOptions";
 
 interface GameRegistryEntry {
   metadata: GameMetadata;
   instructions: InstructionSection[];
+  /** UI tuỳ chọn khi tạo phòng — GameDetails chỉ render nếu có, không hard-code theo gameKey. */
+  CreateOptionsForm?: ComponentType<CreateOptionsFormProps>;
 }
 
 const REGISTRY: Record<string, GameRegistryEntry> = {
-  vaybat: { metadata: vaybatMetadata, instructions: vaybatInstructions },
-  bang: { metadata: bangMetadata, instructions: bangInstructions },
+  vaybat: { metadata: vaybatMetadata, instructions: vaybatInstructions, CreateOptionsForm: VayBatCreateOptions },
+  bang: { metadata: bangMetadata, instructions: bangInstructions, CreateOptionsForm: BangCreateOptions },
 };
 
 /** Game backend hỗ trợ nhưng CHƯA có metadata trình bày riêng — vẫn hiển thị được, chỉ không có artwork/hướng dẫn chi tiết. */
@@ -45,4 +50,9 @@ export function getGameMetadata(engine: EngineInfo): GameMetadata {
 
 export function getGameInstructions(gameKey: string): InstructionSection[] {
   return REGISTRY[gameKey]?.instructions ?? [];
+}
+
+/** Component UI tuỳ chọn tạo phòng của game này, nếu có đăng ký — GameDetails render có điều kiện. */
+export function getCreateOptionsForm(gameKey: string): ComponentType<CreateOptionsFormProps> | undefined {
+  return REGISTRY[gameKey]?.CreateOptionsForm;
 }

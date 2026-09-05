@@ -1,5 +1,113 @@
 # Decisions (ADR)
 
+## ADR: Rebuild cơ chế phòng/ghép trận — hợp nhất mô hình ghế + `SideForSeat`/`OnRoomFull`/`OnSeatTimedOut`
+
+Date: 2026-09-05
+
+### Context
+
+Người dùng nhận định "web chưa hợp lý" và yêu cầu xây lại từ đầu cơ chế phòng/ghép trận. Khảo sát xác nhận: `GameRoom` có 2 mô hình ghế song song (`RedPlayer(Id)`/`WhitePlayer(Id)` cho ≤2 người, `SeatCount/SeatsJson/SeatUserIdsJson` cho >2 người), buộc `GameHub`/`GamesController` rẽ nhánh `engine.MaxPlayers <= 2` ở 4 chỗ khác nhau (`JoinRoom`, `MakeMove`/`ResolveSide`, `Create`, `Cancel`). Quy ước "phòng vừa đủ ghế" cho game N người dùng side đặc biệt `"SYSTEM"` + `moveJson.type=="__start_game__"` — chỉ tồn tại trong comment, không type-safe.
+
+### Decision
+
+**Supersedes ADR "Ghế generic (SeatCount/SeatsJson) cho game > 2 người, song song với RedPlayer/WhitePlayer" (2026-08-05, bên dưới)** — thời điểm đó cố tình giữ 2 đường song song để "không phá VayBat" khi mới thêm Bang; nay hợp nhất hẳn về 1 đường vì đã có `IGameEngine.SideForSeat` làm lớp dịch, không cần giữ đường cũ nữa.
+
+- `GameRoom.SeatsJson` là mảng `SeatSlot?` (`{UserId, DisplayName, Connected, LastSeenAt}`) độ dài = `SeatCount`, dùng cho MỌI game kể cả VayBat. Xoá `RedPlayer(Id)`/`WhitePlayer(Id)`/`SeatUserIdsJson`.
+- Thêm `IGameEngine.SideForSeat(int seatIndex)` (default `$"P{index}"`) — `VayBatEngine` override 0→"RED", 1→"WHITE" để giữ nguyên contract với `VayBatRules`/frontend.
+- Thêm `IGameEngine.OnRoomFull(mapJson, stateJson, seatDisplayNames)` thay quy ước ngầm `side="SYSTEM"` — `BangEngine` override để chia bài/vai trò (giữ nguyên `ApplyMove` xử lý `side=="SYSTEM"` cho tương thích ngược với test hiện có, nhưng entry point chính thức giờ là `OnRoomFull`).
+- Thêm `IGameEngine.OnSeatTimedOut(mapJson, stateJson, side)` cho cơ chế AFK (xem ADR riêng bên dưới).
+- Thêm `Platform/RoomService.cs` gom toàn bộ logic join/create/cancel/quick-match/timeout — `GameHub`/`GamesController` chỉ còn là lớp transport mỏng gọi xuống.
+- Thêm `GameRoom.OwnerUserId` tường minh, thay suy luận "chủ phòng = ai ở ghế 0".
+
+### Alternatives rejected
+
+- Giữ 2 mô hình song song, chỉ thêm `SideForSeat` cho phần hiển thị — loại vì không giải quyết gốc vấn đề (Hub/Controller vẫn phải rẽ nhánh để biết đọc cột nào).
+- Đổi hẳn `moveJson.type=="__start_game__"` thành convention mạnh hơn (vd enum move type dùng chung) thay vì method riêng trên interface — loại vì Platform vẫn phải biết cấu trúc `moveJson` của từng game, vi phạm nguyên tắc "Platform không biết game cụ thể".
+
+### Reason
+
+`SideForSeat` là lớp dịch mỏng đủ để Platform hoàn toàn generic mà không cần engine đổi vocabulary side đang dùng — rủi ro thấp, không phá gameplay VayBat/Bang (đã verify: 97/97 test cũ + mới pass, side "RED"/"WHITE" không đổi phía engine/frontend).
+
+### Consequences
+
+Migration dữ liệu cũ cần backfill `SeatsJson`/`OwnerUserId` từ cột cũ trước khi xoá cột (raw SQL idempotent trong `Program.cs`, guard bằng kiểm tra `information_schema.columns` vì cột cũ sẽ không còn ở lần chạy sau). Phòng tạo trước rebuild thiếu `RedPlayerId`/`SeatUserIdsJson` (đã mất từ fix JWT 2026-08-05 hoặc cũ hơn) → `OwnerUserId` vẫn `NULL` sau backfill — chấp nhận (dữ liệu test/dev), đúng tiền lệ ADR "Danh tính ghế" bên dưới.
+
+## ADR: Tách `Cancelled`/`Abandoned` khỏi `Finished`
+
+Date: 2026-09-05
+
+### Context
+
+Trước rebuild, cả "chơi xong thật" (`MakeMove` trả `Winner`), "chủ phòng tự huỷ" (`Cancel`), và "hệ thống dọn rác" (`StaleRoomCleanupService`) đều set `Status="Finished"` — không phân biệt được sau khi đã xảy ra, làm lịch sử/OpenSearch lẫn lộn thắng-thua-thật với rác dọn dẹp.
+
+### Decision
+
+`RoomStatus` có 5 giá trị: `Waiting|Playing|Finished|Cancelled|Abandoned`. `Cancel` → `Cancelled`. `StaleRoomCleanupService` (phòng `Waiting` bỏ dở) và cơ chế AFK mới (phòng `Playing` mọi ghế mất kết nối quá lâu không thể tự phân thắng thua, xem `SeatTimeoutService`) → `Abandoned`. Chỉ `Finished` mới index vào OpenSearch. `GamesController.List()` đổi từ đen-list (`!= Finished`) sang allow-list `RoomStatus.IsOpen` (`Waiting`/`Playing`).
+
+### Alternatives rejected
+
+Giữ nguyên gộp chung `Finished`, chỉ thêm field `CancelReason` riêng — loại vì vẫn phải sửa mọi nơi đọc `Status` để phân biệt, phức tạp hơn việc tách hẳn giá trị.
+
+### Reason
+
+Tách giá trị rõ ràng hơn field phụ, và allow-list an toàn hơn đen-list khi thêm status mới về sau (quên thêm status mới vào đen-list sẽ vô tình hiện phòng đó trong sảnh; quên thêm vào allow-list chỉ làm phòng đó bị ẩn — an toàn hơn).
+
+### Consequences
+
+Phòng cũ đã bị đánh dấu `Finished` trước rebuild (do huỷ hoặc dọn rác) KHÔNG được hồi tố phân loại lại — chấp nhận nhầm lẫn lịch sử, chỉ áp dụng phân loại mới từ thời điểm deploy.
+
+## ADR: Cơ chế mất kết nối/AFK giữa ván (`SeatTimeoutService` + `IGameEngine.OnSeatTimedOut`)
+
+Date: 2026-09-05
+
+### Context
+
+Trước rebuild, `GameHub.OnDisconnectedAsync`/`LeaveRoom` chỉ dọn map connection nội bộ — không đụng DB, không báo phòng, không có timeout. Người giữ lượt rớt mạng làm ván kẹt vĩnh viễn, đặc biệt Bang (có tình huống chờ đúng người phản hồi Bang!/Đấu súng/Người da đỏ/Súng Gatling).
+
+### Decision
+
+`SeatSlot.Connected`/`LastSeenAt` theo dõi trạng thái kết nối từng ghế. `GameHub.OnDisconnectedAsync` đánh dấu `Connected=false` khi là connection cuối cùng của user trong phòng, broadcast ngay. `Services/SeatTimeoutService.cs` (`BackgroundService`, quét ~10s) sau `DisconnectGracePeriod` (45s) gọi `IGameEngine.OnSeatTimedOut(map, state, side)` — engine tự quyết (Platform không biết luật cụ thể): VayBat xử thua ngay (2 người, không thể tiếp tục); Bang tự động kết thúc lượt nếu đang là lượt hành động, tự áp dụng hệ quả "không đáp trả" có sẵn trong luật nếu đang bị yêu cầu phản hồi, no-op nếu không liên quan. Sau `AbandonedPlayingAfter` (10 phút) mọi ghế vẫn mất kết nối mà chưa có kết quả → `Status=Abandoned`.
+
+### Alternatives rejected
+
+Timer per-room (`System.Threading.Timer` riêng mỗi phòng) — loại vì mất state khi restart app, không nhất quán với pattern `BackgroundService` quét định kỳ đã dùng cho `StaleRoomCleanupService`.
+Bang tự chế move giả `RESPOND`/`END_TURN` đi qua `HandleMove` public (validate quyền như người chơi thật gọi) — loại vì phức tạp không cần thiết, `OnSeatTimedOut` gọi thẳng logic nội bộ đã có.
+
+### Reason
+
+Đặt hook ở `IGameEngine` (không xử lý cứng trong Platform) đúng nguyên tắc "Platform không biết game cụ thể" — chỉ engine mới biết "một ghế biến mất" nghĩa là gì trong luật của nó.
+
+### Consequences
+
+Người rớt mạng dài hạn trong Bang: mỗi lần tới lượt/bị nhắm lại tự động bỏ qua/nhận hệ quả mặc định — KHÔNG có cơ chế "loại khỏi ván" (ghi vào backlog nếu cần làm sau, tránh scope creep lần này).
+
+## ADR: Ghép trận nhanh dùng `FOR UPDATE SKIP LOCKED`; sảnh realtime qua group SignalR `"lobby"`
+
+Date: 2026-09-05
+
+### Context
+
+Trước rebuild không có "ghép trận nhanh" nào; danh sách phòng chỉ polling `GET /api/games` (2 vòng lặp độc lập, khác nhịp, ở `GameLibrary.tsx` và `GameDetails.tsx`).
+
+### Decision
+
+`POST /api/games/quick-match` → `RoomService.QuickMatchAsync`: quét tối đa 5 phòng `Waiting` cùng `gameKey` (cũ nhất trước) bằng `SELECT ... FOR UPDATE SKIP LOCKED`, chọn phòng đầu còn ghế trống, hết thì tạo mới. `SKIP LOCKED` (khác `FOR UPDATE` chặn cứng của `JoinRoom`/`MakeMove`) vì đây quét nhiều ứng viên — cần bỏ qua row đang bị transaction khác khoá thay vì chờ, tránh 2 người quick-match cùng lúc chặn nhau.
+
+Sảnh: group SignalR `"lobby"` (`GameHub.SubscribeLobby`/`UnsubscribeLobby`), event `"LobbyUpdated"` (`RoomSummaryDto`) phát mỗi khi phòng đổi trạng thái ảnh hưởng sảnh. Frontend bỏ hẳn 2 vòng poll, dùng `useLobbyHub`.
+
+### Alternatives rejected
+
+`FOR UPDATE` thường (chặn cứng) cho quick-match — loại vì quét nhiều candidate cùng lúc, 2 người quick-match đồng thời sẽ xếp hàng chờ nhau không cần thiết.
+Group riêng theo từng `gameKey` (`lobby:<gameKey>`) — loại vì đơn giản hơn khi dùng 1 group chung, payload đã có `gameKey` để client tự lọc, và số phòng thay đổi trong 1 khoảng thời gian là nhỏ (quy mô dự án hiện tại).
+
+### Reason
+
+Tái dùng đúng transaction pattern đã có (`FOR UPDATE`) nhưng đổi chế độ khoá phù hợp với truy vấn nhiều-ứng-viên; SignalR group đã sẵn có hạ tầng (kết nối dùng chung `useGameRoomHub`), không cần thêm cơ chế polling/WebSocket riêng.
+
+### Consequences
+
+`LobbyUpdated` là broadcast dùng chung — `IsMine` trong đó LUÔN `false` (server không biết gửi cho ai trong 1 broadcast group). Frontend (`gameStore.upsertRoom`) không được ghi đè `isMine` đã biết bằng giá trị từ sự kiện này — chỉ REST per-caller mới đáng tin cho field đó. Đây là điểm dễ tưởng nhầm là bug khi đọc code lần đầu — đã ghi rõ trong comment `GamesController.PublishLobbyUpdated`.
+
 ## ADR: Danh tính ghế lấy từ JWT (`Context.User`), không tin `playerName` client gửi
 
 Date: 2026-08-05

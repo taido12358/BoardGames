@@ -38,4 +38,31 @@ public interface IGameEngine
     /// Mặc định: không có thông tin ẩn (như Vây Bắt) — trả nguyên state, không override.
     /// </summary>
     string RedactStateForViewer(string stateJson, string? side) => stateJson;
+
+    /// <summary>
+    /// Tên "side" (ghế người chơi dùng trong ApplyMove/RedactStateForViewer) ứng với chỉ số
+    /// ghế 0-based mà Platform gán — Platform không còn tự phân biệt game 2 người/N người,
+    /// engine tự quyết định vocabulary side của mình. Mặc định "P0".."P{N-1}" (như Bang);
+    /// game 2 người có side cố định (như VayBat "RED"/"WHITE") override lại.
+    /// </summary>
+    string SideForSeat(int seatIndex) => $"P{seatIndex}";
+
+    /// <summary>
+    /// Phòng vừa đủ ghế (tất cả SeatCount ghế đã có người) — engine tự quyết có cần làm gì để
+    /// thật sự bắt đầu ván hay không (vd chia bài/vai trò khi đã biết tên thật của mọi người,
+    /// điều NewGame() chưa biết vì gọi trước khi ai vào phòng). seatDisplayNames theo đúng thứ
+    /// tự ghế 0..N-1. Mặc định: không cần làm gì (như Vây Bắt — NewGame() đã đủ để chơi ngay).
+    /// </summary>
+    MoveOutcome OnRoomFull(string mapJson, string stateJson, IReadOnlyList<string> seatDisplayNames)
+        => new MoveOutcome(true, null, stateJson, null);
+
+    /// <summary>
+    /// Ghế "side" mất kết nối quá lâu giữa ván (xem SeatTimeoutService) — engine tự quyết xử lý
+    /// (bỏ lượt, xử thua, tự động chọn hành động mặc định…) vì chỉ engine mới biết ý nghĩa của
+    /// việc "một ghế biến mất" trong luật của mình. Trả Ok=false nếu side đó hiện KHÔNG ở vị trí
+    /// cần hành động (chưa tới lượt/không liên quan) — SeatTimeoutService sẽ thử lại sau, không
+    /// coi là lỗi. Mặc định: không có khái niệm lượt/AFK, không làm gì.
+    /// </summary>
+    MoveOutcome OnSeatTimedOut(string mapJson, string stateJson, string side)
+        => new MoveOutcome(false, null, stateJson, null);
 }

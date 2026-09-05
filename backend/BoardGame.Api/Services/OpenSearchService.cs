@@ -46,8 +46,7 @@ public class OpenSearchService
                 : q.MultiMatch(m => m
                     .Fields(f => f
                         .Field(x => x.Winner)
-                        .Field(x => x.RedPlayer)
-                        .Field(x => x.WhitePlayer)
+                        .Field(x => x.Players)
                         .Field(x => x.Status))
                     .Query(term))));
         return response.Documents;

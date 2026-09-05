@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import type { EngineInfo, RoomDto } from "./types";
+import type { EngineInfo, RoomDto, RoomSummaryDto } from "./types";
 
 function loadPlayerName(): string {
   const saved = localStorage.getItem("playerName");
@@ -9,42 +9,60 @@ function loadPlayerName(): string {
   return name;
 }
 
+function sortRooms(byId: Record<string, RoomSummaryDto>): RoomSummaryDto[] {
+  return Object.values(byId).sort((a, b) => (a.createdAt < b.createdAt ? 1 : a.createdAt > b.createdAt ? -1 : 0));
+}
+
+export type ConnectionState = "connected" | "reconnecting" | "disconnected";
+
 interface GameStore {
   playerName: string;
   engines: EngineInfo[];
   enginesLoading: boolean;
   /** Lỗi tải danh sách game — rỗng nghĩa là không có lỗi (khác `error` dùng cho lỗi trong ván/hub). */
   enginesError: string;
-  rooms: RoomDto[];
+  /** Nguồn sự thật cho danh sách sảnh — cập nhật realtime qua SignalR (xem useLobbyHub), không polling. */
+  roomsById: Record<string, RoomSummaryDto>;
+  /** Mảng dẫn xuất từ roomsById, sắp theo createdAt giảm dần — tiện cho component filter/render như trước. */
+  rooms: RoomSummaryDto[];
   room: RoomDto | null;
   // "RED"/"WHITE" (VayBat) hoặc "P0".."P7" (Bang — ghế generic); null = khán giả.
   mySide: string | null;
   selected: string | null;  // pieceId / ô đang chọn (tuỳ game)
   error: string;
+  connectionState: ConnectionState;
 
   setPlayerName: (name: string) => void;
   setRoom: (room: RoomDto | null) => void;
   setMySide: (side: string | null) => void;
   setSelected: (sel: string | null) => void;
   setError: (msg: string) => void;
+  setConnectionState: (s: ConnectionState) => void;
 
   fetchEngines: () => Promise<void>;
+  /** Chỉ dùng để paint lần đầu — cập nhật realtime sau đó qua useLobbyHub, không polling. */
   fetchRooms: (gameKey?: string) => Promise<void>;
+  upsertRoom: (room: RoomSummaryDto) => void;
+  removeRoom: (roomId: string) => void;
   createRoom: (gameKey: string, options: Record<string, unknown>) => Promise<RoomDto | null>;
   /** Huỷ phòng do chính mình tạo (chỉ khi còn "Waiting") — server tự kiểm tra quyền theo JWT. */
   cancelRoom: (roomId: string) => Promise<boolean>;
+  /** Ghép vào phòng "Waiting" còn ghế trống gần nhất theo gameKey, hết thì server tự tạo phòng mới. */
+  quickMatch: (gameKey: string) => Promise<RoomDto | null>;
 }
 
-export const useGameStore = create<GameStore>((set) => ({
+export const useGameStore = create<GameStore>((set, get) => ({
   playerName: loadPlayerName(),
   engines: [],
   enginesLoading: false,
   enginesError: "",
+  roomsById: {},
   rooms: [],
   room: null,
   mySide: null,
   selected: null,
   error: "",
+  connectionState: "connected",
 
   setPlayerName: (name) => {
     localStorage.setItem("playerName", name);
@@ -54,6 +72,7 @@ export const useGameStore = create<GameStore>((set) => ({
   setMySide: (mySide) => set({ mySide }),
   setSelected: (selected) => set({ selected }),
   setError: (error) => set({ error }),
+  setConnectionState: (connectionState) => set({ connectionState }),
 
   fetchEngines: async () => {
     set({ enginesLoading: true, enginesError: "" });
@@ -71,10 +90,30 @@ export const useGameStore = create<GameStore>((set) => ({
       const url = gameKey ? `/api/games?gameKey=${gameKey}` : "/api/games";
       const res = await fetch(url);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      set({ rooms: await res.json() });
+      const list = (await res.json()) as RoomSummaryDto[];
+      const byId = { ...get().roomsById };
+      for (const r of list) byId[r.id] = r;
+      set({ roomsById: byId, rooms: sortRooms(byId) });
     } catch {
-      // Danh sách phòng chỉ là "best effort" hiển thị — không chặn UI, thử lại ở lần poll sau.
+      // Danh sách phòng lần đầu chỉ là "best effort" — cập nhật realtime tiếp theo qua useLobbyHub.
     }
+  },
+
+  upsertRoom: (room) => {
+    // "LobbyUpdated" là broadcast dùng chung cho cả nhóm "lobby" — server không biết
+    // đang gửi cho ai nên luôn trả isMine=false (xem báo cáo backend). Chỉ REST
+    // (GET /api/games, tạo/ghép phòng) mới trả isMine đúng theo từng người gọi.
+    // Không bao giờ hạ isMine true -> false chỉ vì một sự kiện broadcast đến sau.
+    const prev = get().roomsById[room.id];
+    const merged = prev?.isMine && !room.isMine ? { ...room, isMine: true } : room;
+    const byId = { ...get().roomsById, [room.id]: merged };
+    set({ roomsById: byId, rooms: sortRooms(byId) });
+  },
+
+  removeRoom: (roomId) => {
+    const byId = { ...get().roomsById };
+    delete byId[roomId];
+    set({ roomsById: byId, rooms: sortRooms(byId) });
   },
 
   createRoom: async (gameKey, options) => {
@@ -99,5 +138,18 @@ export const useGameStore = create<GameStore>((set) => ({
       return false;
     }
     return true;
+  },
+
+  quickMatch: async (gameKey) => {
+    const res = await fetch("/api/games/quick-match", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ gameKey }),
+    });
+    if (!res.ok) {
+      set({ error: "Không tìm được trận phù hợp." });
+      return null;
+    }
+    return (await res.json()) as RoomDto;
   },
 }));

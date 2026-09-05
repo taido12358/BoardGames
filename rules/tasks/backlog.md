@@ -2,25 +2,25 @@
 
 Việc chưa làm, chưa có ai nhận. Không phải kế hoạch chi tiết — chỉ liệt kê để không quên.
 
-## Ghép phòng / vào phòng — Giai đoạn 2 & 3 (chưa làm, 2026-08-05)
+## Ghép phòng / vào phòng — Giai đoạn 2 & 3 — ĐÃ LÀM (2026-09-05, rebuild toàn bộ cơ chế phòng/ghép trận)
 
-Giai đoạn 1 (bảo mật danh tính ghế + dọn phòng rác + huỷ phòng) đã xong — xem
-[`../history/milestones.md`](../history/milestones.md). Còn lại từ đề xuất ban đầu, người
-dùng chưa yêu cầu làm:
+Giai đoạn 1 (bảo mật danh tính ghế + dọn phòng rác + huỷ phòng, 2026-08-05) đã xong trước đó.
+Giai đoạn 2 & 3 (ghép trận nhanh, danh sách phòng realtime, xử lý mất kết nối/AFK) + rebuild
+cấu trúc code Platform + rebuild UI đã hoàn tất trong 1 đợt duy nhất — xem
+[`../history/milestones.md`](../history/milestones.md) và ADR liên quan trong
+[`../history/decisions.md`](../history/decisions.md).
 
-- **Ghép trận nhanh ("Tìm trận")**: API/hub method tự chọn phòng `Waiting` còn ghế trống gần
-  nhất theo `gameKey`, hết thì tự tạo phòng mới — dùng cùng khoá `SELECT ... FOR UPDATE` đã
-  có ở `GameHub.JoinRoom` để tránh race. Hiện người chơi phải tự duyệt danh sách phòng ở
-  `GameDetails.tsx`.
-- **Danh sách phòng realtime**: `GameDetails.tsx` hiện chỉ polling `GET /api/games` mỗi 3s.
-  Có thể thay bằng broadcast SignalR (group `lobby:<gameKey>`) khi phòng tạo/đầy/huỷ — giảm
-  độ trễ, giảm số request định kỳ.
-- **Xử lý mất kết nối/AFK giữa ván**: `GameHub.OnDisconnectedAsync` hiện chỉ dọn map
-  connection nội bộ, không đánh dấu người chơi mất kết nối, không báo cho người còn lại,
-  không có cơ chế timeout. Nếu người giữ lượt rớt mạng, ván có thể kẹt vĩnh viễn (đặc biệt
-  Bang — lượt phải chờ đúng người phản hồi). Cần: đánh dấu "disconnected" trong state, thời
-  gian ân hạn reconnect, hết hạn thì xử lý (skip lượt/xử thua) — generic ở Platform, engine
-  tự quyết cách xử lý mất người.
+**Đơn giản hoá có chủ đích:**
+- Bang AFK dài hạn: mỗi lần tới lượt/bị nhắm, người rớt mạng tự động bỏ qua/nhận hệ quả mặc
+  định (`IGameEngine.OnSeatTimedOut`) — KHÔNG có cơ chế "loại hẳn khỏi ván" (vd out khỏi vòng
+  chơi, chuyển máy chủ điều khiển bot). Nếu về sau thấy cần, làm thêm ở `BangEngine`/`BangRules`,
+  không cần đổi Platform.
+- `SeatTimeoutService` quét toàn bộ phòng `Playing` mỗi ~10s (không index theo phòng có ghế
+  disconnect) — chấp nhận ở quy mô hiện tại (đúng tiền lệ đã chấp nhận cho `BroadcastState`
+  quét theo connection trước đây); cần tối ưu nếu số phòng đồng thời lớn lên nhiều.
+- Chưa có test tích hợp chạm Postgres thật cho `RoomService`/khoá `FOR UPDATE`/`SKIP LOCKED`
+  (project chưa có tiền lệ test chạm DB, chỉ test luật thuần) — chỉ verify thủ công qua
+  Docker Compose. Nợ kỹ thuật, nên bổ sung Testcontainers nếu làm tiếp phần này.
 
 ## Game thứ hai — BANG! — ĐÃ LÀM (2026-08-05)
 

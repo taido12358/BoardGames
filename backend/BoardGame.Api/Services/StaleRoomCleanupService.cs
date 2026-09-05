@@ -1,4 +1,5 @@
 using BoardGame.Api.Data;
+using BoardGame.Api.Platform.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace BoardGame.Api.Services;
@@ -8,8 +9,11 @@ namespace BoardGame.Api.Services;
 /// tránh phòng rác tồn đọng vĩnh viễn làm nhiễu danh sách phòng thật (bài học 2026-08-05:
 /// phòng test "Waiting" từ nhiều giờ trước vẫn hiện trong sảnh vì chưa có gì dọn chúng).
 ///
-/// Đánh dấu "Finished" (không xoá — vẫn giữ lịch sử) — GamesController.List() đã lọc
-/// "Status != Finished" nên phòng tự động biến mất khỏi sảnh, không cần sửa gì thêm.
+/// Đánh dấu "Abandoned" (không xoá — vẫn giữ lịch sử), KHÔNG phải "Finished" — Abandoned nghĩa
+/// là hệ thống tự dọn, tách biệt với Finished (ván có kết quả thật) và Cancelled (chủ phòng chủ
+/// động huỷ). GamesController.List() chỉ lấy Waiting/Playing nên phòng tự động biến mất khỏi
+/// sảnh, không cần sửa gì thêm. Xem thêm SeatTimeoutService — dọn phòng "Playing" mất kết nối
+/// quá lâu giữa ván, một trường hợp Abandoned khác mà service này không xử lý.
 /// </summary>
 public class StaleRoomCleanupService : BackgroundService
 {
@@ -45,7 +49,7 @@ public class StaleRoomCleanupService : BackgroundService
 
         var cutoff = DateTime.UtcNow - StaleAfter;
         var staleIds = await db.GameRooms
-            .Where(r => r.Status == "Waiting" && r.UpdatedAt < cutoff)
+            .Where(r => r.Status == RoomStatus.Waiting && r.UpdatedAt < cutoff)
             .Select(r => r.Id)
             .ToListAsync(ct);
 
@@ -55,9 +59,9 @@ public class StaleRoomCleanupService : BackgroundService
             // Đọc lại + lưu từng phòng riêng — một phòng vừa có người vào (đổi UpdatedAt,
             // trượt concurrency token) không được chặn việc dọn các phòng còn lại.
             var room = await db.GameRooms.FindAsync([roomId], ct);
-            if (room is null || room.Status != "Waiting") continue;
+            if (room is null || room.Status != RoomStatus.Waiting) continue;
 
-            room.Status = "Finished";
+            room.Status = RoomStatus.Abandoned;
             room.UpdatedAt = DateTime.UtcNow;
             try { await db.SaveChangesAsync(ct); cleaned++; }
             catch (DbUpdateConcurrencyException) { db.Entry(room).Reload(); } // vừa bị đổi — bỏ qua, dọn lần sau

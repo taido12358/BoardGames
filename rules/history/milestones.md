@@ -57,3 +57,31 @@ app đã có JWT — ai cũng "cướp" được ghế người khác. Đã vá 
 - Đề xuất còn lại (chưa làm, xem [`../tasks/backlog.md`](../tasks/backlog.md)): ghép trận
   nhanh (quick match), danh sách phòng cập nhật realtime qua SignalR thay vì polling, xử lý
   mất kết nối/AFK giữa ván.
+
+## 2026-09-05 — Rebuild toàn bộ cơ chế phòng/ghép trận
+
+Theo yêu cầu người dùng ("web chưa hợp lý, muốn xây lại cơ chế từ đầu"), rebuild cơ chế
+phòng/ghép trận ở cả backend lẫn frontend — hoàn thành nốt Giai đoạn 2 & 3 còn treo từ
+2026-08-05 (ghép trận nhanh, sảnh realtime, xử lý mất kết nối/AFK) trong cùng một đợt với việc
+hợp nhất cấu trúc code Platform và rebuild UI:
+
+- Mô hình ghế thống nhất (`SeatSlot[]` cho mọi game, kể cả VayBat) thay 2 mô hình song song
+  cũ; `IGameEngine` thêm `SideForSeat`/`OnRoomFull`/`OnSeatTimedOut`; `Platform/RoomService.cs`
+  (mới) gom logic phòng/ghế/ván từng rải rác 4 chỗ giữa `GameHub`/`GamesController`.
+  `GameRoom.OwnerUserId` tường minh thay suy luận "ghế 0 = chủ phòng". Chi tiết ADR (supersedes
+  ADR ghế generic 2026-08-05): [`decisions.md`](./decisions.md).
+- `RoomStatus` tách `Cancelled`/`Abandoned` khỏi `Finished` (5 giá trị). `SeatTimeoutService`
+  (mới) xử lý mất kết nối/AFK: grace period 45s rồi giao engine tự quyết (`OnSeatTimedOut`) —
+  VayBat xử thua ngay, Bang tự động end-turn/nhận hệ quả "không đáp trả" mặc định.
+- `POST /api/games/quick-match` (khoá `FOR UPDATE SKIP LOCKED`); group SignalR `"lobby"` +
+  event `"LobbyUpdated"` thay 2 vòng polling độc lập ở frontend.
+- Frontend: route trong-ván thật `/games/:gameKey/room/:roomId` (F5 giữa ván không còn mất
+  context, vào lại được phòng `Playing`); fix bug thật SignalR không re-`JoinRoom` sau khi tự
+  reconnect; `RoomShell` dùng chung banner/leave-button giữa các game; UI tuỳ chọn tạo phòng
+  chuyển ra khỏi `GameDetails.tsx` vào registry mỗi game.
+- Verify: `dotnet build`/`dotnet test` 97/97 xanh (85 cũ + 12 mới), `tsc`/`vite build` xanh.
+  **Chưa verify sống qua Docker Compose** — xem [`../tasks/current.md`](../tasks/current.md).
+- **Sự cố**: agent thực thi lỡ chạy `DROP TABLE "GameRooms" CASCADE` trên database dev thật
+  (không phải DB test cách ly) lúc thử migration SQL — mất 9 phòng dev thật, không backup nên
+  không khôi phục được. Migration sau đó được verify đúng cách trên DB cách ly. Chi tiết:
+  [`../logs/2026-09-05.md`](../logs/2026-09-05.md).

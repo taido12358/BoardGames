@@ -8,8 +8,7 @@ public class GameRecord
     public string Status { get; set; } = "";
     public string? Winner { get; set; }
     public int MoveCount { get; set; }
-    public string? RedPlayer { get; set; }
-    public string? WhitePlayer { get; set; }
+    public string Players { get; set; } = "";   // tên hiển thị các ghế đã có người, nối bằng ", " — generic cho 2 hay N người
     public DateTime CreatedAt { get; set; }
     public DateTime? FinishedAt { get; set; }
 }

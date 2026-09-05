@@ -58,4 +58,23 @@ public class VayBatEngine : IGameEngine
         VayBatRules.ApplyMove(state, adj, move.PieceId, move.To);
         return new MoveOutcome(true, null, GameJson.Serialize(state), state.Winner);
     }
+
+    /// <summary>Ghế 0 = RED (đi trước), ghế 1 = WHITE — side cố định, không đổi theo Platform.</summary>
+    public string SideForSeat(int seatIndex) => seatIndex == 0 ? "RED" : "WHITE";
+
+    /// <summary>
+    /// 2 người, một bên rớt mạng quá lâu giữa ván là không thể tiếp tục — xử thua ngay
+    /// (không có "bỏ lượt" hợp lý cho game chỉ 2 người) trừ khi ván đã có kết quả.
+    /// </summary>
+    public MoveOutcome OnSeatTimedOut(string mapJson, string stateJson, string side)
+    {
+        GameState state;
+        try { state = GameJson.Deserialize<GameState>(stateJson); }
+        catch { return new MoveOutcome(false, null, stateJson, null); }
+
+        if (state.Winner is not null) return new MoveOutcome(false, null, stateJson, null);
+
+        state.Winner = side == "RED" ? "WHITE" : "RED";
+        return new MoveOutcome(true, null, GameJson.Serialize(state), state.Winner);
+    }
 }

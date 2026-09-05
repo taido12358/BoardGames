@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useGameStore } from "../platform/gameStore";
-import { useGameRoomHubActions } from "../platform/GameRoomHubContext";
-import { getGameInstructions, getGameMetadata } from "../platform/gameRegistry";
+import { useLobbyHub } from "../platform/useLobbyHub";
+import { getGameInstructions, getGameMetadata, getCreateOptionsForm } from "../platform/gameRegistry";
 import GameInstructions from "./GameInstructions";
 
 const ARTWORK_BG: Record<string, string> = {
@@ -15,26 +15,26 @@ export default function GameDetails() {
   const { gameKey = "" } = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { joinRoom } = useGameRoomHubActions();
   const {
     engines, enginesLoading, rooms, playerName, error,
-    fetchEngines, fetchRooms, createRoom, cancelRoom, setError,
+    fetchEngines, fetchRooms, createRoom, cancelRoom, quickMatch, setError,
   } = useGameStore();
 
+  useLobbyHub();
+
   const [creating, setCreating] = useState(false);
+  const [matching, setMatching] = useState(false);
   const [cancelingId, setCancelingId] = useState<string | null>(null);
-  const [maxTurns, setMaxTurns] = useState(15);
-  const [seatCount, setSeatCount] = useState(4);
+  const [options, setOptions] = useState<Record<string, unknown>>({});
   const roomPanelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (engines.length === 0) fetchEngines();
   }, [engines.length, fetchEngines]);
 
+  // Chỉ paint lần đầu — cập nhật realtime sau đó qua useLobbyHub (group SignalR "lobby"), không polling.
   useEffect(() => {
     fetchRooms(gameKey);
-    const t = setInterval(() => fetchRooms(gameKey), 3000);
-    return () => clearInterval(t);
   }, [gameKey, fetchRooms]);
 
   useEffect(() => {
@@ -46,28 +46,39 @@ export default function GameDetails() {
   const engine = engines.find((e) => e.key === gameKey);
   const metadata = engine ? getGameMetadata(engine) : null;
   const instructions = useMemo(() => getGameInstructions(gameKey), [gameKey]);
-  const waitingRooms = rooms.filter((r) => r.gameKey === gameKey && r.status === "Waiting");
+  const CreateOptionsForm = getCreateOptionsForm(gameKey);
+  const gameRooms = useMemo(() => rooms.filter((r) => r.gameKey === gameKey), [rooms, gameKey]);
+  const waitingRooms = gameRooms.filter((r) => r.status === "Waiting");
+  const myActiveRoom = gameRooms.find((r) => r.status === "Playing" && r.isMine);
 
   const scrollToRoomPanel = () => roomPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
 
   async function handleCreate() {
     setError("");
     setCreating(true);
-    const options =
-      gameKey === "vaybat" ? { maxRedTurns: maxTurns }
-      : gameKey === "bang" ? { seatCount }
-      : {};
     const room = await createRoom(gameKey, options);
     setCreating(false);
-    if (room) joinRoom(room.id);
+    if (room) navigate(`/games/${gameKey}/room/${room.id}`);
+  }
+
+  async function handleQuickMatch() {
+    setError("");
+    setMatching(true);
+    const room = await quickMatch(gameKey);
+    setMatching(false);
+    if (room) navigate(`/games/${gameKey}/room/${room.id}`);
   }
 
   async function handleCancel(roomId: string) {
     setError("");
     setCancelingId(roomId);
-    const ok = await cancelRoom(roomId);
+    await cancelRoom(roomId);
     setCancelingId(null);
-    if (ok) fetchRooms(gameKey); // dọn khỏi danh sách ngay, không đợi vòng poll tiếp theo
+    // Không cần fetchRooms thủ công nữa — huỷ thành công server tự phát LobbyUpdated qua SignalR.
+  }
+
+  function handleJoin(roomId: string) {
+    navigate(`/games/${gameKey}/room/${roomId}`);
   }
 
   if (enginesLoading || (!engine && engines.length === 0)) {
@@ -152,6 +163,16 @@ export default function GameDetails() {
         <GameInstructions sections={instructions} />
       </div>
 
+      {/* Vào lại ván đang chơi — nếu người dùng có 1 phòng "Playing" của chính mình */}
+      {myActiveRoom && (
+        <button
+          onClick={() => handleJoin(myActiveRoom.id)}
+          className="w-full rounded-xl bg-indigo-700 hover:bg-indigo-600 px-4 py-3 font-bold text-white transition-colors"
+        >
+          ↩ VÀO LẠI VÁN ĐANG CHƠI
+        </button>
+      )}
+
       {/* Tạo phòng / Vào phòng */}
       <div ref={roomPanelRef} className="space-y-3">
         <h2 className="text-lg font-bold text-amber-100">🚪 CHƠI {metadata.title}</h2>
@@ -160,38 +181,7 @@ export default function GameDetails() {
           <h3 className="text-sm font-semibold text-amber-200">TẠO PHÒNG MỚI</h3>
           <p className="text-xs text-slate-400">Bạn sẽ vào phòng với tên: <span className="text-slate-200 font-medium">{playerName}</span></p>
 
-          {gameKey === "vaybat" && (
-            <div>
-              <label className="text-slate-400 text-xs uppercase tracking-wide">Giới hạn lượt Đỏ</label>
-              <input
-                type="number" min={1}
-                value={maxTurns}
-                onChange={(e) => setMaxTurns(Math.max(1, parseInt(e.target.value) || 1))}
-                className="w-full mt-1 rounded-xl bg-slate-800 border border-slate-700 px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-amber-500"
-              />
-            </div>
-          )}
-
-          {gameKey === "bang" && (
-            <div>
-              <label className="text-slate-400 text-xs uppercase tracking-wide">Số người tối đa</label>
-              <div className="mt-1 grid grid-cols-5 gap-1.5">
-                {[4, 5, 6, 7, 8].map((n) => (
-                  <button
-                    key={n}
-                    type="button"
-                    onClick={() => setSeatCount(n)}
-                    aria-pressed={seatCount === n}
-                    className={`rounded-lg py-2 text-sm font-semibold transition-colors ${
-                      seatCount === n ? "bg-amber-700 text-white" : "bg-slate-800 text-slate-300 hover:bg-slate-700"
-                    }`}
-                  >
-                    {n}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
+          {CreateOptionsForm && <CreateOptionsForm value={options} onChange={setOptions} />}
 
           <button
             onClick={handleCreate}
@@ -199,6 +189,14 @@ export default function GameDetails() {
             className="w-full rounded-xl bg-emerald-700 hover:bg-emerald-600 disabled:opacity-50 px-4 py-3 font-bold text-white transition-colors"
           >
             {creating ? "ĐANG TẠO…" : "➕ TẠO PHÒNG"}
+          </button>
+
+          <button
+            onClick={handleQuickMatch}
+            disabled={matching}
+            className="w-full rounded-xl bg-amber-700 hover:bg-amber-600 disabled:opacity-50 px-4 py-3 font-bold text-white transition-colors"
+          >
+            {matching ? "ĐANG TÌM TRẬN…" : "⚡ TÌM TRẬN NHANH"}
           </button>
         </div>
 
@@ -211,22 +209,18 @@ export default function GameDetails() {
           )}
           <ul className="space-y-2">
             {waitingRooms.map((r) => {
-              const occupied = r.seatCount > 2 ? r.seats.filter(Boolean).length : [r.redPlayer, r.whitePlayer].filter(Boolean).length;
-              const total = r.seatCount > 2 ? r.seatCount : 2;
-              const owner = r.seatCount > 2 ? r.seats.find(Boolean) : r.redPlayer;
-              // Chỉ là GỢI Ý hiển thị (so tên) — quyền huỷ THẬT được server kiểm theo JWT,
-              // trùng tên hiển thị không đồng nghĩa được phép huỷ nếu không đúng chủ phòng.
-              const isMine = owner === playerName;
+              const occupied = r.seats.filter((s) => s.displayName !== null).length;
+              const owner = r.seats.find((s) => s.displayName !== null)?.displayName ?? null;
               return (
                 <li key={r.id} className="bg-slate-800/60 rounded-xl p-3 flex items-center justify-between gap-2">
                   <div className="min-w-0">
                     <div className="text-sm text-slate-200 truncate">
                       Phòng của {owner ?? "Ẩn danh"}
                     </div>
-                    <div className="text-xs text-slate-500">👥 {occupied} / {total} · Trạng thái: Đang chờ</div>
+                    <div className="text-xs text-slate-500">👥 {occupied} / {r.seatCount} · Trạng thái: Đang chờ</div>
                   </div>
                   <div className="shrink-0 flex items-center gap-1.5">
-                    {isMine && (
+                    {r.isMine && (
                       <button
                         onClick={() => handleCancel(r.id)}
                         disabled={cancelingId === r.id}
@@ -237,7 +231,7 @@ export default function GameDetails() {
                       </button>
                     )}
                     <button
-                      onClick={() => joinRoom(r.id)}
+                      onClick={() => handleJoin(r.id)}
                       className="rounded-lg bg-indigo-600 hover:bg-indigo-500 px-3.5 py-2 text-sm font-semibold text-white"
                     >
                       VÀO PHÒNG

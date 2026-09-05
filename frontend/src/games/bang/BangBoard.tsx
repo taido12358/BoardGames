@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useGameStore } from "../../platform/gameStore";
+import { ConnectionBanner, DisconnectBadge, LeaveRoomButton, RoomErrorBanner } from "../../platform/RoomShell";
 import PlayerSeat from "./components/PlayerSeat";
 import LocalPlayerPanel from "./components/LocalPlayerPanel";
 import HandFan from "./components/HandFan";
@@ -51,7 +52,7 @@ function isValidTarget(kind: CardKind, p: BangPublicPlayer, isMe: boolean): bool
 }
 
 export default function BangBoard({ makeMove, onLeave }: Props) {
-  const { room, error } = useGameStore();
+  const { room, error, connectionState } = useGameStore();
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
 
   if (!room) return null;
@@ -60,25 +61,24 @@ export default function BangBoard({ makeMove, onLeave }: Props) {
   if (state.phase === "waitingForPlayers" || room.status === "Waiting") {
     return (
       <div className="flex flex-col gap-3 w-full max-w-md mx-auto">
+        <ConnectionBanner connectionState={connectionState} />
         <div className="bg-slate-800 rounded-2xl p-5 text-center space-y-3">
           <div className="text-3xl">🤠</div>
           <h2 className="font-bold text-lg text-amber-300">BANG! — ĐANG CHỜ</h2>
           <p className="text-slate-400 text-sm">
-            {room.seats.filter(Boolean).length}/{room.seatCount} người chơi đã vào phòng.
+            {room.seats.filter((s) => s.displayName !== null).length}/{room.seatCount} người chơi đã vào phòng.
           </p>
           <ul className="text-sm text-slate-300 space-y-1">
-            {room.seats.map((name, i) => (
-              <li key={i} className={name ? "" : "text-slate-600"}>
-                {name ? `👤 ${name}` : `— (trống)`}
+            {room.seats.map((seat, i) => (
+              <li key={i} className={seat.displayName ? "" : "text-slate-600"}>
+                {seat.displayName ? `👤 ${seat.displayName}` : `— (trống)`}
               </li>
             ))}
           </ul>
         </div>
-        {error && <div className="rounded-xl p-2 text-center bg-red-900/40 text-red-300 text-sm">{error}</div>}
-        <button onClick={onLeave}
-          className="w-full rounded-xl bg-slate-700 hover:bg-slate-600 active:bg-slate-500 px-4 py-3 font-medium text-base transition-colors">
-          ← Rời phòng
-        </button>
+        <DisconnectBadge seats={room.seats} />
+        <RoomErrorBanner error={error} />
+        <LeaveRoomButton onLeave={onLeave} label="← Rời phòng" />
       </div>
     );
   }
@@ -141,6 +141,9 @@ export default function BangBoard({ makeMove, onLeave }: Props) {
           Thoát
         </button>
       </div>
+
+      <ConnectionBanner connectionState={connectionState} />
+      <DisconnectBadge seats={room.seats} />
 
       {isSpectator && (
         <div className="rounded-xl p-2 text-center bg-amber-900/30 text-amber-300 text-sm">
@@ -210,7 +213,7 @@ export default function BangBoard({ makeMove, onLeave }: Props) {
 
       <GameLogPanel log={state.gameLog} />
 
-      {error && <div className="rounded-xl p-2 text-center bg-red-900/40 text-red-300 text-sm">{error}</div>}
+      <RoomErrorBanner error={error} />
     </div>
   );
 }

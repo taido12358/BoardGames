@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState } from "react";
 import { useGameStore } from "../../platform/gameStore";
+import { ConnectionBanner, DisconnectBadge, LeaveRoomButton, RoomErrorBanner, RoomStatusBanner } from "../../platform/RoomShell";
 import { legalMoves, occupancy, side, type GameState, type MapDef } from "./types";
 
 interface Props {
@@ -10,7 +11,7 @@ interface Props {
 interface DragState { pieceId: string; svgX: number; svgY: number; }
 
 export default function VayBatBoard({ makeMove, onLeave }: Props) {
-  const { room, mySide, selected, setSelected, error } = useGameStore();
+  const { room, mySide, selected, setSelected, error, connectionState } = useGameStore();
   const svgRef = useRef<SVGSVGElement>(null);
   const [drag, setDrag] = useState<DragState | null>(null);
   const pressRef = useRef<DragState | null>(null);
@@ -145,16 +146,14 @@ export default function VayBatBoard({ makeMove, onLeave }: Props) {
             ⏳ Chờ đối thủ đi…
           </div>
         )}
-        {room.status === "Playing" && !mySide && (
-          <div className="mt-2 text-center text-amber-400 font-medium text-sm">
-            👁 Hai ghế đã có người — bạn đang xem, không thể đi quân
-          </div>
-        )}
         <div className="mt-1 text-center text-slate-500 text-xs">
           Phòng: <span className="font-mono">{room.id.slice(0, 8)}</span>
-          {" · "}🔴 {room.redPlayer ?? "—"} vs ⚪ {room.whitePlayer ?? "—"}
+          {" · "}🔴 {room.seats[0]?.displayName ?? "—"} vs ⚪ {room.seats[1]?.displayName ?? "—"}
         </div>
       </div>
+
+      <ConnectionBanner connectionState={connectionState} />
+      <DisconnectBadge seats={room.seats} />
 
       {/* Board */}
       <div className="bg-slate-800 rounded-2xl p-2 shadow-lg">
@@ -242,23 +241,10 @@ export default function VayBatBoard({ makeMove, onLeave }: Props) {
             : "⚪ PHE TRẮNG THẮNG — trốn thoát!"}
         </div>
       )}
-      {room.status === "Waiting" && (
-        <div className="rounded-2xl p-3 text-center bg-amber-900/30 text-amber-300 text-sm border border-amber-800/50 space-y-1">
-          <div>Đang chờ đối thủ vào phòng… (chưa đi được quân)</div>
-          <div className="text-amber-500/80 text-xs">
-            Lưu ý: người chơi thứ hai phải dùng <b>tên khác</b> — hai tab cùng trình duyệt
-            dùng chung tên nên sẽ vào lại cùng một ghế.
-          </div>
-        </div>
-      )}
-      {error && (
-        <div className="rounded-xl p-2 text-center bg-red-900/40 text-red-300 text-sm">{error}</div>
-      )}
+      <RoomStatusBanner room={room} mySide={mySide} />
+      <RoomErrorBanner error={error} />
 
-      <button onClick={onLeave}
-        className="w-full rounded-xl bg-slate-700 hover:bg-slate-600 active:bg-slate-500 px-4 py-3 font-medium text-base transition-colors">
-        ← Rời phòng
-      </button>
+      <LeaveRoomButton onLeave={onLeave} />
     </div>
   );
 }

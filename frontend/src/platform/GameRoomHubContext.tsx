@@ -2,9 +2,11 @@ import { createContext, useContext } from "react";
 
 /** Chữ ký khớp với giá trị trả về của useGameRoomHub() — xem useGameRoomHub.ts. */
 export interface GameRoomHubActions {
-  joinRoom: (roomId: string) => void;
+  joinRoom: (roomId: string) => Promise<void> | undefined;
   makeMove: (roomId: string, move: unknown) => void;
   leaveRoom: (roomId: string) => void;
+  subscribeLobby: () => Promise<void> | undefined;
+  unsubscribeLobby: () => Promise<void> | undefined;
 }
 
 // useGameRoomHub() mở MỘT kết nối SignalR (useEffect trong hook) — không được gọi hook

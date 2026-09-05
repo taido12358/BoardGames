@@ -41,8 +41,13 @@ builder.Services.AddSingleton<OpenSearchService>();
 // --- Storage: MinIO ---
 builder.Services.AddSingleton<MinioStorageService>();
 
+// --- Phòng/ghế/ván (dùng chung bởi GameHub + GamesController) ---
+builder.Services.AddScoped<RoomService>();
+
 // --- Dọn phòng "Waiting" bỏ dở quá lâu (xem StaleRoomCleanupService) ---
 builder.Services.AddHostedService<StaleRoomCleanupService>();
+// --- Xử lý ghế mất kết nối quá lâu GIỮA VÁN (xem SeatTimeoutService) ---
+builder.Services.AddHostedService<SeatTimeoutService>();
 
 // --- Game engines ---
 builder.Services.AddSingleton<IGameEngine, VayBatEngine>();
@@ -113,37 +118,93 @@ string[] schemaSqls =
         "Id"          uuid PRIMARY KEY,
         "GameKey"     text NOT NULL DEFAULT '',
         "Status"      text NOT NULL,
-        "RedPlayer"   text NULL,
-        "WhitePlayer" text NULL,
         "Winner"      text NULL,
-        "MapJson"     jsonb NOT NULL DEFAULT '{{}}'::jsonb,
-        "StateJson"   jsonb NOT NULL DEFAULT '{{}}'::jsonb,
+        "MapJson"     jsonb NOT NULL DEFAULT '{}'::jsonb,
+        "StateJson"   jsonb NOT NULL DEFAULT '{}'::jsonb,
+        "OwnerUserId" uuid NULL,
+        "SeatCount"   integer NOT NULL DEFAULT 2,
+        "SeatsJson"   jsonb NOT NULL DEFAULT '[]'::jsonb,
         "CreatedAt"   timestamp with time zone NOT NULL,
         "UpdatedAt"   timestamp with time zone NOT NULL DEFAULT now()
     )
     """,
     """ALTER TABLE "GameRooms" ADD COLUMN IF NOT EXISTS "GameKey"   text  NOT NULL DEFAULT ''""",
-    """ALTER TABLE "GameRooms" ADD COLUMN IF NOT EXISTS "MapJson"   jsonb NOT NULL DEFAULT '{{}}'::jsonb""",
-    """ALTER TABLE "GameRooms" ADD COLUMN IF NOT EXISTS "StateJson" jsonb NOT NULL DEFAULT '{{}}'::jsonb""",
+    """ALTER TABLE "GameRooms" ADD COLUMN IF NOT EXISTS "MapJson"   jsonb NOT NULL DEFAULT '{}'::jsonb""",
+    """ALTER TABLE "GameRooms" ADD COLUMN IF NOT EXISTS "StateJson" jsonb NOT NULL DEFAULT '{}'::jsonb""",
     """ALTER TABLE "GameRooms" ADD COLUMN IF NOT EXISTS "UpdatedAt" timestamp with time zone NOT NULL DEFAULT now()""",
     """ALTER TABLE "GameRooms" ADD COLUMN IF NOT EXISTS "SeatCount" integer NOT NULL DEFAULT 2""",
     """ALTER TABLE "GameRooms" ADD COLUMN IF NOT EXISTS "SeatsJson" jsonb NOT NULL DEFAULT '[]'::jsonb""",
-    """ALTER TABLE "GameRooms" ADD COLUMN IF NOT EXISTS "RedPlayerId" uuid NULL""",
-    """ALTER TABLE "GameRooms" ADD COLUMN IF NOT EXISTS "WhitePlayerId" uuid NULL""",
-    """ALTER TABLE "GameRooms" ADD COLUMN IF NOT EXISTS "SeatUserIdsJson" jsonb NOT NULL DEFAULT '[]'::jsonb""",
+    """ALTER TABLE "GameRooms" ADD COLUMN IF NOT EXISTS "OwnerUserId" uuid NULL""",
     """ALTER TABLE "GameRooms" DROP COLUMN IF EXISTS "MaxRedTurns" """,
+    // Hợp nhất mô hình ghế: RedPlayer(Id)/WhitePlayer(Id) (2 người) + SeatUserIdsJson (N người,
+    // song song SeatsJson) -> MỘT SeatsJson duy nhất (mảng SeatSlot?, xem Models/SeatSlot.cs)
+    // dùng cho MỌI game. Backfill 1 lần cho DB còn cột cũ rồi DROP hẳn — khối DO này chạy lại
+    // MỖI LẦN app khởi động (idempotent), nên guard bằng information_schema + EXECUTE động (SQL
+    // tĩnh tham chiếu cột đã bị DROP sẽ lỗi "column does not exist" ở các lần chạy sau).
+    """
+    DO $mig_seats$
+    BEGIN
+        IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='GameRooms' AND column_name='RedPlayerId') THEN
+            EXECUTE 'UPDATE "GameRooms" SET "OwnerUserId" = "RedPlayerId" WHERE "OwnerUserId" IS NULL AND "RedPlayerId" IS NOT NULL';
+
+            EXECUTE 'UPDATE "GameRooms" SET "OwnerUserId" = ("SeatUserIdsJson"->>0)::uuid
+                WHERE "OwnerUserId" IS NULL AND jsonb_array_length("SeatUserIdsJson") > 0
+                  AND ("SeatUserIdsJson"->>0) IS NOT NULL';
+
+            EXECUTE $sql$
+                UPDATE "GameRooms" SET "SeatsJson" = jsonb_build_array(
+                    CASE WHEN "RedPlayerId" IS NOT NULL THEN jsonb_build_object(
+                        'userId', "RedPlayerId", 'displayName', "RedPlayer", 'connected', true, 'lastSeenAt', "UpdatedAt")
+                        ELSE NULL END,
+                    CASE WHEN "WhitePlayerId" IS NOT NULL THEN jsonb_build_object(
+                        'userId', "WhitePlayerId", 'displayName', "WhitePlayer", 'connected', true, 'lastSeenAt', "UpdatedAt")
+                        ELSE NULL END
+                )
+                WHERE "SeatCount" = 2
+            $sql$;
+
+            EXECUTE $sql$
+                UPDATE "GameRooms" gr SET "SeatsJson" = sub.new_seats
+                FROM (
+                    SELECT g."Id",
+                        jsonb_agg(
+                            CASE WHEN uid.value = 'null'::jsonb THEN NULL
+                                 ELSE jsonb_build_object(
+                                    'userId', uid.value #>> '{}',
+                                    'displayName', nm.value #>> '{}',
+                                    'connected', true,
+                                    'lastSeenAt', g."UpdatedAt")
+                            END ORDER BY uid.ord
+                        ) AS new_seats
+                    FROM "GameRooms" g
+                    CROSS JOIN LATERAL jsonb_array_elements(g."SeatUserIdsJson") WITH ORDINALITY AS uid(value, ord)
+                    CROSS JOIN LATERAL jsonb_array_elements(g."SeatsJson") WITH ORDINALITY AS nm(value, ord2)
+                    WHERE g."SeatCount" > 2 AND uid.ord = nm.ord2
+                    GROUP BY g."Id"
+                ) sub
+                WHERE gr."Id" = sub."Id"
+            $sql$;
+        END IF;
+    END
+    $mig_seats$
+    """,
+    """ALTER TABLE "GameRooms" DROP COLUMN IF EXISTS "RedPlayer" """,
+    """ALTER TABLE "GameRooms" DROP COLUMN IF EXISTS "WhitePlayer" """,
+    """ALTER TABLE "GameRooms" DROP COLUMN IF EXISTS "RedPlayerId" """,
+    """ALTER TABLE "GameRooms" DROP COLUMN IF EXISTS "WhitePlayerId" """,
+    """ALTER TABLE "GameRooms" DROP COLUMN IF EXISTS "SeatUserIdsJson" """,
     """
     CREATE TABLE IF NOT EXISTS "GameMoves" (
         "Id"         bigint GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
         "RoomId"     uuid NOT NULL,
         "MoveNumber" integer NOT NULL DEFAULT 0,
         "Side"       text NOT NULL DEFAULT '',
-        "MoveJson"   jsonb NOT NULL DEFAULT '{{}}'::jsonb,
+        "MoveJson"   jsonb NOT NULL DEFAULT '{}'::jsonb,
         "CreatedAt"  timestamp with time zone NOT NULL
     )
     """,
     """ALTER TABLE "GameMoves" DROP COLUMN IF EXISTS "PieceId" """,
-    """ALTER TABLE "GameMoves" ADD COLUMN IF NOT EXISTS "MoveJson"   jsonb   NOT NULL DEFAULT '{{}}'::jsonb""",
+    """ALTER TABLE "GameMoves" ADD COLUMN IF NOT EXISTS "MoveJson"   jsonb   NOT NULL DEFAULT '{}'::jsonb""",
     """ALTER TABLE "GameMoves" ADD COLUMN IF NOT EXISTS "Side"       text    NOT NULL DEFAULT ''""",
     """ALTER TABLE "GameMoves" ADD COLUMN IF NOT EXISTS "MoveNumber" integer NOT NULL DEFAULT 0""",
     """CREATE INDEX IF NOT EXISTS "IX_GameMoves_RoomId_MoveNumber" ON "GameMoves" ("RoomId", "MoveNumber")""",

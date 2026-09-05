@@ -1,0 +1,26 @@
+import type { CreateOptionsFormProps } from "../../platform/gameLibraryTypes";
+
+/** UI tuỳ chọn tạo phòng riêng cho BANG! — chuyển từ GameDetails.tsx (hard-code trước đây) sang đây. */
+export default function BangCreateOptions({ value, onChange }: CreateOptionsFormProps) {
+  const seatCount = typeof value.seatCount === "number" ? value.seatCount : 4;
+  return (
+    <div>
+      <label className="text-slate-400 text-xs uppercase tracking-wide">Số người tối đa</label>
+      <div className="mt-1 grid grid-cols-5 gap-1.5">
+        {[4, 5, 6, 7, 8].map((n) => (
+          <button
+            key={n}
+            type="button"
+            onClick={() => onChange({ ...value, seatCount: n })}
+            aria-pressed={seatCount === n}
+            className={`rounded-lg py-2 text-sm font-semibold transition-colors ${
+              seatCount === n ? "bg-amber-700 text-white" : "bg-slate-800 text-slate-300 hover:bg-slate-700"
+            }`}
+          >
+            {n}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}

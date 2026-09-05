@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useGameStore } from "../platform/gameStore";
+import { useLobbyHub } from "../platform/useLobbyHub";
 import { getGameMetadata } from "../platform/gameRegistry";
 import type { GameMetadata } from "../platform/gameLibraryTypes";
 import GameCard from "./GameCard";
@@ -35,11 +36,12 @@ export default function GameLibrary() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
 
+  useLobbyHub();
+
   useEffect(() => {
     fetchEngines();
+    // Chỉ paint lần đầu — cập nhật realtime sau đó qua useLobbyHub (group SignalR "lobby"), không polling.
     fetchRooms();
-    const t = setInterval(() => fetchRooms(), 4000);
-    return () => clearInterval(t);
   }, [fetchEngines, fetchRooms]);
 
   const allMetadata = useMemo(() => engines.map(getGameMetadata), [engines]);
