@@ -119,8 +119,8 @@ string[] schemaSqls =
         "GameKey"     text NOT NULL DEFAULT '',
         "Status"      text NOT NULL,
         "Winner"      text NULL,
-        "MapJson"     jsonb NOT NULL DEFAULT '{}'::jsonb,
-        "StateJson"   jsonb NOT NULL DEFAULT '{}'::jsonb,
+        "MapJson"     jsonb NOT NULL DEFAULT '{{}}'::jsonb,
+        "StateJson"   jsonb NOT NULL DEFAULT '{{}}'::jsonb,
         "OwnerUserId" uuid NULL,
         "SeatCount"   integer NOT NULL DEFAULT 2,
         "SeatsJson"   jsonb NOT NULL DEFAULT '[]'::jsonb,
@@ -129,8 +129,8 @@ string[] schemaSqls =
     )
     """,
     """ALTER TABLE "GameRooms" ADD COLUMN IF NOT EXISTS "GameKey"   text  NOT NULL DEFAULT ''""",
-    """ALTER TABLE "GameRooms" ADD COLUMN IF NOT EXISTS "MapJson"   jsonb NOT NULL DEFAULT '{}'::jsonb""",
-    """ALTER TABLE "GameRooms" ADD COLUMN IF NOT EXISTS "StateJson" jsonb NOT NULL DEFAULT '{}'::jsonb""",
+    """ALTER TABLE "GameRooms" ADD COLUMN IF NOT EXISTS "MapJson"   jsonb NOT NULL DEFAULT '{{}}'::jsonb""",
+    """ALTER TABLE "GameRooms" ADD COLUMN IF NOT EXISTS "StateJson" jsonb NOT NULL DEFAULT '{{}}'::jsonb""",
     """ALTER TABLE "GameRooms" ADD COLUMN IF NOT EXISTS "UpdatedAt" timestamp with time zone NOT NULL DEFAULT now()""",
     """ALTER TABLE "GameRooms" ADD COLUMN IF NOT EXISTS "SeatCount" integer NOT NULL DEFAULT 2""",
     """ALTER TABLE "GameRooms" ADD COLUMN IF NOT EXISTS "SeatsJson" jsonb NOT NULL DEFAULT '[]'::jsonb""",
@@ -170,8 +170,8 @@ string[] schemaSqls =
                         jsonb_agg(
                             CASE WHEN uid.value = 'null'::jsonb THEN NULL
                                  ELSE jsonb_build_object(
-                                    'userId', uid.value #>> '{}',
-                                    'displayName', nm.value #>> '{}',
+                                    'userId', uid.value #>> '{{}}',
+                                    'displayName', nm.value #>> '{{}}',
                                     'connected', true,
                                     'lastSeenAt', g."UpdatedAt")
                             END ORDER BY uid.ord
@@ -199,12 +199,12 @@ string[] schemaSqls =
         "RoomId"     uuid NOT NULL,
         "MoveNumber" integer NOT NULL DEFAULT 0,
         "Side"       text NOT NULL DEFAULT '',
-        "MoveJson"   jsonb NOT NULL DEFAULT '{}'::jsonb,
+        "MoveJson"   jsonb NOT NULL DEFAULT '{{}}'::jsonb,
         "CreatedAt"  timestamp with time zone NOT NULL
     )
     """,
     """ALTER TABLE "GameMoves" DROP COLUMN IF EXISTS "PieceId" """,
-    """ALTER TABLE "GameMoves" ADD COLUMN IF NOT EXISTS "MoveJson"   jsonb   NOT NULL DEFAULT '{}'::jsonb""",
+    """ALTER TABLE "GameMoves" ADD COLUMN IF NOT EXISTS "MoveJson"   jsonb   NOT NULL DEFAULT '{{}}'::jsonb""",
     """ALTER TABLE "GameMoves" ADD COLUMN IF NOT EXISTS "Side"       text    NOT NULL DEFAULT ''""",
     """ALTER TABLE "GameMoves" ADD COLUMN IF NOT EXISTS "MoveNumber" integer NOT NULL DEFAULT 0""",
     """CREATE INDEX IF NOT EXISTS "IX_GameMoves_RoomId_MoveNumber" ON "GameMoves" ("RoomId", "MoveNumber")""",
