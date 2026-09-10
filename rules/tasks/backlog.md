@@ -31,8 +31,11 @@ Western gốc theo `van-de.md`). Chi tiết: [`../history/milestones.md`](../his
 **Còn treo lại từ quyết định theme:** asset 12-cung-hoàng-đạo đã commit sẵn ở
 `frontend/public/assets/games/zodiac/` (24 icon nam/nữ theo 12 cung + khung thư mục
 equipment/shop cards/crates/carts/dice/effects/tokens) **không được dùng** cho BANG! —
-người dùng chọn theme Western gốc theo spec thay vì reskin zodiac. Asset này vẫn còn đó,
-chưa gắn với game nào; có thể dùng cho game thứ ba hoặc reskin BANG! sau này nếu muốn.
+người dùng chọn theme Western gốc theo spec thay vì reskin zodiac. Game thứ ba (Ô Ăn Quan,
+2026-09-11) CŨNG không dùng asset này (dùng CSS/số quân thuần, giống VayBat/Bang — theo đúng
+tinh thần "không dùng artwork bản quyền" nhất quán trong repo, và bộ asset này không hợp theme
+dân gian VN của Ô Ăn Quan). Asset vẫn còn đó, chưa gắn với game nào; có thể dùng cho game thứ tư
+hoặc reskin sau này nếu muốn.
 
 **Đơn giản hoá có chủ đích so với spec/luật gốc** (không phải bug — xem chú thích đầu
 `Games/Bang/BangRules.cs`):
@@ -64,6 +67,27 @@ chưa gắn với game nào; có thể dùng cho game thứ ba hoặc reskin BAN
   chuỗi tên"). Dù chỉ định bật ở Development, chủ động xây lại một dạng bypass tương tự (kể cả
   có gate `IsDevelopment()`) là việc có rủi ro bảo mật thật nếu gate sai — nên HỎI XÁC NHẬN người
   dùng trước khi làm, không tự quyết như các việc UI/tính năng thường khác.
+
+## Game thứ ba — Ô Ăn Quan — ĐÃ LÀM (2026-09-11)
+
+Trò chơi dân gian Việt Nam (`gameKey: "oanquan"`, 2 người, bàn 12 ô: 10 ô dân + 2 ô quan). Chi
+tiết đầy đủ: [`../history/milestones.md`](../history/milestones.md), ADR về lựa chọn luật khi
+nguồn dân gian có dị bản: [`../history/decisions.md`](../history/decisions.md).
+
+**Đơn giản hoá có chủ đích so với luật gốc** (không phải bug — xem chú thích đầu
+`Games/OAnQuan/OAnQuanRules.cs` và ADR trong `decisions.md`):
+- Chỉ ăn được 1 lần mỗi lượt — không hỗ trợ "ăn chuỗi/ăn liên hoàn" nhiều ô liên tiếp trong cùng
+  1 lượt, vì các nguồn tra cứu không thống nhất mô tả chính xác cơ chế này; chọn bản chắc chắn
+  đúng (chỉ 1 lần ăn) thay vì tự đoán một cơ chế có rủi ro sai luật dân gian quen thuộc.
+- Quân "quan" ban đầu = 10 quân (một biến thể phổ biến; biến thể khác dùng 5).
+- Không dùng asset 12-cung-hoàng-đạo có sẵn trong repo — dùng CSS/số quân thuần (giống
+  VayBat/Bang), vừa nhất quán "không dùng artwork bản quyền", vừa không hợp theme dân gian VN.
+- Không có `CreateOptions.tsx` (không có tuỳ chọn tạo phòng riêng — bàn cờ luôn cố định, không
+  như `maxRedTurns` của VayBat hay số ghế của Bang).
+- **CHƯA live-test qua Chrome/Docker Compose** — chỉ verify bằng `dotnet build`/`dotnet test`
+  (18 test luật thuần mới, tất cả pass) + `npm run lint`/`tsc`/`vite build`. Đây là game MỚI
+  (rủi ro cao hơn một thay đổi UI nhỏ trên game đã có) nên nên ưu tiên live-test 2 client thật
+  khi có dịp (xem `rules/tasks/current.md` mục "Ghi chú môi trường").
 
 ## Thư viện trò chơi — ĐÃ LÀM (2026-08-05)
 

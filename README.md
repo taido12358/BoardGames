@@ -1,10 +1,14 @@
-# 🎲 BoardGame — Hello World
+# 🎲 BoardGame
 
-Mẫu **"hello world"** minh hoạ đầy đủ hạ tầng công nghệ của dự án. Một greeting
-được tạo ra sẽ đi qua toàn bộ stack:
+Nền tảng boardgame full-stack dùng chung — mỗi trò chơi cắm vào Platform generic qua một
+interface duy nhất (`IGameEngine`), nên thêm game mới không phải sửa hạ tầng phòng/ghép trận/
+realtime/lưu trữ. Hiện có 3 game: **Vây Bắt Trên Đồ Thị**, **BANG!**, **Ô Ăn Quan**.
 
-> **PostgreSQL** (lưu) → **Redis** (cache) → **RabbitMQ** (event) →
-> **OpenSearch** (index) → **MinIO** (artifact) → **SignalR** (realtime tới UI)
+Luồng một nước đi đi qua toàn bộ hạ tầng:
+
+> Client gửi ý định đi → **Backend (C# Rule Engine validate)** → **PostgreSQL** (lưu room +
+> replay) → **Redis** (cache state) → **RabbitMQ** (event) → *(khi ván kết thúc)* **OpenSearch**
+> (index lịch sử) + **MinIO** (lưu replay) → **SignalR** (broadcast state realtime) → **React** board.
 
 ## Công nghệ
 
@@ -36,29 +40,31 @@ BoardGame/
 ├── backend/                    # ASP.NET Core Web API
 │   └── BoardGame.Api/
 │       ├── Program.cs          # DI + đăng ký engine của từng game
-│       ├── Data/               # AppDbContext (EF Core / PostgreSQL)
+│       ├── Data/               # AppDbContext (EF Core / PostgreSQL) + SchemaBootstrapper.cs (raw SQL)
 │       ├── Services/           # Redis, RabbitMQ, OpenSearch, MinIO (dùng chung)
-│       ├── Controllers/        # HelloController (demo hạ tầng)
-│       ├── Models/             # Greeting (demo)
 │       ├── Platform/           # ❖ Lõi dùng chung cho MỌI game
 │       │   ├── Abstractions/   #   IGameEngine, GameEngineRegistry, MoveOutcome
 │       │   ├── Models/         #   GameRoom, GameMove, GameRecord (generic, JSONB)
+│       │   ├── Auth/           #   Đăng nhập OTP qua email, JWT cookie HttpOnly
+│       │   ├── RoomService.cs  #   Toàn bộ logic phòng/ghế/ván (join/create/cancel/quick-match)
 │       │   ├── GamesController.cs  # REST lobby (game-agnostic)
-│       │   ├── GameHub.cs      #   SignalR realtime (dispatch theo gameKey)
+│       │   ├── AdminController.cs  # Trang quản trị read-only (role "Admin" qua JWT claim)
+│       │   ├── GameHub.cs      #   SignalR realtime (dispatch theo gameKey, chat, rematch)
 │       │   ├── RoomDto.cs / GameJson.cs
 │       └── Games/              # ❖ Mỗi game một thư mục tự chứa
-│           └── VayBat/         #   game001
-│               ├── VayBatTypes.cs   # Map/State/Move
-│               ├── VayBatRules.cs   # luật thuần (đã test)
-│               └── VayBatEngine.cs  # adapter implement IGameEngine
+│           ├── VayBat/         #   game 1 — 2 người, không thông tin ẩn
+│           │   ├── VayBatTypes.cs   # Map/State/Move
+│           │   ├── VayBatRules.cs   # luật thuần (đã test)
+│           │   └── VayBatEngine.cs  # adapter implement IGameEngine
+│           ├── Bang/           #   game 2 — 4-8 người, hidden-role
+│           └── OAnQuan/        #   game 3 — 2 người, dân gian Việt Nam
 ├── frontend/                   # React + TypeScript + Vite
 │   └── src/
 │       ├── App.tsx
-│       ├── platform/           # ❖ store/hub/lobby/types dùng chung
+│       ├── platform/           # ❖ store/hub/lobby/chat/types dùng chung
 │       ├── games/              # ❖ mỗi game một thư mục
-│       │   └── vaybat/         #   types.ts + VayBatBoard.tsx
-│       ├── components/         # GameView (route theo gameKey)
-│       ├── store/ · hooks/     # helloStore, useGameHub (demo)
+│       │   ├── vaybat/  bang/  oanquan/
+│       ├── components/         # GameLibrary/GameDetails/RoomRoute/AdminPage (route theo gameKey)
 └── k8s/                        # Manifests Kubernetes (không đổi)
 ```
 
@@ -66,8 +72,8 @@ BoardGame/
 1. **Backend** — tạo `Games/<Tên>/`: định nghĩa Map/State/Move, viết luật thuần,
    và một lớp `…Engine : IGameEngine`. Đăng ký 1 dòng ở `Program.cs`:
    `builder.Services.AddSingleton<IGameEngine, TenEngine>();`
-2. **Frontend** — tạo `games/<ten>/` (types + Board component) và thêm 1 nhánh
-   `case "<key>"` trong `components/GameView.tsx`.
+2. **Frontend** — tạo `games/<ten>/` (types + metadata.ts + Board component), đăng ký vào
+   `platform/gameRegistry.ts`, thêm 1 nhánh `case "<key>"` trong `components/RoomRoute.tsx`.
 
 Platform (room, lobby, hub, replay, persistence) **không cần đụng tới**.
 
@@ -101,29 +107,9 @@ npm install
 npm run dev       # http://localhost:5173
 ```
 
-## Thử nghiệm API
-
-```bash
-# Tạo greeting (đi qua toàn bộ stack)
-curl -X POST http://localhost:5000/api/hello \
-  -H "Content-Type: application/json" \
-  -d '{"message":"Xin chào BoardGame!"}'
-
-# Lấy greeting mới nhất (ưu tiên Redis)
-curl http://localhost:5000/api/hello
-
-# Tìm kiếm full-text (OpenSearch)
-curl "http://localhost:5000/api/hello/search?q=chào"
-```
-
 ## 🎯 Game 001 — Vây Bắt Trên Đồ Thị (online, server-authoritative)
 
-Game thật đầu tiên, chạy xuyên suốt toàn bộ hạ tầng giống mẫu Hello World:
-
-> Client gửi ý định đi → **Backend (C# Rule Engine validate)** → **PostgreSQL**
-> (room + replay) → **Redis** (cache state) → **RabbitMQ** (event) → *(khi kết
-> thúc)* **OpenSearch** (index) + **MinIO** (replay) → **SignalR** (broadcast
-> state cho cả phòng) → **React** board.
+Game thật đầu tiên, chạy xuyên suốt toàn bộ hạ tầng (xem luồng ở đầu file).
 
 **Rule Engine chạy ở server** (`backend/.../Games/VayBat/VayBatRules.cs`) — chống
 gian lận và đảm bảo tất định. Client chỉ có bản engine "nhẹ" để gợi ý nước đi
@@ -136,32 +122,31 @@ gian lận và đảm bảo tất định. Client chỉ có bản engine "nhẹ"
 - **Trắng thắng**: sống sót qua X lượt Đỏ, hoặc Đỏ rơi vào stalemate.
 
 ### Cách thử
-1. Mở 2 tab trình duyệt tại http://localhost:5173 (tab Game).
-2. Tab 1: đặt tên → **Tạo phòng** (bạn cầm Đỏ).
-3. Tab 2: đặt tên khác → bấm **Vào** phòng đó (bạn cầm Trắng) → trận bắt đầu.
-4. Click quân của mình khi tới lượt → các đỉnh đi được sáng xanh → click để đi.
-
-> Bản demo offline 1 file (không cần backend, có cả AI để test một mình):
-> `taido/game001.html`.
+1. Mở 2 tab trình duyệt tại http://localhost:5173, mỗi tab đăng nhập bằng một email khác nhau
+   (đăng nhập không mật khẩu — nhập email, nhận mã OTP 6 số qua SMTP hoặc log backend nếu chưa
+   cấu hình SMTP, xem `.env.example`).
+2. Tab 1: vào Thư viện trò chơi → chọn **Vây Bắt Trên Đồ Thị** → **Tạo phòng** (bạn cầm Đỏ).
+3. Tab 2: vào cùng phòng đó (bạn cầm Trắng) → trận bắt đầu.
+4. Click quân của mình khi tới lượt → các đỉnh đi được sáng xanh → click để đi (hoặc kéo-thả).
 
 ### API (lobby — generic cho mọi game)
+Toàn bộ endpoint dưới đây yêu cầu đăng nhập (JWT cookie `HttpOnly` — đăng nhập qua UI, hoặc gọi
+`POST /api/auth/request-otp` + `POST /api/auth/verify-otp` rồi dùng `-b`/`-c` của curl để giữ
+cookie). Danh tính người chơi luôn lấy từ token, không nhận `playerName` từ client.
+
 ```bash
 curl http://localhost:5000/api/games/engines    # danh sách game được hỗ trợ
 
-# Tạo phòng (options tuỳ game; Vây Bắt dùng maxRedTurns)
-curl -X POST http://localhost:5000/api/games -H "Content-Type: application/json" \
-  -d '{"gameKey":"vaybat","options":{"maxRedTurns":15},"playerName":"An"}'
+# Tạo phòng (options tuỳ game; Vây Bắt dùng maxRedTurns) — cần cookie đăng nhập, xem trên
+curl -X POST http://localhost:5000/api/games -H "Content-Type: application/json" -b cookies.txt \
+  -d '{"gameKey":"vaybat","options":{"maxRedTurns":15}}'
 
-curl http://localhost:5000/api/games            # danh sách phòng đang mở
-curl "http://localhost:5000/api/games/search?q=RED"  # tìm lịch sử ván đã xong
+curl -b cookies.txt http://localhost:5000/api/games            # danh sách phòng đang mở
+curl -b cookies.txt "http://localhost:5000/api/games/search?q=RED"  # tìm lịch sử ván đã xong
 ```
-Nước đi realtime qua SignalR hub `/hubs/game`: `JoinRoom(roomId, name)`,
-`MakeMove(roomId, moveJson, name)` (moveJson tuỳ game, vd. `{"pieceId":"R0","to":5}`),
-`LeaveRoom(roomId)`.
-
-> ⚠️ **Schema DB đã đổi** khi tách Platform/Games (bảng `GameRooms`/`GameMoves`
-> thành generic). Nếu trước đó bạn đã chạy bản cũ, hãy reset volume một lần:
-> `docker compose down -v` rồi `docker compose up --build`.
+Nước đi realtime qua SignalR hub `/hubs/game` (cookie tự gửi kèm): `JoinRoom(roomId)`,
+`MakeMove(roomId, moveJson)` (moveJson tuỳ game, vd. `{"pieceId":"R0","to":5}`),
+`LeaveRoom(roomId)`, `SendChatMessage(roomId, text)`.
 
 ## 🤠 Game 002 — BANG! (hidden-role, 4-8 người chơi, server-authoritative)
 
@@ -192,8 +177,9 @@ bài thật). Tích hợp vào ĐÚNG kiến trúc Platform hiện có, không t
 
 ### Cách thử
 
-1. Mở 4-8 tab trình duyệt (hoặc profile khác nhau) tại http://localhost:5173.
-2. Mỗi tab: đăng nhập, đặt tên → chọn game **BANG!**, chọn số người chơi → **Tạo phòng**
+1. Mở 4-8 tab trình duyệt (hoặc profile khác nhau) tại http://localhost:5173, mỗi tab đăng
+   nhập một email khác nhau.
+2. Mỗi tab: Thư viện trò chơi → chọn **BANG!**, chọn số người chơi → **Tạo phòng**
    (tab đầu) / **Vào** phòng đó (các tab sau).
 3. Khi đủ ghế, server tự chia vai trò/nhân vật/bài — ván bắt đầu ngay (Cảnh sát trưởng
    đi trước).
@@ -208,6 +194,32 @@ bài thật). Tích hợp vào ĐÚNG kiến trúc Platform hiện có, không t
 - Đã verify sống bằng 4 SignalR client thật qua Docker Compose: vào phòng → server tự
   chia bài → không client nào nhận được bài người khác → nước đi ngoài tầm bị server
   từ chối đúng như thiết kế.
+
+## 🌾 Game 003 — Ô Ăn Quan (dân gian Việt Nam, 2 người, server-authoritative)
+
+Trò chơi dân gian quen thuộc — bàn cờ 12 ô (10 ô dân + 2 ô quan), rải quân vòng quanh bàn và
+tranh ăn quân đối phương. Không có yếu tố may rủi (không xúc xắc/bài), không có thông tin ẩn.
+
+- **Bàn cờ**: `[Quan0][5 ô dân P0][Quan1][5 ô dân P1]` xếp thành 1 vòng. Ban đầu mỗi ô dân có
+  5 quân, mỗi ô quan có 10 quân.
+- **Rải quân**: chọn 1 ô dân của mình, chọn chiều (trái/phải), rải mỗi ô 1 quân vòng quanh bàn.
+  Nếu quân cuối rơi vào ô đã có sẵn quân thì "bốc" cả ô rải tiếp (relay) — trừ khi đó là ô quan
+  (luôn kết thúc lượt ngay). Nếu quân cuối rơi vào ô trống, xét ăn quân ở ô kế tiếp.
+- **Kết thúc ván**: khi cả 2 ô quan đã bị ăn hết quân gốc — quân còn lại trên bàn thuộc về chủ ô,
+  ai nhiều quân hơn thắng (bằng nhau thì hoà).
+- Luật đầy đủ + các lựa chọn khi nguồn dân gian có dị bản: `Games/OAnQuan/OAnQuanRules.cs`
+  (đọc chú thích đầu file) và ADR trong `rules/history/decisions.md`.
+
+### Cách thử
+
+1. Mở 2 tab, đăng nhập 2 tài khoản khác nhau tại http://localhost:5173.
+2. Tab 1: Thư viện trò chơi → **Ô Ăn Quan** → **Tạo phòng**. Tab 2: vào cùng phòng đó.
+3. Đến lượt, chạm 1 ô dân của mình (đang có quân) → chọn "← Trái" hoặc "Phải →" để rải.
+
+### Test
+
+- Unit test luật chơi (không cần Docker): `dotnet test backend/BoardGame.Api.Tests` — 18 test
+  phủ rải quân/bốc tiếp/ăn quân/ăn quan/luật "hết vốn"/kết thúc ván, cả 2 chiều rải.
 
 ## Triển khai Kubernetes
 

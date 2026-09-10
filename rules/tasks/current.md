@@ -40,17 +40,31 @@ IN_PROGRESS (vòng lặp liên tục, không có điểm "DONE" cố định —
     Postgres tạm trước khi tin — xem `rules/logs/2026-09-11.md` vì đây đúng vùng code từng gây sự
     cố mất dữ liệu 2026-09-05). Xem backlog mục "Test tích hợp Postgres thật (Testcontainers)".
 
-Tổng test backend hiện tại: 123/123 pass (chạy qua `dotnet test backend/BoardGame.sln`, đúng lệnh CI dùng; 5 test mới cần Docker khả dụng).
+11. **Game thứ ba: Ô Ăn Quan** (`gameKey: "oanquan"`) — trò chơi dân gian Việt Nam, 2 người, bàn
+    12 ô. Luật đầy đủ (rải quân 2 chiều, relay, ăn quân/ăn quan, "hết vốn", kết thúc ván) + 18
+    unit test luật thuần. Không dùng asset zodiac có sẵn (dùng CSS/số quân thuần, nhất quán với
+    VayBat/Bang). Xem ADR về lựa chọn luật khi nguồn dân gian có dị bản trong
+    `../history/decisions.md`, và backlog mục "Game thứ ba — Ô Ăn Quan — ĐÃ LÀM".
+    `dotnet build`/`dotnet test`: 141/141 pass. `npm run lint`/`tsc`/`vite build`: sạch.
+    **CHƯA live-test qua Chrome/Docker Compose** — ưu tiên cao hơn các UI tweak nhỏ trước đó vì
+    đây là game HOÀN TOÀN MỚI, xem "Ghi chú môi trường" bên dưới.
+
+Tổng test backend hiện tại: 141/141 pass (chạy qua `dotnet test backend/BoardGame.sln`, đúng lệnh CI dùng; 5 test cần Docker khả dụng).
 
 ## Việc đang làm / tiếp theo (thứ tự ưu tiên gợi ý, không bắt buộc theo đúng thứ tự)
 
-- Cân nhắc thêm game thứ ba (asset zodiac có sẵn ở `frontend/public/assets/games/zodiac/`,
-  chưa gắn game nào) — quy mô lớn, chỉ làm khi các việc "hoàn thiện game cũ" đã ổn.
+- **Ưu tiên cao: live-test Ô Ăn Quan qua Chrome/Docker Compose** với 2 danh tính thật (cần tài
+  khoản Gmail thứ 2, xem "Việc dở dang từ đợt trước" bên dưới) — game mới, luật khá phức tạp
+  (relay/ăn quân/hết vốn), chỉ verify được bằng unit test tới giờ, chưa ai thực sự chơi thử.
+  Ít nhất nên tự chơi 1 mình qua 2 tab (không test được race-condition 2-người-thật nhưng vẫn
+  xác nhận được UI/luồng render/click hoạt động đúng).
 - Cân nhắc thêm thao tác quản trị có phá huỷ (huỷ phòng treo thủ công từ `/admin`) — CHỈ làm
   nếu người dùng xác nhận cần, kèm log ai-làm-gì-lúc-nào (xem "Chủ ý CHƯA làm" ở trên).
 - Debug panel cho Bang (spec §51 trong `van-de.md`) — dev-only, đụng vào `BangRules.cs` (engine
   lớn/nhạy cảm nhất repo) để thêm force-draw/force-damage; cân nhắc kỹ trước khi làm vì đây là
-  action mutate state bỏ qua luật chơi bình thường, dù chỉ bật ở Development.
+  action mutate state bỏ qua luật chơi bình thường, dù chỉ bật ở Development. CẦN hỏi xác nhận
+  người dùng trước (xem lý do ở mục "Chủ ý CHƯA làm").
+- Game thứ tư (nếu muốn) — asset zodiac vẫn còn chưa dùng tới sau cả Bang lẫn Ô Ăn Quan.
 
 ## Việc dở dang từ đợt trước (2026-09-05, tạm gác — không chặn việc mới)
 

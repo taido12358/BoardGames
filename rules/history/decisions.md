@@ -1,5 +1,60 @@
 # Decisions (ADR)
 
+## ADR: Ô Ăn Quan — chọn biến thể "chỉ ăn 1 lần mỗi lượt" do luật dân gian có dị bản
+
+Date: 2026-09-11
+
+### Context
+
+Thêm game thứ ba, "Ô Ăn Quan" (trò chơi dân gian Việt Nam). Trước khi viết luật, đã tra cứu 3
+nguồn (Wikipedia tiếng Anh, Wikipedia tiếng Việt, một trang hướng dẫn) để xác nhận luật chính
+xác — vì đây là trò chơi quen thuộc với người Việt, sai luật sẽ bị nhận ra ngay và khó sửa "cho
+đúng" sau khi đã có người chơi thật trên đó.
+
+Phát hiện: các nguồn KHÔNG thống nhất về "ăn liên hoàn" (chain capture). Wikipedia tiếng Anh
+(trích dẫn nguyên văn) chỉ mô tả một lần ăn duy nhất mỗi lượt: *"When the next square to be
+distributed is empty, the player wins all the pieces in the square after that."* — không nhắc gì
+tới việc lặp lại. Wikipedia tiếng Việt có nhắc *"có thể ăn liên tiếp nếu điều kiện lặp lại"*
+nhưng không mô tả chính xác cơ chế lặp lại đó là gì (đi tiếp bao xa, dừng khi nào).
+
+### Decision
+
+Chọn triển khai bản **chỉ ăn 1 lần mỗi lượt** (không ăn chuỗi/ăn liên hoàn nhiều ô liên tiếp
+trong cùng một lượt) — khớp với mô tả chắc chắn nhất (Wikipedia tiếng Anh, trích dẫn nguyên
+văn), ghi rõ đây là lựa chọn có chủ đích trong comment đầu `OAnQuanRules.cs` và trong
+`rules/tasks/backlog.md`, không lặng lẽ implement một cơ chế "ăn chuỗi" tự đoán mà không chắc
+đúng luật dân gian thật.
+
+Các quyết định luật khác cũng chọn theo cùng tinh thần "chọn bản chắc chắn đúng, ghi rõ lựa
+chọn khi có dị bản":
+- Quân "quan" ban đầu = 10 quân (một biến thể phổ biến; biến thể khác dùng 5) — không nguồn nào
+  mâu thuẫn nhau về SỐ, chỉ khác nhau GIÁ TRỊ mặc định, nên đây là lựa chọn ít rủi ro hơn "ăn
+  chuỗi".
+- Rải quân dừng ĐÚNG vào một ô quan luôn kết thúc lượt ngay lập tức (không ăn, không bốc tiếp
+  rải dù ô quan đó đã có sẵn quân) — cả 3 nguồn đồng thuận về điểm này, không phải lựa chọn có
+  tranh cãi.
+
+### Alternatives
+
+- Implement "ăn chuỗi" theo suy đoán cách hiểu hợp lý nhất (lặp lại kiểm tra "ô trống rồi ô đầy"
+  xa dần) — bị loại vì không có nguồn nào mô tả đủ chi tiết để tự tin đúng luật dân gian thật;
+  rủi ro implement sai một luật mà người chơi Việt Nam đã quen thuộc cao hơn giá trị thêm được.
+
+### Reason
+
+Đây là trò chơi dân gian có tính "phải đúng luật quen thuộc" cao hơn các game tự thiết kế khác
+trong repo (VayBat/Bang là luật do dự án tự định nghĩa, không có "đúng/sai" tuyệt đối so với một
+chuẩn bên ngoài) — ưu tiên một phiên bản CHẮC CHẮN ĐÚNG (dù đơn giản hơn) thay vì một phiên bản
+đầy đủ hơn nhưng có rủi ro sai lệch so với luật thật mà không ai kiểm chứng được ngay.
+
+### Consequences
+
+Nếu sau này có người chơi phản hồi rằng thiếu "ăn chuỗi" so với luật họ quen chơi, cân nhắc thêm
+lại như một tuỳ chọn luật (không phải mặc định) sau khi tìm được nguồn mô tả chính xác cơ chế —
+không tự đoán lại. Việc này không phải bug, đã ghi rõ trong `rules/tasks/backlog.md`.
+
+---
+
 ## ADR: Role "Admin" đầu tiên trong hệ thống — claim JWT lúc đăng nhập, không phải cột DB
 
 Date: 2026-09-10

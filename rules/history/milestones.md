@@ -85,3 +85,38 @@ hợp nhất cấu trúc code Platform và rebuild UI:
   (không phải DB test cách ly) lúc thử migration SQL — mất 9 phòng dev thật, không backup nên
   không khôi phục được. Migration sau đó được verify đúng cách trên DB cách ly. Chi tiết:
   [`../logs/2026-09-05.md`](../logs/2026-09-05.md).
+
+## 2026-09-10/11 — Chỉ thị `/goal` liên tục: hoàn thiện 2 game cũ, hạ tầng, Game 003 (Ô Ăn Quan)
+
+Theo chỉ thị `/goal` tự động nhiều phiên liên tiếp ("tiếp tục nâng cấp web... tự suy nghĩ hướng
+phát triển"), không hỏi lại người dùng cho từng bước:
+
+- **Dọn dẹp + hoàn thiện Vây Bắt/Bang**: xoá demo "Hello World" khỏi backend (frontend đã xoá
+  2026-08-05); `/health` kiểm tra thật DB/Redis/RabbitMQ; Bang có UI chọn bài để bỏ khi vượt giới
+  hạn tay bài; chat trong phòng (Platform generic, dùng chung mọi game); nút "CHƠI LẠI" ở màn
+  thắng/thua + banner mời qua SignalR. 17 unit test mới cho `VayBatRules`.
+- **Trang quản trị `/admin`** (bản READ-ONLY đầu tiên) — role "Admin" đầu tiên trong hệ thống,
+  gán qua JWT claim lúc đăng nhập theo `ADMIN_EMAILS` (env). ADR: [`decisions.md`](./decisions.md).
+- **Hạ tầng CI/CD + chất lượng code**: `.github/workflows/ci.yml` (build+test backend, lint+build
+  frontend, build thử Docker image) — verify chạy thật trên GitHub Actions, không chỉ local.
+  ESLint cho frontend bắt được 1 bug Rules of Hooks thật trong `VayBatBoard.tsx` ngay lần chạy
+  đầu. Test tích hợp Postgres thật (Testcontainers) cho `RoomService` — trả nợ kỹ thuật cũ nhất
+  trong backlog, verify khoá `FOR UPDATE`/`SKIP LOCKED` bằng cuộc gọi đồng thời thật; tách
+  `Data/SchemaBootstrapper.cs` khỏi `Program.cs` để test tái dùng đúng SQL thật (copy nguyên vẹn,
+  verify byte-for-byte, smoke-test qua container Postgres tạm — vùng code này từng gây sự cố mất
+  dữ liệu 2026-09-05 nên làm rất thận trọng).
+- **Game 003: Ô Ăn Quan** (`gameKey: "oanquan"`) — trò chơi dân gian Việt Nam, 2 người, bàn 12 ô
+  (10 ô dân + 2 ô quan). Luật đầy đủ: rải quân 2 chiều tuỳ chọn, bốc-tiếp-rải (relay) khi rơi vào
+  ô đã có quân, ăn quân khi rơi vào ô trống mà ô kế có quân (kể cả ăn quan — phần thưởng lớn),
+  rơi đúng ô quan luôn kết thúc lượt ngay, luật "hết vốn" (vay 5 quân từ điểm đã ăn), kết thúc
+  ván khi ăn hết cả 2 ô quan. Luật dân gian có vài dị bản giữa các nguồn — đã tra cứu Wikipedia
+  tiếng Anh/tiếng Việt trước khi chọn phiên bản "chỉ ăn 1 lần mỗi lượt, không ăn chuỗi" (nguồn
+  chắc chắn nhất), ghi rõ trong code + backlog. 18 unit test luật thuần.
+- Cân nhắc làm debug panel Bang (spec §51) trước Ô Ăn Quan nhưng quyết định KHÔNG tự làm vì spec
+  yêu cầu bypass danh tính ghế ("switch giữa test player") — đúng lớp lỗ hổng đã vá 2026-08-05;
+  để lại chờ xác nhận người dùng, ưu tiên việc an toàn hơn (Testcontainers, rồi game mới).
+- Verify: `dotnet build`/`dotnet test` xanh (141/141 — 123 cũ + 18 mới), `npm run lint`/
+  `tsc`/`vite build` xanh. **Chưa verify sống qua Chrome/Docker Compose** cho Ô Ăn Quan — theo
+  đúng tiền lệ đã thống nhất trong đợt này (UI thuần không cần bật stack/OTP chỉ để xem), nhưng
+  đây là game MỚI (rủi ro cao hơn một UI tweak nhỏ) nên cần ưu tiên live-test khi có dịp, xem
+  [`../tasks/current.md`](../tasks/current.md).
