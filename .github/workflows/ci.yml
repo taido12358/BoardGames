@@ -2,7 +2,7 @@ name: CI
 
 # Pipeline toi thieu mo ta trong rules/workflow/deployment.md:
 #   1. dotnet build + dotnet test
-#   2. frontend: npm ci -> lint -> type-check (tsc --noEmit) -> build
+#   2. frontend: npm ci -> lint -> unit test (vitest) -> type-check (tsc --noEmit) -> build
 #   3. build Docker image (chi tren branch chinh / tag)
 
 on:
@@ -28,7 +28,7 @@ jobs:
         run: dotnet test backend/BoardGame.sln --no-build --configuration Release --logger "console;verbosity=normal"
 
   frontend:
-    name: Frontend lint + type-check + build
+    name: Frontend lint + test + type-check + build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -42,6 +42,9 @@ jobs:
         working-directory: frontend
       - name: Lint
         run: npm run lint
+        working-directory: frontend
+      - name: Unit test (vitest)
+        run: npm run test
         working-directory: frontend
       - name: Build (tsc --noEmit + vite build)
         run: npm run build

@@ -4,9 +4,10 @@
 
 | Tầng | Đối tượng | Công cụ |
 |---|---|---|
-| Unit | **Engine** (`IGameEngine` — luật chơi), helper (`GameJson`) | xUnit |
-| Integration | Controller + Hub + DB thật (compose) | xUnit + `WebApplicationFactory`, Testcontainers/compose |
-| E2E | 2 client thật chơi một ván qua trình duyệt | Playwright (Chromium) + 2 SignalR client |
+| Unit (backend) | **Engine** (`IGameEngine` — luật chơi), helper (`GameJson`) | xUnit |
+| Unit (frontend) | Logic thuần phía client — helper hiển thị/gợi ý UI của từng game (`games/<ten>/types.ts`), `platform/gameStore.ts` | Vitest (`frontend/`, mới 2026-09-11 — `npm run test`) |
+| Integration | Controller + Hub + DB thật, khoá hàng thật (`FOR UPDATE`/`SKIP LOCKED`) | xUnit + Testcontainers (`Platform/RoomServiceIntegrationTests.cs`, mới 2026-09-11 — cần Docker) |
+| E2E | 2 client thật chơi một ván qua trình duyệt | Playwright (Chromium) + 2 SignalR client — **chưa có trong repo**, chỉ live-test thủ công qua Chrome DevTools/2 tab tới giờ |
 
 Ưu tiên đầu tư theo thứ tự: **engine unit test** (rẻ, giá trị cao nhất — luật chơi là phần dễ sai nhất) → integration cho luồng `MakeMove` → E2E smoke.
 
@@ -19,6 +20,25 @@ Engine thuần logic (không DB/Redis/hub) nên test rất rẻ. Mỗi engine t�
 - Nước đi sai luật (sai lượt, sai quân, ô không hợp lệ) → `MoveOutcome(false)` **kèm message**, state không đổi.
 - **Input rác**: JSON sai cú pháp, thiếu field, `PieceId: null` → trả fail, ❌ không throw (rule đã có ở `VayBatEngine.ApplyMove`).
 - Điều kiện kết thúc ván (thắng/thua/hoà).
+
+## Unit test frontend (Vitest, mới 2026-09-11)
+
+`frontend/` trước đó không có test tự động nào (chỉ `tsc`/ESLint bắt lỗi type/style, không bắt
+được lỗi logic). Đã thêm Vitest (`vite.config.ts` mục `test`, environment `jsdom` + setup
+`src/test-setup.ts` polyfill `localStorage` thủ công — jsdom mới không tự cấp phát
+`localStorage` hoạt động được nếu không có flag `--localstorage-file` của Node).
+
+Ưu tiên test: **logic thuần, không cần render component** — helper hiển thị/gợi ý nước đi của
+từng game (`games/<ten>/types.ts`, vd `legalMoves`/`occupancy` của VayBat, `isQuanPit`/`ownerOf`
+của Ô Ăn Quan) và store dùng chung (`platform/gameStore.ts`, vd merge `isMine` trong
+`upsertRoom`, giới hạn `chatMessages`). Đây là "rẻ, giá trị cao" giống tinh thần ưu tiên engine
+unit test ở backend — các hàm này thuần, dễ test, và sai ở đây làm UI gợi ý sai (dù server vẫn
+validate lại nên không phải lỗ hổng bảo mật, chỉ là trải nghiệm tệ).
+
+**Chưa làm** (nợ kỹ thuật, không phải bị bỏ qua): test component React (cần React Testing
+Library + `jsdom`, môi trường đã sẵn sàng nhưng chưa cài RTL/viết test nào) — component phức tạp
+nhất (`BangBoard.tsx`, `OAnQuanBoard.tsx`) vẫn chỉ được verify bằng `tsc`/build/lint + review thủ
+công, chưa có test tự động cho tương tác UI (click chọn ô/lá bài, chọn chiều rải...).
 
 ## Integration test
 

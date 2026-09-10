@@ -54,7 +54,13 @@ IN_PROGRESS (vòng lặp liên tục, không có điểm "DONE" cố định —
     "Nâng cấp dependency frontend có breaking change" — `vite`/`esbuild` vẫn để riêng (rủi ro cao
     hơn, ảnh hưởng thực tế thấp vì chỉ lộ lúc `npm run dev`).
 
-Tổng test backend hiện tại: 141/141 pass (chạy qua `dotnet test backend/BoardGame.sln`, đúng lệnh CI dùng; 5 test cần Docker khả dụng).
+13. **Vitest cho frontend** (18 test) — frontend trước đó KHÔNG có test tự động nào. Test logic
+    thuần: helper hiển thị/gợi ý của VayBat + Ô Ăn Quan, `gameStore.ts` (merge `isMine`, giới hạn
+    chat, rematch invite). Wire vào CI. Xem backlog mục "Unit test frontend (Vitest)". Chưa có
+    test component React (RTL chưa cài) — nợ kỹ thuật ghi rõ, không phải bỏ qua.
+
+Tổng test hiện tại: backend 141/141 pass (`dotnet test backend/BoardGame.sln`), frontend 18/18
+pass (`npm run test` trong `frontend/`) — cả 2 đúng lệnh CI dùng; 5 test backend cần Docker.
 
 ## Việc đang làm / tiếp theo (thứ tự ưu tiên gợi ý, không bắt buộc theo đúng thứ tự)
 

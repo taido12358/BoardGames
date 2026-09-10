@@ -14,7 +14,7 @@ Mọi đường dẫn dưới đây đã xác nhận tồn tại trong repo (c�
 - Docker: `docker-compose.yml` (root), `backend/BoardGame.Api/Dockerfile`, `frontend/Dockerfile`, `.dockerignore` ở mỗi phía.
 - CI: `.github/workflows/ci.yml` (mới 2026-09-11) — build+test backend, lint+build frontend trên mọi push/PR nhắm `master`, build thử (không push) 2 Docker image khi push thẳng `master`.
 - Kubernetes: `k8s/*.yaml` (namespace, config, mỗi service hạ tầng, backend, frontend, ingress).
-- Frontend build: `frontend/vite.config.ts`, `frontend/tailwind.config.js`, `frontend/tsconfig.json`, `frontend/eslint.config.js` (mới 2026-09-11 — `npm run lint`, wire vào CI).
+- Frontend build: `frontend/vite.config.ts` (có mục `test` cho Vitest, mới 2026-09-11), `frontend/tailwind.config.js`, `frontend/tsconfig.json`, `frontend/eslint.config.js` (mới 2026-09-11 — `npm run lint`, wire vào CI).
 
 ## Database
 
@@ -68,6 +68,7 @@ Mọi đường dẫn dưới đây đã xác nhận tồn tại trong repo (c�
 ## Tests
 
 - `backend/BoardGame.Api.Tests/` (thêm 2026-08-05) — xUnit, 141 test. `Bang/*.cs`: roles, characters, deck, distance, luồng chơi, bảo vệ thông tin ẩn, hợp đồng JSON enum, `BangSeatTimeoutTests.cs` (mới 2026-09-05 — `OnSeatTimedOut`). `VayBat/VayBatEngineTests.cs` (2026-09-05 — `SideForSeat`/`OnSeatTimedOut`, lớp adapter) + `VayBat/VayBatRulesTests.cs` (2026-09-10, 17 test — luật thuần: kề/trống, nước đi hợp lệ, áp nước đi, thắng/thua, khởi tạo state). `OAnQuan/OAnQuanRulesTests.cs` (mới 2026-09-11, 18 test — rải quân/relay/ăn quân/ăn quan/hết vốn/kết thúc ván; đọc chú thích đầu file về lỗi thật đã tự bắt được lúc viết test đầu tiên — mảng `pits` phải khởi tạo từ bàn ĐẦY ĐỦ, không phải mảng trần toàn 0, nếu không sẽ vô tình kích hoạt luật "hết vốn" ngoài ý muốn). `Platform/Auth/TokenServiceTests.cs` (2026-09-10, 4 test — round-trip JWT thật cho claim role "Admin", xem ADR trong `../history/decisions.md`). `Platform/RoomServiceIntegrationTests.cs` (2026-09-11, 5 test — Testcontainers, Postgres thật, verify khoá `FOR UPDATE`/`SKIP LOCKED` của `RoomService` bằng các cuộc gọi đồng thời thật; CẦN Docker khả dụng lúc `dotnet test` chạy, GitHub Actions `ubuntu-latest` có sẵn). `Platform/RoomStatusTests.cs` (mới).
+- `frontend/` (mới 2026-09-11) — Vitest, 18 test, `npm run test`. `src/games/vaybat/types.test.ts` + `src/games/oanquan/types.test.ts` (helper hiển thị/gợi ý nước đi thuần của từng game). `src/platform/gameStore.test.ts` (merge `isMine` trong `upsertRoom`, giới hạn `chatMessages`, `rematchInvite`, `setPlayerName`). Config ở `vite.config.ts` mục `test` (`environment: "jsdom"`, `setupFiles: ["./src/test-setup.ts"]` — polyfill `localStorage` thủ công vì jsdom mới không tự cấp phát được). Chưa có test component React (cần React Testing Library, chưa cài) — xem [`../coding/testing.md`](../coding/testing.md).
 - Chiến lược test đầy đủ (mong muốn cho mọi game): [`../coding/testing.md`](../coding/testing.md).
 
 ## Tài liệu

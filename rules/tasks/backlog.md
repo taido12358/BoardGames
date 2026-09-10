@@ -245,3 +245,19 @@ Testcontainers tự dọn qua reaper "Ryuk".
 thêm — đã verify chạy thật trên Actions (xem `rules/logs/2026-09-11.md`). Nếu sau này đổi runner
 (self-hosted không có Docker, hoặc macOS/Windows runner) thì 5 test này sẽ fail vì không kết nối
 được Docker daemon — lúc đó cần `[Trait]`/filter riêng để skip có điều kiện, chưa cần làm bây giờ.
+
+## Unit test frontend (Vitest) — ĐÃ LÀM bản đầu (2026-09-11)
+
+Frontend trước đó KHÔNG có test tự động nào (chỉ `tsc`/ESLint). Thêm Vitest — chi tiết đầy đủ:
+[`../coding/testing.md`](../coding/testing.md) mục "Unit test frontend". Wire vào CI (`npm run
+test`, job frontend, chạy sau lint trước build).
+
+**Chưa làm (nợ kỹ thuật, không phải bỏ qua)**: test component React (cần cài React Testing
+Library — môi trường `jsdom` đã sẵn sàng, chỉ chưa viết test nào cho component). Component phức
+tạp nhất (`BangBoard.tsx`, `OAnQuanBoard.tsx`, `ChatPanel.tsx`) vẫn chỉ verify bằng `tsc`/build/
+lint + review thủ công.
+
+**`npm audit`**: cài `vitest`/`jsdom` không phát sinh lỗ hổng MỚI ngoài `esbuild`/`vite` đã biết
+(vitest tự kéo theo 1 bản `vite-node` nội bộ dùng chung gốc `esbuild` cũ) — không đổi quyết định
+đã ghi ở mục "Nâng cấp dependency frontend có breaking change" (dev-tooling, không lộ ra
+production, để dành nếu có lý do cụ thể hơn).
