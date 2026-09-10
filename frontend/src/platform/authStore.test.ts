@@ -167,3 +167,48 @@ describe("backToEmail", () => {
     expect(useAuthStore.getState().error).toBe("");
   });
 });
+
+describe("updateDisplayName", () => {
+  it("thành công: cập nhật user + đồng bộ playerName sang gameStore, trả true", async () => {
+    useAuthStore.setState({ user });
+    vi.stubGlobal("fetch", vi.fn(() => Promise.resolve(jsonResponse({ ...user, displayName: "Tên mới" }))));
+
+    const ok = await useAuthStore.getState().updateDisplayName("Tên mới");
+
+    expect(ok).toBe(true);
+    expect(useAuthStore.getState().user?.displayName).toBe("Tên mới");
+    expect(useGameStore.getState().playerName).toBe("Tên mới");
+  });
+
+  it("gửi đúng displayName trong body PUT", async () => {
+    const fetchMock = vi.fn((_url: string, _init?: RequestInit) => Promise.resolve(jsonResponse(user)));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await useAuthStore.getState().updateDisplayName("Bình mới");
+
+    const call = fetchMock.mock.calls[0];
+    expect(call[0]).toBe("/api/auth/display-name");
+    expect((call[1] as RequestInit).method).toBe("PUT");
+    expect(JSON.parse((call[1] as RequestInit).body as string)).toEqual({ displayName: "Bình mới" });
+  });
+
+  it("thất bại (vd tên quá dài): set lỗi, trả false, KHÔNG đổi user", async () => {
+    useAuthStore.setState({ user });
+    vi.stubGlobal("fetch", vi.fn(() => Promise.resolve(jsonResponse({ error: "Tên hiển thị tối đa 30 ký tự." }, false, 400))));
+
+    const ok = await useAuthStore.getState().updateDisplayName("x".repeat(31));
+
+    expect(ok).toBe(false);
+    expect(useAuthStore.getState().error).toBe("Tên hiển thị tối đa 30 ký tự.");
+    expect(useAuthStore.getState().user).toEqual(user);
+  });
+
+  it("lỗi mạng: trả false, hiện thông báo không kết nối được", async () => {
+    vi.stubGlobal("fetch", vi.fn(() => Promise.reject(new Error("boom"))));
+
+    const ok = await useAuthStore.getState().updateDisplayName("Tên mới");
+
+    expect(ok).toBe(false);
+    expect(useAuthStore.getState().error).toBe("Không kết nối được máy chủ. Kiểm tra mạng rồi thử lại.");
+  });
+});

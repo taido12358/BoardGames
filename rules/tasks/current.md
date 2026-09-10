@@ -214,7 +214,19 @@ IN_PROGRESS (vòng lặp liên tục, không có điểm "DONE" cố định —
     `GET /api/games/search` (rỗng/theo tên người chơi/theo winner) đều trả đúng bản ghi vừa
     index, và query không khớp gì trả `[]` đúng như frontend kỳ vọng.
 
-Tổng test hiện tại: backend 189/189 pass (`dotnet test backend/BoardGame.sln`), frontend 166/166
+31. **Trang đổi tên hiển thị** — trả nợ TÍNH NĂNG thứ hai (cùng kỹ thuật audit ở mục 30): backend
+    có sẵn từ đầu dự án `PUT /api/auth/display-name` (`AuthController.cs`, validate rỗng/tối đa 30
+    ký tự, refresh claim JWT) nhưng CHƯA từng có giao diện nào gọi tới — phát hiện khi grep toàn
+    frontend không ra kết quả nào tham chiếu endpoint này (cùng đợt audit tìm ra `/history` ở mục
+    30). Thêm `authStore.updateDisplayName` (4 test), `DisplayNameEditor.tsx` — sửa tên tại chỗ
+    ngay trên header (bấm vào tên → input inline, Enter/Escape, Lưu/Huỷ), 8 test component. Gắn
+    vào `App.tsx` thay `<span>{user.displayName}</span>` tĩnh cũ. **Live-test qua hệ thống sống
+    thật** (Docker Compose, `EMAIL_PROVIDER=` rỗng tạm thời cho phiên test rồi phục hồi lại
+    `.env` SMTP thật): đổi tên thành công → cookie JWT refresh đúng claim `name` mới (`/api/auth/me`
+    phản ánh ngay), từ chối tên rỗng/quá 30 ký tự, 401 khi không có cookie — đều đúng như thiết
+    kế.
+
+Tổng test hiện tại: backend 189/189 pass (`dotnet test backend/BoardGame.sln`), frontend 178/178
 pass (`npm run test` trong `frontend/`) — cả 2 đúng lệnh CI dùng; 5 test backend cần Docker.
 
 **Đã verify cả 17 commit (14-33) chạy thật trên GitHub Actions** — run

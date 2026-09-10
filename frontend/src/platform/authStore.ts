@@ -25,6 +25,8 @@ interface AuthStore {
   verifyOtp: (code: string) => Promise<void>;
   logout: () => Promise<void>;
   backToEmail: () => void;
+  /** Đổi tên hiển thị — trả true/false để component tự quyết định đóng form edit hay không. */
+  updateDisplayName: (name: string) => Promise<boolean>;
 }
 
 /** Token nằm trong cookie HttpOnly nên mọi request chỉ cần credentials — JS không giữ token. */
@@ -135,4 +137,22 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   },
 
   backToEmail: () => set({ step: "email", error: "" }),
+
+  updateDisplayName: async (name: string) => {
+    set({ error: "" });
+    try {
+      const res = await api("display-name", { method: "PUT", body: JSON.stringify({ displayName: name }) });
+      if (!res.ok) {
+        set({ error: await readError(res) });
+        return false;
+      }
+      const user = (await res.json()) as AuthUser;
+      syncPlayerName(user);
+      set({ user });
+      return true;
+    } catch {
+      set({ error: "Không kết nối được máy chủ. Kiểm tra mạng rồi thử lại." });
+      return false;
+    }
+  },
 }));

@@ -5,6 +5,7 @@ import LoginPage from "./platform/LoginPage";
 import { useAuthStore } from "./platform/authStore";
 import { useAdminStore } from "./platform/adminStore";
 import ScrollToTop from "./platform/ScrollToTop";
+import DisplayNameEditor from "./platform/DisplayNameEditor";
 
 export default function App() {
   const { user, checking, restoreSession, logout } = useAuthStore();
@@ -30,9 +31,7 @@ export default function App() {
             <h1 className="text-2xl font-bold tracking-tight">🎲 BoardGame</h1>
             {user && (
               <div className="flex items-center gap-2 min-w-0">
-                <span className="text-sm text-slate-400 truncate" title={user.email}>
-                  {user.displayName}
-                </span>
+                <DisplayNameEditor displayName={user.displayName} email={user.email} />
                 <Link
                   to="/history"
                   className="shrink-0 text-xs px-2.5 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-300"
