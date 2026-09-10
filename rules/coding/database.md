@@ -4,7 +4,7 @@
 
 ## Schema bootstrap — KHÔNG dùng migrations
 
-Dự án dùng **raw SQL duy nhất** trong block `ExecuteSqlRaw` ở `Program.cs`. Không dùng EF Migrations, không dùng `EnsureCreated()` (đã xoá vì gây `FormatException` với PostgreSQL 16 — xem [`../history/decisions.md`](../history/decisions.md)).
+Dự án dùng **raw SQL duy nhất** trong block `ExecuteSqlRaw` ở `Data/SchemaBootstrapper.cs` (`Program.cs` chỉ gọi `SchemaBootstrapper.ApplyAsync` lúc boot). Không dùng EF Migrations, không dùng `EnsureCreated()` (đã xoá vì gây `FormatException` với PostgreSQL 16 — xem [`../history/decisions.md`](../history/decisions.md)).
 
 **Quy tắc khi đổi schema:**
 

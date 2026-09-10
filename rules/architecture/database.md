@@ -8,7 +8,7 @@
 
 ## Schema bootstrap — không dùng migration
 
-Quyết định kiến trúc: dự án dùng **raw SQL** (`ExecuteSqlRaw` trong `Program.cs`) thay vì EF Migrations hoặc `EnsureCreated()`. `EnsureCreated()` từng gây `FormatException` khi Npgsql parse introspection query trên PostgreSQL 16 — quyết định này không đổi trừ khi vấn đề gốc được xác nhận đã hết trên phiên bản Npgsql/PostgreSQL mới.
+Quyết định kiến trúc: dự án dùng **raw SQL** (`ExecuteSqlRaw` trong `Data/SchemaBootstrapper.cs`, `Program.cs` chỉ gọi `SchemaBootstrapper.ApplyAsync` lúc boot — tách ra 2026-09-11 để backend test/Testcontainers tái dùng đúng SQL thật) thay vì EF Migrations hoặc `EnsureCreated()`. `EnsureCreated()` từng gây `FormatException` khi Npgsql parse introspection query trên PostgreSQL 16 — quyết định này không đổi trừ khi vấn đề gốc được xác nhận đã hết trên phiên bản Npgsql/PostgreSQL mới.
 
 Hệ quả cho mọi thay đổi schema: phải backward-compatible ngay khi code mới chạy trên DB cũ lúc khởi động (xem quy tắc thực thi ở [`../coding/database.md`](../coding/database.md) và quy trình deploy ở [`../workflow/deployment.md`](../workflow/deployment.md)).
 
