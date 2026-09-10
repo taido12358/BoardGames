@@ -107,6 +107,16 @@ học `within(row)` ở `AdminPage.test.tsx` — nhãn hiển thị trùng nhau 
 (`OAnQuanBoard`, `BangBoard`, `VayBatBoard`, `ZodiacRaceBoard`) đều đã có test. Việc tiếp theo
 (nếu có) là bổ sung ca test khi tính năng mới được thêm, không phải một đợt phủ test riêng.
 
+Thêm `components/GameDetails.test.tsx` (10 test, mới 2026-09-11) — component route-level đầu
+tiên trong bộ test (`useParams`/`useNavigate`/`useSearchParams`), bọc `render()` trong
+`<MemoryRouter initialEntries={["/games/:gameKey"]}>` + khai `<Routes><Route path="/games/:gameKey" .../></Routes>`
+(pattern mới, tái dùng được cho component route-level khác sau này) — cần khai thêm 1 `Route`
+"bắt hết" (`/games/:gameKey/room/:roomId`, element bất kỳ) nếu component tự `navigate()` sau khi
+action xong (vd tạo phòng xong), nếu không React Router log warning "No routes matched" (không
+làm fail test nhưng nhiễu output). Test này trực tiếp là regression cho bug `ARTWORK_BG` (mục
+trên) — render THẬT component cho cả 4 gameKey và kiểm class nền, bắt được đúng dạng lỗi thật đã
+xảy ra (mất class do thiếu key), khác `artworkTheme.test.ts` chỉ kiểm tra hằng số ở mức unit.
+
 ## Integration test
 
 - Chạy trên PostgreSQL thật (compose/Testcontainers), không InMemory provider — dự án dựa vào JSONB và raw SQL bootstrap, InMemory không kiểm chứng được.

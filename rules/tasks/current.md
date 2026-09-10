@@ -152,7 +152,14 @@ IN_PROGRESS (vòng lặp liên tục, không có điểm "DONE" cố định —
     này. Thêm `artworkTheme.test.ts` (2 test) làm regression guard runtime. Xem
     `../references/important-files.md` mục `artworkTheme.ts`.
 
-Tổng test hiện tại: backend 189/189 pass (`dotnet test backend/BoardGame.sln`), frontend 78/78
+24. **Test component `GameDetails.tsx`** (10 test, mới) — trang chi tiết game (hướng dẫn/tạo
+    phòng/tìm trận nhanh/danh sách phòng chờ) trước đó CHƯA có test nào dù dùng nhiều nhất. Dùng
+    `MemoryRouter` lần đầu trong bộ test (`useParams`/`useNavigate`/`useSearchParams`). Test nền
+    artwork đúng accent cho CẢ 4 game bằng cách render THẬT component — bắt được đúng dạng lỗi đã
+    xảy ra ở bug mục 23 (khác `artworkTheme.test.ts` chỉ kiểm tra hằng số) — cộng tạo phòng/tìm
+    trận nhanh/huỷ phòng/hiện đúng phòng đang chờ.
+
+Tổng test hiện tại: backend 189/189 pass (`dotnet test backend/BoardGame.sln`), frontend 88/88
 pass (`npm run test` trong `frontend/`) — cả 2 đúng lệnh CI dùng; 5 test backend cần Docker.
 
 **Đã verify cả 9 commit (14-22) chạy thật trên GitHub Actions** — run
