@@ -205,11 +205,11 @@ IN_PROGRESS (vòng lặp liên tục, không có điểm "DONE" cố định —
 Tổng test hiện tại: backend 189/189 pass (`dotnet test backend/BoardGame.sln`), frontend 160/160
 pass (`npm run test` trong `frontend/`) — cả 2 đúng lệnh CI dùng; 5 test backend cần Docker.
 
-**Đã verify cả 16 commit (14-32) chạy thật trên GitHub Actions** — run
+**Đã verify cả 17 commit (14-33) chạy thật trên GitHub Actions** — run
 `34518584349`/`34519404921`/`34519619027`/`34521278895`/`34523008065`/`34524664240`/
 `34525284764`/`34526258657`/`34528351569`/`34529196962`/`34529674967`/`34530079935`/
-`34530757755`/`34531421319`/`34531768899`/`34532473258` đều `completed`/`success` (gồm cả job
-`docker` build thử smoke test), không chỉ xanh cục bộ.
+`34530757755`/`34531421319`/`34531768899`/`34532473258`/`34532748965` đều `completed`/`success`
+(gồm cả job `docker` build thử smoke test), không chỉ xanh cục bộ.
 
 **Kết quả 2 đợt audit tĩnh bổ sung (không tìm thấy vấn đề mới)**: rà `key={index}` trong
 `.map()` toàn frontend — hầu hết là false positive (mảng tĩnh không đổi thứ tự, hoặc biến vòng
