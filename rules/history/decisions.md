@@ -1,5 +1,43 @@
 # Decisions (ADR)
 
+## ADR: Thêm trang "Lịch sử ván đấu" — lắp UI cho tính năng backend đã có sẵn nhưng bị bỏ quên
+
+Date: 2026-09-11
+
+### Context
+
+Rà lại toàn bộ `GamesController.cs` phát hiện endpoint `GET /api/games/search?q=` (gọi
+`OpenSearchService.SearchGamesAsync`, tìm theo người thắng/tên người chơi/trạng thái) đã tồn tại
+từ những commit đầu tiên của dự án — index mỗi khi ván kết thúc (`FinishGame` trong
+`GameHub.cs`). Grep toàn bộ `frontend/` không ra bất kỳ tham chiếu nào tới endpoint này — tính
+năng "tìm kiếm lịch sử ván" mà kiến trúc dự án đã mô tả rõ (`rules/architecture/system.md`:
+"Search | OpenSearch (lịch sử ván đã kết thúc)") chưa từng thật sự dùng được bởi người dùng.
+
+### Decision
+
+Thêm `GameHistoryPage.tsx` (route `/history`) — trang tìm kiếm đơn giản, chỉ đọc, dùng thẳng
+endpoint đã có sẵn, không cần thêm gì ở backend. Hiện link "📜 Lịch sử" cho MỌI người dùng đã
+đăng nhập (khác `/admin` — endpoint `search` kế thừa `[Authorize]` cấp class của
+`GamesController`, không yêu cầu role Admin, nên đây đúng là tính năng phổ thông chứ không phải
+quản trị).
+
+### Alternatives
+
+- Bỏ qua, không làm gì — bị loại vì đây đúng nghĩa "hoàn thiện tính năng còn dang dở" theo goal
+  hiện tại, chi phí làm rất thấp (chỉ cần 1 trang frontend, không đổi backend), và tính năng đã
+  được kiến trúc dự án mô tả là "đã có" nhưng thực ra người dùng không dùng được.
+- Gộp vào `/admin` thay vì trang riêng — bị loại vì tra lịch sử ván của MÌNH không phải hành vi
+  quản trị, không nên yêu cầu role Admin mới xem được lịch sử ván đấu của chính mình/người khác
+  đã công khai chơi.
+
+### Consequences
+
+Không có thao tác ghi/xoá nào ở trang này — thuần đọc, rủi ro thấp. Nếu sau này muốn thêm lọc
+theo gameKey/khoảng thời gian, mở rộng `SearchGamesAsync` (đã có sẵn cấu trúc multi-match, dễ
+thêm field lọc) và query string tương ứng ở frontend.
+
+---
+
 ## ADR: Debug panel BANG! (van-de.md §51) — cờ cấu hình riêng thay vì chỉ `IsDevelopment()`
 
 Date: 2026-09-11

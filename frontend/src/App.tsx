@@ -33,6 +33,12 @@ export default function App() {
                 <span className="text-sm text-slate-400 truncate" title={user.email}>
                   {user.displayName}
                 </span>
+                <Link
+                  to="/history"
+                  className="shrink-0 text-xs px-2.5 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-300"
+                >
+                  📜 Lịch sử
+                </Link>
                 {isAdmin && (
                   <Link
                     to="/admin"

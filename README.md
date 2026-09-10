@@ -250,6 +250,14 @@ thắng ngay. Không có yếu tố chiến thuật, không có thông tin ẩn 
 - Unit test luật chơi + adapter (không cần Docker): `dotnet test backend/BoardGame.Api.Tests` —
   27 test phủ di chuyển/về đích/thùng hàng/lượt chơi/hợp đồng JSON/`OnRoomFull`/`OnSeatTimedOut`.
 
+## 📜 Lịch sử ván đấu
+
+Trang `/history` (link "📜 Lịch sử" trên header, bất kỳ ai đăng nhập cũng xem được — không phải
+tính năng quản trị) — tìm kiếm full-text lịch sử ván đã kết thúc qua OpenSearch (`GET
+/api/games/search?q=`), theo tên người chơi/người thắng/trạng thái. Hạ tầng OpenSearch + endpoint
+backend đã có sẵn từ đầu dự án nhưng chưa từng có giao diện dùng tới cho tới khi trang này được
+thêm — chỉ đọc, không có thao tác thay đổi dữ liệu nào.
+
 ## Triển khai Kubernetes
 
 ```bash

@@ -202,7 +202,19 @@ IN_PROGRESS (vòng lặp liên tục, không có điểm "DONE" cố định —
     artwork thật), input còn lại (`GameLibrary`/`ChatPanel`/`LoginPage`) đều đã có
     `aria-label`/`<label htmlFor>` đúng.
 
-Tổng test hiện tại: backend 189/189 pass (`dotnet test backend/BoardGame.sln`), frontend 160/160
+30. **Trang "Lịch sử ván đấu"** (`/history`) — trả nợ TÍNH NĂNG (không phải bug): backend đã có
+    sẵn từ đầu dự án `GamesController.Search` (`GET /api/games/search?q=`) +
+    `OpenSearchService.SearchGamesAsync` (tìm theo người thắng/tên người chơi/trạng thái, index
+    mỗi khi ván kết thúc) nhưng CHƯA TỪNG có giao diện nào gọi tới — tìm thấy khi grep toàn
+    frontend không ra kết quả nào tham chiếu endpoint này. Thêm `GameHistoryPage.tsx` (route
+    `/history`, link "📜 Lịch sử" cho MỌI người đăng nhập — không phải tính năng quản trị, khác
+    `/admin`), debounce 300ms khi gõ tìm kiếm. 6 test mới (`vi.useFakeTimers()` để test debounce
+    không cần chờ thật). **Live-test qua hệ thống sống thật**: chơi 1 ván Đua Xe Hoàng Đạo tới
+    khi có người thắng (dùng lại script Node từ việc live-test trước), xác nhận
+    `GET /api/games/search` (rỗng/theo tên người chơi/theo winner) đều trả đúng bản ghi vừa
+    index, và query không khớp gì trả `[]` đúng như frontend kỳ vọng.
+
+Tổng test hiện tại: backend 189/189 pass (`dotnet test backend/BoardGame.sln`), frontend 166/166
 pass (`npm run test` trong `frontend/`) — cả 2 đúng lệnh CI dùng; 5 test backend cần Docker.
 
 **Đã verify cả 17 commit (14-33) chạy thật trên GitHub Actions** — run
