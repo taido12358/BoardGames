@@ -2,7 +2,7 @@
 
 Việc chưa làm, chưa có ai nhận. Không phải kế hoạch chi tiết — chỉ liệt kê để không quên.
 
-## SeatTimeoutService/BangDebugController không lưu replay/index lịch sử (phát hiện 2026-09-11)
+## SeatTimeoutService/BangDebugController không lưu replay/index lịch sử — ĐÃ SỬA (2026-09-11)
 
 Phát hiện khi live-test tính năng Replay (`rules/tasks/current.md` mục 35): `GameHub.FinishGame`
 (lưu artifact MinIO cho Replay + index OpenSearch cho `/history`) CHỈ được gọi từ nhánh
@@ -14,15 +14,21 @@ mọi ván thắng qua 2 đường này **vô hình hoàn toàn** với `/histor
 Replay (không lưu MinIO) — người chơi ngắt mạng thắng cuộc hoặc admin dùng debug panel ép thắng
 sẽ không bao giờ thấy lại được ván đó.
 
-**Chưa làm vì**: cần tách `FinishGame` (hiện là `private` method của `GameHub`, nhận
-`(GameRoom room, Guid id)`) thành logic dùng chung được cả 3 nơi gọi tới — `SeatTimeoutService`
-không có instance `GameHub` (chạy như `BackgroundService` riêng, chỉ có `IHubContext<GameHub>`
-tương tự cách `BroadcastRoomStateAsync` đã làm static để dùng chung), và `BangDebugController`
-cũng cần gọi được. Cách làm hợp lý: chuyển `FinishGame` thành static method giống
-`BroadcastRoomStateAsync` (nhận đủ dependency qua tham số: `AppDbContext`/`OpenSearchService`/
-`MinioStorageService`), gọi từ cả 3 nơi. Rủi ro thấp (chỉ thêm lời gọi, không đổi logic hiện có)
-nhưng cần sửa chữ ký + test lại cả 3 luồng (`BangSeatTimeoutTests`/live-test debug panel/live-test
-seat-timeout VayBat đã có sẵn, chỉ cần bổ sung assert có replay/index sau khi kết thúc).
+**Đã sửa**: chuyển `GameHub.FinishGame` thành `public static` (giống
+`BroadcastRoomStateAsync` đã làm trước đó cho đúng lý do — nhận dependency qua tham số
+`(AppDbContext, OpenSearchService, MinioStorageService, GameRoom, Guid)` thay vì field riêng của
+instance), gọi thêm từ `SeatTimeoutService.ScanOnce` (khi `outcome.Winner is not null` sau
+`ApplySeatTimeoutAsync`) và `BangDebugController.Mutate` (khi `winner is not null`) — cả 2 nơi bọc
+try/catch riêng, lỗi Search/MinIO không chặn luồng chính (đúng nguyên tắc "hạ tầng phụ không chặn
+luồng chính" đã áp dụng nhất quán toàn dự án). Không thêm test tự động mới cho 2 call site này —
+theo đúng tiền lệ đã có của `BangDebugTests.cs` (ghi rõ trong doc comment: controller cần
+DbContext/hub thật, verify bằng live-test + review code, không unit-test tầng đó) và
+`SeatTimeoutService` (chưa từng có test tự động cho chính BackgroundService, chỉ test tầng dưới
+`RoomService.ApplySeatTimeoutAsync`/`engine.OnSeatTimedOut`). **Verify bằng live-test thật**: lặp
+lại đúng kịch bản VayBat "ngắt kết nối đột ngột" đã phát hiện ra gap này — trước khi sửa `GET
+/replay` trả 404 sau khi ván kết thúc qua timeout; sau khi sửa, cùng kịch bản trả đúng
+seats/winner/moves thật. Chưa live-test riêng cho đường debug panel (Bang cần 4 tài khoản, cùng
+code path/cùng mức tin cậy nên không lặp lại thiết lập).
 
 ## Replay — chỉ xem danh sách nước đi, chưa dựng lại bàn cờ animate (ghi chú từ lúc làm, 2026-09-11)
 

@@ -77,6 +77,17 @@ public class SeatTimeoutService : BackgroundService
                 var (updatedRoom, outcome) = await rooms.ApplySeatTimeoutAsync(room.Id, engine.SideForSeat(idx));
                 if (updatedRoom is null || outcome is null) continue; // no-op (chưa liên quan lượt/phản hồi hiện tại) — thử lại lần quét sau
 
+                if (outcome.Winner is not null)
+                {
+                    // Trước 2026-09-11: ván thắng qua timeout KHÔNG được index/lưu replay (chỉ
+                    // GameHub.MakeMove gọi FinishGame) — vô hình với /history lẫn Replay. Xem
+                    // rules/tasks/backlog.md.
+                    var search = scope.ServiceProvider.GetRequiredService<OpenSearchService>();
+                    var storage = scope.ServiceProvider.GetRequiredService<MinioStorageService>();
+                    try { await GameHub.FinishGame(db, search, storage, updatedRoom, updatedRoom.Id); }
+                    catch (Exception ex) { _log.LogWarning(ex, "Lưu kết quả/replay thất bại sau seat-timeout"); }
+                }
+
                 await GameHub.BroadcastRoomStateAsync(hub.Clients, room.Id.ToString(), updatedRoom, engine);
                 break; // state đã đổi hẳn — các ghế timeout còn lại của phòng này để lần quét sau
             }

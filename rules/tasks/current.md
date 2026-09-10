@@ -298,6 +298,24 @@ IN_PROGRESS (vòng lặp liên tục, không có điểm "DONE" cố định —
     thật cho tới khi 1 bên về đích), `GET /api/games/{id}/replay` trả đúng seats/winner/map/
     finalState/toàn bộ 11 nước đi thật (gồm cả nước "__room_full__" hệ thống tự chèn lúc đủ ghế).
 
+36. **Sửa gap: SeatTimeoutService/BangDebugController không lưu replay/index lịch sử** — phát
+    hiện ở mục 35, xem ADR/chi tiết đầy đủ trong `rules/tasks/backlog.md` mục cùng tên (đã chuyển
+    ĐÃ SỬA). `GameHub.FinishGame` chuyển thành `public static`, gọi thêm từ
+    `SeatTimeoutService.ScanOnce` + `BangDebugController.Mutate`. Verify lại bằng live-test đúng
+    kịch bản đã phát hiện ra gap (VayBat seat-timeout): trước sửa `GET /replay` trả 404 sau khi
+    ván thắng qua timeout, sau sửa trả đúng dữ liệu thật.
+
+**Sự cố CI (2026-09-11)**: commit thêm tính năng Replay (mục 35) làm CI FAIL ở bước Test dù build
+sạch và local luôn pass. Thử sai 1 lần (đoán do 3 class test tự dùng `IClassFixture<AuthApiFactory>`
+riêng gây quá tải container CI — gộp vào 1 `ICollectionFixture` dùng chung, thay đổi đúng nhưng
+KHÔNG PHẢI nguyên nhân chính, CI vẫn fail). Nguyên nhân THẬT: `docker compose` còn chạy sẵn trên
+máy dev (từ live-test trước) che giấu 1 bug thật trong `MinioStorageService.GetObjectAsync` — khi
+không kết nối được MinIO, SDK trả về stream RỖNG thay vì throw, khiến `GetReplayAsync` trả `""`
+(không phải `null`), gây `GameJson.Element("")` ném `JsonException` không ai bắt → lộ 500. Chỉ tái
+hiện được sau khi chủ động `docker compose down` + chạy lại ĐÚNG lệnh CI dùng
+(`--configuration Release`). Xem chi tiết đầy đủ + bài học chẩn đoán trong
+`rules/coding/testing.md` mục "Sự cố CI thật + bài học chẩn đoán".
+
 Tổng test hiện tại: backend 220/220 pass (`dotnet test backend/BoardGame.sln`), frontend 196/196
 pass (`npm run test` trong `frontend/`) — cả 2 đúng lệnh CI dùng; 5+16+13+2=36 test backend cần Docker.
 

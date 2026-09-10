@@ -3,6 +3,7 @@ using BoardGame.Api.Platform;
 using BoardGame.Api.Platform.Abstractions;
 using BoardGame.Api.Platform.Auth;
 using BoardGame.Api.Platform.Models;
+using BoardGame.Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
@@ -33,16 +34,21 @@ public class BangDebugController : ControllerBase
     private readonly IHostEnvironment _env;
     private readonly IConfiguration _config;
     private readonly IHubContext<GameHub> _hub;
+    private readonly OpenSearchService _search;
+    private readonly MinioStorageService _storage;
     private readonly GameEngineRegistry _engines;
     private readonly ILogger<BangDebugController> _log;
 
     public BangDebugController(AppDbContext db, IHostEnvironment env, IConfiguration config,
-        IHubContext<GameHub> hub, GameEngineRegistry engines, ILogger<BangDebugController> log)
+        IHubContext<GameHub> hub, OpenSearchService search, MinioStorageService storage,
+        GameEngineRegistry engines, ILogger<BangDebugController> log)
     {
         _db = db;
         _env = env;
         _config = config;
         _hub = hub;
+        _search = search;
+        _storage = storage;
         _engines = engines;
         _log = log;
     }
@@ -111,6 +117,15 @@ public class BangDebugController : ControllerBase
         if (winner is not null) { room.Status = RoomStatus.Finished; room.Winner = winner; }
         room.UpdatedAt = DateTime.UtcNow;
         await _db.SaveChangesAsync();
+
+        if (winner is not null)
+        {
+            // Trước 2026-09-11: ván thắng ép qua debug panel KHÔNG được index/lưu replay (chỉ
+            // GameHub.MakeMove gọi FinishGame) — vô hình với /history lẫn Replay. Xem
+            // rules/tasks/backlog.md.
+            try { await GameHub.FinishGame(_db, _search, _storage, room, roomId); }
+            catch (Exception ex) { _log.LogWarning(ex, "Lưu kết quả/replay thất bại sau debug force-win"); }
+        }
 
         var engine = _engines.Get("bang");
         await GameHub.BroadcastRoomStateAsync(_hub.Clients, roomId.ToString(), room, engine);

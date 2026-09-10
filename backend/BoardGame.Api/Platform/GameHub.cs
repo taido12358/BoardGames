@@ -195,7 +195,7 @@ public class GameHub : Hub
 
         if (outcome!.Winner is not null)
         {
-            try { await FinishGame(room, id); }
+            try { await FinishGame(_db, _search, _storage, room, id); }
             catch (Exception ex) { _log.LogWarning(ex, "Lưu kết quả/replay thất bại"); }
         }
 
@@ -234,9 +234,19 @@ public class GameHub : Hub
         }
     }
 
-    private async Task FinishGame(GameRoom room, Guid id)
+    /// <summary>
+    /// Index lịch sử (OpenSearch) + lưu artifact replay (MinIO) khi 1 ván kết thúc — gọi được từ
+    /// BẤT KỲ nơi nào có thể set <c>room.Winner</c>, không chỉ <see cref="MakeMove"/>. static +
+    /// nhận dependency qua tham số (giống <see cref="BroadcastRoomStateAsync"/>) vì
+    /// <c>SeatTimeoutService</c> (BackgroundService riêng, không có instance GameHub) và
+    /// <c>BangDebugController</c> cũng cần gọi được — trước 2026-09-11, 2 nơi đó tự set
+    /// Status/Winner trực tiếp mà KHÔNG gọi hàm này, khiến ván thắng qua timeout/debug panel vô
+    /// hình với cả `/history` lẫn Replay (phát hiện lúc live-test tính năng Replay, xem
+    /// rules/tasks/backlog.md).
+    /// </summary>
+    public static async Task FinishGame(AppDbContext db, OpenSearchService search, MinioStorageService storage, GameRoom room, Guid id)
     {
-        var moves = await _db.GameMoves
+        var moves = await db.GameMoves
             .Where(m => m.RoomId == id)
             .OrderBy(m => m.MoveNumber)
             .ToListAsync();
@@ -244,7 +254,7 @@ public class GameHub : Hub
         var seatNames = SeatCodec.SeatsOf(room).Select(s => s?.DisplayName).ToList();
         var playersLabel = string.Join(", ", seatNames.Where(n => !string.IsNullOrWhiteSpace(n)));
 
-        await _search.IndexGameAsync(new GameRecord                       // OpenSearch
+        await search.IndexGameAsync(new GameRecord                       // OpenSearch
         {
             Id = room.Id.ToString(),
             GameKey = room.GameKey,
@@ -256,7 +266,7 @@ public class GameHub : Hub
             FinishedAt = room.UpdatedAt,
         });
 
-        await _storage.SaveReplayAsync($"replay-{room.Id}.json", GameJson.Serialize(new // MinIO
+        await storage.SaveReplayAsync($"replay-{room.Id}.json", GameJson.Serialize(new // MinIO
         {
             room.Id, room.GameKey, room.Winner,
             seats = seatNames,

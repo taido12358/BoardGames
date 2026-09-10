@@ -179,6 +179,47 @@ thay thế: `AddJwtBearer` trong `Program.cs` đã chốt `TokenValidationParame
 request có cookie sẽ trả 401 (ký/xác thực lệch khoá, tự phát hiện được khi thử secret ngẫu nhiên
 trước khi chốt cách trên).
 
+**Sự cố CI thật + bài học chẩn đoán (2026-09-11, khi thêm tính năng Replay)**: commit thêm
+`MinioStorageService.GetReplayAsync`/`GamesController.Replay` làm **CI FAIL** ở bước Test dù build
+sạch — KHÔNG tái hiện được trên máy dev lúc đầu (local luôn pass). Không có quyền admin repo nên
+không tải được log Actions đầy đủ (API trả 403 "Must have admin rights"); annotations/check-runs
+API chỉ cho biết "Process completed with exit code 1", không có tên test/thông báo lỗi cụ thể.
+
+Thử sai 1 lần đầu KHÔNG ĐÚNG: đoán do 3 class test HTTP tích hợp mỗi class tự dùng
+`IClassFixture<AuthApiFactory>` riêng → xUnit parallelize khác collection → quá nhiều container
+Postgres/host đồng thời so với tài nguyên runner CI. Gộp cả 3 vào 1 xUnit collection dùng chung
+(`[CollectionDefinition("AuthApi")]` + `ICollectionFixture<AuthApiFactory>`, mỗi class gắn
+`[Collection("AuthApi")]` thay vì `IClassFixture` riêng — vẫn là thay đổi ĐÚNG nên giữ lại, giảm
+số container/host cần thiết) nhưng **CI VẪN FAIL** — chứng minh đây không phải nguyên nhân chính,
+hoặc không phải nguyên nhân duy nhất.
+
+**Cách tìm ra nguyên nhân thật**: nhận ra workflow CI chạy `dotnet test --configuration Release`
+trong khi mình luôn test bằng `Debug` mặc định — thử lại chính xác lệnh CI dùng (`dotnet build
+--configuration Release` rồi `dotnet test --no-build --configuration Release`) vẫn PASS local. Bước
+quyết định: nhận ra máy dev có Docker Compose CÒN CHẠY SẴN từ live-test trước đó (`minio`/
+`opensearch`/... map cổng ra `localhost`) — trong khi runner CI hoàn toàn KHÔNG có bất kỳ service
+nào ngoài Testcontainers Postgres tự dựng. `docker compose down` (tắt hết) rồi chạy lại ĐÚNG lệnh
+CI dùng → tái hiện được lỗi 100% cục bộ (`Total: 220, Failed: 1`), lộ đúng test
+`Replay_RoomNeverFinished_...` fail với `InternalServerError` (500) thay vì `NotFound`/
+`ServiceUnavailable` như assert.
+
+**Nguyên nhân thật**: `MinioStorageService.GetObjectAsync` (SDK Minio 6.0.2, dùng
+`WithCallbackStream`) khi KHÔNG kết nối được server, đôi khi hoàn tất "thành công" (không throw
+exception nào cả) nhưng callback ghi stream KHÔNG BAO GIỜ được gọi — trả về stream RỖNG (0 byte)
+thay vì báo lỗi rõ ràng. `GetReplayAsync` cũ coi đây là "đọc thành công" và trả về `""` (chuỗi
+rỗng, không phải `null`), khiến `GamesController.Replay` không nhận ra là lỗi (`json is null` sai)
+và cố `GameJson.Element("")` → `JsonException` không ai bắt → lộ 500. Sửa: coi
+`stream.Length == 0` là "không đọc được" (trả `null`, giống case not-found) — 1 replay thật KHÔNG
+BAO GIỜ rỗng (luôn ít nhất vài trăm byte JSON) nên không có rủi ro false-negative.
+
+**Bài học chẩn đoán tổng quát**: (1) khi CI fail mà không tái hiện được local, LUÔN thử lại đúng
+cấu hình CI dùng (`--configuration Release` ở đây) trước khi đoán nguyên nhân khác; (2) môi trường
+dev có service THẬT còn sót lại từ live-test trước có thể CHE GIẤU lỗi chỉ lộ ra khi hạ tầng phụ
+THẬT SỰ không có (khác "hạ tầng phụ không chặn luồng chính" — ở đây hạ tầng phụ chặn NGẦM vì SDK
+trả kết quả rỗng thay vì lỗi); luôn thử `docker compose down` rồi chạy lại đúng lệnh CI khi nghi
+ngờ môi trường là nguyên nhân; (3) đừng vội tin "resource contention"/lý thuyết đầu tiên nghe hợp
+lý — verify bằng tái hiện được cục bộ trước khi push commit "fix", tránh tốn thêm 1 lần CI đỏ nữa.
+
 Bài học phụ: `request-otp` có cooldown 60s/email (`AuthController.ResendCooldownSeconds`) — nhiều
 test admin chạy trong vài trăm ms nếu dùng CHUNG 1 email admin sẽ khiến các lần sau bị 429, và
 `ExtractOtpCode()` (đọc log OTP capture qua `ILoggerProvider` tự viết, tương đương
