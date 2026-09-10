@@ -175,7 +175,15 @@ IN_PROGRESS (vòng lặp liên tục, không có điểm "DONE" cố định —
     (email/mã), lọc ký tự không phải số khi gõ mã, disable nút khi chưa hợp lệ, đếm ngược gửi
     lại mã, đổi email, hiện lỗi.
 
-Tổng test hiện tại: backend 189/189 pass (`dotnet test backend/BoardGame.sln`), frontend 118/118
+27. **Test `RoomShell.tsx`** (26 test, mới) — mọi component "khung phòng" DÙNG CHUNG giữa cả 4
+    game (`RoomStatusBanner`/`DisconnectBadge`/`ConnectionBanner`/`RoomErrorBanner`/
+    `LeaveRoomButton`/`RematchButton`/`RematchInviteBanner`/`isOpenStatus`) — trước đó chỉ được
+    exercise gián tiếp qua từng board riêng lẻ (không đủ nhánh, vd không board nào test trạng
+    thái `Cancelled`/`Abandoned`). File dùng chung, blast-radius cao nhất trong frontend (1 bug
+    ảnh hưởng cả 4 game cùng lúc) nên ưu tiên test trực tiếp, đủ nhánh thay vì dựa vào coverage
+    gián tiếp từ board test.
+
+Tổng test hiện tại: backend 189/189 pass (`dotnet test backend/BoardGame.sln`), frontend 144/144
 pass (`npm run test` trong `frontend/`) — cả 2 đúng lệnh CI dùng; 5 test backend cần Docker.
 
 **Đã verify cả 13 commit (14-28) chạy thật trên GitHub Actions** — run
