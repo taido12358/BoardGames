@@ -184,18 +184,24 @@ thắng/thua, khởi tạo state) giờ có `VayBat/VayBatRulesTests.cs` (17 tes
 `VayBatEngineTests.cs` (2026-09-05) mới chỉ phủ `SideForSeat`/`OnSeatTimedOut` (lớp adapter),
 chưa test luật lõi. Tổng test backend: 114/114 pass.
 
-## Nâng cấp dependency frontend có breaking change — chưa làm
+## Nâng cấp dependency frontend có breaking change
 
-`npm audit` (2026-09-11) còn 2 lỗ hổng cần bump major version mới hết:
-- `vite` 5.x → 8.x (kéo theo `esbuild` mới) — Vite 6/7/8 đổi khá nhiều (Rolldown, Node version tối
-  thiểu, plugin API); cần đọc changelog + test lại `npm run dev`/`npm run build` kỹ trước khi đổi.
-- `react-router-dom` 6.x → 7.x — đổi API đáng kể (data router, loader/action…); dự án hiện chỉ
-  dùng `<BrowserRouter>`/`<Routes>`/`<Route>`/`useNavigate`/`useParams`/`<Link>` cơ bản nên có thể
-  không bị ảnh hưởng nhiều, nhưng vẫn cần test lại toàn bộ routing (`/games`, `/games/:gameKey`,
-  `/games/:gameKey/room/:roomId`, `/admin`, redirect `*` → `/games`) sau khi nâng.
+`npm audit` (2026-09-11) phát hiện 2 lỗ hổng cần bump major version mới hết:
 
-Không làm gộp vào việc thêm ESLint (2026-09-11) vì đây là thay đổi runtime/behavior thật, cần
-verify riêng — không phải chỉ thêm tool dev-time như ESLint.
+- ~~`react-router-dom` 6.x → 7.x~~ — ĐÃ LÀM (2026-09-11, cùng ngày, tách commit riêng vì đây là
+  thay đổi runtime thật, không gộp vào việc thêm ESLint). Upgrade **hoàn toàn không cần đổi code**
+  — `react-router-dom` v7 vẫn giữ nguyên toàn bộ export quen thuộc (`BrowserRouter`/`Routes`/
+  `Route`/`Link`/`useNavigate`/`useParams`/`useSearchParams`/`Navigate`) làm package tương thích
+  ngược cho ai chưa migrate sang gói `react-router` hợp nhất mới — dự án chỉ dùng đúng tập API cơ
+  bản đó nên không chạm lớp "Data Router"/loader/action mới của v7. Verify: `tsc`/`vite build`/
+  `npm run lint` sạch (không có thay đổi type nào từ TypeScript, xác nhận mọi export vẫn khớp).
+  **Chưa live-test qua Chrome/Docker Compose** — cùng lý do các việc UI khác trong đợt này.
+- `vite` 5.x → 8.x (kéo theo `esbuild` mới) — CHƯA làm, vẫn để riêng. Vite 6/7/8 đổi khá nhiều
+  (Rolldown, Node version tối thiểu, plugin API) — rủi ro breaking cao hơn nhiều so với
+  react-router-dom, trong khi lỗ hổng thực tế (esbuild dev-server cho phép website khác gửi
+  request/đọc response) chỉ ảnh hưởng lúc chạy `npm run dev` cục bộ, không lộ ra ở bundle production
+  (`npm run build` + nginx). Đánh đổi rủi ro/lợi ích chưa đủ hấp dẫn để làm ngay — để dành khi có
+  lý do cụ thể hơn (cần tính năng mới của Vite, hoặc lỗ hổng leo thang mức nghiêm trọng cao hơn).
 
 ## Test tích hợp Postgres thật (Testcontainers) — ĐÃ LÀM (2026-09-11)
 

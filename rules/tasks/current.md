@@ -49,6 +49,11 @@ IN_PROGRESS (vòng lặp liên tục, không có điểm "DONE" cố định —
     **CHƯA live-test qua Chrome/Docker Compose** — ưu tiên cao hơn các UI tweak nhỏ trước đó vì
     đây là game HOÀN TOÀN MỚI, xem "Ghi chú môi trường" bên dưới.
 
+12. **Nâng cấp `react-router-dom` 6→7** — hoàn toàn không cần đổi code (v7 giữ nguyên export
+    quen thuộc làm tương thích ngược). Xử lý gọn 1/2 lỗ hổng `npm audit` còn lại. Xem backlog mục
+    "Nâng cấp dependency frontend có breaking change" — `vite`/`esbuild` vẫn để riêng (rủi ro cao
+    hơn, ảnh hưởng thực tế thấp vì chỉ lộ lúc `npm run dev`).
+
 Tổng test backend hiện tại: 141/141 pass (chạy qua `dotnet test backend/BoardGame.sln`, đúng lệnh CI dùng; 5 test cần Docker khả dụng).
 
 ## Việc đang làm / tiếp theo (thứ tự ưu tiên gợi ý, không bắt buộc theo đúng thứ tự)
