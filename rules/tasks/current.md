@@ -162,7 +162,15 @@ IN_PROGRESS (vòng lặp liên tục, không có điểm "DONE" cố định —
     `GameInstructions.tsx`'s `RolesSection`/`CardsSection`/`CharactersSection`/
     `DistanceDemoSection` vốn chưa ai test.
 
-Tổng test hiện tại: backend 189/189 pass (`dotnet test backend/BoardGame.sln`), frontend 94/94
+25. **Test `authStore.ts`** (12 test, mới) — luồng đăng nhập OTP (khôi phục phiên/gửi mã/xác
+    minh/đăng xuất/đếm ngược) CHƯA từng có test dù là logic quan trọng nhất (chặn cả app nếu
+    sai). Phát hiện + tự sửa 1 bug hạ tầng test nghiêm trọng: `vi.unstubAllGlobals()` trong
+    `afterEach` revert NHẦM stub `localStorage` dùng chung của `test-setup.ts`, không chỉ
+    `fetch` của riêng file — khiến mọi test SAU test đầu tiên fail sai lý do ("lỗi mạng" giả,
+    thật ra là `localStorage.setItem is not a function` bị nuốt bởi catch chung). Xem bài học
+    đầy đủ trong `../coding/testing.md`.
+
+Tổng test hiện tại: backend 189/189 pass (`dotnet test backend/BoardGame.sln`), frontend 106/106
 pass (`npm run test` trong `frontend/`) — cả 2 đúng lệnh CI dùng; 5 test backend cần Docker.
 
 **Đã verify cả 9 commit (14-22) chạy thật trên GitHub Actions** — run

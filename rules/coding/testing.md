@@ -117,6 +117,27 @@ làm fail test nhưng nhiễu output). Test này trực tiếp là regression ch
 trên) — render THẬT component cho cả 4 gameKey và kiểm class nền, bắt được đúng dạng lỗi thật đã
 xảy ra (mất class do thiếu key), khác `artworkTheme.test.ts` chỉ kiểm tra hằng số ở mức unit.
 
+Thêm `platform/authStore.test.ts` (mới 2026-09-11, 12 test) — luồng đăng nhập OTP (khôi phục
+phiên, gửi mã, xác minh mã, đăng xuất, đếm ngược gửi lại) CHƯA từng có test dù là logic quan
+trọng nhất (chặn cả app nếu sai). Dùng `vi.useFakeTimers()` để test đếm ngược 60s không cần chờ
+thật.
+
+**Bài học nghiêm trọng nhất về `vi.stubGlobal`/`vi.unstubAllGlobals`**: test đầu tiên viết luôn
+gọi `vi.unstubAllGlobals()` trong `afterEach` (tưởng là "dọn dẹp đúng cách" sau khi tự
+`vi.stubGlobal("fetch", ...)` trong từng test) — nhưng `unstubAllGlobals()` revert LUÔN MỌI
+global đã bị stub, KỂ CẢ stub `localStorage` dùng CHUNG cho toàn bộ bộ test khai trong
+`test-setup.ts` (setupFiles chạy lại cho mỗi test file, nên stub đó tồn tại trong phạm vi file
+hiện tại). Hậu quả: test ĐẦU TIÊN trong file luôn qua, nhưng mọi test SAU ĐÓ gọi
+`verifyOtp`/`restoreSession` (có `syncPlayerName` → `localStorage.setItem`) đều fail với lỗi
+"Không kết nối được máy chủ" — SAI HOÀN TOÀN so với nguyên nhân thật (không phải lỗi mạng, là
+`localStorage.setItem is not a function` bị nuốt bởi `catch` chung của action). Debug bằng cách
+tự gọi `fetch()` thủ công ngay trước khi gọi action để xác nhận mock fetch vẫn đúng (loại trừ khả
+năng do fetch), rồi mới nghi ngờ sang `localStorage`. **Quy tắc rút ra**: KHÔNG BAO GIỜ gọi
+`vi.unstubAllGlobals()` trong `afterEach` của một test file riêng lẻ khi `test-setup.ts` (global
+setup) cũng dùng `vi.stubGlobal` cho thứ khác (`localStorage`) — chỉ cần gọi lại
+`vi.stubGlobal("fetch", ...)` (hoặc dùng lại hàm `stubFetch()` riêng) ở ĐẦU MỖI TEST để ghi đè
+mock cũ, không cần "unstub" gì giữa các lần.
+
 ## Integration test
 
 - Chạy trên PostgreSQL thật (compose/Testcontainers), không InMemory provider — dự án dựa vào JSONB và raw SQL bootstrap, InMemory không kiểm chứng được.
