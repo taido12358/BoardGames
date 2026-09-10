@@ -54,11 +54,20 @@ no-op 1 lần trong `test-setup.ts` (cùng chỗ với polyfill `localStorage`) 
 trong từng file test đụng phải — component tương lai dùng `scrollTo`/`scrollIntoView` sẽ tự động
 không bị ảnh hưởng.
 
-**Còn lại chưa làm** (nợ kỹ thuật, không phải bị bỏ qua): `BangBoard.tsx`, `VayBatBoard.tsx`,
-`AdminPage.tsx` vẫn chỉ verify bằng `tsc`/build/lint + review thủ công, chưa có test tự động —
-làm dần khi sửa/thêm tính năng ở các component đó, theo đúng tinh thần ưu tiên "chỗ nào đang
-động tới thì thêm test", không cần một đợt riêng phủ hết toàn bộ component cùng lúc.
-`VayBatBoard.tsx` khó test bằng RTL/jsdom hơn các component khác — dùng API hình học SVG
+Thêm `components/AdminPage.test.tsx` (6 test — mock `global.fetch` theo URL thay vì mock cả
+`adminStore.ts`, để kiểm đúng contract request/response thật: đang kiểm tra quyền, không phải
+admin thì không gọi `rooms`/`stats`, admin thấy đúng thống kê + bảng phòng, trống khi không có
+phòng khớp lọc, hiện lỗi khi fetch phòng thất bại, bấm chip lọc gọi lại đúng query `status=...`).
+**Bài học**: 1 test fail vì "Đang chờ" khớp CẢ badge trạng thái của 1 dòng bảng LẪN nút chip lọc
+cùng tên (chip lọc luôn hiển thị, không phụ thuộc dữ liệu) — sửa bằng cách giới hạn truy vấn
+(`within(row)`) vào đúng dòng `<tr>` thay vì tìm text toàn trang, một lỗi test hay gặp khi UI có
+nhiều chỗ dùng lại cùng một bảng nhãn hiển thị (`STATUS_LABEL`).
+
+**Còn lại chưa làm** (nợ kỹ thuật, không phải bị bỏ qua): `BangBoard.tsx`, `VayBatBoard.tsx` vẫn
+chỉ verify bằng `tsc`/build/lint + review thủ công, chưa có test tự động — làm dần khi sửa/thêm
+tính năng ở các component đó, theo đúng tinh thần ưu tiên "chỗ nào đang động tới thì thêm test",
+không cần một đợt riêng phủ hết toàn bộ component cùng lúc. `VayBatBoard.tsx` khó test bằng
+RTL/jsdom hơn các component khác — dùng API hình học SVG
 (`createSVGPoint`/`getScreenCTM`/`matrixTransform`) mà jsdom không triển khai, cần mock hình học
 riêng hoặc chuyển sang Playwright (trình duyệt thật) nếu muốn test tương tác kéo-thả/click quân.
 
