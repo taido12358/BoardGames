@@ -105,10 +105,9 @@ nguồn dân gian có dị bản: [`../history/decisions.md`](../history/decisio
   VayBat/Bang), vừa nhất quán "không dùng artwork bản quyền", vừa không hợp theme dân gian VN.
 - Không có `CreateOptions.tsx` (không có tuỳ chọn tạo phòng riêng — bàn cờ luôn cố định, không
   như `maxRedTurns` của VayBat hay số ghế của Bang).
-- **CHƯA live-test qua Chrome/Docker Compose** — chỉ verify bằng `dotnet build`/`dotnet test`
-  (18 test luật thuần mới, tất cả pass) + `npm run lint`/`tsc`/`vite build`. Đây là game MỚI
-  (rủi ro cao hơn một thay đổi UI nhỏ trên game đã có) nên nên ưu tiên live-test 2 client thật
-  khi có dịp (xem `rules/tasks/current.md` mục "Ghi chú môi trường").
+- **Đã live-test qua hệ thống sống thật (2026-09-11)** — xem `rules/tasks/current.md` mục 19:
+  rải quân/relay/ăn quan qua 3 nước đi thật giữa 2 client giả lập bằng script Node/SignalR, đúng
+  như thiết kế. (Ghi chú cũ ở đây từng nói "CHƯA live-test" — đã lỗi thời, cập nhật lại.)
 
 ## Thư viện trò chơi — ĐÃ LÀM (2026-08-05)
 

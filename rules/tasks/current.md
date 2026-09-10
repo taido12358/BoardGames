@@ -226,7 +226,14 @@ IN_PROGRESS (vòng lặp liên tục, không có điểm "DONE" cố định —
     phản ánh ngay), từ chối tên rỗng/quá 30 ký tự, 401 khi không có cookie — đều đúng như thiết
     kế.
 
-Tổng test hiện tại: backend 189/189 pass (`dotnet test backend/BoardGame.sln`), frontend 178/178
+32. **Test trực tiếp `adminStore.ts`** (12 test mới) — cùng nợ kỹ thuật dạng mục 28
+    (`gameStore.ts`): 3 action REST (`checkAdmin`/`fetchRooms`/`fetchStats`) trước đó chỉ được
+    exercise gián tiếp qua `AdminPage.test.tsx` (mock thành black-box qua `global.fetch`, không
+    test riêng từng nhánh lỗi/query string). Test đủ nhánh: thành công, lỗi HTTP (403/401/500),
+    lỗi mạng, đúng query string khi có/không filter, và xác nhận `fetchStats` cố ý im lặng bỏ qua
+    lỗi (thống kê chỉ phụ trợ, không chặn trang — đúng thiết kế trong code, không phải thiếu sót).
+
+Tổng test hiện tại: backend 189/189 pass (`dotnet test backend/BoardGame.sln`), frontend 190/190
 pass (`npm run test` trong `frontend/`) — cả 2 đúng lệnh CI dùng; 5 test backend cần Docker.
 
 **Đã verify cả 17 commit (14-33) chạy thật trên GitHub Actions** — run
