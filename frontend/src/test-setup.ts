@@ -18,6 +18,14 @@ afterEach(() => {
   cleanup();
 });
 
+// jsdom không triển khai Element.scrollTo (không làm layout/scroll thật) — bất kỳ component
+// nào gọi nó (vd ChatPanel tự cuộn xuống tin nhắn mới nhất) sẽ crash với "scrollTo is not a
+// function" khi test render trong jsdom. Polyfill no-op ở đây một lần cho MỌI test, thay vì
+// mock riêng trong từng file test đụng phải.
+if (typeof Element.prototype.scrollTo !== "function") {
+  Element.prototype.scrollTo = () => {};
+}
+
 class MemoryStorage implements Storage {
   private store = new Map<string, string>();
 

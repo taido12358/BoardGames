@@ -253,10 +253,12 @@ Frontend trước đó KHÔNG có test tự động nào (chỉ `tsc`/ESLint). T
 test`, job frontend, chạy sau lint trước build).
 
 **Đã bổ sung sau đó cùng ngày**: cài React Testing Library, viết `OAnQuanBoard.test.tsx` (8 test)
-làm ví dụ mẫu test component — xem `rules/coding/testing.md` mục "Test component React" cho chi
-tiết + bài học về `afterEach(cleanup)` thủ công. `BangBoard.tsx`/`VayBatBoard.tsx`/`ChatPanel.tsx`/
-`AdminPage.tsx` vẫn chưa có test tự động (nợ kỹ thuật còn lại, không phải bỏ qua) — chỉ verify
-bằng `tsc`/build/lint + review thủ công, làm dần khi sửa/thêm tính năng ở các component đó.
++ `ChatPanel.test.tsx` (7 test) làm ví dụ mẫu test component — xem `rules/coding/testing.md` mục
+"Test component React" cho chi tiết + 2 bài học hạ tầng test tự bắt được (`afterEach(cleanup)`
+thủ công, polyfill `Element.prototype.scrollTo` vì jsdom không triển khai).
+`BangBoard.tsx`/`VayBatBoard.tsx`/`AdminPage.tsx` vẫn chưa có test tự động (nợ kỹ thuật còn lại,
+không phải bỏ qua) — chỉ verify bằng `tsc`/build/lint + review thủ công, làm dần khi sửa/thêm
+tính năng ở các component đó. `VayBatBoard.tsx` khó test hơn (SVG geometry API jsdom không có).
 
 **`npm audit`**: cài `vitest`/`jsdom` không phát sinh lỗ hổng MỚI ngoài `esbuild`/`vite` đã biết
 (vitest tự kéo theo 1 bản `vite-node` nội bộ dùng chung gốc `esbuild` cũ) — không đổi quyết định

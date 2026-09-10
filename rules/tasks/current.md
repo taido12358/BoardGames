@@ -54,15 +54,16 @@ IN_PROGRESS (vòng lặp liên tục, không có điểm "DONE" cố định —
     "Nâng cấp dependency frontend có breaking change" — `vite`/`esbuild` vẫn để riêng (rủi ro cao
     hơn, ảnh hưởng thực tế thấp vì chỉ lộ lúc `npm run dev`).
 
-13. **Vitest cho frontend** (26 test) — frontend trước đó KHÔNG có test tự động nào. Test logic
+13. **Vitest cho frontend** (33 test) — frontend trước đó KHÔNG có test tự động nào. Test logic
     thuần: helper hiển thị/gợi ý của VayBat + Ô Ăn Quan, `gameStore.ts` (merge `isMine`, giới hạn
-    chat, rematch invite) + React Testing Library cho `OAnQuanBoard.tsx` (8 test — ví dụ mẫu test
-    component đầu tiên của repo, phát hiện luôn 1 vấn đề setup thật: thiếu `afterEach(cleanup)`
-    thủ công gây lỗi "Found multiple elements" hàng loạt, đã sửa). Wire vào CI. Xem backlog mục
-    "Unit test frontend (Vitest)". `BangBoard.tsx`/`VayBatBoard.tsx`/`ChatPanel.tsx`/
-    `AdminPage.tsx` vẫn chưa có test component — nợ kỹ thuật ghi rõ, làm dần khi động tới.
+    chat, rematch invite) + React Testing Library cho `OAnQuanBoard.tsx` (8 test) và
+    `ChatPanel.tsx` (7 test) — 2 ví dụ mẫu test component, phát hiện 2 vấn đề setup thật:
+    thiếu `afterEach(cleanup)` thủ công (gây "Found multiple elements" hàng loạt) và jsdom không
+    triển khai `Element.scrollTo` — cả 2 đã sửa 1 lần trong `test-setup.ts`. Wire vào CI. Xem
+    backlog mục "Unit test frontend (Vitest)". `BangBoard.tsx`/`VayBatBoard.tsx`/`AdminPage.tsx`
+    vẫn chưa có test component — nợ kỹ thuật ghi rõ, làm dần khi động tới.
 
-Tổng test hiện tại: backend 141/141 pass (`dotnet test backend/BoardGame.sln`), frontend 26/26
+Tổng test hiện tại: backend 141/141 pass (`dotnet test backend/BoardGame.sln`), frontend 33/33
 pass (`npm run test` trong `frontend/`) — cả 2 đúng lệnh CI dùng; 5 test backend cần Docker.
 
 ## Việc đang làm / tiếp theo (thứ tự ưu tiên gợi ý, không bắt buộc theo đúng thứ tự)

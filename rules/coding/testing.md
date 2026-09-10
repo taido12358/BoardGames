@@ -45,10 +45,22 @@ KHÔNG tự kích hoạt — phải tự gọi `cleanup()` trong `afterEach` ở
 DOM của test trước còn sót lại khi test sau render tiếp, gây lỗi "Found multiple elements" hàng
 loạt (đã tự bắt được ngay lần chạy đầu, sửa 1 chỗ trong setup là hết).
 
+Thêm `platform/ChatPanel.test.tsx` (7 test — mở/thu gọn, hiện đúng số tin/nội dung/người gửi,
+disable nút Gửi khi rỗng/chỉ khoảng trắng, gửi tin gọi đúng `sendChatMessage(roomId, textĐãTrim)`
+rồi xoá ô nhập). **Bài học thứ 2**: `Element.prototype.scrollTo` không tồn tại trong jsdom (jsdom
+không làm layout/scroll thật) — bất kỳ component nào gọi `ref.current.scrollTo(...)` (như
+`ChatPanel` tự cuộn xuống tin mới nhất) sẽ crash test với "scrollTo is not a function". Polyfill
+no-op 1 lần trong `test-setup.ts` (cùng chỗ với polyfill `localStorage`) thay vì mock riêng lẻ
+trong từng file test đụng phải — component tương lai dùng `scrollTo`/`scrollIntoView` sẽ tự động
+không bị ảnh hưởng.
+
 **Còn lại chưa làm** (nợ kỹ thuật, không phải bị bỏ qua): `BangBoard.tsx`, `VayBatBoard.tsx`,
-`ChatPanel.tsx`, `AdminPage.tsx` vẫn chỉ verify bằng `tsc`/build/lint + review thủ công, chưa có
-test tự động — làm dần khi sửa/thêm tính năng ở các component đó, theo đúng tinh thần ưu tiên
-"chỗ nào đang động tới thì thêm test", không cần một đợt riêng phủ hết toàn bộ component cùng lúc.
+`AdminPage.tsx` vẫn chỉ verify bằng `tsc`/build/lint + review thủ công, chưa có test tự động —
+làm dần khi sửa/thêm tính năng ở các component đó, theo đúng tinh thần ưu tiên "chỗ nào đang
+động tới thì thêm test", không cần một đợt riêng phủ hết toàn bộ component cùng lúc.
+`VayBatBoard.tsx` khó test bằng RTL/jsdom hơn các component khác — dùng API hình học SVG
+(`createSVGPoint`/`getScreenCTM`/`matrixTransform`) mà jsdom không triển khai, cần mock hình học
+riêng hoặc chuyển sang Playwright (trình duyệt thật) nếu muốn test tương tác kéo-thả/click quân.
 
 ## Integration test
 
