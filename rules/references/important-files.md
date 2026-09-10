@@ -19,7 +19,7 @@ Mọi đường dẫn dưới đây đã xác nhận tồn tại trong repo (c�
 ## Database
 
 - Context: `backend/BoardGame.Api/Data/AppDbContext.cs`.
-- Schema: **không có file migration** — toàn bộ `CREATE TABLE`/`ALTER TABLE` nằm trong block raw SQL của `Program.cs` (xem [`../architecture/database.md`](../architecture/database.md)).
+- Schema: **không có file migration** — toàn bộ `CREATE TABLE`/`ALTER TABLE` nằm trong `Data/SchemaBootstrapper.cs` (`Sqls` + `ApplyAsync`, tách khỏi `Program.cs` 2026-09-11 để test tái sử dụng đúng SQL thật — xem [`../architecture/database.md`](../architecture/database.md)). `Program.cs` chỉ gọi `SchemaBootstrapper.ApplyAsync(db, logger)` lúc boot.
 - Entity generic: `backend/BoardGame.Api/Platform/Models/GameRoom.cs`, `GameMove.cs`, `GameRecord.cs`.
 - Entity auth: `backend/BoardGame.Api/Platform/Auth/AppUser.cs`, `AuthOtp.cs`.
 
@@ -65,7 +65,7 @@ Mọi đường dẫn dưới đây đã xác nhận tồn tại trong repo (c�
 
 ## Tests
 
-- `backend/BoardGame.Api.Tests/` (thêm 2026-08-05) — xUnit, 118 test. `Bang/*.cs`: roles, characters, deck, distance, luồng chơi, bảo vệ thông tin ẩn, hợp đồng JSON enum, `BangSeatTimeoutTests.cs` (mới 2026-09-05 — `OnSeatTimedOut`). `VayBat/VayBatEngineTests.cs` (2026-09-05 — `SideForSeat`/`OnSeatTimedOut`, lớp adapter) + `VayBat/VayBatRulesTests.cs` (2026-09-10, 17 test — luật thuần: kề/trống, nước đi hợp lệ, áp nước đi, thắng/thua, khởi tạo state). `Platform/Auth/TokenServiceTests.cs` (mới 2026-09-10, 4 test — round-trip JWT thật cho claim role "Admin", xem ADR trong `../history/decisions.md`). `Platform/RoomStatusTests.cs` (mới). Chưa có test tích hợp chạm Postgres thật cho `RoomService`/khoá `FOR UPDATE`/`SKIP LOCKED` — nợ kỹ thuật, ghi trong [`../tasks/backlog.md`](../tasks/backlog.md).
+- `backend/BoardGame.Api.Tests/` (thêm 2026-08-05) — xUnit, 123 test. `Bang/*.cs`: roles, characters, deck, distance, luồng chơi, bảo vệ thông tin ẩn, hợp đồng JSON enum, `BangSeatTimeoutTests.cs` (mới 2026-09-05 — `OnSeatTimedOut`). `VayBat/VayBatEngineTests.cs` (2026-09-05 — `SideForSeat`/`OnSeatTimedOut`, lớp adapter) + `VayBat/VayBatRulesTests.cs` (2026-09-10, 17 test — luật thuần: kề/trống, nước đi hợp lệ, áp nước đi, thắng/thua, khởi tạo state). `Platform/Auth/TokenServiceTests.cs` (2026-09-10, 4 test — round-trip JWT thật cho claim role "Admin", xem ADR trong `../history/decisions.md`). `Platform/RoomServiceIntegrationTests.cs` (mới 2026-09-11, 5 test — Testcontainers, Postgres thật, verify khoá `FOR UPDATE`/`SKIP LOCKED` của `RoomService` bằng các cuộc gọi đồng thời thật; CẦN Docker khả dụng lúc `dotnet test` chạy, GitHub Actions `ubuntu-latest` có sẵn). `Platform/RoomStatusTests.cs` (mới).
 - Chiến lược test đầy đủ (mong muốn cho mọi game): [`../coding/testing.md`](../coding/testing.md).
 
 ## Tài liệu

@@ -10,6 +10,13 @@
   <ItemGroup>
     <PackageReference Include="coverlet.collector" Version="6.0.4" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <!-- Pin trực tiếp trùng version BoardGame.Api thật sự dùng (8.0.6, kéo theo bởi
+         Microsoft.EntityFrameworkCore.Design với PrivateAssets="all") — nếu không, closure
+         tham chiếu của project này chỉ thấy 8.0.4 (qua Npgsql.EntityFrameworkCore.PostgreSQL,
+         package đó chưa có bản 8.0.6 trong dòng 8.0.x), gây lỗi CS1705 ngay khi code test nào
+         đó thật sự đụng tới kiểu của Microsoft.EntityFrameworkCore (vd DbContextOptionsBuilder). -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.6" />
+    <PackageReference Include="Testcontainers.PostgreSql" Version="4.15.0" />
     <PackageReference Include="xunit" Version="2.9.3" />
     <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
   </ItemGroup>

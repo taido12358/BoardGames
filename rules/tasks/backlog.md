@@ -18,9 +18,9 @@ cấu trúc code Platform + rebuild UI đã hoàn tất trong 1 đợt duy nhấ
 - `SeatTimeoutService` quét toàn bộ phòng `Playing` mỗi ~10s (không index theo phòng có ghế
   disconnect) — chấp nhận ở quy mô hiện tại (đúng tiền lệ đã chấp nhận cho `BroadcastState`
   quét theo connection trước đây); cần tối ưu nếu số phòng đồng thời lớn lên nhiều.
-- Chưa có test tích hợp chạm Postgres thật cho `RoomService`/khoá `FOR UPDATE`/`SKIP LOCKED`
-  (project chưa có tiền lệ test chạm DB, chỉ test luật thuần) — chỉ verify thủ công qua
-  Docker Compose. Nợ kỹ thuật, nên bổ sung Testcontainers nếu làm tiếp phần này.
+- ~~Chưa có test tích hợp chạm Postgres thật cho `RoomService`/khoá `FOR UPDATE`/`SKIP LOCKED`~~
+  — ĐÃ LÀM (2026-09-11): `Platform/RoomServiceIntegrationTests.cs` (Testcontainers, 5 test) —
+  xem mục "Test tích hợp Postgres thật (Testcontainers)" bên dưới.
 
 ## Game thứ hai — BANG! — ĐÃ LÀM (2026-08-05)
 
@@ -58,7 +58,12 @@ chưa gắn với game nào; có thể dùng cho game thứ ba hoặc reskin BAN
   ở banner — không có gì đảm bảo họ giữ đúng ghế cũ/thứ tự cũ). Không có test DB thật cho
   `CreateRematchAsync` (cùng lý do "chưa có test tích hợp chạm Postgres" đã ghi ở mục "Việc kỹ
   thuật chưa làm" — nợ kỹ thuật có sẵn, không phải riêng tính năng này).
-- Debug panel (spec §51) chưa làm — có thể thêm sau nếu cần, chỉ nên bật ở Development.
+- Debug panel (spec §51) chưa làm. **Cân nhắc 2026-09-11**: spec yêu cầu "switch between test
+  players" (xem/điều khiển bất kỳ ghế nào bất kể đăng nhập là ai) — đúng dạng bypass danh tính
+  đã bị vá làm lỗ hổng bảo mật 2026-08-05 ("ai cũng giả được người khác chỉ bằng cách gửi đúng
+  chuỗi tên"). Dù chỉ định bật ở Development, chủ động xây lại một dạng bypass tương tự (kể cả
+  có gate `IsDevelopment()`) là việc có rủi ro bảo mật thật nếu gate sai — nên HỎI XÁC NHẬN người
+  dùng trước khi làm, không tự quyết như các việc UI/tính năng thường khác.
 
 ## Thư viện trò chơi — ĐÃ LÀM (2026-08-05)
 
@@ -167,3 +172,46 @@ chưa test luật lõi. Tổng test backend: 114/114 pass.
 
 Không làm gộp vào việc thêm ESLint (2026-09-11) vì đây là thay đổi runtime/behavior thật, cần
 verify riêng — không phải chỉ thêm tool dev-time như ESLint.
+
+## Test tích hợp Postgres thật (Testcontainers) — ĐÃ LÀM (2026-09-11)
+
+Trả nợ kỹ thuật ghi từ 2026-08-05/2026-09-05: `RoomService` dùng `SELECT ... FOR UPDATE` (khoá
+hàng, xem `JoinRoomAsync`/`MakeMoveAsync`/`CancelRoomAsync`/`ApplySeatTimeoutAsync`) và
+`FOR UPDATE SKIP LOCKED` (`QuickMatchAsync`) — hành vi chỉ có ý nghĩa khi test chạm Postgres
+THẬT với nhiều connection đồng thời; EF Core InMemory hay test luật thuần không mô phỏng được.
+
+**Thay đổi:**
+- **Tách schema bootstrap khỏi `Program.cs`** thành `Data/SchemaBootstrapper.cs` (`Sqls` +
+  `ApplyAsync`) — COPY NGUYÊN VẸN nội dung SQL (verify bằng `diff` byte-for-byte trước khi ghép
+  file, không gõ lại tay — xem `rules/logs/2026-09-11.md` để biết quy trình chi tiết, vì đây
+  đúng vùng code đã từng gây sự cố mất dữ liệu 2026-09-05). Lý do tách: test tích hợp cần chạy
+  ĐÚNG SQL thật đang chạm DB thật, không phải một bản sao có thể lệch dần. Đã smoke-test lại qua
+  container Postgres tạm (không phải DB dev) trước khi tin tưởng refactor không đổi hành vi.
+- `Platform/RoomServiceIntegrationTests.cs` (mới, `Testcontainers.PostgreSql`) — 5 test, mỗi test
+  tự dựng 1 container Postgres RIÊNG (cô lập tuyệt đối, đổi lấy tốc độ — ~25s cho cả bộ):
+  `CreateRoomAsync` persist đúng; `JoinRoomAsync` với 5 người tranh 3 ghế trống đồng thời không ai
+  bị gán trùng ghế; `CancelRoomAsync` gọi huỷ đồng thời 5 lần chỉ đúng 1 lần thành công; `QuickMatchAsync`
+  4 người tranh 1 ghế trống cuối chỉ đúng 1 người ghép được; `ApplySeatTimeoutAsync` gọi đồng thời
+  5 lần cho cùng 1 ghế chỉ tạo đúng 1 kết quả. Mỗi test đều đọc lại bằng `AppDbContext` KHÁC để
+  xác nhận đã persist thật xuống Postgres, không phải chỉ đúng trong bộ nhớ của lần gọi vừa rồi.
+- Thêm `Microsoft.EntityFrameworkCore` 8.0.6 làm PackageReference TRỰC TIẾP trong
+  `BoardGame.Api.Tests.csproj` — phát hiện 1 vấn đề version-resolution có sẵn từ trước (không
+  phải do việc này gây ra): `BoardGame.Api.csproj` có `Npgsql.EntityFrameworkCore.PostgreSQL`
+  8.0.4 VÀ `Microsoft.EntityFrameworkCore.Design` 8.0.6 (đóng gói `PrivateAssets="all"`) cùng
+  lúc — bản thân `BoardGame.Api.dll` compile xong dùng EF Core 8.0.6, nhưng project nào
+  `ProjectReference` tới nó (như Tests) chỉ thấy được nhánh 8.0.4 vì nhánh 8.0.6 bị
+  `PrivateAssets` chặn không lan truyền. Trước đây đây chỉ là WARNING vô hại (MSB3277) vì chưa
+  có code test nào THẬT SỰ đụng tới kiểu của `Microsoft.EntityFrameworkCore` — file test đầu
+  tiên dùng `DbContextOptionsBuilder<AppDbContext>` mới làm lộ ra thành lỗi biên dịch cứng
+  (`CS1705`). Không có bản Npgsql 8.0.6 trong dòng 8.0.x để tự sửa gốc — pin trực tiếp trong
+  Tests project là cách chuẩn cho tình huống này.
+
+**Tests:** `dotnet test backend/BoardGame.sln --configuration Release`: 123/123 pass (118 cũ +
+5 mới), 25.6s. Xác nhận không có container/volume nào sót lại sau khi chạy (`docker ps -a`) —
+Testcontainers tự dọn qua reaper "Ryuk".
+
+**Lưu ý cho CI**: 5 test này CẦN Docker socket khả dụng lúc `dotnet test` chạy. GitHub Actions
+`ubuntu-latest` có Docker cài sẵn mặc định nên `.github/workflows/ci.yml` không cần cấu hình gì
+thêm — đã verify chạy thật trên Actions (xem `rules/logs/2026-09-11.md`). Nếu sau này đổi runner
+(self-hosted không có Docker, hoặc macOS/Windows runner) thì 5 test này sẽ fail vì không kết nối
+được Docker daemon — lúc đó cần `[Trait]`/filter riêng để skip có điều kiện, chưa cần làm bây giờ.

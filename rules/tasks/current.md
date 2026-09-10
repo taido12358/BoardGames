@@ -34,8 +34,13 @@ IN_PROGRESS (vòng lặp liên tục, không có điểm "DONE" cố định —
    of Hooks THẬT trong `VayBatBoard.tsx` ngay lần chạy đầu (đã sửa). `npm audit fix` xử lý 4/6 lỗ
    hổng dev dependency có sẵn; còn `vite`/`react-router-dom` cần bump major, để riêng (xem backlog
    mục "Nâng cấp dependency frontend có breaking change").
+10. Test tích hợp Postgres thật cho `RoomService` (Testcontainers, 5 test) — trả nợ kỹ thuật cũ
+    nhất trong backlog (từ 2026-08-05). Tách `Data/SchemaBootstrapper.cs` khỏi `Program.cs` để
+    test tái dùng đúng SQL thật (copy nguyên vẹn, verify byte-for-byte, smoke-test qua container
+    Postgres tạm trước khi tin — xem `rules/logs/2026-09-11.md` vì đây đúng vùng code từng gây sự
+    cố mất dữ liệu 2026-09-05). Xem backlog mục "Test tích hợp Postgres thật (Testcontainers)".
 
-Tổng test backend hiện tại: 118/118 pass (chạy qua `dotnet test backend/BoardGame.sln`, đúng lệnh CI dùng).
+Tổng test backend hiện tại: 123/123 pass (chạy qua `dotnet test backend/BoardGame.sln`, đúng lệnh CI dùng; 5 test mới cần Docker khả dụng).
 
 ## Việc đang làm / tiếp theo (thứ tự ưu tiên gợi ý, không bắt buộc theo đúng thứ tự)
 
