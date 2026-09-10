@@ -87,6 +87,30 @@ describe("GameDetails — nền artwork đúng accent (regression cho bug đã s
   });
 });
 
+describe("GameDetails — chuyển tab hướng dẫn (GameInstructions, chưa từng có test riêng)", () => {
+  // Bang dùng ĐỦ CẢ 6 kind hiện có (text/roles/flow/distanceDemo/cards/characters) — click qua
+  // từng tab xác nhận GameInstructions.tsx render đúng cho mọi kind mà không crash, thay vì chỉ
+  // để 3 game kia (chỉ dùng text/flow) che khuất các renderer ít dùng hơn (RolesSection/
+  // CardsSection/CharactersSection/DistanceDemoSection) không bao giờ được test tới.
+  // Dùng text CỐ ĐỊNH của từng renderer (không phải dữ liệu game, dễ trùng lặp giữa các mục —
+  // vd tên vai trò/nhân vật thường được nhắc lại ở nhiều chỗ) để khớp CHÍNH XÁC 1 phần tử.
+  it.each([
+    ["VAI TRÒ", "GIỮ BÍ MẬT"],
+    ["LƯỢT CHƠI", "Bắt đầu lượt"],
+    ["KHOẢNG CÁCH & TẦM BẮN", "CÓ THỂ BẮN"],
+    ["LÁ BÀI", "Súng Gatling"],
+    ["NHÂN VẬT", "Thông tin nhân vật LUÔN công khai"],
+    ["CHIẾN THẮNG", "Kẻ phản bội thắng"],
+  ])("tab %s render được nội dung tương ứng không crash", async (tabLabel, expectedText) => {
+    const user = userEvent.setup();
+    renderDetails("bang");
+
+    await user.click(screen.getByRole("tab", { name: tabLabel }));
+
+    expect(screen.getByText(new RegExp(expectedText))).toBeInTheDocument();
+  });
+});
+
 describe("GameDetails — hiển thị cơ bản", () => {
   it("hiện đúng tên/mô tả/số người chơi từ metadata", () => {
     renderDetails("zodiacrace");
