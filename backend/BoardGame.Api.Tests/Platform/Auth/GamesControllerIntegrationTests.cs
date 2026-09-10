@@ -19,7 +19,8 @@ namespace BoardGame.Api.Tests.Platform.Auth;
 /// thật mới test có ý nghĩa — đã có live-test thủ công riêng cho việc đó (xem
 /// rules/coding/testing.md mục "Live-test nhiều người chơi thật").
 /// </summary>
-public class GamesControllerIntegrationTests : IClassFixture<AuthApiFactory>
+[Collection("AuthApi")]
+public class GamesControllerIntegrationTests
 {
     private readonly AuthApiFactory _factory;
 

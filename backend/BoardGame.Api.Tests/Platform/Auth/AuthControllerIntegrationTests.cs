@@ -17,7 +17,8 @@ namespace BoardGame.Api.Tests.Platform.Auth;
 /// CÙNG 1 container Postgres chia sẻ (xem <see cref="AuthApiFactory"/>) mà không đụng rate-limit/
 /// dữ liệu của nhau.
 /// </summary>
-public class AuthControllerIntegrationTests : IClassFixture<AuthApiFactory>
+[Collection("AuthApi")]
+public class AuthControllerIntegrationTests
 {
     private static readonly JsonSerializerOptions JsonOpts = new(JsonSerializerDefaults.Web);
 

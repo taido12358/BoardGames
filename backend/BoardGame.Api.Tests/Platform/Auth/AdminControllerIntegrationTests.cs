@@ -13,7 +13,8 @@ namespace BoardGame.Api.Tests.Platform.Auth;
 /// controller mà TokenServiceTests không bao giờ phát hiện ra). Đây là lần đầu tiên phân quyền
 /// Admin được verify end-to-end qua HTTP thật (xem rules/coding/security.md mục "Phân quyền").
 /// </summary>
-public class AdminControllerIntegrationTests : IClassFixture<AuthApiFactory>
+[Collection("AuthApi")]
+public class AdminControllerIntegrationTests
 {
     private readonly AuthApiFactory _factory;
 

@@ -18,17 +18,25 @@ namespace BoardGame.Api.Tests.Platform.Auth;
 /// HTTP/middleware/[Authorize] thật — khác <see cref="Api.Tests.Platform.RoomServiceIntegrationTests"/>
 /// chỉ gọi thẳng service, bỏ qua toàn bộ tầng controller/auth) trên POSTGRES THẬT (Testcontainers,
 /// container tạm huỷ ngay sau khi test xong). Dùng CHUNG 1 container/factory cho MỌI test trong
-/// class (qua <see cref="IClassFixture{TFixture}"/>) thay vì mỗi test 1 container riêng như
-/// <c>RoomServiceIntegrationTests</c> — an toàn ở đây vì mỗi test tự dùng 1 email ngẫu nhiên
-/// riêng (<see cref="AuthControllerIntegrationTests.UniqueEmail"/>), không có race condition
-/// đồng thời cần cô lập DB như test ghép trận; đổi lấy tốc độ (không cần boot lại toàn bộ
-/// ASP.NET Core host + Testcontainers cho từng test).
+/// CẢ 3 class (<see cref="AuthControllerIntegrationTests"/>/<see cref="AdminControllerIntegrationTests"/>/
+/// <see cref="GamesControllerIntegrationTests"/>) qua <see cref="ICollectionFixture{TFixture}"/>
+/// (collection "AuthApi", xem <see cref="AuthApiCollection"/>) — an toàn vì mỗi test tự dùng 1
+/// email ngẫu nhiên riêng, không có race condition đồng thời cần cô lập DB như test ghép trận.
+/// Ban đầu dùng <c>IClassFixture</c> RIÊNG cho mỗi class (mỗi class 1 container) nhưng gây CI
+/// fail (2026-09-11, xem `rules/logs/2026-09-11.md`) — nghi do 3 class chạy song song (xUnit mặc
+/// định parallelize khác collection), mỗi class tự boot 1 host ASP.NET Core + 1 container Postgres
+/// riêng, cộng dồn với container của `RoomServiceIntegrationTests` chạy song song luôn, vượt quá
+/// tài nguyên runner CI (không tái hiện được local — máy dev có nhiều tài nguyên/cache image hơn).
+/// Gộp lại còn 1 container/host dùng chung giảm đáng kể áp lực đồng thời.
 ///
 /// Không cấu hình Redis/RabbitMQ/OpenSearch/MinIO thật — 3 controller được test ở đây
 /// (<see cref="Platform.Auth.AuthController"/>/<see cref="Platform.AdminController"/>) không đụng
 /// tới chúng, và cả 3 service tương ứng đều kết nối LAZY (xem comment trong từng file Services/),
 /// không throw lúc host khởi động dù không có service thật chạy.
 /// </summary>
+[CollectionDefinition("AuthApi")]
+public class AuthApiCollection : ICollectionFixture<AuthApiFactory> { }
+
 public class AuthApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
     private readonly PostgreSqlContainer _container = new PostgreSqlBuilder("postgres:16-alpine")
