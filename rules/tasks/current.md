@@ -170,7 +170,12 @@ IN_PROGRESS (vòng lặp liên tục, không có điểm "DONE" cố định —
     thật ra là `localStorage.setItem is not a function` bị nuốt bởi catch chung). Xem bài học
     đầy đủ trong `../coding/testing.md`.
 
-Tổng test hiện tại: backend 189/189 pass (`dotnet test backend/BoardGame.sln`), frontend 106/106
+26. **Test `LoginPage.tsx`** (12 test, mới) — trang ĐẦU TIÊN mọi người dùng thấy (nhập email →
+    nhập mã OTP), chưa từng có test tự động dù `authStore.ts` (mục 25) đã có. Test cả 2 bước
+    (email/mã), lọc ký tự không phải số khi gõ mã, disable nút khi chưa hợp lệ, đếm ngược gửi
+    lại mã, đổi email, hiện lỗi.
+
+Tổng test hiện tại: backend 189/189 pass (`dotnet test backend/BoardGame.sln`), frontend 118/118
 pass (`npm run test` trong `frontend/`) — cả 2 đúng lệnh CI dùng; 5 test backend cần Docker.
 
 **Đã verify cả 9 commit (14-22) chạy thật trên GitHub Actions** — run
