@@ -205,11 +205,24 @@ IN_PROGRESS (vòng lặp liên tục, không có điểm "DONE" cố định —
 Tổng test hiện tại: backend 189/189 pass (`dotnet test backend/BoardGame.sln`), frontend 160/160
 pass (`npm run test` trong `frontend/`) — cả 2 đúng lệnh CI dùng; 5 test backend cần Docker.
 
-**Đã verify cả 15 commit (14-31) chạy thật trên GitHub Actions** — run
+**Đã verify cả 16 commit (14-32) chạy thật trên GitHub Actions** — run
 `34518584349`/`34519404921`/`34519619027`/`34521278895`/`34523008065`/`34524664240`/
 `34525284764`/`34526258657`/`34528351569`/`34529196962`/`34529674967`/`34530079935`/
-`34530757755`/`34531421319`/`34531768899` đều `completed`/`success` (gồm cả job `docker` build
-thử smoke test), không chỉ xanh cục bộ.
+`34530757755`/`34531421319`/`34531768899`/`34532473258` đều `completed`/`success` (gồm cả job
+`docker` build thử smoke test), không chỉ xanh cục bộ.
+
+**Kết quả 2 đợt audit tĩnh bổ sung (không tìm thấy vấn đề mới)**: rà `key={index}` trong
+`.map()` toàn frontend — hầu hết là false positive (mảng tĩnh không đổi thứ tự, hoặc biến vòng
+lặp thực ra là ID miền dữ liệu như số ô Ô Ăn Quan chứ không phải vị trí mảng); `ChatPanel.tsx`
+có lý thuyết bị ảnh hưởng khi danh sách tin nhắn bị cắt bớt đầu (`slice(-200)`) nhưng không gây
+bug thật vì mỗi tin nhắn không có state riêng. Rà `catch` "im lặng" (không log) trong backend —
+các engine (`VayBatEngine`/`BangEngine`/`OAnQuanEngine`/`ZodiacRaceEngine`) đều có 1 catch im
+lặng khi state hỏng không deserialize được; cân nhắc thêm `ILogger` để log cảnh báo (nhất quán
+hơn với `GameHub.cs`/`GamesController.cs`/`RoomService.cs`) nhưng QUYẾT ĐỊNH KHÔNG làm — cần
+thêm constructor injection cho cả 4 engine (hiện đều parameterless), kéo theo sửa lại MỌI chỗ
+test đang gọi `new VayBatEngine()` v.v. (hàng chục chỗ), đổi lấy 1 log warning cho tình huống gần
+như không thể xảy ra trong thực tế (state luôn do chính engine đó ghi ra) — rủi ro/công sức không
+tương xứng lợi ích, giữ nguyên hành vi hiện tại (fail-safe im lặng đã có test riêng).
 
 ## Việc đang làm / tiếp theo (thứ tự ưu tiên gợi ý, không bắt buộc theo đúng thứ tự)
 
