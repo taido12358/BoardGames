@@ -229,6 +229,20 @@ chưa test luật lõi. Tổng test backend: 114/114 pass.
   (`npm run build` + nginx). Đánh đổi rủi ro/lợi ích chưa đủ hấp dẫn để làm ngay — để dành khi có
   lý do cụ thể hơn (cần tính năng mới của Vite, hoặc lỗ hổng leo thang mức nghiêm trọng cao hơn).
 
+  **Cập nhật 2026-09-11**: `npm audit` nay báo `vitest` **critical** (chuỗi phụ thuộc gồm cả
+  "arbitrary file can be read and executed" khi bật Vitest UI — dự án KHÔNG dùng `vitest --ui`,
+  chỉ `vitest run`, nên phần này không thực sự khai thác được trong cách dự án dùng) và `vite`
+  **high** (path traversal trong xử lý `.map` của optimized deps + `server.fs.deny` bypass trên
+  Windows — vẫn chỉ lộ ra lúc `npm run dev`, không đổi bản chất "dev-only" đã phân tích ở trên).
+  Đây đúng là điều kiện "lỗ hổng leo thang mức nghiêm trọng cao hơn" đã tự đặt ra ở trên, nên đã
+  THỬ chạy `npm audit fix --force` để nâng cấp — bị **permission classifier của Claude Code chặn**
+  (lệnh `--force` thay đổi dependency tree rộng, được xếp vào loại cần xác nhận rõ ràng của người
+  dùng, không tự động chạy). KHÔNG cố lách bằng cách gọi `npm install vite@latest vitest@latest...`
+  thủ công để né classifier — đúng tinh thần "không cố bypass ý định đằng sau việc từ chối". Việc
+  này chuyển sang nhóm CẦN xác nhận người dùng trước khi làm tiếp (cùng nhóm với debug panel Bang
+  / thao tác admin phá huỷ) — không phải vì bản thân việc nâng cấp phá huỷ/không đảo ngược (ngược
+  lại, dependency upgrade rất dễ revert qua git), mà vì hệ thống permission đã quyết định vậy.
+
 ## Test tích hợp Postgres thật (Testcontainers) — ĐÃ LÀM (2026-09-11)
 
 Trả nợ kỹ thuật ghi từ 2026-08-05/2026-09-05: `RoomService` dùng `SELECT ... FOR UPDATE` (khoá

@@ -137,6 +137,11 @@ pass (`npm run test` trong `frontend/`) — cả 2 đúng lệnh CI dùng; 5 tes
   lớn/nhạy cảm nhất repo) để thêm force-draw/force-damage; cân nhắc kỹ trước khi làm vì đây là
   action mutate state bỏ qua luật chơi bình thường, dù chỉ bật ở Development. CẦN hỏi xác nhận
   người dùng trước (xem lý do ở mục "Chủ ý CHƯA làm").
+- Nâng cấp `vite`/`vitest` major (5.x/2.x → 8.x/4.x) — lỗ hổng đã leo thang lên
+  **critical**/**high** (xem backlog mục "Nâng cấp dependency frontend có breaking change"), đúng
+  điều kiện đã tự đặt ra để cân nhắc lại. Đã THỬ `npm audit fix --force` nhưng bị permission
+  classifier chặn (lệnh thay đổi dependency tree rộng, cần xác nhận rõ ràng) — KHÔNG cố lách qua
+  `npm install` thủ công. CẦN người dùng xác nhận hoặc tự chạy lệnh trước khi làm tiếp.
 - (Đã xong 2026-09-11 — mục 18) ~~Game thứ tư~~ — "Đua Xe Hoàng Đạo" (`zodiacrace`), xem ADR
   trong `../history/decisions.md`.
 - (Đã xong 2026-09-11 — mục 19) ~~Live-test Ô Ăn Quan VÀ Đua Xe Hoàng Đạo~~ — xem "Việc dở dang
