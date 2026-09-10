@@ -21,10 +21,11 @@ IN_PROGRESS (vòng lặp liên tục, không có điểm "DONE" cố định)
    `HandFan.tsx`) — xem mục "Đơn giản hoá có chủ đích" trong backlog (nay đã gạch mục này).
    Chỉ verify bằng `tsc`/`vite build` xanh, CHƯA live-test qua Docker Compose (người dùng xác
    nhận không cần bật stack/OTP chỉ để xem UI thuần React này).
+4. **Unit test cho `VayBatRules.cs`** (luật thuần) — `VayBat/VayBatRulesTests.cs` (17 test mới,
+   xem backlog mục "Test — ĐÃ LÀM"). Tổng test backend: 114/114 pass.
 
 ## Việc đang làm / tiếp theo (thứ tự ưu tiên gợi ý, không bắt buộc theo đúng thứ tự)
 
-- `Games/VayBat/VayBatRules.cs` (luật thuần) chưa có unit test — xem backlog.
 - Cân nhắc thêm game thứ ba (asset zodiac có sẵn ở `frontend/public/assets/games/zodiac/`,
   chưa gắn game nào) — quy mô lớn, chỉ làm khi các việc "hoàn thiện game cũ" đã ổn.
 - "Code lại giao diện quản lý game": hiện repo **không có trang admin/quản lý** riêng (chỉ có

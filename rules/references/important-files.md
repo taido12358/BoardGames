@@ -62,7 +62,7 @@ Mọi đường dẫn dưới đây đã xác nhận tồn tại trong repo (c�
 
 ## Tests
 
-- `backend/BoardGame.Api.Tests/` (thêm 2026-08-05) — xUnit. `Bang/*.cs`: roles, characters, deck, distance, luồng chơi, bảo vệ thông tin ẩn, hợp đồng JSON enum, `BangSeatTimeoutTests.cs` (mới 2026-09-05 — `OnSeatTimedOut`). `VayBat/VayBatEngineTests.cs` (mới 2026-09-05 — `SideForSeat`/`OnSeatTimedOut`, trả nợ kỹ thuật "chưa có test VayBat"). `Platform/RoomStatusTests.cs` (mới). Chưa có test tích hợp chạm Postgres thật cho `RoomService`/khoá `FOR UPDATE`/`SKIP LOCKED` — nợ kỹ thuật, ghi trong [`../tasks/backlog.md`](../tasks/backlog.md).
+- `backend/BoardGame.Api.Tests/` (thêm 2026-08-05) — xUnit, 114 test. `Bang/*.cs`: roles, characters, deck, distance, luồng chơi, bảo vệ thông tin ẩn, hợp đồng JSON enum, `BangSeatTimeoutTests.cs` (mới 2026-09-05 — `OnSeatTimedOut`). `VayBat/VayBatEngineTests.cs` (2026-09-05 — `SideForSeat`/`OnSeatTimedOut`, lớp adapter) + `VayBat/VayBatRulesTests.cs` (mới 2026-09-10, 17 test — luật thuần: kề/trống, nước đi hợp lệ, áp nước đi, thắng/thua, khởi tạo state). `Platform/RoomStatusTests.cs` (mới). Chưa có test tích hợp chạm Postgres thật cho `RoomService`/khoá `FOR UPDATE`/`SKIP LOCKED` — nợ kỹ thuật, ghi trong [`../tasks/backlog.md`](../tasks/backlog.md).
 - Chiến lược test đầy đủ (mong muốn cho mọi game): [`../coding/testing.md`](../coding/testing.md).
 
 ## Tài liệu

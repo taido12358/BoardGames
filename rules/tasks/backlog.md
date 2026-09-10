@@ -71,4 +71,10 @@ Chi tiết: [`../history/milestones.md`](../history/milestones.md), [`../archite
 ## Việc kỹ thuật chưa làm
 
 - CI/CD pipeline tự động: chưa có thư mục `.github/workflows/` hay pipeline config nào trong repo — pipeline mô tả trong `rules/workflow/deployment.md` là **mong muốn**, chưa có thật.
-- `Games/VayBat/VayBatRules.cs` (luật thuần: di chuyển, ăn quân, thắng/thua) vẫn chưa có unit test — `VayBat/VayBatEngineTests.cs` (2026-09-05) mới chỉ phủ `SideForSeat`/`OnSeatTimedOut` (adapter), chưa test luật lõi.
+
+## Test — ĐÃ LÀM (2026-09-10)
+
+`Games/VayBat/VayBatRules.cs` (luật thuần: kề/trống, nước đi hợp lệ, áp nước đi, điều kiện
+thắng/thua, khởi tạo state) giờ có `VayBat/VayBatRulesTests.cs` (17 test) — trước đó
+`VayBatEngineTests.cs` (2026-09-05) mới chỉ phủ `SideForSeat`/`OnSeatTimedOut` (lớp adapter),
+chưa test luật lõi. Tổng test backend: 114/114 pass.
