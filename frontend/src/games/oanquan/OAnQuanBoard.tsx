@@ -27,6 +27,7 @@ function PitCell({
       type="button"
       disabled={!selectable}
       onClick={onClick}
+      aria-label={quan ? `Ô Quan, ${count} quân` : `Ô dân số ${index}, ${count} quân`}
       className={`flex flex-col items-center justify-center rounded-xl border-2 transition-all
         ${quan ? "w-16 h-full min-h-[5.5rem]" : "w-14 h-16 sm:w-16 sm:h-20"}
         ${selected ? "border-amber-400 bg-amber-900/40 -translate-y-1 shadow-[0_0_12px_rgba(251,191,36,0.5)]" : "border-lime-800/60 bg-[#1c2413]"}

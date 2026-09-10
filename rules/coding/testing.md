@@ -35,10 +35,20 @@ của Ô Ăn Quan) và store dùng chung (`platform/gameStore.ts`, vd merge `isM
 unit test ở backend — các hàm này thuần, dễ test, và sai ở đây làm UI gợi ý sai (dù server vẫn
 validate lại nên không phải lỗ hổng bảo mật, chỉ là trải nghiệm tệ).
 
-**Chưa làm** (nợ kỹ thuật, không phải bị bỏ qua): test component React (cần React Testing
-Library + `jsdom`, môi trường đã sẵn sàng nhưng chưa cài RTL/viết test nào) — component phức tạp
-nhất (`BangBoard.tsx`, `OAnQuanBoard.tsx`) vẫn chỉ được verify bằng `tsc`/build/lint + review thủ
-công, chưa có test tự động cho tương tác UI (click chọn ô/lá bài, chọn chiều rải...).
+**Test component React** (React Testing Library, cài cùng ngày 2026-09-11) — bắt đầu với
+`games/oanquan/OAnQuanBoard.test.tsx` (8 test: chọn ô/chọn chiều rải gửi đúng move, không cho
+chọn ô đối phương/khi chưa tới lượt, hiện đúng kết quả thắng/hoà, khán giả không thấy nút CHƠI
+LẠI) làm ví dụ mẫu cho việc test component sau này. **Bài học khi viết test component đầu
+tiên**: dự án không bật `globals: true` của Vitest (import `describe`/`it`/`expect` tường minh),
+nên cơ chế tự dọn DOM sau mỗi test của React Testing Library (dựa vào `afterEach` toàn cục)
+KHÔNG tự kích hoạt — phải tự gọi `cleanup()` trong `afterEach` ở `src/test-setup.ts`, nếu không
+DOM của test trước còn sót lại khi test sau render tiếp, gây lỗi "Found multiple elements" hàng
+loạt (đã tự bắt được ngay lần chạy đầu, sửa 1 chỗ trong setup là hết).
+
+**Còn lại chưa làm** (nợ kỹ thuật, không phải bị bỏ qua): `BangBoard.tsx`, `VayBatBoard.tsx`,
+`ChatPanel.tsx`, `AdminPage.tsx` vẫn chỉ verify bằng `tsc`/build/lint + review thủ công, chưa có
+test tự động — làm dần khi sửa/thêm tính năng ở các component đó, theo đúng tinh thần ưu tiên
+"chỗ nào đang động tới thì thêm test", không cần một đợt riêng phủ hết toàn bộ component cùng lúc.
 
 ## Integration test
 
