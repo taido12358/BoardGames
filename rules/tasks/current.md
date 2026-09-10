@@ -121,6 +121,16 @@ IN_PROGRESS (vòng lặp liên tục, không có điểm "DONE" cố định —
     sảnh realtime 2 tab) — cùng kỹ thuật mục 19, xem chi tiết kết quả ở mục "Việc dở dang từ đợt
     trước" bên dưới (đã chuyển thành ĐÃ XONG). Không còn việc nào treo từ đợt 2026-09-05.
 
+21. **Vá 2 lỗ hổng NuGet transitive High severity** — `dotnet list package --vulnerable
+    --include-transitive` (kiểm tra định kỳ theo `rules/coding/security.md`, chưa từng chạy từ
+    trước) phát hiện `System.Text.Json` 8.0.0 và `Microsoft.Extensions.Caching.Memory` 8.0.0 bị
+    kéo về bản gốc có lỗ hổng dù không package nào trực tiếp khai báo chúng. Ghim thẳng bản vá
+    mới nhất cùng dòng `8.0.x` (8.0.6/8.0.1) trong `BoardGame.Api.csproj` — rủi ro breaking rất
+    thấp (bản vá trong dòng LTS, không nâng major, khác hẳn tình huống `vite`/`vitest` ở mục
+    trên). Xem backlog mục "Vá lỗ hổng NuGet transitive High severity". `dotnet list package
+    --vulnerable` sạch sau khi ghim, `dotnet test` 179/179 pass, smoke-test qua Docker Compose
+    thật (đăng nhập OTP + gọi API xác thực) xác nhận JSON serialization vẫn đúng.
+
 Tổng test hiện tại: backend 179/179 pass (`dotnet test backend/BoardGame.sln`), frontend 70/70
 pass (`npm run test` trong `frontend/`) — cả 2 đúng lệnh CI dùng; 5 test backend cần Docker.
 

@@ -243,6 +243,24 @@ chưa test luật lõi. Tổng test backend: 114/114 pass.
   / thao tác admin phá huỷ) — không phải vì bản thân việc nâng cấp phá huỷ/không đảo ngược (ngược
   lại, dependency upgrade rất dễ revert qua git), mà vì hệ thống permission đã quyết định vậy.
 
+## Vá lỗ hổng NuGet transitive High severity — ĐÃ LÀM (2026-09-11)
+
+`dotnet list package --vulnerable --include-transitive` (kiểm tra định kỳ theo
+`rules/coding/security.md`, chưa từng chạy từ trước tới giờ trong dự án) phát hiện 2 gói
+transitive ở mức **High** mà KHÔNG package nào trong repo trực tiếp khai báo — NuGet tự kéo về
+bản `8.0.0` gốc có lỗ hổng vì không ai ghim bản mới hơn:
+- `System.Text.Json` 8.0.0 — 2 CVE DoS, đã vá tới 8.0.6.
+- `Microsoft.Extensions.Caching.Memory` 8.0.0 — 1 CVE DoS, đã vá tới 8.0.1.
+
+**Khắc phục:** ghim trực tiếp 2 `PackageReference` này trong `BoardGame.Api.csproj` ở đúng bản vá
+mới nhất trong CÙNG dòng `8.0.x` (không nâng major/minor) — rủi ro breaking rất thấp vì đây là
+bản vá bảo mật trong một dòng LTS, khác hẳn tình huống `vite`/`vitest` ở trên (nhảy major version
+thật). Cùng cách đã làm với `Microsoft.EntityFrameworkCore` ở `BoardGame.Api.Tests.csproj` khi
+gặp vấn đề version-resolution tương tự trước đó. Verify: `dotnet list package --vulnerable` sạch
+hoàn toàn sau khi ghim; `dotnet build`/`dotnet test` 179/179 xanh; smoke-test qua Docker Compose
+thật (đăng nhập OTP + gọi `/api/games/engines` xác thực) xác nhận JSON serialization
+(`System.Text.Json`) vẫn hoạt động đúng, không phải chỉ xanh ở build/test.
+
 ## Test tích hợp Postgres thật (Testcontainers) — ĐÃ LÀM (2026-09-11)
 
 Trả nợ kỹ thuật ghi từ 2026-08-05/2026-09-05: `RoomService` dùng `SELECT ... FOR UPDATE` (khoá

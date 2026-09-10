@@ -8,6 +8,14 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- Ghim bản vá cho 2 gói transitive bị "dotnet list package vulnerable" báo High (2026-09-11)
+         — không package nào ở trên trực tiếp khai báo chúng, NuGet kéo về bản 8.0.0 gốc có lỗ
+         hổng (System.Text.Json: 2 CVE DoS; Caching.Memory: 1 CVE DoS). Ghim thẳng bản vá mới
+         nhất trong cùng dòng 8.0.x (không nâng major) — rủi ro breaking thấp, cùng cách đã làm
+         với Microsoft.EntityFrameworkCore ở BoardGame.Api.Tests.csproj. -->
+    <PackageReference Include="System.Text.Json" Version="8.0.6" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="8.0.1" />
+
     <!-- Database (PostgreSQL via EF Core) -->
     <PackageReference Include="MailKit" Version="4.17.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.6" />
