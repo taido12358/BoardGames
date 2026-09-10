@@ -1,7 +1,18 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router-dom";
 import GameHistoryPage from "./GameHistoryPage";
+
+// Trang giờ có <Link to="/replay/:id"> ở mỗi dòng (mới 2026-09-11) — cần <MemoryRouter> bao
+// ngoài, không thì react-router-dom throw ngay lúc render.
+function renderPage() {
+  return render(
+    <MemoryRouter>
+      <GameHistoryPage />
+    </MemoryRouter>,
+  );
+}
 
 function jsonResponse(body: unknown, ok = true, status = 200): Response {
   return { ok, status, json: () => Promise.resolve(body) } as Response;
@@ -26,7 +37,7 @@ afterEach(() => {
 describe("GameHistoryPage", () => {
   it("tải danh sách lúc mount (query rỗng), hiện đúng dữ liệu", async () => {
     vi.stubGlobal("fetch", vi.fn(() => Promise.resolve(jsonResponse([record()]))));
-    render(<GameHistoryPage />);
+    renderPage();
 
     await vi.advanceTimersByTimeAsync(300);
 
@@ -39,7 +50,7 @@ describe("GameHistoryPage", () => {
     const fetchMock = vi.fn((_url: string, _init?: RequestInit) => Promise.resolve(jsonResponse([])));
     vi.stubGlobal("fetch", fetchMock);
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
-    render(<GameHistoryPage />);
+    renderPage();
     await vi.advanceTimersByTimeAsync(300); // lượt tải rỗng lúc mount
 
     await user.type(screen.getByLabelText("Tìm kiếm lịch sử ván đấu"), "An");
@@ -59,7 +70,7 @@ describe("GameHistoryPage", () => {
   it("query rỗng thì gọi API không kèm ?q=", async () => {
     const fetchMock = vi.fn(() => Promise.resolve(jsonResponse([])));
     vi.stubGlobal("fetch", fetchMock);
-    render(<GameHistoryPage />);
+    renderPage();
 
     await vi.advanceTimersByTimeAsync(300);
 
@@ -68,7 +79,7 @@ describe("GameHistoryPage", () => {
 
   it("không có kết quả: hiện thông báo không tìm thấy", async () => {
     vi.stubGlobal("fetch", vi.fn(() => Promise.resolve(jsonResponse([]))));
-    render(<GameHistoryPage />);
+    renderPage();
 
     await vi.advanceTimersByTimeAsync(300);
 
@@ -77,7 +88,7 @@ describe("GameHistoryPage", () => {
 
   it("lỗi HTTP: hiện thông báo lỗi, không crash", async () => {
     vi.stubGlobal("fetch", vi.fn(() => Promise.resolve(jsonResponse({}, false, 500))));
-    render(<GameHistoryPage />);
+    renderPage();
 
     await vi.advanceTimersByTimeAsync(300);
 
@@ -86,7 +97,7 @@ describe("GameHistoryPage", () => {
 
   it("ván chưa có winner hiện dấu gạch ngang thay vì rỗng/undefined", async () => {
     vi.stubGlobal("fetch", vi.fn(() => Promise.resolve(jsonResponse([record({ winner: null, finishedAt: null })]))));
-    render(<GameHistoryPage />);
+    renderPage();
 
     await vi.advanceTimersByTimeAsync(300);
 

@@ -2,6 +2,39 @@
 
 Việc chưa làm, chưa có ai nhận. Không phải kế hoạch chi tiết — chỉ liệt kê để không quên.
 
+## SeatTimeoutService/BangDebugController không lưu replay/index lịch sử (phát hiện 2026-09-11)
+
+Phát hiện khi live-test tính năng Replay (`rules/tasks/current.md` mục 35): `GameHub.FinishGame`
+(lưu artifact MinIO cho Replay + index OpenSearch cho `/history`) CHỈ được gọi từ nhánh
+thắng-qua-nước-đi-thật trong `GameHub.MakeMove` (`if (outcome!.Winner is not null) { await
+FinishGame(room, id); }`). Cả `SeatTimeoutService.ScanOnce` (ván kết thúc do 1 bên mất kết nối
+quá lâu — qua `RoomService.ApplySeatTimeoutAsync`) LẪN `BangDebugController.Mutate` (ván kết thúc
+ép qua debug panel — set thẳng `room.Status`/`room.Winner`) đều KHÔNG gọi `FinishGame`. Hệ quả:
+mọi ván thắng qua 2 đường này **vô hình hoàn toàn** với `/history` (không index OpenSearch) VÀ
+Replay (không lưu MinIO) — người chơi ngắt mạng thắng cuộc hoặc admin dùng debug panel ép thắng
+sẽ không bao giờ thấy lại được ván đó.
+
+**Chưa làm vì**: cần tách `FinishGame` (hiện là `private` method của `GameHub`, nhận
+`(GameRoom room, Guid id)`) thành logic dùng chung được cả 3 nơi gọi tới — `SeatTimeoutService`
+không có instance `GameHub` (chạy như `BackgroundService` riêng, chỉ có `IHubContext<GameHub>`
+tương tự cách `BroadcastRoomStateAsync` đã làm static để dùng chung), và `BangDebugController`
+cũng cần gọi được. Cách làm hợp lý: chuyển `FinishGame` thành static method giống
+`BroadcastRoomStateAsync` (nhận đủ dependency qua tham số: `AppDbContext`/`OpenSearchService`/
+`MinioStorageService`), gọi từ cả 3 nơi. Rủi ro thấp (chỉ thêm lời gọi, không đổi logic hiện có)
+nhưng cần sửa chữ ký + test lại cả 3 luồng (`BangSeatTimeoutTests`/live-test debug panel/live-test
+seat-timeout VayBat đã có sẵn, chỉ cần bổ sung assert có replay/index sau khi kết thúc).
+
+## Replay — chỉ xem danh sách nước đi, chưa dựng lại bàn cờ animate (ghi chú từ lúc làm, 2026-09-11)
+
+`GameReplayPage.tsx` (xem `rules/tasks/current.md` mục 35) chỉ hiện tóm tắt + danh sách nước đi
+dạng JSON thô theo thứ tự — KHÔNG animate lại bàn cờ từng bước như một trình xem replay đầy đủ.
+Lý do: engine hiện tại không hỗ trợ tái tạo state ban đầu từ 1 map CỐ ĐỊNH (`NewGame()` của cả 4
+game đều tự sinh map MỚI mỗi lần gọi, không nhận map có sẵn làm tham số) — cần thêm 1 phương thức
+kiểu `InitialStateForMap(mapJson)` vào `IGameEngine` cho cả 4 engine trước khi có thể replay từng
+bước bằng cách áp lại tuần tự `ApplyMove` từ trạng thái ban đầu. Việc kiến trúc lớn hơn phạm vi 1
+task, để dành nếu có nhu cầu thật (spec `van-de.md` §37 chỉ nói chung chung "replay lại được",
+không yêu cầu animate).
+
 ## Ghép phòng / vào phòng — Giai đoạn 2 & 3 — ĐÃ LÀM (2026-09-05, rebuild toàn bộ cơ chế phòng/ghép trận)
 
 Giai đoạn 1 (bảo mật danh tính ghế + dọn phòng rác + huỷ phòng, 2026-08-05) đã xong trước đó.

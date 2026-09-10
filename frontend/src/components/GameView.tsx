@@ -6,6 +6,7 @@ import GameDetails from "./GameDetails";
 import RoomRoute from "./RoomRoute";
 import AdminPage from "./AdminPage";
 import GameHistoryPage from "./GameHistoryPage";
+import GameReplayPage from "./GameReplayPage";
 
 /**
  * Container giữ MỘT kết nối SignalR (useGameRoomHub) cho toàn bộ khu vực chơi game.
@@ -18,6 +19,7 @@ import GameHistoryPage from "./GameHistoryPage";
  *   fetch/join phòng theo roomId trên URL, kể cả sau khi F5).
  * - `/admin` — trang quản trị read-only (chỉ tài khoản trong ADMIN_EMAILS, server tự chặn 403).
  * - `/history` — lịch sử ván đấu (tìm kiếm OpenSearch, bất kỳ ai đăng nhập cũng xem được).
+ * - `/replay/:roomId` — xem lại diễn biến 1 ván đã kết thúc (artifact MinIO, xem GameReplayPage).
  */
 export default function GameView() {
   const hub = useGameRoomHub();
@@ -31,6 +33,7 @@ export default function GameView() {
         <Route path="/games/:gameKey/room/:roomId" element={<RoomRoute />} />
         <Route path="/admin" element={<AdminPage />} />
         <Route path="/history" element={<GameHistoryPage />} />
+        <Route path="/replay/:roomId" element={<GameReplayPage />} />
         <Route path="*" element={<Navigate to="/games" replace />} />
       </Routes>
     </GameRoomHubProvider>

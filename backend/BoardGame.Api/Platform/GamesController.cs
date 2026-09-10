@@ -27,18 +27,21 @@ public class GamesController : ControllerBase
     private readonly RedisCacheService _cache;
     private readonly RabbitMqPublisher _queue;
     private readonly OpenSearchService _search;
+    private readonly MinioStorageService _storage;
     private readonly GameEngineRegistry _engines;
     private readonly IHubContext<GameHub> _hub;
     private readonly ILogger<GamesController> _log;
 
     public GamesController(AppDbContext db, RoomService rooms, RedisCacheService cache, RabbitMqPublisher queue,
-        OpenSearchService search, GameEngineRegistry engines, IHubContext<GameHub> hub, ILogger<GamesController> log)
+        OpenSearchService search, MinioStorageService storage, GameEngineRegistry engines, IHubContext<GameHub> hub,
+        ILogger<GamesController> log)
     {
         _db = db;
         _rooms = rooms;
         _cache = cache;
         _queue = queue;
         _search = search;
+        _storage = storage;
         _engines = engines;
         _hub = hub;
         _log = log;
@@ -187,6 +190,28 @@ public class GamesController : ControllerBase
     [HttpGet("search")]
     public async Task<ActionResult<IEnumerable<GameRecord>>> Search([FromQuery] string q = "")
         => Ok(await _search.SearchGamesAsync(q));
+
+    /// <summary>
+    /// Xem lại 1 ván đã kết thúc — trả nguyên artifact đã lưu ở MinIO lúc ván kết thúc
+    /// (<see cref="GameHub.FinishGame"/>: seats/map/finalState/danh sách nước đi theo thứ tự).
+    /// MinioStorageService trước đây CHỈ GHI, chưa từng có cách đọc lại — trang "Lịch sử ván đấu"
+    /// (<c>/history</c>) chỉ hiện tóm tắt (thắng/số nước đi), chưa ai xem lại được diễn biến thật.
+    /// Không giới hạn chỉ người đã chơi mới xem được — cùng chính sách với `/history` (đã mở cho
+    /// mọi người đăng nhập từ trước, không phải thông tin nhạy cảm sau khi ván đã kết thúc).
+    /// </summary>
+    [HttpGet("{id:guid}/replay")]
+    public async Task<IActionResult> Replay(Guid id)
+    {
+        string? json;
+        try { json = await _storage.GetReplayAsync($"replay-{id}.json"); }
+        catch (Exception ex)
+        {
+            _log.LogWarning(ex, "Đọc replay từ MinIO thất bại");
+            return StatusCode(503, new { error = "Không tải được replay lúc này. Thử lại sau." });
+        }
+        if (json is null) return NotFound(new { error = "Chưa có replay cho ván này (chưa kết thúc hoặc không tồn tại)." });
+        return Ok(GameJson.Element(json));
+    }
 
     private static GameRecord ToRecord(GameRoom r, int moveCount) => new()
     {

@@ -264,8 +264,42 @@ IN_PROGRESS (vòng lặp liên tục, không có điểm "DONE" cố định —
     `GET /api/games/search` — endpoint đó gọi thẳng OpenSearch thật không try/catch (khác mọi
     endpoint khác), cần OpenSearch chạy thật mới có ý nghĩa, đã có live-test thủ công riêng.
 
-Tổng test hiện tại: backend 218/218 pass (`dotnet test backend/BoardGame.sln`), frontend 190/190
-pass (`npm run test` trong `frontend/`) — cả 2 đúng lệnh CI dùng; 5+16+13=34 test backend cần Docker.
+35. **Trang "Xem lại ván đấu" (Replay)** — trả nợ tính năng phát hiện qua audit spec gốc
+    (`van-de.md` §37 "replay"): `MinioStorageService`/`GameHub.FinishGame` đã lưu đầy đủ artifact
+    replay (seats/map/finalState/danh sách nước đi) mỗi khi ván kết thúc TỪ ĐẦU DỰ ÁN, nhưng
+    `MinioStorageService` CHỈ CÓ GHI (`SaveReplayAsync`), chưa từng có cách đọc lại — không route
+    backend, không UI nào tham chiếu. Thêm `MinioStorageService.GetReplayAsync` (đọc lại, bắt
+    `ObjectNotFoundException`/`BucketNotFoundException` trả null; lỗi kết nối khác propagate lên
+    để controller trả 503, không nuốt im lặng) + `GamesController.Replay`
+    (`GET /api/games/{id}/replay`, 404 nếu chưa có/không tồn tại, 503 nếu MinIO lỗi). Cố tình
+    KHÔNG dựng lại bàn cờ từng bước animate — engine không hỗ trợ tái tạo state ban đầu từ 1 map
+    cố định (NewGame() sinh map MỚI mỗi lần, không nhận map có sẵn), cần thay đổi kiến trúc engine
+    lớn hơn để làm đúng; phạm vi lần này chỉ hiện tóm tắt (thắng/người chơi/số nước đi) + danh
+    sách nước đi theo thứ tự (side + JSON nước đi) — đã đúng nghĩa "xem lại được", để dành phần
+    animate bàn cờ cho đợt sau nếu cần. Frontend: `GameReplayPage.tsx` (route `/replay/:roomId`),
+    link "🎬 Xem lại" ở mỗi dòng ván ĐÃ KẾT THÚC trong `/history`.
+    **Test:** 2 test HTTP tích hợp (`GamesControllerIntegrationTests`) verify hành vi phòng thủ
+    KHÔNG BAO GIỜ lộ 500 (chấp nhận 404 HOẶC 503 tuỳ MinIO có sẵn trong môi trường test hay không —
+    môi trường CI sạch sẽ luôn ra 503, môi trường dev có thể có MinIO thật còn sót từ live-test
+    trước đó nên ra 404 thật) + 401 khi chưa đăng nhập. 6 test component `GameReplayPage.test.tsx`
+    (tải thành công/404/503/lỗi mạng/ván không có nước đi). Cập nhật `GameHistoryPage.test.tsx`
+    bọc `MemoryRouter` (trang giờ có `<Link>`).
+    **Live-test qua hệ thống sống thật**: rebuild + recreate container `backend` (code mới). Thử
+    trước bằng kỹ thuật "ngắt kết nối đột ngột kích hoạt SeatTimeoutService" (VayBat) — ván kết
+    thúc đúng (`winner: "WHITE"`) nhưng `GET /replay` trả 404! Điều tra ra **phát hiện quan trọng
+    ngoài dự kiến**: `GameHub.FinishGame` (lưu replay + index OpenSearch) CHỈ được gọi từ nhánh
+    thắng-qua-nước-đi-thật trong `GameHub.MakeMove` — cả `SeatTimeoutService.ScanOnce` (thắng do
+    timeout) LẪN `BangDebugController.Mutate` (thắng ép qua debug panel) đều tự set
+    `room.Status`/`room.Winner` trực tiếp, KHÔNG gọi `FinishGame` — nghĩa là các ván thắng qua 2
+    đường này vô hình với CẢ `/history` (mục 30) LẪN replay (mục này), không phải bug riêng của
+    replay. Xem thêm ở backlog mục "SeatTimeoutService/BangDebugController không lưu
+    replay/index lịch sử". Live-test lại đúng bằng thắng qua nước đi thật: chơi 1 ván Đua Xe Hoàng
+    Đạo tới khi có người thắng (script Node/SignalR gọi `MakeMove` lặp lại `{type:"ROLL"}` qua hub
+    thật cho tới khi 1 bên về đích), `GET /api/games/{id}/replay` trả đúng seats/winner/map/
+    finalState/toàn bộ 11 nước đi thật (gồm cả nước "__room_full__" hệ thống tự chèn lúc đủ ghế).
+
+Tổng test hiện tại: backend 220/220 pass (`dotnet test backend/BoardGame.sln`), frontend 196/196
+pass (`npm run test` trong `frontend/`) — cả 2 đúng lệnh CI dùng; 5+16+13+2=36 test backend cần Docker.
 
 **Đã verify cả 17 commit (14-33) chạy thật trên GitHub Actions** — run
 `34518584349`/`34519404921`/`34519619027`/`34521278895`/`34523008065`/`34524664240`/

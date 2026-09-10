@@ -28,6 +28,30 @@ public class MinioStorageService
     public Task SaveReplayAsync(string objectName, string json)
         => SaveAsync(ReplaysBucket, objectName, json, "application/json");
 
+    /// <summary>Đọc lại replay JSON đã lưu — trả null nếu chưa từng lưu (ván chưa kết thúc, hoặc
+    /// object không tồn tại). Trước 2026-09-11, <see cref="MinioStorageService"/> chỉ ghi, chưa
+    /// từng có cách đọc lại — xem <c>GamesController.Replay</c>.</summary>
+    public async Task<string?> GetReplayAsync(string objectName)
+    {
+        try
+        {
+            using var stream = new MemoryStream();
+            await _client.GetObjectAsync(new GetObjectArgs()
+                .WithBucket(ReplaysBucket)
+                .WithObject(objectName)
+                .WithCallbackStream(s => s.CopyTo(stream)));
+            return Encoding.UTF8.GetString(stream.ToArray());
+        }
+        catch (Minio.Exceptions.ObjectNotFoundException)
+        {
+            return null;
+        }
+        catch (Minio.Exceptions.BucketNotFoundException)
+        {
+            return null;
+        }
+    }
+
     private async Task SaveAsync(string bucket, string objectName, string content, string contentType)
     {
         var found = await _client.BucketExistsAsync(

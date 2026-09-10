@@ -173,6 +173,39 @@ public class GamesControllerIntegrationTests : IClassFixture<AuthApiFactory>
     }
 
     [Fact]
+    public async Task Replay_RoomNeverFinished_ReturnsNotFoundOrServiceUnavailableNeverCrashes()
+    {
+        // Không cấu hình MinIO thật cho môi trường test này (xem doc comment AuthApiFactory) —
+        // nhưng máy chạy test CÓ THỂ (như lúc phát triển local) đã có sẵn 1 MinIO thật đang chạy ở
+        // cổng mặc định (vd còn sót từ live-test thủ công qua Docker Compose), khiến 2 kết quả đều
+        // hợp lệ tuỳ môi trường: 404 (MinIO thật, object không tồn tại vì phòng chưa từng kết
+        // thúc) hoặc 503 (không kết nối được MinIO — đúng hành vi phòng thủ của
+        // GamesController.Replay). Điều quan trọng cần xác nhận là KHÔNG BAO GIỜ lộ 500 không rõ
+        // nguyên nhân — happy-path đọc đúng nội dung replay thật cần MinIO thật, xem live-test thủ
+        // công trong rules/coding/testing.md.
+        using var client = await _factory.LoggedInClientAsync();
+        var created = await (await client.PostAsJsonAsync("/api/games", new { gameKey = "vaybat" }))
+            .Content.ReadFromJsonAsync<JsonElement>();
+        var id = created.GetProperty("id").GetGuid();
+
+        var res = await client.GetAsync($"/api/games/{id}/replay");
+
+        Assert.True(
+            res.StatusCode is HttpStatusCode.NotFound or HttpStatusCode.ServiceUnavailable,
+            $"Expected NotFound or ServiceUnavailable, got {res.StatusCode}");
+    }
+
+    [Fact]
+    public async Task Replay_WithoutAuth_ReturnsUnauthorized()
+    {
+        using var anonClient = _factory.CreateClient();
+
+        var res = await anonClient.GetAsync($"/api/games/{Guid.NewGuid()}/replay");
+
+        Assert.Equal(HttpStatusCode.Unauthorized, res.StatusCode);
+    }
+
+    [Fact]
     public async Task List_ReturnsCreatedWaitingRoom()
     {
         using var client = await _factory.LoggedInClientAsync();

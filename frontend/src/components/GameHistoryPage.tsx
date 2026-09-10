@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 
 interface GameRecord {
   id: string;
@@ -84,6 +85,7 @@ export default function GameHistoryPage() {
                 <th className="text-left px-3 py-2">Thắng</th>
                 <th className="text-left px-3 py-2">Số nước đi</th>
                 <th className="text-left px-3 py-2">Kết thúc lúc</th>
+                <th className="text-left px-3 py-2"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800">
@@ -94,6 +96,13 @@ export default function GameHistoryPage() {
                   <td className="px-3 py-2 text-slate-400">{r.winner ?? "—"}</td>
                   <td className="px-3 py-2 text-slate-400">{r.moveCount}</td>
                   <td className="px-3 py-2 text-slate-500 text-xs">{formatTime(r.finishedAt)}</td>
+                  <td className="px-3 py-2">
+                    {r.status === "Finished" && (
+                      <Link to={`/replay/${r.id}`} className="text-xs text-amber-400 hover:text-amber-300 whitespace-nowrap">
+                        🎬 Xem lại
+                      </Link>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>
