@@ -17,11 +17,13 @@ IN_PROGRESS (vòng lặp liên tục, không có điểm "DONE" cố định)
 1. **Xoá demo "Hello World" khỏi backend** — xem [`../tasks/backlog.md`](../tasks/backlog.md) mục
    "Dọn dẹp — ĐÃ LÀM (2026-09-10)". `dotnet build`/`dotnet test` (97/97) và `tsc`/`vite build` xanh.
 2. **`/health` kiểm tra thật DB/Redis/RabbitMQ** thay vì trả tĩnh — cùng mục backlog trên.
+3. **Bang: UI chọn bài để bỏ khi vượt giới hạn tay bài** (`BangBoard.tsx`/`ActionBar.tsx`/
+   `HandFan.tsx`) — xem mục "Đơn giản hoá có chủ đích" trong backlog (nay đã gạch mục này).
+   Chỉ verify bằng `tsc`/`vite build` xanh, CHƯA live-test qua Docker Compose (người dùng xác
+   nhận không cần bật stack/OTP chỉ để xem UI thuần React này).
 
 ## Việc đang làm / tiếp theo (thứ tự ưu tiên gợi ý, không bắt buộc theo đúng thứ tự)
 
-- Bang: thêm UI chọn bài cụ thể để bỏ khi vượt giới hạn tay bài cuối lượt (backend đã hỗ trợ
-  `discardCardIds` trong `END_TURN`, xem `BangRules.HandleEndTurn` — chỉ thiếu UI ở `BangBoard.tsx`).
 - `Games/VayBat/VayBatRules.cs` (luật thuần) chưa có unit test — xem backlog.
 - Cân nhắc thêm game thứ ba (asset zodiac có sẵn ở `frontend/public/assets/games/zodiac/`,
   chưa gắn game nào) — quy mô lớn, chỉ làm khi các việc "hoàn thiện game cũ" đã ổn.

@@ -3,13 +3,14 @@ import CardView from "./CardView";
 
 interface Props {
   hand: Card[];
-  selectedId: string | null;
+  selectedId?: string | null;
+  selectedIds?: string[];
   playable: boolean;
   onSelect: (card: Card) => void;
 }
 
 /** Bài trên tay của CHÍNH người chơi — luôn thấy mặt bài (đối thủ chỉ thấy số lá, xem PlayerSeat). */
-export default function HandFan({ hand, selectedId, playable, onSelect }: Props) {
+export default function HandFan({ hand, selectedId, selectedIds, playable, onSelect }: Props) {
   if (hand.length === 0) {
     return <div className="text-slate-500 text-sm py-4 text-center">Bạn không có lá bài nào.</div>;
   }
@@ -19,7 +20,7 @@ export default function HandFan({ hand, selectedId, playable, onSelect }: Props)
         <div key={card.id} className="-ml-3 first:ml-0">
           <CardView
             card={card}
-            selected={selectedId === card.id}
+            selected={selectedId === card.id || !!selectedIds?.includes(card.id)}
             disabled={!playable}
             onClick={playable ? () => onSelect(card) : undefined}
           />

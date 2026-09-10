@@ -37,9 +37,11 @@ chưa gắn với game nào; có thể dùng cho game thứ ba hoặc reskin BAN
 **Đơn giản hoá có chủ đích so với spec/luật gốc** (không phải bug — xem chú thích đầu
 `Games/Bang/BangRules.cs`):
 - Bia (Beer) vẫn hồi máu được kể cả khi chỉ còn 2 người sống (luật gốc: vô hiệu lúc đó).
-- Không có UI chọn bài cụ thể để bỏ khi vượt giới hạn tay bài cuối lượt — server tự bỏ
-  từ đầu danh sách (client CÓ THỂ gửi `discardCardIds` để chọn thủ công, nhưng
-  `BangBoard.tsx` hiện chưa có UI cho việc này).
+- ~~Không có UI chọn bài cụ thể để bỏ khi vượt giới hạn tay bài~~ — ĐÃ LÀM (2026-09-10):
+  `BangBoard.tsx` giờ vào "chế độ bỏ bài" khi bấm KẾT THÚC LƯỢT lúc tay bài vượt `hp`, cho chọn
+  đúng số lá cần bỏ (chạm để chọn/bỏ chọn trong `HandFan`, xác nhận qua `ActionBar`) rồi mới gửi
+  `END_TURN` kèm `discardCardIds` — trước đó server luôn tự bỏ từ đầu danh sách vì client chưa
+  từng gửi field này dù backend đã hỗ trợ sẵn.
 - Không có chat trong phòng Bang (Platform chưa có kênh chat generic — VayBat cũng chưa có).
 - Không có nút "CHƠI LẠI" ở màn thắng/thua (chỉ có "VỀ PHÒNG CHỜ") — tạo phòng mới lại từ
   sảnh, giống VayBat.

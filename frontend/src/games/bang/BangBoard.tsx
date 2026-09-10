@@ -54,6 +54,8 @@ function isValidTarget(kind: CardKind, p: BangPublicPlayer, isMe: boolean): bool
 export default function BangBoard({ makeMove, onLeave }: Props) {
   const { room, error, connectionState } = useGameStore();
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
+  const [discardIds, setDiscardIds] = useState<string[]>([]);
+  const [discarding, setDiscarding] = useState(false);
 
   if (!room) return null;
   const state = room.state as BangViewerState;
@@ -92,10 +94,19 @@ export default function BangBoard({ makeMove, onLeave }: Props) {
 
   const selectedCard = you?.hand.find((c) => c.id === selectedCardId) ?? null;
   const selectingTarget = !!selectedCard && myTurn && needsTarget(selectedCard.kind, isCalamity);
+  const discardOverflow = me && you ? Math.max(0, you.hand.length - me.hp) : 0;
 
   const send = (move: BangMove) => makeMove(room.id, move);
 
   function handleCardClick(card: Card) {
+    if (discarding) {
+      setDiscardIds((ids) => {
+        if (ids.includes(card.id)) return ids.filter((id) => id !== card.id);
+        if (ids.length >= discardOverflow) return ids;
+        return [...ids, card.id];
+      });
+      return;
+    }
     if (myTurn) {
       if (!playableInActionPhase(card.kind, isCalamity)) return;
       if (needsTarget(card.kind, isCalamity)) {
@@ -111,6 +122,26 @@ export default function BangBoard({ makeMove, onLeave }: Props) {
       if (!allowed.includes(card.kind)) return;
       send({ type: "RESPOND", cardId: card.id });
     }
+  }
+
+  function handleEndTurnClick() {
+    if (discardOverflow > 0) {
+      setDiscardIds([]);
+      setDiscarding(true);
+      return;
+    }
+    send({ type: "END_TURN" });
+  }
+
+  function handleConfirmDiscard() {
+    send({ type: "END_TURN", discardCardIds: discardIds });
+    setDiscarding(false);
+    setDiscardIds([]);
+  }
+
+  function handleCancelDiscard() {
+    setDiscarding(false);
+    setDiscardIds([]);
   }
 
   function handleSeatClick(target: BangPublicPlayer) {
@@ -198,14 +229,20 @@ export default function BangBoard({ makeMove, onLeave }: Props) {
             awaitingResponse={awaitingResp}
             selectingTarget={selectingTarget}
             canEndTurn={myTurn}
-            onEndTurn={() => send({ type: "END_TURN" })}
+            onEndTurn={handleEndTurnClick}
             onRespondPass={() => send({ type: "RESPOND" })}
             onCancelTarget={() => setSelectedCardId(null)}
+            discarding={discarding}
+            discardOverflow={discardOverflow}
+            discardSelectedCount={discardIds.length}
+            onConfirmDiscard={handleConfirmDiscard}
+            onCancelDiscard={handleCancelDiscard}
           />
           <HandFan
             hand={you.hand}
             selectedId={selectedCardId}
-            playable={myTurn || awaitingResp}
+            selectedIds={discarding ? discardIds : undefined}
+            playable={discarding || myTurn || awaitingResp}
             onSelect={handleCardClick}
           />
         </>
