@@ -42,7 +42,11 @@ chưa gắn với game nào; có thể dùng cho game thứ ba hoặc reskin BAN
   đúng số lá cần bỏ (chạm để chọn/bỏ chọn trong `HandFan`, xác nhận qua `ActionBar`) rồi mới gửi
   `END_TURN` kèm `discardCardIds` — trước đó server luôn tự bỏ từ đầu danh sách vì client chưa
   từng gửi field này dù backend đã hỗ trợ sẵn.
-- Không có chat trong phòng Bang (Platform chưa có kênh chat generic — VayBat cũng chưa có).
+- ~~Không có chat trong phòng Bang (Platform chưa có kênh chat generic)~~ — ĐÃ LÀM (2026-09-10):
+  `GameHub.SendChatMessage` (generic, broadcast qua nhóm SignalR của phòng, KHÔNG lưu DB — mất
+  khi phòng đóng/tải lại trang) + `platform/ChatPanel.tsx` mount MỘT LẦN ở `RoomRoute.tsx` cho
+  mọi game (không phải riêng Bang) — VayBat có chat cùng lúc luôn, không cần code riêng. Cả
+  player lẫn spectator chat được, theo đúng bảng phân quyền trong `rules/coding/security.md`.
 - Không có nút "CHƠI LẠI" ở màn thắng/thua (chỉ có "VỀ PHÒNG CHỜ") — tạo phòng mới lại từ
   sảnh, giống VayBat.
 - Debug panel (spec §51) chưa làm — có thể thêm sau nếu cần, chỉ nên bật ở Development.

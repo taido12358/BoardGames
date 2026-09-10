@@ -125,6 +125,37 @@ public class GameHub : Hub
     }
 
     /// <summary>
+    /// Chat trong phòng — GENERIC cho mọi game (Platform, không phải riêng game nào). Chỉ
+    /// broadcast qua SignalR, KHÔNG lưu DB — mất khi phòng đóng/người chat tải lại trang. Cả
+    /// player lẫn spectator đều chat được (xem rules/coding/security.md mục "Phân quyền": khán
+    /// giả được phép chat) — chỉ cần đã JoinRoom đúng phòng này (tracked trong _connections),
+    /// không phân biệt có ghế hay không.
+    /// </summary>
+    public async Task SendChatMessage(string roomId, string text)
+    {
+        var userId = CallerUserId;
+        if (userId is null) { await Err("Phiên đăng nhập không hợp lệ."); return; }
+        if (!_connections.TryGetValue(Context.ConnectionId, out var info) || info.RoomId != roomId)
+        {
+            await Err("Bạn chưa ở trong phòng này.");
+            return;
+        }
+
+        var trimmed = text?.Trim() ?? "";
+        if (trimmed.Length == 0) return;
+        if (trimmed.Length > 500) trimmed = trimmed[..500]; // chặn spam tin nhắn khổng lồ
+
+        var message = new
+        {
+            userId = userId.Value,
+            displayName = CallerDisplayName,
+            text = trimmed,
+            sentAt = DateTimeOffset.UtcNow,
+        };
+        await Clients.Group(roomId).SendAsync("ChatMessageReceived", message);
+    }
+
+    /// <summary>
     /// Thực hiện một nước đi. moveJson là payload tuỳ game; hub xác định ghế của
     /// người chơi (theo JWT, không theo tham số client) rồi giao cho engine tương ứng.
     /// </summary>

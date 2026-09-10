@@ -35,6 +35,12 @@ IN_PROGRESS (vòng lặp liên tục, không có điểm "DONE" cố định)
    mất dữ liệu 2026-09-05; làm sau nếu người dùng thật sự cần, với xác nhận riêng + log đầy đủ.
    Test: `TokenServiceTests.cs` (4 test, round-trip JWT thật qua `JwtSecurityTokenHandler` để
    xác nhận role claim hoạt động đúng — xem backlog). Tổng test backend: 118/118 pass.
+6. **Chat trong phòng** (Platform, generic cho mọi game) — `GameHub.SendChatMessage` (broadcast
+   qua nhóm SignalR, KHÔNG lưu DB) + `platform/ChatPanel.tsx` mount 1 lần ở `RoomRoute.tsx`, cả
+   VayBat lẫn Bang có chat cùng lúc (không phải sửa riêng từng game). Cả player lẫn spectator
+   chat được. Xem backlog mục "Đơn giản hoá có chủ đích" của Bang (nay đã gạch mục chat).
+   `dotnet build`/`dotnet test`: 118/118 pass. `tsc`/`vite build`: sạch. CHƯA live-test qua
+   Docker Compose (cùng lý do các việc UI trước — không cần bật stack/OTP chỉ để xem UI).
 
 ## Việc đang làm / tiếp theo (thứ tự ưu tiên gợi ý, không bắt buộc theo đúng thứ tự)
 
@@ -42,6 +48,8 @@ IN_PROGRESS (vòng lặp liên tục, không có điểm "DONE" cố định)
   chưa gắn game nào) — quy mô lớn, chỉ làm khi các việc "hoàn thiện game cũ" đã ổn.
 - Cân nhắc thêm thao tác quản trị có phá huỷ (huỷ phòng treo thủ công từ `/admin`) — CHỈ làm
   nếu người dùng xác nhận cần, kèm log ai-làm-gì-lúc-nào (xem "Chủ ý CHƯA làm" ở trên).
+- Nút "CHƠI LẠI" ở màn thắng/thua (Bang/VayBat) — còn lại trong backlog mục "Đơn giản hoá có
+  chủ đích", chưa làm (cần thiết kế lại luồng rematch 2 người, không chỉ 1 nút UI).
 
 ## Việc dở dang từ đợt trước (2026-09-05, tạm gác — không chặn việc mới)
 

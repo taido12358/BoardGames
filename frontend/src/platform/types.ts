@@ -39,6 +39,14 @@ export interface RoomSummaryDto {
   isMine: boolean;
 }
 
+/** Tin nhắn chat trong phòng — GENERIC cho mọi game, chỉ tồn tại trong bộ nhớ (không lưu DB). */
+export interface ChatMessageDto {
+  userId: string;
+  displayName: string;
+  text: string;
+  sentAt: string;
+}
+
 export interface EngineInfo {
   key: string;
   displayName: string;

@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { HubConnection, HubConnectionBuilder } from "@microsoft/signalr";
 import { useGameStore } from "./gameStore";
-import type { RoomDto, RoomSummaryDto } from "./types";
+import type { ChatMessageDto, RoomDto, RoomSummaryDto } from "./types";
 
 /**
  * Kết nối SignalR tới GameHub (GENERIC cho mọi game). makeMove gửi payload
@@ -21,6 +21,7 @@ export function useGameRoomHub() {
     conn.on("Seated", (info: { side: string | null }) => useGameStore.getState().setMySide(info.side));
     conn.on("Error", (msg: string) => useGameStore.getState().setError(msg));
     conn.on("LobbyUpdated", (room: RoomSummaryDto) => useGameStore.getState().upsertRoom(room));
+    conn.on("ChatMessageReceived", (msg: ChatMessageDto) => useGameStore.getState().addChatMessage(msg));
 
     conn.onreconnecting(() => useGameStore.getState().setConnectionState("reconnecting"));
 
@@ -88,5 +89,9 @@ export function useGameRoomHub() {
     return connRef.current?.invoke("UnsubscribeLobby").catch(console.error);
   };
 
-  return { joinRoom, makeMove, leaveRoom, subscribeLobby, unsubscribeLobby };
+  const sendChatMessage = (roomId: string, text: string) => {
+    connRef.current?.invoke("SendChatMessage", roomId, text).catch(surface);
+  };
+
+  return { joinRoom, makeMove, leaveRoom, subscribeLobby, unsubscribeLobby, sendChatMessage };
 }

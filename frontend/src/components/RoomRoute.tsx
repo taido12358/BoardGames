@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useGameStore } from "../platform/gameStore";
 import { useGameRoomHubActions } from "../platform/GameRoomHubContext";
+import ChatPanel from "../platform/ChatPanel";
 import type { RoomDto } from "../platform/types";
 import VayBatBoard from "../games/vaybat/VayBatBoard";
 import BangBoard from "../games/bang/BangBoard";
@@ -15,7 +16,7 @@ import BangBoard from "../games/bang/BangBoard";
 export default function RoomRoute() {
   const { gameKey = "", roomId = "" } = useParams();
   const navigate = useNavigate();
-  const { room, setRoom, setMySide, setSelected, setError } = useGameStore();
+  const { room, setRoom, setMySide, setSelected, setError, clearChat } = useGameStore();
   const { joinRoom, makeMove, leaveRoom } = useGameRoomHubActions();
 
   const [loading, setLoading] = useState(room?.id !== roomId);
@@ -29,6 +30,7 @@ export default function RoomRoute() {
         setLoading(false);
         return;
       }
+      clearChat(); // phòng mới -> chat của phòng cũ không còn liên quan (chỉ tồn tại trong bộ nhớ)
       setLoading(true);
       setNotFound(false);
       try {
@@ -69,6 +71,7 @@ export default function RoomRoute() {
     setMySide(null);
     setSelected(null);
     setError("");
+    clearChat();
     navigate(`/games/${gameKey}`);
   };
 
@@ -112,22 +115,31 @@ export default function RoomRoute() {
     );
   }
 
-  switch (room.gameKey) {
-    case "vaybat":
-      return <VayBatBoard makeMove={makeMove} onLeave={handleLeave} />;
-    case "bang":
-      return <BangBoard makeMove={makeMove} onLeave={handleLeave} />;
-    default:
-      return (
-        <div className="bg-slate-800 rounded-2xl p-6 text-center space-y-4">
-          <p>Game "{room.gameKey}" chưa có giao diện.</p>
-          <button
-            onClick={handleLeave}
-            className="rounded-lg bg-slate-700 hover:bg-slate-600 px-4 py-2 font-medium"
-          >
-            ← Rời phòng
-          </button>
-        </div>
-      );
-  }
+  const board = (() => {
+    switch (room.gameKey) {
+      case "vaybat":
+        return <VayBatBoard makeMove={makeMove} onLeave={handleLeave} />;
+      case "bang":
+        return <BangBoard makeMove={makeMove} onLeave={handleLeave} />;
+      default:
+        return (
+          <div className="bg-slate-800 rounded-2xl p-6 text-center space-y-4">
+            <p>Game "{room.gameKey}" chưa có giao diện.</p>
+            <button
+              onClick={handleLeave}
+              className="rounded-lg bg-slate-700 hover:bg-slate-600 px-4 py-2 font-medium"
+            >
+              ← Rời phòng
+            </button>
+          </div>
+        );
+    }
+  })();
+
+  return (
+    <div className="flex flex-col gap-3">
+      {board}
+      <ChatPanel roomId={roomId} />
+    </div>
+  );
 }
