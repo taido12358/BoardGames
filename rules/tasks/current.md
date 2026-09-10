@@ -143,7 +143,16 @@ IN_PROGRESS (vòng lặp liên tục, không có điểm "DONE" cố định —
     tài khoản: force-draw/force-damage/force-end-turn/xem state đầy đủ đều hoạt động đúng, kể cả
     trigger đúng victory detection khi ép loại Sheriff.
 
-Tổng test hiện tại: backend 189/189 pass (`dotnet test backend/BoardGame.sln`), frontend 82/82
+23. **Sửa bug thật: `GameDetails.tsx` mất nền artwork cho Ô Ăn Quan/Đua Xe Hoàng Đạo** — phát
+    hiện khi chủ động rà lại code tìm việc, không phải do ai báo. `GameDetails.tsx` tự khai báo
+    bản sao RIÊNG của `ARTWORK_BG` (kiểu `Record<string, string>` lỏng) tách biệt khỏi
+    `GameCard.tsx` — thiếu hẳn `"folk"`/`"zodiac"`, không lỗi biên dịch nào báo vì kiểu không ép
+    đủ key. Gộp về `platform/artworkTheme.ts` dùng chung, ép kiểu đúng
+    `Record<GameMetadata["accent"], string>` để bắt buộc đủ key ở compile-time cho game 5 sau
+    này. Thêm `artworkTheme.test.ts` (2 test) làm regression guard runtime. Xem
+    `../references/important-files.md` mục `artworkTheme.ts`.
+
+Tổng test hiện tại: backend 189/189 pass (`dotnet test backend/BoardGame.sln`), frontend 78/78
 pass (`npm run test` trong `frontend/`) — cả 2 đúng lệnh CI dùng; 5 test backend cần Docker.
 
 **Đã verify cả 9 commit (14-22) chạy thật trên GitHub Actions** — run

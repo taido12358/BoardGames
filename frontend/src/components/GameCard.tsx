@@ -1,4 +1,5 @@
 import type { GameMetadata } from "../platform/gameLibraryTypes";
+import { ARTWORK_BG } from "../platform/artworkTheme";
 
 interface Props {
   metadata: GameMetadata;
@@ -7,15 +8,6 @@ interface Props {
   onViewDetails: () => void;
   onPlayNow: () => void;
 }
-
-/** Nền "artwork" theo accent — không có ảnh thật, dùng gradient + hoạ tiết CSS để tránh vi phạm bản quyền artwork gốc. */
-const ARTWORK_BG: Record<GameMetadata["accent"], string> = {
-  western: "bg-[radial-gradient(circle_at_30%_20%,#5c3a1e_0%,#2b1a0d_60%,#160d06_100%)]",
-  graph: "bg-[radial-gradient(circle_at_30%_20%,#2a3a6b_0%,#151d3d_60%,#0a0e1f_100%)]",
-  folk: "bg-[radial-gradient(circle_at_30%_20%,#3d4a2a_0%,#232b17_60%,#12160b_100%)]",
-  zodiac: "bg-[radial-gradient(circle_at_30%_20%,#4a2a6b_0%,#251740_60%,#120a20_100%)]",
-  default: "bg-[radial-gradient(circle_at_30%_20%,#334155_0%,#1e293b_60%,#0f172a_100%)]",
-};
 
 const ACCENT_RING: Record<GameMetadata["accent"], string> = {
   western: "group-hover:ring-amber-500/60 group-hover:shadow-amber-900/40",

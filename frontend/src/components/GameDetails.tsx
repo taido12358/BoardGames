@@ -3,13 +3,8 @@ import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useGameStore } from "../platform/gameStore";
 import { useLobbyHub } from "../platform/useLobbyHub";
 import { getGameInstructions, getGameMetadata, getCreateOptionsForm } from "../platform/gameRegistry";
+import { ARTWORK_BG } from "../platform/artworkTheme";
 import GameInstructions from "./GameInstructions";
-
-const ARTWORK_BG: Record<string, string> = {
-  western: "bg-[radial-gradient(circle_at_30%_20%,#5c3a1e_0%,#2b1a0d_60%,#160d06_100%)]",
-  graph: "bg-[radial-gradient(circle_at_30%_20%,#2a3a6b_0%,#151d3d_60%,#0a0e1f_100%)]",
-  default: "bg-[radial-gradient(circle_at_30%_20%,#334155_0%,#1e293b_60%,#0f172a_100%)]",
-};
 
 export default function GameDetails() {
   const { gameKey = "" } = useParams();
