@@ -118,6 +118,36 @@ học `within(row)` ở `AdminPage.test.tsx` — nhãn hiển thị trùng nhau 
 - Kịch bản smoke chuẩn (đã dùng để verify bug "không thể di chuyển quân"): 2 client **tên khác nhau** → tạo/join phòng → `Status` chuyển `Playing` → client A đi một nước → client B nhận `GameStateUpdated` → UI cập nhật.
 - Kịch bản regression: 2 tab trùng tên → tab hai phải thấy trạng thái rõ ràng (Waiting/khán giả), không im lặng.
 
+### Live-test nhiều "người chơi" thật mà KHÔNG cần nhiều tài khoản Gmail thật (phát hiện 2026-09-11)
+
+Trước đây nhiều lần ghi nhận việc live-test bị chặn vì "cần N tài khoản Gmail thật khác nhau"
+(`JoinRoomAsync` coi cùng `userId` là reconnect, không phải người chơi thứ 2). Thực ra **không
+cần Gmail thật** — Docker Compose local mặc định `Auth__DevLogOtp: true` VÀ `SmtpOtpSender` tự
+fallback log OTP ra `docker compose logs backend` (dòng `"...OTP cho {email}...: {code}"`) bất cứ
+khi nào SMTP chưa cấu hình đủ (`EMAIL_PROVIDER`/`SMTP_USER`/`SMTP_PASS` rỗng). Vì `.env` thật của
+máy dev này CÓ cấu hình SMTP thật (gửi qua Gmail thật của người dùng), phải tự ghi đè biến môi
+trường CHỈ cho phiên chạy của mình (không sửa file `.env`):
+`EMAIL_PROVIDER= docker compose up -d --force-recreate backend` — các service khác không đổi,
+chỉ backend cần recreate để nhận biến mới.
+
+Sau đó có thể tạo bao nhiêu "người chơi" tuỳ ý bằng email bịa bất kỳ (vd `p1@test.local`), đọc mã
+OTP qua `docker compose logs backend --tail N | grep "OTP cho"`, lấy JWT qua
+`curl -i .../api/auth/verify-otp` (giá trị cookie `bg_auth` CHÍNH LÀ JWT thô — server cũng nhận
+`Authorization: Bearer <jwt>` cho REST, xem comment trong `Program.cs` "Vẫn nhận Authorization
+header cho tool/test"). Dùng JWT đó làm `accessTokenFactory` cho `@microsoft/signalr`
+(`HubConnectionBuilder().withUrl("http://localhost:5000/hubs/game", {accessTokenFactory: () =>
+jwt})`) — package này đã có sẵn trong `frontend/node_modules`, không cần cài thêm gì, viết 1
+script Node nhỏ (`.cjs`, chạy ngoài `frontend/` để tránh đụng `package.json`/lockfile) gọi
+`JoinRoom`/`MakeMove` y hệt frontend thật, log lại `GameStateUpdated` để verify hành vi.
+
+Đã dùng cách này live-test THÀNH CÔNG cả Ô Ăn Quan (rải/relay/ăn quan qua SignalR thật) và Đua Xe
+Hoàng Đạo (2 người đua tới khi có người thắng) lần đầu tiên qua hệ thống sống thật (không chỉ
+unit test) — xem `rules/logs/2026-09-11.md` Task 21. Sau khi xong, `docker compose down` để trả
+lại đúng trạng thái trước đó (không chạy) — KHÔNG sửa `.env`, không cần dọn dữ liệu test trong
+volume Postgres (vô hại, không ảnh hưởng ai). Kỹ thuật này áp dụng được cho MỌI kịch bản E2E
+trước đây bị gắn nhãn "cần nhiều tài khoản thật" (ngắt kết nối giữa ván, ghép trận nhanh đồng
+thời, sảnh realtime nhiều tab) — không còn là blocker thật sự, chỉ là việc chưa làm.
+
 ## Quy tắc viết test
 
 - Tên test mô tả hành vi: `ApplyMove_WrongTurn_ReturnsFailWithMessage`.

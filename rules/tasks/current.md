@@ -104,6 +104,19 @@ IN_PROGRESS (vòng lặp liên tục, không có điểm "DONE" cố định —
     (types/metadata/CreateOptions/Board), 16 test mới. Đăng ký DI (`Program.cs`), route
     (`RoomRoute.tsx`), registry (`gameRegistry.ts`), accent theme mới `"zodiac"`.
 
+19. **Live-test Ô Ăn Quan + Đua Xe Hoàng Đạo qua hệ thống sống thật** (không chỉ unit test) —
+    phát hiện quan trọng: blocker "cần tài khoản Gmail thật" ghi từ 2026-09-05 KHÔNG còn đúng,
+    Docker Compose local tự fallback log OTP ra console khi SMTP chưa cấu hình đủ. Ghi đè
+    `EMAIL_PROVIDER=` (rỗng) CHỈ cho phiên chạy của mình (không sửa `.env` thật đang có SMTP
+    Gmail thật) để bật fallback này, tạo tài khoản test bằng email bịa, dùng script Node nhỏ với
+    `@microsoft/signalr` (đã có sẵn `frontend/node_modules`, dùng JWT lấy từ `verify-otp` làm
+    `accessTokenFactory`) để giả lập 2 người chơi thật qua đúng hub thật. Kết quả: Ô Ăn Quan
+    (rải quân/relay/ăn quan qua 3 nước đi thật) và Đua Xe Hoàng Đạo (chơi tới khi có người thắng,
+    xác nhận đúng thu thập thùng hàng + clamp về đích) đều hoạt động đúng trên hệ thống sống
+    thật. Xem kỹ thuật đầy đủ trong `../coding/testing.md` mục "Live-test nhiều người chơi thật".
+    Dọn dẹp: `docker compose down` sau khi xong (không chạy trước đó), không sửa file cấu hình
+    nào, dữ liệu test còn lại trong volume Postgres vô hại.
+
 Tổng test hiện tại: backend 179/179 pass (`dotnet test backend/BoardGame.sln`), frontend 70/70
 pass (`npm run test` trong `frontend/`) — cả 2 đúng lệnh CI dùng; 5 test backend cần Docker.
 
@@ -113,11 +126,6 @@ pass (`npm run test` trong `frontend/`) — cả 2 đúng lệnh CI dùng; 5 tes
 
 ## Việc đang làm / tiếp theo (thứ tự ưu tiên gợi ý, không bắt buộc theo đúng thứ tự)
 
-- **Ưu tiên cao: live-test Ô Ăn Quan qua Chrome/Docker Compose** với 2 danh tính thật (cần tài
-  khoản Gmail thứ 2, xem "Việc dở dang từ đợt trước" bên dưới) — game mới, luật khá phức tạp
-  (relay/ăn quân/hết vốn), chỉ verify được bằng unit test tới giờ, chưa ai thực sự chơi thử.
-  Ít nhất nên tự chơi 1 mình qua 2 tab (không test được race-condition 2-người-thật nhưng vẫn
-  xác nhận được UI/luồng render/click hoạt động đúng).
 - (Đã xong 2026-09-11 — mục 15) ~~Test component `VayBatBoard.tsx`~~.
 - Cân nhắc thêm thao tác quản trị có phá huỷ (huỷ phòng treo thủ công từ `/admin`) — CHỈ làm
   nếu người dùng xác nhận cần, kèm log ai-làm-gì-lúc-nào (xem "Chủ ý CHƯA làm" ở trên).
@@ -126,22 +134,28 @@ pass (`npm run test` trong `frontend/`) — cả 2 đúng lệnh CI dùng; 5 tes
   action mutate state bỏ qua luật chơi bình thường, dù chỉ bật ở Development. CẦN hỏi xác nhận
   người dùng trước (xem lý do ở mục "Chủ ý CHƯA làm").
 - (Đã xong 2026-09-11 — mục 18) ~~Game thứ tư~~ — "Đua Xe Hoàng Đạo" (`zodiacrace`), xem ADR
-  trong `../history/decisions.md`. **CHƯA live-test** qua Chrome/Docker Compose (cùng lý do các
-  game trước — cần nhiều danh tính thật, ưu tiên thấp hơn việc khác tới giờ).
+  trong `../history/decisions.md`.
+- (Đã xong 2026-09-11 — mục 19) ~~Live-test Ô Ăn Quan VÀ Đua Xe Hoàng Đạo~~ — xem "Việc dở dang
+  từ đợt trước" bên dưới, blocker "cần tài khoản Gmail thật" hoá ra không có thật (dev-log OTP).
+- Áp dụng lại kỹ thuật live-test mới (xem `../coding/testing.md` mục "Live-test nhiều người chơi
+  thật") cho 3 kịch bản còn treo từ 2026-09-05 (ngắt mạng giữa ván, ghép trận nhanh đồng thời,
+  sảnh realtime nhiều tab) — không còn bị chặn kỹ thuật, chỉ là việc chưa làm, ưu tiên thấp hơn
+  việc mới vì đã verify bằng test tự động + review code.
 
 ## Việc dở dang từ đợt trước (2026-09-05, tạm gác — không chặn việc mới)
 
 Rebuild cơ chế phòng/ghép trận đã xong code (commit `07155fc`, `15ae7b2`), nhưng **live test qua
 Docker Compose bị dừng giữa chừng ở bước đăng nhập OTP** và **Docker Compose của phiên đó đã
 tắt** (không còn chạy — kiểm tra lại bằng `docker compose ps` trước khi giả định gì về trạng thái
-container). Việc còn thiếu, cần 2 danh tính Gmail khác nhau thật để test (không dùng lại được vì
-`JoinRoomAsync` coi cùng `userId` là reconnect, không phải người chơi thứ 2):
+container). Việc còn thiếu (3 kịch bản dưới đây) từng bị ghi là "cần 2 danh tính Gmail khác nhau
+thật" — **KHÔNG còn đúng nữa**, xem phát hiện 2026-09-11 trong `../coding/testing.md` mục
+"Live-test nhiều người chơi thật mà KHÔNG cần nhiều tài khoản Gmail thật" (dev-log OTP + script
+Node dùng `@microsoft/signalr` sẵn có trong `frontend/node_modules`). Vẫn chưa làm 3 kịch bản cụ
+thể này (chỉ mới dùng kỹ thuật để verify Ô Ăn Quan + Đua Xe Hoàng Đạo), không phải vì bị chặn mà
+vì ưu tiên thấp hơn — vẫn đã verify qua code review + test tự động:
 - Ngắt mạng giữa ván (VayBat xử thua, Bang auto end-turn/auto-fail-respond)
 - Ghép trận nhanh 2 người đồng thời, đua `Cancel`/`JoinRoom`
 - Sảnh realtime 2 tab
-
-Chỉ verify được các kịch bản này qua code review + test tự động đã có (không tự chạy live 2 danh
-tính được vì không có tài khoản Gmail thứ 2) — chấp nhận giới hạn này, không phải việc chặn.
 
 ## Known Issues (từ đợt trước, chưa liên quan việc đang làm)
 

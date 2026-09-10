@@ -49,8 +49,14 @@ về đích trước thắng ngay, 2-6 người (`gameKey: "zodiacrace"`). Xem A
 `../history/decisions.md`. Backend: `Games/ZodiacRace/` (Types/Rules/Engine), 27 test
 (`ZodiacRaceRulesTests`/`ZodiacRaceEngineTests`). Frontend: `games/zodiacrace/` đầy đủ
 (types/metadata/CreateOptions/Board), 16 test, accent theme mới `"zodiac"`. `dotnet test`:
-179/179 pass. `npm run test`/`lint`/`build`: 70/70 pass + sạch. **CHƯA live-test** qua Chrome/
-Docker Compose — cùng lý do các game trước (cần nhiều danh tính thật để test đầy đủ 2-6 người).
+179/179 pass. `npm run test`/`lint`/`build`: 70/70 pass + sạch.
+
+**Đã live-test thành công (2026-09-11, cùng ngày)** qua hệ thống sống thật (Docker Compose +
+script Node dùng `@microsoft/signalr` giả lập 2 người chơi qua hub thật) — phát hiện quan trọng:
+blocker "cần tài khoản Gmail thật" không còn đúng nữa, xem `rules/coding/testing.md` mục
+"Live-test nhiều người chơi thật mà KHÔNG cần nhiều tài khoản Gmail thật". Cùng dịp này cũng
+live-test luôn Ô Ăn Quan (chưa từng live-test từ lúc thêm 2026-09-11) — cả 2 game hoạt động đúng
+trên hệ thống thật, không chỉ unit test.
 
 **Đơn giản hoá có chủ đích so với spec/luật gốc** (không phải bug — xem chú thích đầu
 `Games/Bang/BangRules.cs`):
