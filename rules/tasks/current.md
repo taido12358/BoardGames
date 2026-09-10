@@ -325,6 +325,13 @@ pass (`npm run test` trong `frontend/`) — cả 2 đúng lệnh CI dùng; 5+16+
 `34530757755`/`34531421319`/`34531768899`/`34532473258`/`34532748965` đều `completed`/`success`
 (gồm cả job `docker` build thử smoke test), không chỉ xanh cục bộ.
 
+**Commit 34-36 (mục 34/35/36) — CÓ sự cố CI thật, đã sửa xong**: `97d1724`/`62889ef` xanh bình
+thường; `d6b4950`/`f98086d` (test HTTP tích hợp mới) xanh; `d7c4d913` (thêm tính năng Replay) VÀ
+`9146ebc` (lần sửa đầu, sai nguyên nhân) đều ĐỎ trên Actions — xem sự cố đầy đủ +
+nguyên nhân thật + cách chẩn đoán trong `rules/coding/testing.md` mục "Sự cố CI thật + bài học
+chẩn đoán". `8701989` (sửa đúng nguyên nhân: `MinioStorageService` trả rỗng thay vì throw khi mất
+kết nối) đã verify `completed`/`success` trên Actions — master xanh trở lại.
+
 **Kết quả 2 đợt audit tĩnh bổ sung (không tìm thấy vấn đề mới)**: rà `key={index}` trong
 `.map()` toàn frontend — hầu hết là false positive (mảng tĩnh không đổi thứ tự, hoặc biến vòng
 lặp thực ra là ID miền dữ liệu như số ô Ô Ăn Quan chứ không phải vị trí mảng); `ChatPanel.tsx`
