@@ -622,4 +622,45 @@ public static class BangRules
             state.Deck.Count, state.DiscardPile, prView,
             state.Winner, state.GameLog, you);
     }
+
+    // ===================== DEBUG (van-de.md §51 — CHỈ gọi từ BangDebugController, luôn gate
+    // Development/cờ bật riêng, không bao giờ lộ ra production). Cố tình bỏ qua validate
+    // lượt/lá bài để tiện test — không phải lỗi, đây chính là mục đích của debug panel. =====
+
+    /// <summary>Ép rút bài cho 1 người chơi bất kỳ, không cần đúng lượt.</summary>
+    public static void DebugForceDraw(BangGameState state, string playerId, int count, Random rng)
+    {
+        var player = GetPlayer(state, playerId) ?? throw new ArgumentException($"Không tìm thấy người chơi '{playerId}'.");
+        var drawn = BangDeck.DrawMany(state, rng, count);
+        player.Hand.AddRange(drawn);
+        state.GameLog.Add($"[DEBUG] {player.Name} được ép rút {drawn.Count} lá.");
+    }
+
+    /// <summary>Ép trừ HP cho 1 người chơi bất kỳ — tái dùng đúng logic loại/thắng-thua thật (ApplyDamage/CheckVictoryAndContinue).</summary>
+    public static string? DebugForceDamage(BangGameState state, string playerId, int amount, Random rng)
+    {
+        var player = GetPlayer(state, playerId) ?? throw new ArgumentException($"Không tìm thấy người chơi '{playerId}'.");
+        state.GameLog.Add($"[DEBUG] Ép {player.Name} mất {amount} HP.");
+        ApplyDamage(state, player, amount, null, rng);
+        var (_, _, winner) = CheckVictoryAndContinue(state, rng);
+        return winner;
+    }
+
+    /// <summary>Ép kết thúc lượt hiện tại ngay lập tức (tự bỏ bớt bài nếu vượt giới hạn tay bài) — không cần đúng người gọi.</summary>
+    public static void DebugForceEndTurn(BangGameState state, Random rng)
+    {
+        if (state.Phase != GamePhase.Action) return; // đang chờ phản hồi — không có "lượt" nào để kết thúc
+        var player = GetPlayer(state, state.CurrentPlayerId ?? "");
+        if (player is null) return;
+
+        var overflow = player.Hand.Count - player.Hp;
+        if (overflow > 0)
+        {
+            var toDiscard = player.Hand.Take(overflow).ToList();
+            foreach (var c in toDiscard) MoveToDiscard(state, player, c);
+            state.GameLog.Add($"[DEBUG] {player.Name} bị ép bỏ {toDiscard.Count} lá do vượt giới hạn tay bài.");
+        }
+        state.GameLog.Add($"[DEBUG] Ép kết thúc lượt của {player.Name}.");
+        AdvanceTurn(state, rng);
+    }
 }

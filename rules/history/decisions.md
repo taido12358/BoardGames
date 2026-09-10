@@ -1,5 +1,70 @@
 # Decisions (ADR)
 
+## ADR: Debug panel BANG! (van-de.md §51) — cờ cấu hình riêng thay vì chỉ `IsDevelopment()`
+
+Date: 2026-09-11
+
+### Context
+
+Spec gốc (`van-de.md` §51, do người dùng viết trước khi Bang được implement) yêu cầu: "For
+development only, create a debug panel if the existing project architecture allows it" với các
+khả năng switch player/inspect state/force draw/force damage/end turn, và "Never expose it in
+production". Việc này từng bị hoãn lại với lý do "cần hỏi xác nhận người dùng trước" — rà lại
+quyết định đó: đây là tính năng CHÍNH người dùng đã yêu cầu rõ trong spec, dev-only, không đụng
+dữ liệu thật/production — khác hẳn bản chất "phá huỷ/không đảo ngược" mà lẽ ra mới cần hỏi trước
+(so sánh với thao tác admin huỷ phòng thật, vẫn tiếp tục cần hỏi vì đó là dữ liệu người dùng thật
+trong production). Không có lý do chính đáng để tiếp tục hoãn.
+
+Vấn đề kỹ thuật khi implement: đơn giản chỉ gate bằng `IHostEnvironment.IsDevelopment()` (cách
+"hiển nhiên" nhất) sẽ khiến debug panel KHÔNG BAO GIỜ hiện được trong môi trường dev thực tế của
+dự án — `docker-compose.yml` (stack dev local) cố tình set `ASPNETCORE_ENVIRONMENT=Production`
+(không phải `Development`), lý do đã có từ trước (cookie `Secure` cần theo scheme HTTPS thật,
+không theo tên environment). Đây CHÍNH XÁC là vấn đề `SmtpOtpSender` đã gặp và giải quyết trước
+đó cho tính năng dev-log OTP.
+
+### Decision
+
+Lặp lại đúng pattern đã có ở `SmtpOtpSender.DevLogOtpEnabled`: gate bằng
+`env.IsDevelopment() || config.GetValue<bool>("Debug:BangPanelEnabled")` thay vì chỉ
+`IsDevelopment()`. `docker-compose.yml` set `Debug__BangPanelEnabled: ${BANG_DEBUG_PANEL_ENABLED:-true}`
+(bật mặc định cho máy dev qua compose này) — một deploy thật không dùng file compose này sẽ
+KHÔNG set biến này, `GetValue<bool>` trả về `false` mặc định (an toàn, đúng "never expose in
+production").
+
+Logic mutate state (force-draw/force-damage/force-end-turn) tái dùng THẲNG các hàm luật thật đã
+có (`BangRules.ApplyDamage`/`Eliminate`/`CheckVictoryAndContinue`/`AdvanceTurn` — qua các wrapper
+`public static DebugXxx` mới thêm trong CÙNG file `BangRules.cs`) thay vì viết lại logic
+thiệt hại/loại/thắng-thua riêng cho debug — đảm bảo hành vi debug KHÔNG lệch với luồng chơi thật
+(vd rút bài thưởng khi hạ Outlaw, "bắn nhầm Phó cảnh sát phải bỏ bài" khi Eliminate chạy).
+
+"Switch between test players"/"inspect legal actions" trong spec được đơn giản hoá: thay vì xây
+cơ chế đổi danh tính JWT hoặc bộ enumerate nước đi hợp lệ riêng, endpoint `GET .../state` trả
+THẲNG `StateJson` chưa qua `RedactStateForViewer` — 1 developer test một mình thấy được hết bài/
+vai trò của mọi người mà không cần nhiều tài khoản, tự suy luận nước đi hợp lệ từ state đầy đủ
+(cùng cách test file `BangGameFlowTests.cs` đã làm).
+
+### Alternatives
+
+- Chỉ gate bằng `IsDevelopment()` — bị loại vì sẽ không hoạt động được trong dev workflow thực tế
+  của dự án (đã giải thích ở Context).
+- Viết lại logic thiệt hại/loại/thắng-thua riêng cho debug (không tái dùng `BangRules` private
+  methods) — bị loại vì tăng rủi ro hành vi debug lệch so với luồng chơi thật theo thời gian khi
+  luật gốc thay đổi mà quên đồng bộ bản debug.
+- Xây hệ thống "chuyển đổi danh tính test player" thật (re-login as) hoặc enumerate đầy đủ nước
+  đi hợp lệ — bị loại vì phức tạp hơn nhiều so với giá trị thêm được ở v1; endpoint xem state đầy
+  đủ đã đáp ứng đúng nhu cầu cốt lõi (developer tự mình xem được hết để test).
+
+### Consequences
+
+Debug panel CHỈ bật khi có cờ `Debug:BangPanelEnabled` (hoặc `IsDevelopment()` thật) — một deploy
+production đúng cách (không copy nguyên `docker-compose.yml` dev vào production, không set biến
+môi trường đó) sẽ không bao giờ lộ endpoint này. Nếu sau này có nhu cầu debug panel tương tự cho
+game khác, lặp lại đúng pattern (`Debug:<TenGame>PanelEnabled`, tái dùng hàm luật thật qua
+wrapper `DebugXxx` trong rules file của game đó) thay vì tạo cơ chế chung ở Platform (giữ đúng
+nguyên tắc phân tầng — Platform không biết game cụ thể).
+
+---
+
 ## ADR: Game thứ tư "Đua Xe Hoàng Đạo" — tự thiết kế luật MVP tối giản, KHÔNG cố tái hiện hệ thống shop/trang bị của bộ asset zodiac
 
 Date: 2026-09-11

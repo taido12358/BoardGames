@@ -8,6 +8,7 @@ import ActionBar from "./components/ActionBar";
 import GameLogPanel from "./components/GameLogPanel";
 import VictoryScreen from "./components/VictoryScreen";
 import CardView from "./components/CardView";
+import BangDebugPanel from "./components/BangDebugPanel";
 import {
   awaitingMyResponse, isMyTurn, myPlayer,
   type BangMove, type BangPublicPlayer, type BangViewerState, type Card, type CardKind,
@@ -260,6 +261,8 @@ export default function BangBoard({ makeMove, onLeave, onRematch, rematching }: 
       <GameLogPanel log={state.gameLog} />
 
       <RoomErrorBanner error={error} />
+
+      <BangDebugPanel roomId={room.id} players={state.players} />
     </div>
   );
 }

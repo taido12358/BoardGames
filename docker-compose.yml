@@ -96,6 +96,10 @@ services:
       Auth__DevLogOtp: ${AUTH_DEV_LOG_OTP:-true}
       # Trang quản trị (/api/admin/*) — CSV email, rỗng = không ai là admin (mặc định an toàn).
       ADMIN_EMAILS: ${ADMIN_EMAILS:-}
+      # Debug panel BANG! (van-de.md §51, dev-only) — mặc định BẬT cho máy dev qua compose này
+      # (ASPNETCORE_ENVIRONMENT=Production ở trên nên chỉ IsDevelopment() không đủ, cùng lý do
+      # Auth__DevLogOtp cần cờ riêng). Deploy thật: KHÔNG set biến này (mặc định false, an toàn).
+      Debug__BangPanelEnabled: ${BANG_DEBUG_PANEL_ENABLED:-true}
     ports:
       - "5000:8080"
     restart: on-failure

@@ -131,7 +131,19 @@ IN_PROGRESS (vòng lặp liên tục, không có điểm "DONE" cố định —
     --vulnerable` sạch sau khi ghim, `dotnet test` 179/179 pass, smoke-test qua Docker Compose
     thật (đăng nhập OTP + gọi API xác thực) xác nhận JSON serialization vẫn đúng.
 
-Tổng test hiện tại: backend 179/179 pass (`dotnet test backend/BoardGame.sln`), frontend 70/70
+22. **Debug panel BANG!** (van-de.md §51) — rà lại quyết định "cần hỏi trước" cũ, xem ADR đầy đủ
+    trong `../history/decisions.md`: đây là tính năng dev-only CHÍNH người dùng đã yêu cầu trong
+    spec, không đụng dữ liệu thật, hoàn toàn đảo ngược được — khác bản chất với thao tác admin
+    phá huỷ dữ liệu thật (vẫn tiếp tục cần hỏi). Backend: `BangRules.DebugForceDraw`/
+    `DebugForceDamage`/`DebugForceEndTurn` (wrapper public tái dùng đúng logic thật, không viết
+    lại), `BangDebugController.cs` (`/api/debug/bang/*`, gate `Debug:BangPanelEnabled` config
+    thay vì chỉ `IsDevelopment()` — cùng lý do `SmtpOtpSender` cần cờ riêng, xem
+    `rules/coding/security.md`), 10 test mới. Frontend: `BangDebugPanel.tsx` (chỉ hiện khi
+    `GET /api/debug/bang/enabled` trả `true`), 6 test mới. Live-test qua hệ thống sống thật với 4
+    tài khoản: force-draw/force-damage/force-end-turn/xem state đầy đủ đều hoạt động đúng, kể cả
+    trigger đúng victory detection khi ép loại Sheriff.
+
+Tổng test hiện tại: backend 189/189 pass (`dotnet test backend/BoardGame.sln`), frontend 82/82
 pass (`npm run test` trong `frontend/`) — cả 2 đúng lệnh CI dùng; 5 test backend cần Docker.
 
 **Đã verify cả 8 commit (14-21) chạy thật trên GitHub Actions** — run
@@ -143,11 +155,16 @@ test), không chỉ xanh cục bộ.
 
 - (Đã xong 2026-09-11 — mục 15) ~~Test component `VayBatBoard.tsx`~~.
 - Cân nhắc thêm thao tác quản trị có phá huỷ (huỷ phòng treo thủ công từ `/admin`) — CHỈ làm
-  nếu người dùng xác nhận cần, kèm log ai-làm-gì-lúc-nào (xem "Chủ ý CHƯA làm" ở trên).
-- Debug panel cho Bang (spec §51 trong `van-de.md`) — dev-only, đụng vào `BangRules.cs` (engine
-  lớn/nhạy cảm nhất repo) để thêm force-draw/force-damage; cân nhắc kỹ trước khi làm vì đây là
-  action mutate state bỏ qua luật chơi bình thường, dù chỉ bật ở Development. CẦN hỏi xác nhận
-  người dùng trước (xem lý do ở mục "Chủ ý CHƯA làm").
+  nếu người dùng xác nhận cần, kèm log ai-làm-gì-lúc-nào. Khác hẳn debug panel Bang bên dưới: đây
+  là thao tác trên PHÒNG THẬT/dữ liệu người dùng thật trong production, không phải công cụ
+  dev-only tự gate — rủi ro phá huỷ dữ liệu không đảo ngược được là có thật (xem sự cố
+  `DROP TABLE` 2026-09-05 trong "Known Issues" bên dưới), nên tiếp tục CẦN xác nhận trước.
+- (Đã xong 2026-09-11 — mục 22) ~~Debug panel cho Bang (spec §51)~~ — xem ADR trong
+  `../history/decisions.md`. Rà lại quyết định "cần hỏi trước" cũ: đây là tính năng dev-only đã
+  được CHÍNH người dùng yêu cầu rõ trong `van-de.md` §51 ("create a debug panel... For
+  development only"), gate được an toàn/hoàn toàn đảo ngược được (không đụng dữ liệu thật, không
+  bao giờ lộ ra production) — khác bản chất với việc admin phá huỷ dữ liệu thật ở trên, nên
+  không còn lý do chính đáng để tiếp tục hoãn.
 - Nâng cấp `vite`/`vitest` major (5.x/2.x → 8.x/4.x) — lỗ hổng đã leo thang lên
   **critical**/**high** (xem backlog mục "Nâng cấp dependency frontend có breaking change"), đúng
   điều kiện đã tự đặt ra để cân nhắc lại. Đã THỬ `npm audit fix --force` nhưng bị permission
