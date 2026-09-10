@@ -7,7 +7,7 @@
 | Unit (backend) | **Engine** (`IGameEngine` — luật chơi), helper (`GameJson`) | xUnit |
 | Unit (frontend) | Logic thuần phía client — helper hiển thị/gợi ý UI của từng game (`games/<ten>/types.ts`), `platform/gameStore.ts` | Vitest (`frontend/`, mới 2026-09-11 — `npm run test`) |
 | Integration (service) | Service tầng dưới + DB thật, khoá hàng thật (`FOR UPDATE`/`SKIP LOCKED`) — gọi thẳng `RoomService`, KHÔNG qua HTTP/[Authorize] | xUnit + Testcontainers (`Platform/RoomServiceIntegrationTests.cs`, 2026-09-11 — cần Docker) |
-| Integration (HTTP) | Controller THẬT qua `WebApplicationFactory` — đúng pipeline routing/model binding/`[Authorize]`/cookie JWT, DB thật (Testcontainers) | xUnit + `Microsoft.AspNetCore.Mvc.Testing` (`Platform/Auth/AuthControllerIntegrationTests.cs` + `AdminControllerIntegrationTests.cs`, mới 2026-09-11 — cần Docker, xem mục "Test HTTP tích hợp qua WebApplicationFactory" bên dưới) |
+| Integration (HTTP) | Controller THẬT qua `WebApplicationFactory` — đúng pipeline routing/model binding/`[Authorize]`/cookie JWT, DB thật (Testcontainers) | xUnit + `Microsoft.AspNetCore.Mvc.Testing` (`Platform/Auth/AuthControllerIntegrationTests.cs` + `AdminControllerIntegrationTests.cs` + `GamesControllerIntegrationTests.cs`, mới 2026-09-11 — cần Docker, xem mục "Test HTTP tích hợp qua WebApplicationFactory" bên dưới) |
 | E2E | 2 client thật chơi một ván qua trình duyệt | Playwright (Chromium) + 2 SignalR client — **chưa có trong repo**, chỉ live-test thủ công qua Chrome DevTools/2 tab tới giờ |
 
 Ưu tiên đầu tư theo thứ tự: **engine unit test** (rẻ, giá trị cao nhất — luật chơi là phần dễ sai nhất) → integration cho luồng `MakeMove` → E2E smoke.
@@ -153,9 +153,13 @@ model binding, role check qua middleware thật). Trước 2026-09-11, phân quy
 `[Authorize(Roles = "Admin")]`) chỉ được verify tới tầng tạo/validate JWT thuần
 (`TokenServiceTests`) — chưa từng chạy qua đúng pipeline HTTP thật. `Platform/Auth/AuthApiFactory.cs`
 (`WebApplicationFactory<Program>` + Testcontainers Postgres, dùng CHUNG 1 factory cho mọi test
-trong class qua `IClassFixture` — mỗi test tự dùng email ngẫu nhiên riêng nên an toàn) lấp khoảng
-trống này cho `AuthController`/`AdminController` (2 controller không đụng Redis/RabbitMQ/
-OpenSearch/MinIO — cả 3 service đó đều kết nối lazy nên host vẫn boot bình thường không có chúng).
+trong class qua `IClassFixture` — mỗi test tự dùng email ngẫu nhiên riêng nên an toàn; có sẵn
+`LoggedInClientAsync()` để lấy 1 `HttpClient` đã đăng nhập) lấp khoảng trống này cho
+`AuthController`/`AdminController`/`GamesController`. `GamesController` CÓ đụng Redis/RabbitMQ/
+OpenSearch nhưng mọi endpoint TRỪ `Search` đều bọc try/catch quanh các lời gọi đó (đúng nguyên
+tắc "hạ tầng phụ không chặn luồng chính") nên vẫn test được bình thường không cần service thật —
+riêng `GET /api/games/search` gọi thẳng OpenSearch KHÔNG try/catch nên KHÔNG test ở tầng này (đã
+có live-test thủ công riêng, xem mục "Live-test nhiều người chơi thật" bên dưới).
 
 **Bài học hạ tầng test quan trọng nhất khi dựng cái này** — `Program.cs` đọc `ADMIN_EMAILS`/
 `JWT_SECRET` **NGAY LÚC BOOT** (`var tokenService = new TokenService(builder.Configuration);`,

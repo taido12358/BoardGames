@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Net.Http.Json;
 using System.Text.RegularExpressions;
 using BoardGame.Api.Platform.Auth;
 using Microsoft.AspNetCore.Hosting;
@@ -114,6 +115,19 @@ public class AuthApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
         if (!match.Success)
             throw new InvalidOperationException($"Log OTP không đúng định dạng: {message}");
         return match.Groups[1].Value;
+    }
+
+    /// <summary>Tạo 1 <see cref="HttpClient"/> mới, tự đăng nhập OTP (email ngẫu nhiên nếu không
+    /// truyền) — dùng chung cho mọi test cần "1 người dùng đã đăng nhập" (Admin hoặc thường) mà
+    /// không quan tâm chi tiết luồng request-otp/verify-otp.</summary>
+    public async Task<HttpClient> LoggedInClientAsync(string? email = null)
+    {
+        email ??= $"user-{Guid.NewGuid():N}@test.local";
+        var client = CreateClient();
+        await client.PostAsJsonAsync("/api/auth/request-otp", new { email });
+        var code = ExtractOtpCode(email);
+        await client.PostAsJsonAsync("/api/auth/verify-otp", new { email, code });
+        return client;
     }
 }
 

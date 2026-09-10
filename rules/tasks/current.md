@@ -255,8 +255,17 @@ IN_PROGRESS (vòng lặp liên tục, không có điểm "DONE" cố định —
     instance gốc, gây 401 toàn bộ). Xem chi tiết đầy đủ trong `rules/coding/testing.md` mục "Test
     HTTP tích hợp qua WebApplicationFactory".
 
-Tổng test hiện tại: backend 205/205 pass (`dotnet test backend/BoardGame.sln`), frontend 190/190
-pass (`npm run test` trong `frontend/`) — cả 2 đúng lệnh CI dùng; 5+16=21 test backend cần Docker.
+34. **Mở rộng test HTTP tích hợp sang `GamesController`** (13 test mới) — cùng hạ tầng
+    `AuthApiFactory` vừa dựng ở mục 33, thêm `LoggedInClientAsync()` dùng chung (rút gọn
+    `AdminControllerIntegrationTests` khỏi helper trùng lặp). Test sảnh chờ qua HTTP thật: tạo
+    phòng (thành công/gameKey sai/thiếu gameKey/chưa đăng nhập), lấy chi tiết phòng (tồn tại/không
+    tồn tại), huỷ phòng (đúng chủ/sai chủ → 403/không tồn tại → 404), ghép trận nhanh (2 người
+    khác nhau vào ĐÚNG 1 phòng, tự chuyển `Playing`), danh sách phòng. Cố tình KHÔNG test
+    `GET /api/games/search` — endpoint đó gọi thẳng OpenSearch thật không try/catch (khác mọi
+    endpoint khác), cần OpenSearch chạy thật mới có ý nghĩa, đã có live-test thủ công riêng.
+
+Tổng test hiện tại: backend 218/218 pass (`dotnet test backend/BoardGame.sln`), frontend 190/190
+pass (`npm run test` trong `frontend/`) — cả 2 đúng lệnh CI dùng; 5+16+13=34 test backend cần Docker.
 
 **Đã verify cả 17 commit (14-33) chạy thật trên GitHub Actions** — run
 `34518584349`/`34519404921`/`34519619027`/`34521278895`/`34523008065`/`34524664240`/

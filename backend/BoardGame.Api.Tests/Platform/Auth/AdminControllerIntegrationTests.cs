@@ -19,19 +19,10 @@ public class AdminControllerIntegrationTests : IClassFixture<AuthApiFactory>
 
     public AdminControllerIntegrationTests(AuthApiFactory factory) => _factory = factory;
 
-    private async Task<HttpClient> LoggedInClientAsync(string email)
-    {
-        var client = _factory.CreateClient();
-        await client.PostAsJsonAsync("/api/auth/request-otp", new { email });
-        var code = _factory.ExtractOtpCode(email);
-        await client.PostAsJsonAsync("/api/auth/verify-otp", new { email, code });
-        return client;
-    }
-
     [Fact]
     public async Task Check_NonAdminUser_ReturnsFalse()
     {
-        using var client = await LoggedInClientAsync($"user-{Guid.NewGuid():N}@test.local");
+        using var client = await _factory.LoggedInClientAsync();
 
         var res = await client.GetAsync("/api/admin/check");
 
@@ -43,7 +34,7 @@ public class AdminControllerIntegrationTests : IClassFixture<AuthApiFactory>
     [Fact]
     public async Task Check_AdminUser_ReturnsTrue()
     {
-        using var client = await LoggedInClientAsync(_factory.NextAdminEmail());
+        using var client = await _factory.LoggedInClientAsync(_factory.NextAdminEmail());
 
         var res = await client.GetAsync("/api/admin/check");
 
@@ -55,7 +46,7 @@ public class AdminControllerIntegrationTests : IClassFixture<AuthApiFactory>
     [Fact]
     public async Task Rooms_NonAdminUser_ReturnsForbidden()
     {
-        using var client = await LoggedInClientAsync($"user-{Guid.NewGuid():N}@test.local");
+        using var client = await _factory.LoggedInClientAsync();
 
         var res = await client.GetAsync("/api/admin/rooms");
 
@@ -65,7 +56,7 @@ public class AdminControllerIntegrationTests : IClassFixture<AuthApiFactory>
     [Fact]
     public async Task Stats_NonAdminUser_ReturnsForbidden()
     {
-        using var client = await LoggedInClientAsync($"user-{Guid.NewGuid():N}@test.local");
+        using var client = await _factory.LoggedInClientAsync();
 
         var res = await client.GetAsync("/api/admin/stats");
 
@@ -75,7 +66,7 @@ public class AdminControllerIntegrationTests : IClassFixture<AuthApiFactory>
     [Fact]
     public async Task Rooms_AdminUser_ReturnsOk()
     {
-        using var client = await LoggedInClientAsync(_factory.NextAdminEmail());
+        using var client = await _factory.LoggedInClientAsync(_factory.NextAdminEmail());
 
         var res = await client.GetAsync("/api/admin/rooms");
 
@@ -85,7 +76,7 @@ public class AdminControllerIntegrationTests : IClassFixture<AuthApiFactory>
     [Fact]
     public async Task Stats_AdminUser_ReturnsOkWithCounts()
     {
-        using var client = await LoggedInClientAsync(_factory.NextAdminEmail());
+        using var client = await _factory.LoggedInClientAsync(_factory.NextAdminEmail());
 
         var res = await client.GetAsync("/api/admin/stats");
 
