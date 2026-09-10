@@ -1,6 +1,14 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useGameStore } from "./gameStore";
 import type { ChatMessageDto, RoomSummaryDto } from "./types";
+
+function jsonResponse(body: unknown, ok = true, status = 200): Response {
+  return { ok, status, json: () => Promise.resolve(body) } as Response;
+}
+
+// KHÔNG dùng vi.unstubAllGlobals() ở đây — sẽ revert nhầm stub `localStorage` dùng chung của
+// test-setup.ts (bài học đau từ authStore.test.ts, xem rules/coding/testing.md). Mỗi test tự
+// gọi lại vi.stubGlobal("fetch", ...) để ghi đè mock cũ, không cần "unstub" giữa các lần.
 
 function room(overrides: Partial<RoomSummaryDto> & { id: string; createdAt: string }): RoomSummaryDto {
   return {
@@ -103,5 +111,123 @@ describe("setPlayerName", () => {
 
     expect(useGameStore.getState().playerName).toBe("Bình");
     expect(localStorage.getItem("playerName")).toBe("Bình");
+  });
+});
+
+describe("fetchEngines", () => {
+  it("thành công: lưu danh sách engine, tắt loading, xoá lỗi cũ", async () => {
+    useGameStore.setState({ enginesError: "lỗi cũ" });
+    vi.stubGlobal("fetch", vi.fn(() => Promise.resolve(jsonResponse([{ key: "vaybat", displayName: "Vây Bắt", minPlayers: 2, maxPlayers: 2 }]))));
+
+    await useGameStore.getState().fetchEngines();
+
+    expect(useGameStore.getState().engines).toEqual([{ key: "vaybat", displayName: "Vây Bắt", minPlayers: 2, maxPlayers: 2 }]);
+    expect(useGameStore.getState().enginesLoading).toBe(false);
+    expect(useGameStore.getState().enginesError).toBe("");
+  });
+
+  it("HTTP lỗi: giữ enginesError, tắt loading, KHÔNG throw", async () => {
+    vi.stubGlobal("fetch", vi.fn(() => Promise.resolve(jsonResponse({}, false, 500))));
+
+    await useGameStore.getState().fetchEngines();
+
+    expect(useGameStore.getState().enginesError).toBe("Không thể tải danh sách trò chơi.");
+    expect(useGameStore.getState().enginesLoading).toBe(false);
+  });
+
+  it("lỗi mạng: cũng set enginesError, không throw", async () => {
+    vi.stubGlobal("fetch", vi.fn(() => Promise.reject(new Error("network"))));
+
+    await expect(useGameStore.getState().fetchEngines()).resolves.toBeUndefined();
+    expect(useGameStore.getState().enginesError).toBe("Không thể tải danh sách trò chơi.");
+  });
+});
+
+describe("fetchRooms", () => {
+  it("thành công: gộp phòng mới vào roomsById đã có, sắp lại theo createdAt", async () => {
+    useGameStore.getState().upsertRoom(room({ id: "old", createdAt: "2026-01-01T00:00:00Z" }));
+    vi.stubGlobal("fetch", vi.fn(() => Promise.resolve(jsonResponse([room({ id: "new", createdAt: "2026-01-02T00:00:00Z" })]))));
+
+    await useGameStore.getState().fetchRooms();
+
+    expect(useGameStore.getState().rooms.map((r) => r.id)).toEqual(["new", "old"]);
+  });
+
+  it("gửi đúng query gameKey khi được truyền vào", async () => {
+    const fetchMock = vi.fn(() => Promise.resolve(jsonResponse([])));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await useGameStore.getState().fetchRooms("bang");
+
+    expect(fetchMock).toHaveBeenCalledWith("/api/games?gameKey=bang");
+  });
+
+  it("lỗi mạng: im lặng bỏ qua (best-effort, không set error nào)", async () => {
+    vi.stubGlobal("fetch", vi.fn(() => Promise.reject(new Error("network"))));
+
+    await expect(useGameStore.getState().fetchRooms()).resolves.toBeUndefined();
+    expect(useGameStore.getState().error).toBe("");
+  });
+});
+
+describe("createRoom", () => {
+  it("thành công: trả về RoomDto, không set lỗi", async () => {
+    vi.stubGlobal("fetch", vi.fn(() => Promise.resolve(jsonResponse({ id: "r1" }))));
+
+    const result = await useGameStore.getState().createRoom("zodiacrace", { seatCount: 4 });
+
+    expect(result).toEqual({ id: "r1" });
+    expect(useGameStore.getState().error).toBe("");
+  });
+
+  it("gửi đúng gameKey/options trong body", async () => {
+    const fetchMock = vi.fn((_url: string, _init?: RequestInit) => Promise.resolve(jsonResponse({ id: "r1" })));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await useGameStore.getState().createRoom("bang", { seatCount: 6 });
+
+    const body = JSON.parse((fetchMock.mock.calls[0][1] as RequestInit).body as string);
+    expect(body).toEqual({ gameKey: "bang", options: { seatCount: 6 } });
+  });
+
+  it("thất bại: set lỗi, trả về null", async () => {
+    vi.stubGlobal("fetch", vi.fn(() => Promise.resolve(jsonResponse({ error: "Game chưa hỗ trợ" }, false, 400))));
+
+    const result = await useGameStore.getState().createRoom("khong-ton-tai", {});
+
+    expect(result).toBeNull();
+    expect(useGameStore.getState().error).toBe("Không tạo được phòng");
+  });
+});
+
+describe("cancelRoom", () => {
+  it("thành công: trả về true", async () => {
+    vi.stubGlobal("fetch", vi.fn(() => Promise.resolve(jsonResponse({}))));
+    expect(await useGameStore.getState().cancelRoom("r1")).toBe(true);
+  });
+
+  it("thất bại: set lỗi, trả về false", async () => {
+    vi.stubGlobal("fetch", vi.fn(() => Promise.resolve(jsonResponse({}, false, 403))));
+
+    const result = await useGameStore.getState().cancelRoom("r1");
+
+    expect(result).toBe(false);
+    expect(useGameStore.getState().error).toBe("Không huỷ được phòng.");
+  });
+});
+
+describe("quickMatch", () => {
+  it("thành công: trả về RoomDto", async () => {
+    vi.stubGlobal("fetch", vi.fn(() => Promise.resolve(jsonResponse({ id: "qm1" }))));
+    expect(await useGameStore.getState().quickMatch("vaybat")).toEqual({ id: "qm1" });
+  });
+
+  it("thất bại: set lỗi, trả về null", async () => {
+    vi.stubGlobal("fetch", vi.fn(() => Promise.resolve(jsonResponse({}, false, 500))));
+
+    const result = await useGameStore.getState().quickMatch("vaybat");
+
+    expect(result).toBeNull();
+    expect(useGameStore.getState().error).toBe("Không tìm được trận phù hợp.");
   });
 });

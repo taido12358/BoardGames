@@ -183,7 +183,14 @@ IN_PROGRESS (vòng lặp liên tục, không có điểm "DONE" cố định —
     ảnh hưởng cả 4 game cùng lúc) nên ưu tiên test trực tiếp, đủ nhánh thay vì dựa vào coverage
     gián tiếp từ board test.
 
-Tổng test hiện tại: backend 189/189 pass (`dotnet test backend/BoardGame.sln`), frontend 144/144
+28. **Test 5 action gọi API của `gameStore.ts`** (13 test mới, thêm vào `gameStore.test.ts` có
+    sẵn) — `fetchEngines`/`fetchRooms`/`createRoom`/`cancelRoom`/`quickMatch` chưa từng có test
+    TRỰC TIẾP dù đây là các action REST cốt lõi của cả sảnh lẫn tạo/vào phòng (trước đó
+    `GameDetails.test.tsx` chỉ mock chúng thành `vi.fn()`, không test logic thật bên trong: xử lý
+    HTTP lỗi, lỗi mạng, merge dữ liệu). Cùng khuôn `authStore.test.ts` — áp dụng ngay bài học
+    KHÔNG dùng `vi.unstubAllGlobals()` (mục 25) ngay từ đầu, không lặp lại sự cố.
+
+Tổng test hiện tại: backend 189/189 pass (`dotnet test backend/BoardGame.sln`), frontend 157/157
 pass (`npm run test` trong `frontend/`) — cả 2 đúng lệnh CI dùng; 5 test backend cần Docker.
 
 **Đã verify cả 13 commit (14-28) chạy thật trên GitHub Actions** — run
