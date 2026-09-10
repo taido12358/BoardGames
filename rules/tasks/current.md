@@ -22,17 +22,26 @@ IN_PROGRESS (vòng lặp liên tục, không có điểm "DONE" cố định)
    Chỉ verify bằng `tsc`/`vite build` xanh, CHƯA live-test qua Docker Compose (người dùng xác
    nhận không cần bật stack/OTP chỉ để xem UI thuần React này).
 4. **Unit test cho `VayBatRules.cs`** (luật thuần) — `VayBat/VayBatRulesTests.cs` (17 test mới,
-   xem backlog mục "Test — ĐÃ LÀM"). Tổng test backend: 114/114 pass.
+   xem backlog mục "Test — ĐÃ LÀM").
+5. **Trang "Quản lý game" (`/admin`)** — repo trước đó KHÔNG có trang quản trị nào (chỉ có Thư
+   viện trò chơi phía người chơi), nên hiểu "code lại giao diện quản lý game" là LÀM MỚI. Đã làm
+   bản READ-ONLY: xem tổng quan phòng/ván toàn hệ thống + thống kê nhanh, lọc theo trạng thái.
+   Backend: `AdminController.cs` (`/api/admin/check|rooms|stats`), role "Admin" gán qua JWT claim
+   lúc đăng nhập (`TokenService.CreateToken`) theo email trong `ADMIN_EMAILS` (env, rỗng mặc
+   định), `[Authorize(Roles = "Admin")]` chuẩn ASP.NET — đúng pattern đã ghi sẵn trong
+   `rules/coding/security.md` mục "Phân quyền". Frontend: `AdminPage.tsx` + `adminStore.ts`,
+   route `/admin`, link "🛠 Quản trị" trong header chỉ hiện khi `isAdmin`.
+   **Chủ ý CHƯA làm**: không có thao tác phá huỷ (huỷ/xoá phòng thủ công) — tránh lặp lại sự cố
+   mất dữ liệu 2026-09-05; làm sau nếu người dùng thật sự cần, với xác nhận riêng + log đầy đủ.
+   Test: `TokenServiceTests.cs` (4 test, round-trip JWT thật qua `JwtSecurityTokenHandler` để
+   xác nhận role claim hoạt động đúng — xem backlog). Tổng test backend: 118/118 pass.
 
 ## Việc đang làm / tiếp theo (thứ tự ưu tiên gợi ý, không bắt buộc theo đúng thứ tự)
 
 - Cân nhắc thêm game thứ ba (asset zodiac có sẵn ở `frontend/public/assets/games/zodiac/`,
   chưa gắn game nào) — quy mô lớn, chỉ làm khi các việc "hoàn thiện game cũ" đã ổn.
-- "Code lại giao diện quản lý game": hiện repo **không có trang admin/quản lý** riêng (chỉ có
-  Thư viện trò chơi `GameLibrary`/`GameDetails` phía người chơi) — cần làm rõ phạm vi (trang
-  quản trị mới, hay cải tiến Thư viện trò chơi hiện có) trước khi code; xem
-  [`../architecture/frontend.md`](../architecture/frontend.md) và hỏi lại nếu chỉ thị tiếp theo
-  không đủ rõ.
+- Cân nhắc thêm thao tác quản trị có phá huỷ (huỷ phòng treo thủ công từ `/admin`) — CHỈ làm
+  nếu người dùng xác nhận cần, kèm log ai-làm-gì-lúc-nào (xem "Chủ ý CHƯA làm" ở trên).
 
 ## Việc dở dang từ đợt trước (2026-09-05, tạm gác — không chặn việc mới)
 

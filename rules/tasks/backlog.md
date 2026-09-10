@@ -68,9 +68,33 @@ Chi tiết: [`../history/milestones.md`](../history/milestones.md), [`../archite
 - **Xoá demo "Hello World" khỏi backend** (frontend đã xoá từ 2026-08-05, backend giữ lại lúc đó vì "chưa ai yêu cầu") — theo yêu cầu tổng quát của người dùng "xoá trang không cần thiết". Xoá `Controllers/HelloController.cs`, `Models/Greeting.cs`, bảng `Greetings` khỏi schema bootstrap (chỉ ngừng tạo mới, không `DROP TABLE` — theo nguyên tắc thay đổi phá huỷ 2 bước của `rules/workflow/deployment.md`), hub method `GameHub.SendHello`. Giữ nguyên phần hạ tầng dùng thật cho game trong `RedisCacheService`/`RabbitMqPublisher`/`MinioStorageService`/`OpenSearchService`.
 - **`/health` giờ kiểm tra thật** DB (`CanConnectAsync`)/Redis (`PingAsync`)/RabbitMQ (thử mở channel) song song, timeout 3s mỗi phần, trả `503` kèm chi tiết từng phần nếu có phần down — trước đây chỉ trả tĩnh `{ status: "healthy" }`.
 
+## Trang quản lý game (`/admin`) — ĐÃ LÀM bản READ-ONLY (2026-09-10)
+
+Repo trước đó không có trang quản trị nào. Đã làm bản đầu: xem tổng quan phòng/ván toàn hệ
+thống + thống kê nhanh, lọc theo trạng thái/game — xem ADR "Role Admin đầu tiên trong hệ thống"
+trong [`../history/decisions.md`](../history/decisions.md) cho quyết định phân quyền, và
+[`../references/important-files.md`](../references/important-files.md) cho danh sách file.
+
+**Chưa làm (có chủ đích, để đợt sau nếu cần)**:
+- Không có thao tác phá huỷ (huỷ/xoá phòng thủ công từ `/admin`) — tránh lặp lại sự cố mất dữ
+  liệu dev thật 2026-09-05; cần hỏi xác nhận người dùng trước khi thêm, kèm log ai-làm-gì-lúc-nào.
+- Không có UI cấp/thu hồi quyền Admin (quản lý qua env `ADMIN_EMAILS`, sửa thủ công + khởi động
+  lại backend + admin đăng nhập lại) — chấp nhận được ở quy mô hiện tại (vài người vận hành biết
+  trước), làm UI quản lý role riêng chỉ khi số người cần quyền tăng lên nhiều.
+- Chưa có audit log riêng cho hành động xem trang quản trị (chỉ log qua `ILogger` thường ở
+  endpoint `rooms`, không có bảng audit log persist) — đủ dùng vì hiện tại toàn bộ hành động là
+  READ-ONLY.
+
 ## Việc kỹ thuật chưa làm
 
 - CI/CD pipeline tự động: chưa có thư mục `.github/workflows/` hay pipeline config nào trong repo — pipeline mô tả trong `rules/workflow/deployment.md` là **mong muốn**, chưa có thật.
+
+## Test — ĐÃ LÀM (2026-09-10, đợt 2)
+
+`TokenService.CreateToken` (role "Admin" cho `/admin`) giờ có `Platform/Auth/TokenServiceTests.cs`
+(4 test) — verify round-trip THẬT qua `JwtSecurityTokenHandler.ValidateToken`, không chỉ gọi
+`CreateToken` rồi đọc field nội bộ (claim quyết định authorization, sai sót khó phát hiện qua
+code review thường). Tổng test backend: 118/118 pass.
 
 ## Test — ĐÃ LÀM (2026-09-10)
 

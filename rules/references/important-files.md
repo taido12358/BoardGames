@@ -9,7 +9,7 @@ Mọi đường dẫn dưới đây đã xác nhận tồn tại trong repo (c�
 
 ## Configuration
 
-- Environment: `.env` (gitignored, local) / `.env.example` (committed, mẫu) — nạp bởi `backend/BoardGame.Api/Services/DotEnv.cs` khi chạy ngoài Docker.
+- Environment: `.env` (gitignored, local) / `.env.example` (committed, mẫu) — nạp bởi `backend/BoardGame.Api/Services/DotEnv.cs` khi chạy ngoài Docker. Có `ADMIN_EMAILS` (mới 2026-09-10 — CSV email được cấp role "Admin" lúc đăng nhập, xem `AdminController.cs`).
 - Backend config: `backend/BoardGame.Api/appsettings.json`, `appsettings.Development.json`.
 - Docker: `docker-compose.yml` (root), `backend/BoardGame.Api/Dockerfile`, `frontend/Dockerfile`, `.dockerignore` ở mỗi phía.
 - Kubernetes: `k8s/*.yaml` (namespace, config, mỗi service hạ tầng, backend, frontend, ingress).
@@ -32,7 +32,8 @@ Mọi đường dẫn dưới đây đã xác nhận tồn tại trong repo (c�
 - `backend/BoardGame.Api/Platform/RoomDto.cs`, `GameJson.cs`, `GameMapper` (trong `RoomDto.cs`) — tính `MySide`/`IsMine` theo caller.
 - `backend/BoardGame.Api/Platform/Models/SeatSlot.cs` (mới) — `SeatSlot` record + `SeatCodec` (mã hoá/giải mã `GameRoom.SeatsJson`).
 - `backend/BoardGame.Api/Platform/Models/RoomStatus.cs` (mới) — hằng số 5 trạng thái + `IsOpen`.
-- `backend/BoardGame.Api/Platform/Auth/` — `AuthController.cs`, `TokenService.cs` (JWT), `ClaimsPrincipalExtensions.cs` (đọc user id/display name từ `ClaimsPrincipal` — dùng ở `GameHub`/`GamesController`/`RoomService` để xác thực ghế), OTP.
+- `backend/BoardGame.Api/Platform/Auth/` — `AuthController.cs`, `TokenService.cs` (JWT), `ClaimsPrincipalExtensions.cs` (đọc user id/display name/email từ `ClaimsPrincipal` — dùng ở `GameHub`/`GamesController`/`RoomService`/`AdminController` để xác thực ghế), OTP.
+- `backend/BoardGame.Api/Platform/AdminController.cs` (mới, 2026-09-10) — `/api/admin/*` READ-ONLY: `check` (bất kỳ ai đăng nhập gọi được, trả `isAdmin` — frontend dùng để ẩn/hiện mục "Quản trị"), `rooms`/`stats` (`[Authorize(Roles = "Admin")]`, 403 tự động nếu không phải admin). Role "Admin" gán vào **claim JWT lúc đăng nhập** (`TokenService.CreateToken`, không phải kiểm tra config mỗi request) nếu email nằm trong env `ADMIN_EMAILS` (CSV, rỗng mặc định — xem `.env.example`) — đúng pattern ở `rules/coding/security.md` mục "Phân quyền" (role qua claim + `[Authorize(Roles=...)]`, không hard-code danh sách trong logic từng action). Đánh đổi: đổi `ADMIN_EMAILS` chỉ có hiệu lực từ lần đăng nhập MỚI. Không dùng cột DB mới cho quyền. Chủ ý không có thao tác phá huỷ (huỷ/xoá phòng) — xem chú thích đầu file.
 
 ## Games
 
@@ -55,6 +56,7 @@ Mọi đường dẫn dưới đây đã xác nhận tồn tại trong repo (c�
 - Platform (dùng chung mọi game): `frontend/src/platform/` — `authStore.ts`, `gameStore.ts`, `useGameRoomHub.ts`, `useLobbyHub.ts` (mới), `GameRoomHubContext.tsx`, `RoomShell.tsx` (mới — banner/leave button dùng chung giữa các game), `ScrollToTop.tsx`, `types.ts`, `gameLibraryTypes.ts`, `gameRegistry.ts`.
 - Điều hướng theo game: `frontend/src/components/GameView.tsx` (luôn render `<Routes>`) + `RoomRoute.tsx` (mới, route `/games/:gameKey/room/:roomId` — route trong-ván thật, thay cho rẽ nhánh theo `gameStore.room` trước đây).
 - Thư viện trò chơi: `frontend/src/components/{GameLibrary,GameCard,GameDetails,GameInstructions}.tsx`.
+- Quản trị (mới, 2026-09-10): `frontend/src/components/AdminPage.tsx` (route `/admin`, xem `GameView.tsx`) + `frontend/src/platform/adminStore.ts`. Chỉ hiện link "Quản trị" trong `App.tsx` khi `adminStore.isAdmin` — server (`AdminController`) mới là lớp chặn thật.
 - Game VayBat: `frontend/src/games/vaybat/` — `types.ts`, `metadata.ts` (thẻ + hướng dẫn), `CreateOptions.tsx` (mới — UI tuỳ chọn tạo phòng, tách khỏi `GameDetails.tsx`), `VayBatBoard.tsx`.
 - Game Bang: `frontend/src/games/bang/` — `types.ts`, `metadata.ts` (thẻ + hướng dẫn), `CreateOptions.tsx` (mới), `BangBoard.tsx`, `components/`.
 - Demo "Hello World" (frontend + backend) đã xoá hoàn toàn (2026-09-10) — trước đó frontend đã xoá 2026-08-05, backend giữ lại vì "chưa ai yêu cầu"; nay dọn nốt theo yêu cầu tổng quát "xoá trang không cần thiết": `Controllers/HelloController.cs`, `Models/Greeting.cs`, bảng `Greetings` (ngừng tạo mới trong schema bootstrap, không DROP bảng cũ), hub method `GameHub.SendHello`, endpoint `/api/hello` không còn. `RedisCacheService`/`RabbitMqPublisher`/`MinioStorageService`/`OpenSearchService` vẫn còn — chỉ bỏ phần API/method/const dành riêng cho demo, phần dùng thật cho game (cache state, `PublishGameEvent`, `SaveReplayAsync`, `IndexGameAsync`/`SearchGamesAsync`) giữ nguyên.
@@ -62,7 +64,7 @@ Mọi đường dẫn dưới đây đã xác nhận tồn tại trong repo (c�
 
 ## Tests
 
-- `backend/BoardGame.Api.Tests/` (thêm 2026-08-05) — xUnit, 114 test. `Bang/*.cs`: roles, characters, deck, distance, luồng chơi, bảo vệ thông tin ẩn, hợp đồng JSON enum, `BangSeatTimeoutTests.cs` (mới 2026-09-05 — `OnSeatTimedOut`). `VayBat/VayBatEngineTests.cs` (2026-09-05 — `SideForSeat`/`OnSeatTimedOut`, lớp adapter) + `VayBat/VayBatRulesTests.cs` (mới 2026-09-10, 17 test — luật thuần: kề/trống, nước đi hợp lệ, áp nước đi, thắng/thua, khởi tạo state). `Platform/RoomStatusTests.cs` (mới). Chưa có test tích hợp chạm Postgres thật cho `RoomService`/khoá `FOR UPDATE`/`SKIP LOCKED` — nợ kỹ thuật, ghi trong [`../tasks/backlog.md`](../tasks/backlog.md).
+- `backend/BoardGame.Api.Tests/` (thêm 2026-08-05) — xUnit, 118 test. `Bang/*.cs`: roles, characters, deck, distance, luồng chơi, bảo vệ thông tin ẩn, hợp đồng JSON enum, `BangSeatTimeoutTests.cs` (mới 2026-09-05 — `OnSeatTimedOut`). `VayBat/VayBatEngineTests.cs` (2026-09-05 — `SideForSeat`/`OnSeatTimedOut`, lớp adapter) + `VayBat/VayBatRulesTests.cs` (2026-09-10, 17 test — luật thuần: kề/trống, nước đi hợp lệ, áp nước đi, thắng/thua, khởi tạo state). `Platform/Auth/TokenServiceTests.cs` (mới 2026-09-10, 4 test — round-trip JWT thật cho claim role "Admin", xem ADR trong `../history/decisions.md`). `Platform/RoomStatusTests.cs` (mới). Chưa có test tích hợp chạm Postgres thật cho `RoomService`/khoá `FOR UPDATE`/`SKIP LOCKED` — nợ kỹ thuật, ghi trong [`../tasks/backlog.md`](../tasks/backlog.md).
 - Chiến lược test đầy đủ (mong muốn cho mọi game): [`../coding/testing.md`](../coding/testing.md).
 
 ## Tài liệu

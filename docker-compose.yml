@@ -94,6 +94,8 @@ services:
       SMTP_PASS: ${SMTP_PASS:-}
       SMTP_FROM: ${SMTP_FROM:-}
       Auth__DevLogOtp: ${AUTH_DEV_LOG_OTP:-true}
+      # Trang quản trị (/api/admin/*) — CSV email, rỗng = không ai là admin (mặc định an toàn).
+      ADMIN_EMAILS: ${ADMIN_EMAILS:-}
     ports:
       - "5000:8080"
     restart: on-failure

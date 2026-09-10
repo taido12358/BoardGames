@@ -22,4 +22,8 @@ public static class ClaimsPrincipalExtensions
     /// <summary>Tên hiển thị hiện tại (đồng bộ mỗi lần đăng nhập/đổi tên — xem AuthController).</summary>
     public static string GetDisplayName(this ClaimsPrincipal user) =>
         user.FindFirstValue(ClaimTypes.Name) ?? user.FindFirstValue("name") ?? "Ẩn danh";
+
+    /// <summary>Email đã xác thực từ token — null nếu thiếu claim (không nên xảy ra sau đăng nhập).</summary>
+    public static string? TryGetEmail(this ClaimsPrincipal user) =>
+        user.FindFirstValue(ClaimTypes.Email) ?? user.FindFirstValue("email");
 }

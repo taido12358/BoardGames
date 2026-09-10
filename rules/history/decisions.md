@@ -1,5 +1,70 @@
 # Decisions (ADR)
 
+## ADR: Role "Admin" đầu tiên trong hệ thống — claim JWT lúc đăng nhập, không phải cột DB
+
+Date: 2026-09-10
+
+### Context
+
+Chỉ thị `/goal` yêu cầu "code lại giao diện quản lý game" — repo trước đó không có khái niệm
+role/quyền quản trị nào (chỉ có "chủ phòng" — quyền theo TỪNG phòng, không toàn cục). Cần một
+trang quản trị xem tổng quan phòng/ván toàn hệ thống, và cần quyết định: quyền admin xác định
+bằng gì?
+
+`rules/coding/security.md` mục "Phân quyền" đã ghi sẵn định hướng cho tình huống này (viết
+trước khi tính năng này tồn tại): *"Role quản trị (khi thêm...): định nghĩa ở tầng auth (claim
+trong token), kiểm tra bằng policy/`[Authorize(Roles=...)]` — không hard-code danh sách tên
+trong logic."*
+
+### Decision
+
+- Danh sách admin cấu hình qua env `ADMIN_EMAILS` (CSV, rỗng mặc định — xem `.env.example`).
+- `TokenService.CreateToken` đọc danh sách này **1 lần lúc boot** (constructor), gắn claim
+  `ClaimTypes.Role = "Admin"` vào JWT **lúc đăng nhập** nếu email khớp — không phải cột DB mới
+  trên `AppUser`, không phải kiểm tra config lại mỗi request trong controller.
+- `AdminController` dùng `[Authorize(Roles = "Admin")]` chuẩn ASP.NET Core cho các endpoint cần
+  quyền (`rooms`, `stats`); endpoint `check` (dùng để ẩn/hiện UI) chỉ cần `[Authorize]` thường,
+  trả `isAdmin: User.IsInRole("Admin")` cho bất kỳ ai đăng nhập.
+- Ghi claim bằng **`ClaimTypes.Role` (URI đầy đủ)**, không dùng tên ngắn `"role"` — pipeline JWT
+  của app (`AddJwtBearer` + `TokenValidationParameters` tự chế, không cấu hình
+  `MapInboundClaims` tường minh) không đảm bảo tự map tên ngắn chuẩn JWT sang URI .NET lúc đọc
+  lại token (dấu hiệu: `ClaimsPrincipalExtensions.TryGetUserId` đã phải kiểm cả `ClaimTypes.NameIdentifier`
+  lẫn `"sub"` phòng hờ, thay vì tin tưởng mapping xảy ra). Ghi thẳng URI đầy đủ thì
+  `[Authorize(Roles=...)]`/`User.IsInRole` khớp được bất kể có mapping hay không — an toàn hơn
+  là giả định hành vi mapping của handler đang dùng.
+- Verify bằng test round-trip THẬT qua `JwtSecurityTokenHandler.ValidateToken` (không chỉ gọi
+  `CreateToken` rồi đọc field nội bộ) — `TokenServiceTests.cs`, vì đây là claim quyết định
+  authorization có hoạt động đúng hay không, sai sót ở đây khó phát hiện qua code review thường.
+
+### Alternatives
+
+- Cột `IsAdmin`/`Role` trên bảng `Users` — bị loại: cần thay đổi schema (dự án không dùng
+  migration, mọi đổi schema phải backward-compatible và rất thận trọng sau sự cố mất dữ liệu dev
+  thật 2026-09-05), và cần thêm UI/API để gán quyền (vòng lặp "ai cấp quyền cho ai" khi chưa có
+  admin nào) — quá nhiều cho nhu cầu hiện tại (một vài người vận hành biết trước).
+- Kiểm tra `ADMIN_EMAILS` trực tiếp trong từng action của `AdminController` (so sánh email mỗi
+  request) — bị loại vì đúng là "hard-code danh sách tên trong logic" mà security.md đã cảnh
+  báo tránh; cũng không tận dụng được cơ chế `[Authorize(Roles=...)]` có sẵn của framework.
+
+### Reason
+
+Theo đúng định hướng đã ghi sẵn trong `rules/coding/security.md` trước khi tính năng này được
+làm — tận dụng cơ chế role/claim chuẩn của ASP.NET Core thay vì tự chế kiểm tra quyền rải rác,
+và tránh đổi schema DB cho một tính năng có thể chưa cần thiết lâu dài.
+
+### Consequences
+
+- Đổi `ADMIN_EMAILS` chỉ có hiệu lực từ **lần đăng nhập MỚI** — token cũ (còn hạn tới 7 ngày,
+  xem `Jwt:ExpireDays`) giữ nguyên role lúc phát hành. Người vừa được thêm vào danh sách phải
+  đăng xuất/đăng nhập lại mới thấy mục "Quản trị".
+- Role thêm sau (nếu có, vd "Moderator") nên theo cùng pattern claim + `[Authorize(Roles=...)]`
+  — không quay lại kiểu kiểm tra config thủ công.
+- `AdminController` hiện CHỈ đọc (không có thao tác phá huỷ) — mở rộng thêm hành động phá huỷ
+  (huỷ phòng bất kỳ…) phải log ai-làm-gì-lúc-nào theo đúng security.md, và nên hỏi xác nhận
+  trước khi làm (bài học sự cố mất dữ liệu 2026-09-05).
+
+---
+
 ## ADR: Rebuild cơ chế phòng/ghép trận — hợp nhất mô hình ghế + `SideForSeat`/`OnRoomFull`/`OnSeatTimedOut`
 
 Date: 2026-09-05

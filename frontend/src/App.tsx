@@ -1,16 +1,22 @@
 import { useEffect } from "react";
-import { BrowserRouter } from "react-router-dom";
+import { BrowserRouter, Link } from "react-router-dom";
 import GameView from "./components/GameView";
 import LoginPage from "./platform/LoginPage";
 import { useAuthStore } from "./platform/authStore";
+import { useAdminStore } from "./platform/adminStore";
 import ScrollToTop from "./platform/ScrollToTop";
 
 export default function App() {
   const { user, checking, restoreSession, logout } = useAuthStore();
+  const { isAdmin, checkAdmin } = useAdminStore();
 
   useEffect(() => {
     restoreSession();
   }, [restoreSession]);
+
+  useEffect(() => {
+    if (user) checkAdmin();
+  }, [user, checkAdmin]);
 
   return (
     <BrowserRouter>
@@ -27,6 +33,14 @@ export default function App() {
                 <span className="text-sm text-slate-400 truncate" title={user.email}>
                   {user.displayName}
                 </span>
+                {isAdmin && (
+                  <Link
+                    to="/admin"
+                    className="shrink-0 text-xs px-2.5 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-300"
+                  >
+                    🛠 Quản trị
+                  </Link>
+                )}
                 <button
                   onClick={logout}
                   className="shrink-0 text-xs px-2.5 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-300"

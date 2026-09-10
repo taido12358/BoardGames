@@ -50,7 +50,7 @@ Nguyên tắc access control:
 4. Mặc định **deny**: trạng thái không khớp role nào → từ chối, không đoán.
 5. Reconnect: người chơi quay lại (đúng **user id từ JWT**, không phải tên trùng khớp) được ngồi lại ghế cũ; người lạ không bao giờ chiếm được ghế đang có chủ — xem `GameHub.JoinTwoSeat`/`JoinMultiSeat`.
 6. Huỷ phòng (`POST /api/games/{id}/cancel`): chỉ chủ phòng (ghế đầu tiên, so theo user id) mới huỷ được, chỉ khi còn `Waiting`. Frontend chỉ hiện nút "HUỶ" khi tên hiển thị trùng — đó là GỢI Ý UI, quyền thật luôn được server kiểm lại theo JWT.
-7. Role quản trị (khi thêm — vd xoá phòng bất kỳ, ban người chơi): định nghĩa ở tầng auth (claim trong token), kiểm tra bằng policy/`[Authorize(Roles=...)]` — không hard-code danh sách tên trong logic. Hành động quản trị phải được log kèm ai-làm-gì-lúc-nào.
+7. Role quản trị (khi thêm — vd xoá phòng bất kỳ, ban người chơi): định nghĩa ở tầng auth (claim trong token), kiểm tra bằng policy/`[Authorize(Roles=...)]` — không hard-code danh sách tên trong logic. Hành động quản trị phải được log kèm ai-làm-gì-lúc-nào. **Đã áp dụng** (2026-09-10): role "Admin" đầu tiên trong hệ thống, xem `backend/BoardGame.Api/Platform/AdminController.cs` + `TokenService.CreateToken` + ADR trong [`../history/decisions.md`](../history/decisions.md) — hiện chỉ có endpoint READ-ONLY, chưa có hành động phá huỷ nào cần log ai-làm-gì-lúc-nào.
 
 ## Encryption & transport
 

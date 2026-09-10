@@ -4,6 +4,7 @@ import { GameRoomHubProvider } from "../platform/GameRoomHubContext";
 import GameLibrary from "./GameLibrary";
 import GameDetails from "./GameDetails";
 import RoomRoute from "./RoomRoute";
+import AdminPage from "./AdminPage";
 
 /**
  * Container giữ MỘT kết nối SignalR (useGameRoomHub) cho toàn bộ khu vực chơi game.
@@ -14,6 +15,7 @@ import RoomRoute from "./RoomRoute";
  * - `/games/:gameKey` — chi tiết game + tạo/vào phòng.
  * - `/games/:gameKey/room/:roomId` — đang ở trong một phòng cụ thể (RoomRoute tự
  *   fetch/join phòng theo roomId trên URL, kể cả sau khi F5).
+ * - `/admin` — trang quản trị read-only (chỉ tài khoản trong ADMIN_EMAILS, server tự chặn 403).
  */
 export default function GameView() {
   const hub = useGameRoomHub();
@@ -25,6 +27,7 @@ export default function GameView() {
         <Route path="/games" element={<GameLibrary />} />
         <Route path="/games/:gameKey" element={<GameDetails />} />
         <Route path="/games/:gameKey/room/:roomId" element={<RoomRoute />} />
+        <Route path="/admin" element={<AdminPage />} />
         <Route path="*" element={<Navigate to="/games" replace />} />
       </Routes>
     </GameRoomHubProvider>
