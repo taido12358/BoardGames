@@ -26,6 +26,11 @@ if (typeof Element.prototype.scrollTo !== "function") {
   Element.prototype.scrollTo = () => {};
 }
 
+// Cùng lý do — jsdom cũng không có scrollIntoView (vd GameLogPanel tự cuộn xuống dòng log mới).
+if (typeof Element.prototype.scrollIntoView !== "function") {
+  Element.prototype.scrollIntoView = () => {};
+}
+
 class MemoryStorage implements Storage {
   private store = new Map<string, string>();
 

@@ -63,11 +63,19 @@ cùng tên (chip lọc luôn hiển thị, không phụ thuộc dữ liệu) —
 (`within(row)`) vào đúng dòng `<tr>` thay vì tìm text toàn trang, một lỗi test hay gặp khi UI có
 nhiều chỗ dùng lại cùng một bảng nhãn hiển thị (`STATUS_LABEL`).
 
-**Còn lại chưa làm** (nợ kỹ thuật, không phải bị bỏ qua): `BangBoard.tsx`, `VayBatBoard.tsx` vẫn
-chỉ verify bằng `tsc`/build/lint + review thủ công, chưa có test tự động — làm dần khi sửa/thêm
-tính năng ở các component đó, theo đúng tinh thần ưu tiên "chỗ nào đang động tới thì thêm test",
-không cần một đợt riêng phủ hết toàn bộ component cùng lúc. `VayBatBoard.tsx` khó test bằng
-RTL/jsdom hơn các component khác — dùng API hình học SVG
+Thêm `games/bang/BangBoard.test.tsx` (8 test, tập trung vào luồng bỏ bài khi vượt giới hạn tay
+bài cuối lượt — tính năng thêm ngày 2026-09-10 vẫn chưa có test): bấm KẾT THÚC LƯỢT khi
+`hand.length > hp` vào đúng chế độ chọn bài (không gửi move ngay), chọn đủ số lá rồi xác nhận gửi
+đúng `{type: "END_TURN", discardCardIds: [...]}`, nút xác nhận disable khi chưa chọn đủ, không
+cho chọn quá số lá overflow, Hủy quay lại bình thường không gửi move, không vào chế độ bỏ bài khi
+tay bài chưa vượt giới hạn, và 2 test màn thắng (có/không nút CHƠI LẠI cho khán giả). **Bài học
+thứ 3**: `Element.prototype.scrollIntoView` cũng không tồn tại trong jsdom giống `scrollTo`
+(component `GameLogPanel` dùng chung cho VayBat/Bang tự cuộn xuống log mới) — polyfill no-op
+thêm vào `test-setup.ts` cùng chỗ với `scrollTo`.
+
+**Còn lại chưa làm** (nợ kỹ thuật, không phải bị bỏ qua): `VayBatBoard.tsx` vẫn chỉ verify bằng
+`tsc`/build/lint + review thủ công, chưa có test tự động — làm dần khi sửa/thêm tính năng ở
+component đó. Khó test bằng RTL/jsdom hơn các component khác — dùng API hình học SVG
 (`createSVGPoint`/`getScreenCTM`/`matrixTransform`) mà jsdom không triển khai, cần mock hình học
 riêng hoặc chuyển sang Playwright (trình duyệt thật) nếu muốn test tương tác kéo-thả/click quân.
 

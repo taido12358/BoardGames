@@ -261,6 +261,12 @@ chỗ trên trang). `BangBoard.tsx`/`VayBatBoard.tsx` vẫn chưa có test tự 
 không phải bỏ qua) — chỉ verify bằng `tsc`/build/lint + review thủ công, làm dần khi sửa/thêm
 tính năng ở các component đó. `VayBatBoard.tsx` khó test hơn (SVG geometry API jsdom không có).
 
+**Đã bổ sung tiếp cùng ngày**: `BangBoard.test.tsx` (8 test, luồng bỏ bài khi vượt giới hạn tay
+bài — tính năng thêm sớm hơn cùng ngày, xem mục ngay phía trên, chưa có test tự động lúc đó).
+Phát hiện thêm 1 lỗ hổng jsdom cùng dạng `scrollTo`: `Element.prototype.scrollIntoView` không
+tồn tại (`GameLogPanel` dùng chung VayBat/Bang) — polyfill no-op thêm vào `test-setup.ts`. Còn
+lại đúng 1 nợ kỹ thuật: `VayBatBoard.tsx` (SVG geometry API jsdom không có).
+
 **`npm audit`**: cài `vitest`/`jsdom` không phát sinh lỗ hổng MỚI ngoài `esbuild`/`vite` đã biết
 (vitest tự kéo theo 1 bản `vite-node` nội bộ dùng chung gốc `esbuild` cũ) — không đổi quyết định
 đã ghi ở mục "Nâng cấp dependency frontend có breaking change" (dev-tooling, không lộ ra

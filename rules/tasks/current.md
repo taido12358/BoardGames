@@ -64,7 +64,13 @@ IN_PROGRESS (vòng lặp liên tục, không có điểm "DONE" cố định —
     "Unit test frontend (Vitest)". `BangBoard.tsx`/`VayBatBoard.tsx` vẫn chưa có test component —
     nợ kỹ thuật ghi rõ, làm dần khi động tới (`VayBatBoard` khó hơn — SVG geometry jsdom không có).
 
-Tổng test hiện tại: backend 141/141 pass (`dotnet test backend/BoardGame.sln`), frontend 39/39
+14. **Test component `BangBoard.tsx`** (8 test) — trả nợ kỹ thuật ghi ở mục 13, tập trung vào
+    luồng bỏ bài khi vượt giới hạn tay bài cuối lượt (thêm 2026-09-10, chưa có test tự động lúc
+    đó). Phát hiện thêm 1 lỗ hổng jsdom giống `scrollTo` trước đây: `Element.scrollIntoView`
+    không tồn tại (component `GameLogPanel`) — polyfill no-op thêm vào `test-setup.ts`. Xem
+    `../coding/testing.md` mục "Unit test frontend (Vitest)".
+
+Tổng test hiện tại: backend 141/141 pass (`dotnet test backend/BoardGame.sln`), frontend 47/47
 pass (`npm run test` trong `frontend/`) — cả 2 đúng lệnh CI dùng; 5 test backend cần Docker.
 
 ## Việc đang làm / tiếp theo (thứ tự ưu tiên gợi ý, không bắt buộc theo đúng thứ tự)
@@ -74,6 +80,8 @@ pass (`npm run test` trong `frontend/`) — cả 2 đúng lệnh CI dùng; 5 tes
   (relay/ăn quân/hết vốn), chỉ verify được bằng unit test tới giờ, chưa ai thực sự chơi thử.
   Ít nhất nên tự chơi 1 mình qua 2 tab (không test được race-condition 2-người-thật nhưng vẫn
   xác nhận được UI/luồng render/click hoạt động đúng).
+- Test component `VayBatBoard.tsx` (nợ kỹ thuật còn lại duy nhất trong mảng test component
+  frontend) — cần mock hình học SVG hoặc chuyển sang Playwright, xem `../coding/testing.md`.
 - Cân nhắc thêm thao tác quản trị có phá huỷ (huỷ phòng treo thủ công từ `/admin`) — CHỈ làm
   nếu người dùng xác nhận cần, kèm log ai-làm-gì-lúc-nào (xem "Chủ ý CHƯA làm" ở trên).
 - Debug panel cho Bang (spec §51 trong `van-de.md`) — dev-only, đụng vào `BangRules.cs` (engine
