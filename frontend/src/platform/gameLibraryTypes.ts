@@ -16,7 +16,7 @@ export interface GameMetadata {
   difficultyStars: number;
   category: string[];
   /** Token theme để GameCard/GameDetails chọn màu/hoạ tiết riêng cho game (không phải ảnh thật — xem ARTWORK). */
-  accent: "graph" | "western" | "folk" | "default";
+  accent: "graph" | "western" | "folk" | "zodiac" | "default";
   /** Icon lớn dùng làm "artwork" (không có asset ảnh thật — dùng icon + CSS, không vi phạm bản quyền). */
   emblem: string;
 }

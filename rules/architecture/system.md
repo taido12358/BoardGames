@@ -57,7 +57,8 @@ BoardGames/
 │   └── Games/                    — ❖ Mỗi game một thư mục tự chứa
 │       ├── VayBat/                 game 1 (2 người): VayBatTypes/Rules/Engine.cs
 │       ├── Bang/                   game 2 (4-8 người, hidden-role): BangTypes/Cards/Characters/Roles/Deck/Rules/Engine.cs
-│       └── OAnQuan/                game 3 (2 người, dân gian VN): OAnQuanTypes/Rules/Engine.cs
+│       ├── OAnQuan/                game 3 (2 người, dân gian VN): OAnQuanTypes/Rules/Engine.cs
+│       └── ZodiacRace/             game 4 (2-6 người, đua xúc xắc): ZodiacRaceTypes/Rules/Engine.cs
 └── frontend/src/
     ├── App.tsx
     ├── platform/                 — ❖ store/hub/auth/Thư viện trò chơi dùng chung

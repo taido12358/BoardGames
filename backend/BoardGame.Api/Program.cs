@@ -2,6 +2,7 @@ using BoardGame.Api.Data;
 using BoardGame.Api.Games.Bang;
 using BoardGame.Api.Games.OAnQuan;
 using BoardGame.Api.Games.VayBat;
+using BoardGame.Api.Games.ZodiacRace;
 using BoardGame.Api.Platform;
 using BoardGame.Api.Platform.Abstractions;
 using BoardGame.Api.Platform.Auth;
@@ -54,6 +55,7 @@ builder.Services.AddHostedService<SeatTimeoutService>();
 builder.Services.AddSingleton<IGameEngine, VayBatEngine>();
 builder.Services.AddSingleton<IGameEngine, BangEngine>();
 builder.Services.AddSingleton<IGameEngine, OAnQuanEngine>();
+builder.Services.AddSingleton<IGameEngine, ZodiacRaceEngine>();
 builder.Services.AddSingleton<GameEngineRegistry>();
 
 // --- Auth: đăng nhập OTP qua email (SMTP), JWT trong cookie HttpOnly ---

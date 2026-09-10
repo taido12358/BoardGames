@@ -91,12 +91,26 @@ IN_PROGRESS (vòng lặp liên tục, không có điểm "DONE" cố định —
     `RoomServiceIntegrationTests` đã dùng. Gồm cả 2 test phòng thủ dữ liệu hỏng (`SeatsJson`
     rỗng/không parse được → trả ghế trống thay vì throw, xem `SeatCodec`).
 
-Tổng test hiện tại: backend 152/152 pass (`dotnet test backend/BoardGame.sln`), frontend 54/54
+18. **Game thứ tư: Đua Xe Hoàng Đạo** (`gameKey: "zodiacrace"`) — tự thiết kế MVP tối giản (đổ
+    xúc xắc, đường đua tuyến tính, về đích trước thắng ngay), 2-6 người (ghế generic như Bang).
+    KHÔNG dùng bộ asset ảnh `assets/games/zodiac/` (shop/trang bị/thùng hàng/xe thật) — chỉ dùng
+    tên + icon Unicode 12 cung hoàng đạo, xem ADR đầy đủ (lý do không cố tái hiện hệ kinh tế phức
+    tạp mà asset gợi ý — không có spec/nguồn nào để biết "đúng" là gì, khác hẳn Ô Ăn Quan) trong
+    `../history/decisions.md`. Backend: `ZodiacRaceTypes/Rules/Engine.cs`, 27 test mới
+    (`ZodiacRaceRulesTests`/`ZodiacRaceEngineTests`) — `ApplyRoll` nhận `Func<int> rollDice` thay
+    vì `Random` trực tiếp để test kiểm soát chính xác kết quả xúc xắc; `NewGame()` cố tình chưa
+    cấp phát mảng theo seat, `OnRoomFull` mới cấp phát thật (tránh lệch với
+    `RoomService.ResolveSeatCount`, giống Bang). Frontend: `games/zodiacrace/` đầy đủ
+    (types/metadata/CreateOptions/Board), 16 test mới. Đăng ký DI (`Program.cs`), route
+    (`RoomRoute.tsx`), registry (`gameRegistry.ts`), accent theme mới `"zodiac"`.
+
+Tổng test hiện tại: backend 179/179 pass (`dotnet test backend/BoardGame.sln`), frontend 70/70
 pass (`npm run test` trong `frontend/`) — cả 2 đúng lệnh CI dùng; 5 test backend cần Docker.
 
 **Đã verify cả 4 commit (14/15/16/17) chạy thật trên GitHub Actions** — run
 `34518584349`/`34519404921`/`34519619027`/`34521278895` đều `completed`/`success` (gồm cả job
-`docker` build thử smoke test), không chỉ xanh cục bộ.
+`docker` build thử smoke test), không chỉ xanh cục bộ. (Commit 18 — game thứ tư — đang chờ verify
+tương tự sau khi push.)
 
 ## Việc đang làm / tiếp theo (thứ tự ưu tiên gợi ý, không bắt buộc theo đúng thứ tự)
 
@@ -112,7 +126,9 @@ pass (`npm run test` trong `frontend/`) — cả 2 đúng lệnh CI dùng; 5 tes
   lớn/nhạy cảm nhất repo) để thêm force-draw/force-damage; cân nhắc kỹ trước khi làm vì đây là
   action mutate state bỏ qua luật chơi bình thường, dù chỉ bật ở Development. CẦN hỏi xác nhận
   người dùng trước (xem lý do ở mục "Chủ ý CHƯA làm").
-- Game thứ tư (nếu muốn) — asset zodiac vẫn còn chưa dùng tới sau cả Bang lẫn Ô Ăn Quan.
+- (Đã xong 2026-09-11 — mục 18) ~~Game thứ tư~~ — "Đua Xe Hoàng Đạo" (`zodiacrace`), xem ADR
+  trong `../history/decisions.md`. **CHƯA live-test** qua Chrome/Docker Compose (cùng lý do các
+  game trước — cần nhiều danh tính thật, ưu tiên thấp hơn việc khác tới giờ).
 
 ## Việc dở dang từ đợt trước (2026-09-05, tạm gác — không chặn việc mới)
 

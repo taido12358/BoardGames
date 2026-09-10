@@ -34,8 +34,23 @@ equipment/shop cards/crates/carts/dice/effects/tokens) **không được dùng**
 người dùng chọn theme Western gốc theo spec thay vì reskin zodiac. Game thứ ba (Ô Ăn Quan,
 2026-09-11) CŨNG không dùng asset này (dùng CSS/số quân thuần, giống VayBat/Bang — theo đúng
 tinh thần "không dùng artwork bản quyền" nhất quán trong repo, và bộ asset này không hợp theme
-dân gian VN của Ô Ăn Quan). Asset vẫn còn đó, chưa gắn với game nào; có thể dùng cho game thứ tư
-hoặc reskin sau này nếu muốn.
+dân gian VN của Ô Ăn Quan). **Game thứ tư (Đua Xe Hoàng Đạo, 2026-09-11) VẪN không dùng file ảnh
+này** — xem mục "Game thứ tư" bên dưới và ADR trong `../history/decisions.md` để biết lý do đầy
+đủ (tên thư mục shop/equipment/crate gợi ý 1 hệ kinh tế phức tạp không có spec để tra cứu, chỉ
+mượn tên "hoàng đạo" + icon Unicode 12 cung, không mượn cơ chế). Asset ảnh thật (shop/trang bị/
+thùng hàng/xe) vẫn còn nguyên, chưa gắn với game nào — chỉ dùng nếu sau này có input rõ ràng từ
+người dùng muốn 1 game thật sự khai thác chúng.
+
+## Game thứ tư — Đua Xe Hoàng Đạo — ĐÃ LÀM (2026-09-11)
+
+~~Game thứ tư dùng asset zodiac~~ — thay vì cố tái hiện hệ shop/trang bị mà bộ asset gợi ý (không
+có spec, rủi ro đoán sai cao), tự thiết kế MVP tối giản: đua xúc xắc + đường đua tuyến tính, ai
+về đích trước thắng ngay, 2-6 người (`gameKey: "zodiacrace"`). Xem ADR đầy đủ trong
+`../history/decisions.md`. Backend: `Games/ZodiacRace/` (Types/Rules/Engine), 27 test
+(`ZodiacRaceRulesTests`/`ZodiacRaceEngineTests`). Frontend: `games/zodiacrace/` đầy đủ
+(types/metadata/CreateOptions/Board), 16 test, accent theme mới `"zodiac"`. `dotnet test`:
+179/179 pass. `npm run test`/`lint`/`build`: 70/70 pass + sạch. **CHƯA live-test** qua Chrome/
+Docker Compose — cùng lý do các game trước (cần nhiều danh tính thật để test đầy đủ 2-6 người).
 
 **Đơn giản hoá có chủ đích so với spec/luật gốc** (không phải bug — xem chú thích đầu
 `Games/Bang/BangRules.cs`):

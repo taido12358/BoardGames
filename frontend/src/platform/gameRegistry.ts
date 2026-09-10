@@ -8,8 +8,10 @@ import type { CreateOptionsFormProps, GameMetadata, InstructionSection } from ".
 import { vaybatMetadata, vaybatInstructions } from "../games/vaybat/metadata";
 import { bangMetadata, bangInstructions } from "../games/bang/metadata";
 import { oanQuanMetadata, oanQuanInstructions } from "../games/oanquan/metadata";
+import { zodiacRaceMetadata, zodiacRaceInstructions } from "../games/zodiacrace/metadata";
 import VayBatCreateOptions from "../games/vaybat/CreateOptions";
 import BangCreateOptions from "../games/bang/CreateOptions";
+import ZodiacRaceCreateOptions from "../games/zodiacrace/CreateOptions";
 
 interface GameRegistryEntry {
   metadata: GameMetadata;
@@ -22,6 +24,7 @@ const REGISTRY: Record<string, GameRegistryEntry> = {
   vaybat: { metadata: vaybatMetadata, instructions: vaybatInstructions, CreateOptionsForm: VayBatCreateOptions },
   bang: { metadata: bangMetadata, instructions: bangInstructions, CreateOptionsForm: BangCreateOptions },
   oanquan: { metadata: oanQuanMetadata, instructions: oanQuanInstructions }, // không có tuỳ chọn tạo phòng riêng
+  zodiacrace: { metadata: zodiacRaceMetadata, instructions: zodiacRaceInstructions, CreateOptionsForm: ZodiacRaceCreateOptions },
 };
 
 /** Game backend hỗ trợ nhưng CHƯA có metadata trình bày riêng — vẫn hiển thị được, chỉ không có artwork/hướng dẫn chi tiết. */

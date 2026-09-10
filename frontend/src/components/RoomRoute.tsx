@@ -8,6 +8,7 @@ import type { RoomDto } from "../platform/types";
 import VayBatBoard from "../games/vaybat/VayBatBoard";
 import BangBoard from "../games/bang/BangBoard";
 import OAnQuanBoard from "../games/oanquan/OAnQuanBoard";
+import ZodiacRaceBoard from "../games/zodiacrace/ZodiacRaceBoard";
 
 /**
  * Route thật cho "đang ở trong một phòng" (`/games/:gameKey/room/:roomId`) — trước đây
@@ -161,6 +162,8 @@ export default function RoomRoute() {
         return <BangBoard makeMove={makeMove} onLeave={handleLeave} onRematch={handleRematch} rematching={rematching} />;
       case "oanquan":
         return <OAnQuanBoard makeMove={makeMove} onLeave={handleLeave} onRematch={handleRematch} rematching={rematching} />;
+      case "zodiacrace":
+        return <ZodiacRaceBoard makeMove={makeMove} onLeave={handleLeave} onRematch={handleRematch} rematching={rematching} />;
       default:
         return (
           <div className="bg-slate-800 rounded-2xl p-6 text-center space-y-4">

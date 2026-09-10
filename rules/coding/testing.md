@@ -95,9 +95,17 @@ ghi đè HẲN (không chỉ polyfill khi thiếu) vì bản jsdom hiện tại 
 `pointerId` không khớp một pointer thật đang hoạt động — lỗi này chặn hẳn `setSelected()` chạy
 tiếp vì nó đứng ngay trước trong cùng nhánh code.
 
-**Nợ kỹ thuật frontend còn lại**: không còn — cả 3 board component (`OAnQuanBoard`, `BangBoard`,
-`VayBatBoard`) đều đã có test. Việc tiếp theo (nếu có) là bổ sung ca test khi tính năng mới được
-thêm, không phải một đợt phủ test riêng.
+Thêm `games/zodiacrace/ZodiacRaceBoard.test.tsx` (9 test, game thứ tư — xem ADR trong
+`rules/history/decisions.md`) + `games/zodiacrace/types.test.ts` (7 test). Không phát sinh bài
+học jsdom mới (component đơn giản hơn VayBat/Bang, không dùng SVG geometry/pointer capture).
+**Bài học nhỏ khi viết test**: đường đua ngắn (10 ô cho test) khiến chỉ số ô 1-6 trùng với mặt
+xúc xắc 1-6 — `getByText("5")` mơ hồ giữa ô số 5 trên đường đua và giá trị xúc xắc hiển thị, sửa
+bằng `getByText("5", { selector: "span.font-bold" })` thay vì tìm text toàn trang (cùng lớp bài
+học `within(row)` ở `AdminPage.test.tsx` — nhãn hiển thị trùng nhau ở nhiều chỗ trên UI).
+
+**Nợ kỹ thuật frontend còn lại**: không còn cho các board đã có — cả 4 board component
+(`OAnQuanBoard`, `BangBoard`, `VayBatBoard`, `ZodiacRaceBoard`) đều đã có test. Việc tiếp theo
+(nếu có) là bổ sung ca test khi tính năng mới được thêm, không phải một đợt phủ test riêng.
 
 ## Integration test
 

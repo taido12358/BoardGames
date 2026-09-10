@@ -1,5 +1,74 @@
 # Decisions (ADR)
 
+## ADR: Game thứ tư "Đua Xe Hoàng Đạo" — tự thiết kế luật MVP tối giản, KHÔNG cố tái hiện hệ thống shop/trang bị của bộ asset zodiac
+
+Date: 2026-09-11
+
+### Context
+
+Thư mục `frontend/public/assets/games/zodiac/` có sẵn một bộ asset khá lớn (map, 24 nhân vật
+cung hoàng đạo, 6 token, 48 thẻ trang bị, 20 thẻ cửa hàng, 32 thùng hàng, 6 xe, xúc xắc, hiệu
+ứng) từ trước cả game Bang/Ô Ăn Quan, nhưng CHƯA game nào dùng tới. Tên gọi các thư mục
+(`cards/shop`, `cards/equipment`, `crates`, `carts`) gợi ý một game buôn bán + di chuyển khá
+phức tạp, nhưng KHÔNG có tài liệu luật đi kèm (khác Bang — có `van-de.md` là spec đầy đủ do
+người dùng viết trước khi code — và khác Ô Ăn Quan — luật dân gian có thật, tra cứu được qua
+nhiều nguồn độc lập để xác nhận đúng/sai).
+
+Nói cách khác: bất kỳ luật "shop + trang bị + thùng hàng" nào tự nghĩ ra ở đây đều là bịa hoàn
+toàn, không có gì để đối chiếu đúng/sai — khác hẳn tình huống Ô Ăn Quan (ADR bên dưới), nơi vẫn
+có nguồn để tra cứu dù có dị bản. Rủi ro: đầu tư nhiều công sức thiết kế + code một hệ kinh tế
+phức tạp (mua/bán/trang bị) mà không khớp bất kỳ hình dung nào người dùng từng có khi tạo bộ
+asset đó — tốn công mà vẫn phải sửa lại từ đầu.
+
+### Decision
+
+Thiết kế MỘT game hoàn toàn mới, tối giản, dùng cơ chế phổ thông không cần tra cứu (đổ xúc xắc +
+đường đua tuyến tính, ai về đích trước thắng) — chủ đề "hoàng đạo" chỉ còn lại ở TÊN game và biểu
+tượng 12 cung (Unicode ♈-♓, không dùng ảnh thật) làm icon xe đua theo seat index. KHÔNG dùng bất
+kỳ file ảnh nào trong `assets/games/zodiac/` — tiếp tục đúng quy ước đã có từ VayBat/Bang/Ô Ăn
+Quan là dùng CSS/icon Unicode thuần, không phải vì thiếu asset mà vì nhất quán với 3 game trước
+(xem `rules/coding/general.md`). KHÔNG implement shop/trang bị/mua-bán — giữ lại "thùng hàng"
+(crate) chỉ như một ô thưởng điểm phụ vô hại (không ảnh hưởng thắng/thua ở v1), đặt tên game
+`zodiacrace` (gameKey), 2-6 người chơi (ghế generic như Bang).
+
+Cùng tinh thần "engine mỏng, luật thuần dễ test" đã áp dụng cho 3 game trước: `ZodiacRaceRules.cs`
+(logic thuần, nhận `Func<int> rollDice` thay vì `Random` trực tiếp để test kiểm soát chính xác
+kết quả xúc xắc) + `ZodiacRaceEngine.cs` (adapter IGameEngine, seatCount thật chỉ cấp phát ở
+`OnRoomFull` — giống Bang, tránh trùng lặp logic `RoomService.ResolveSeatCount` rồi lệch mảng).
+
+### Alternatives
+
+- Thử tái hiện đầy đủ hệ thống shop/trang bị/thùng hàng theo tên thư mục asset — bị loại vì
+  không có spec/nguồn nào để biết "đúng" là gì, độ phức tạp cao (ngang hoặc hơn Bang, game NẶNG
+  nhất repo), rủi ro sai lệch với ý người dùng cao nhất trong tất cả các lựa chọn.
+- Hỏi người dùng trước khi bắt tay thiết kế — cân nhắc nhưng bị loại vì goal hiện tại
+  ("tự suy nghĩ hướng phát triển... triển khai") trao quyền quyết định độc lập, việc thêm 1 game
+  mới hoàn toàn tự chứa (không đụng Platform/game khác — xem nguyên tắc phân tầng trong
+  `rules/architecture/system.md`) không phải hành động phá huỷ/không đảo ngược, và MVP nhỏ giữ
+  chi phí "đoán sai" ở mức thấp (dễ bỏ/sửa nếu không đúng ý, không giống việc động vào dữ liệu
+  hoặc luật của game đã có người chơi).
+- Bỏ hẳn ý tưởng "game thứ tư", chỉ dừng ở 3 game — bị loại vì asset đã tồn tại sẵn không dùng
+  tới là lãng phí, và đây là hạng mục backlog duy nhất còn lại không cần xác nhận trước từ người
+  dùng (khác debug panel Bang / thao tác admin phá huỷ).
+
+### Reason
+
+Chi phí thấp + giá trị rõ ràng (thêm 1 lựa chọn chơi nhanh, nhiều người, khác hẳn phong cách 3
+game hiện có — VayBat chiến thuật đồ thị, Bang nhập vai ẩn thông tin, Ô Ăn Quan dân gian tính
+toán) trong khi độ rủi ro "đoán sai ý người dùng" được giữ ở mức tối thiểu nhờ phạm vi nhỏ và
+tách biệt hoàn toàn khỏi code hiện có.
+
+### Consequences
+
+Bộ asset `assets/games/zodiac/` (shop/trang bị/crate/cart hình ảnh thật) VẪN CHƯA được dùng tới
+sau quyết định này — nếu người dùng muốn một game phức tạp hơn thật sự khai thác các asset đó,
+cần một vòng thiết kế mới có input rõ ràng từ người dùng (luật cụ thể muốn gì), không tự đoán
+tiếp. `zodiacrace` v1 có thể mở rộng dần (vd biến "thùng hàng" thành có tác dụng luật thật, thêm
+thẻ hiệu ứng ngẫu nhiên) nếu về sau quyết định đi theo hướng đó — kiến trúc `IGameEngine` cô lập
+hoàn toàn game này khỏi 3 game kia nên mở rộng không có rủi ro lan sang chỗ khác.
+
+---
+
 ## ADR: Ô Ăn Quan — chọn biến thể "chỉ ăn 1 lần mỗi lượt" do luật dân gian có dị bản
 
 Date: 2026-09-11

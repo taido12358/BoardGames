@@ -2,7 +2,8 @@
 
 Nền tảng boardgame full-stack dùng chung — mỗi trò chơi cắm vào Platform generic qua một
 interface duy nhất (`IGameEngine`), nên thêm game mới không phải sửa hạ tầng phòng/ghép trận/
-realtime/lưu trữ. Hiện có 3 game: **Vây Bắt Trên Đồ Thị**, **BANG!**, **Ô Ăn Quan**.
+realtime/lưu trữ. Hiện có 4 game: **Vây Bắt Trên Đồ Thị**, **BANG!**, **Ô Ăn Quan**, **Đua Xe
+Hoàng Đạo**.
 
 Luồng một nước đi đi qua toàn bộ hạ tầng:
 
@@ -57,13 +58,14 @@ BoardGame/
 │           │   ├── VayBatRules.cs   # luật thuần (đã test)
 │           │   └── VayBatEngine.cs  # adapter implement IGameEngine
 │           ├── Bang/           #   game 2 — 4-8 người, hidden-role
-│           └── OAnQuan/        #   game 3 — 2 người, dân gian Việt Nam
+│           ├── OAnQuan/        #   game 3 — 2 người, dân gian Việt Nam
+│           └── ZodiacRace/     #   game 4 — 2-6 người, đua xúc xắc
 ├── frontend/                   # React + TypeScript + Vite
 │   └── src/
 │       ├── App.tsx
 │       ├── platform/           # ❖ store/hub/lobby/chat/types dùng chung
 │       ├── games/              # ❖ mỗi game một thư mục
-│       │   ├── vaybat/  bang/  oanquan/
+│       │   ├── vaybat/  bang/  oanquan/  zodiacrace/
 │       ├── components/         # GameLibrary/GameDetails/RoomRoute/AdminPage (route theo gameKey)
 └── k8s/                        # Manifests Kubernetes (không đổi)
 ```
@@ -220,6 +222,33 @@ tranh ăn quân đối phương. Không có yếu tố may rủi (không xúc x�
 
 - Unit test luật chơi (không cần Docker): `dotnet test backend/BoardGame.Api.Tests` — 18 test
   phủ rải quân/bốc tiếp/ăn quân/ăn quan/luật "hết vốn"/kết thúc ván, cả 2 chiều rải.
+
+## 🎲 Game 004 — Đua Xe Hoàng Đạo (đua xúc xắc, 2-6 người, server-authoritative)
+
+Trò đua xúc xắc tự thiết kế (MVP tối giản) — mỗi người một xe mang biểu tượng cung hoàng đạo
+(Unicode ♈-♓, không dùng ảnh), đổ xúc xắc di chuyển trên đường đua tuyến tính, ai về đích trước
+thắng ngay. Không có yếu tố chiến thuật, không có thông tin ẩn — chơi nhanh, nhiều người.
+
+- **Đường đua**: 30 ô liên tiếp, một số ô có "thùng hàng" (📦) — dừng đúng ô đó (không phải đi
+  ngang qua) được +1 điểm thu thập (chỉ để vui, chưa ảnh hưởng thắng/thua ở v1).
+- **Lượt chơi**: tới lượt, bấm "Đổ xúc xắc" — xe tự động tiến 1-6 ô. Không cần đổ đúng số để về
+  đích (không có luật "dội ngược").
+- **Vì sao không dùng bộ asset zodiac có sẵn** (`frontend/public/assets/games/zodiac/` — map/
+  shop card/equipment/crate/cart): tên thư mục gợi ý một hệ kinh tế phức tạp không có spec nào
+  để tra cứu đúng/sai (khác Ô Ăn Quan có luật dân gian thật) — xem ADR đầy đủ trong
+  `rules/history/decisions.md`.
+
+### Cách thử
+
+1. Mở 2-6 tab, đăng nhập các tài khoản khác nhau tại http://localhost:5173.
+2. Tab 1: Thư viện trò chơi → **Đua Xe Hoàng Đạo** → chọn số người chơi → **Tạo phòng**. Các tab
+   khác vào cùng phòng.
+3. Khi đủ người, tới lượt ai thì người đó bấm "🎲 ĐỔ XÚC XẮC".
+
+### Test
+
+- Unit test luật chơi + adapter (không cần Docker): `dotnet test backend/BoardGame.Api.Tests` —
+  27 test phủ di chuyển/về đích/thùng hàng/lượt chơi/hợp đồng JSON/`OnRoomFull`/`OnSeatTimedOut`.
 
 ## Triển khai Kubernetes
 
