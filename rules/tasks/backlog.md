@@ -61,8 +61,12 @@ Chi tiết: [`../history/milestones.md`](../history/milestones.md), [`../archite
 - Trang chi tiết game không có route riêng cho "đang trong ván" (`/games/bang/room/:id`) — vào
   ván vẫn không có URL riêng, giữ đúng hành vi cũ (chỉ phần "trước khi vào ván" có URL mới).
 
+## Dọn dẹp — ĐÃ LÀM (2026-09-10)
+
+- **Xoá demo "Hello World" khỏi backend** (frontend đã xoá từ 2026-08-05, backend giữ lại lúc đó vì "chưa ai yêu cầu") — theo yêu cầu tổng quát của người dùng "xoá trang không cần thiết". Xoá `Controllers/HelloController.cs`, `Models/Greeting.cs`, bảng `Greetings` khỏi schema bootstrap (chỉ ngừng tạo mới, không `DROP TABLE` — theo nguyên tắc thay đổi phá huỷ 2 bước của `rules/workflow/deployment.md`), hub method `GameHub.SendHello`. Giữ nguyên phần hạ tầng dùng thật cho game trong `RedisCacheService`/`RabbitMqPublisher`/`MinioStorageService`/`OpenSearchService`.
+- **`/health` giờ kiểm tra thật** DB (`CanConnectAsync`)/Redis (`PingAsync`)/RabbitMQ (thử mở channel) song song, timeout 3s mỗi phần, trả `503` kèm chi tiết từng phần nếu có phần down — trước đây chỉ trả tĩnh `{ status: "healthy" }`.
+
 ## Việc kỹ thuật chưa làm
 
-- `/health` (`Program.cs`) chỉ trả `{ status: "healthy" }` tĩnh — không kiểm tra DB/Redis/RabbitMQ như mô tả mong muốn trong `rules/workflow/deployment.md`/monitoring cũ. Muốn đúng như tài liệu thì phải bổ sung health check thật (`Microsoft.Extensions.Diagnostics.HealthChecks` hoặc kiểm tra thủ công).
 - CI/CD pipeline tự động: chưa có thư mục `.github/workflows/` hay pipeline config nào trong repo — pipeline mô tả trong `rules/workflow/deployment.md` là **mong muốn**, chưa có thật.
-- Test project (`backend/BoardGame.Api.Tests`, thêm 2026-08-05) mới chỉ phủ `Games/Bang/`. `Games/VayBat/` (game đầu tiên) vẫn chưa có unit test nào — nợ kỹ thuật có sẵn từ trước, không phải do việc thêm Bang gây ra.
+- `Games/VayBat/VayBatRules.cs` (luật thuần: di chuyển, ăn quân, thắng/thua) vẫn chưa có unit test — `VayBat/VayBatEngineTests.cs` (2026-09-05) mới chỉ phủ `SideForSeat`/`OnSeatTimedOut` (adapter), chưa test luật lõi.

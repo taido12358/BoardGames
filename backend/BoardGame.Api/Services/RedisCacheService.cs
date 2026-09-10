@@ -3,7 +3,7 @@ using StackExchange.Redis;
 namespace BoardGame.Api.Services;
 
 /// <summary>
-/// Thin Redis wrapper used to cache the most recent greeting.
+/// Thin Redis wrapper used to cache per-room game state.
 /// </summary>
 public class RedisCacheService
 {

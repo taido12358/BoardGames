@@ -1,4 +1,3 @@
-using BoardGame.Api.Models;
 using BoardGame.Api.Platform.Auth;
 using BoardGame.Api.Platform.Models;
 using Microsoft.EntityFrameworkCore;
@@ -12,7 +11,6 @@ public class AppDbContext : DbContext
 {
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
-    public DbSet<Greeting> Greetings => Set<Greeting>();
     public DbSet<GameRoom> GameRooms => Set<GameRoom>();
     public DbSet<GameMove> GameMoves => Set<GameMove>();
     public DbSet<AppUser> Users => Set<AppUser>();

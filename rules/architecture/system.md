@@ -64,7 +64,7 @@ BoardGames/
     └── components/                 GameView, GameLibrary, GameDetails, GameCard…
 ```
 
-> `hooks/useGameHub.ts` + `store/helloStore.ts` (demo "Hello World" phía frontend) đã xoá 2026-08-05. Backend demo (`Controllers/HelloController.cs`, `/api/hello`, hub method `SendHello`) vẫn còn — xem [`../references/important-files.md`](../references/important-files.md).
+> Demo "Hello World" (frontend + backend) đã xoá hoàn toàn — xem [`../references/important-files.md`](../references/important-files.md).
 
 ## Nguyên tắc phân tầng (bắt buộc)
 

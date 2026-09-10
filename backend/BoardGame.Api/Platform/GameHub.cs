@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore;
 namespace BoardGame.Api.Platform;
 
 /// <summary>
-/// SignalR hub — GENERIC cho mọi game (giữ thêm demo Hello World). Toàn bộ logic phòng/ghế/ván
+/// SignalR hub — GENERIC cho mọi game. Toàn bộ logic phòng/ghế/ván
 /// nằm ở <see cref="RoomService"/> — hub chỉ điều phối transport: nhận invoke, gọi RoomService,
 /// rồi lo phần realtime (group/connection tracking, broadcast, best-effort cache/publish).
 ///
@@ -57,10 +57,6 @@ public class GameHub : Hub
         _engines = engines;
         _log = log;
     }
-
-    // ----- Hello World demo (giữ nguyên) -----
-    public async Task SendHello(string message)
-        => await Clients.All.SendAsync("GreetingCreated", message);
 
     public override async Task OnDisconnectedAsync(Exception? exception)
     {

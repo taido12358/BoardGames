@@ -10,7 +10,6 @@ namespace BoardGame.Api.Services;
 /// </summary>
 public class RabbitMqPublisher : IDisposable
 {
-    public const string ExchangeName = "boardgame.greetings";
     public const string GamesExchange = "boardgame.games";
 
     private readonly ConnectionFactory _factory;
@@ -43,23 +42,29 @@ public class RabbitMqPublisher : IDisposable
             _connection?.Dispose();
             _connection = _factory.CreateConnection();
             var newCh = _connection.CreateModel();
-            newCh.ExchangeDeclare(ExchangeName, ExchangeType.Fanout, durable: true);
             newCh.ExchangeDeclare(GamesExchange, ExchangeType.Fanout, durable: true);
             Volatile.Write(ref _channel, newCh);
             return newCh;
         }
     }
 
-    public void Publish(string message)
-    {
-        var body = Encoding.UTF8.GetBytes(message);
-        GetChannel().BasicPublish(ExchangeName, routingKey: string.Empty, basicProperties: null, body: body);
-    }
-
     public void PublishGameEvent(string jsonPayload)
     {
         var body = Encoding.UTF8.GetBytes(jsonPayload);
         GetChannel().BasicPublish(GamesExchange, routingKey: string.Empty, basicProperties: null, body: body);
+    }
+
+    /// <summary>Dùng cho /health — GetChannel() có thể block trên I/O nên chạy trong Task.Run kèm timeout.</summary>
+    public async Task<bool> IsHealthyAsync(TimeSpan timeout)
+    {
+        try
+        {
+            return await Task.Run(() => GetChannel().IsOpen).WaitAsync(timeout);
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     public void Dispose()

@@ -77,7 +77,7 @@ Group SignalR `"lobby"` (`GameHub.SubscribeLobby`/`UnsubscribeLobby`) thay cho p
 
 Trước rebuild, cả 3 trường hợp trên đều dùng chung `Finished` (ADR cũ 2026-08-05, lý do lúc đó: giữ tập giá trị nhỏ). Rebuild 2026-09-05 tách riêng vì gộp chung làm lịch sử/OpenSearch lẫn lộn thắng-thua-thật với phòng bị huỷ/bỏ hoang — xem ADR mới trong [`../history/decisions.md`](../history/decisions.md). `GamesController.List()` lọc theo `RoomStatus.IsOpen` (allow-list `Waiting`/`Playing`) thay vì đen-list `!= Finished` — an toàn hơn khi có status mới sau này. `List()` cũng trả cả phòng `Playing` (không chỉ `Waiting`) để chủ ghế cũ có thể "vào lại ván đang chơi" nếu bị văng ra.
 
-## Toàn bộ luồng qua hạ tầng (mẫu Hello World / VayBat)
+## Toàn bộ luồng qua hạ tầng (mẫu VayBat)
 
 ```
 Client gửi ý định đi → Backend (C# Rule Engine validate) → PostgreSQL (room + replay)

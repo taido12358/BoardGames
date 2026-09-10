@@ -21,7 +21,6 @@ Mọi đường dẫn dưới đây đã xác nhận tồn tại trong repo (c�
 - Schema: **không có file migration** — toàn bộ `CREATE TABLE`/`ALTER TABLE` nằm trong block raw SQL của `Program.cs` (xem [`../architecture/database.md`](../architecture/database.md)).
 - Entity generic: `backend/BoardGame.Api/Platform/Models/GameRoom.cs`, `GameMove.cs`, `GameRecord.cs`.
 - Entity auth: `backend/BoardGame.Api/Platform/Auth/AppUser.cs`, `AuthOtp.cs`.
-- Entity demo: `backend/BoardGame.Api/Models/Greeting.cs`.
 
 ## Platform (generic, dùng chung mọi game)
 
@@ -58,7 +57,7 @@ Mọi đường dẫn dưới đây đã xác nhận tồn tại trong repo (c�
 - Thư viện trò chơi: `frontend/src/components/{GameLibrary,GameCard,GameDetails,GameInstructions}.tsx`.
 - Game VayBat: `frontend/src/games/vaybat/` — `types.ts`, `metadata.ts` (thẻ + hướng dẫn), `CreateOptions.tsx` (mới — UI tuỳ chọn tạo phòng, tách khỏi `GameDetails.tsx`), `VayBatBoard.tsx`.
 - Game Bang: `frontend/src/games/bang/` — `types.ts`, `metadata.ts` (thẻ + hướng dẫn), `CreateOptions.tsx` (mới), `BangBoard.tsx`, `components/`.
-- Trang demo "Hello World" phía frontend đã xoá (2026-08-05, theo yêu cầu người dùng) — `hooks/useGameHub.ts`, `store/helloStore.ts` không còn trong repo. Backend demo (`Controllers/HelloController.cs`, model `Greeting`, bảng `Greetings`, hub method `GameHub.SendHello`, endpoint `/api/hello`) **vẫn còn nguyên** — chỉ trang UI bị xoá, chưa ai yêu cầu dọn phần backend.
+- Demo "Hello World" (frontend + backend) đã xoá hoàn toàn (2026-09-10) — trước đó frontend đã xoá 2026-08-05, backend giữ lại vì "chưa ai yêu cầu"; nay dọn nốt theo yêu cầu tổng quát "xoá trang không cần thiết": `Controllers/HelloController.cs`, `Models/Greeting.cs`, bảng `Greetings` (ngừng tạo mới trong schema bootstrap, không DROP bảng cũ), hub method `GameHub.SendHello`, endpoint `/api/hello` không còn. `RedisCacheService`/`RabbitMqPublisher`/`MinioStorageService`/`OpenSearchService` vẫn còn — chỉ bỏ phần API/method/const dành riêng cho demo, phần dùng thật cho game (cache state, `PublishGameEvent`, `SaveReplayAsync`, `IndexGameAsync`/`SearchGamesAsync`) giữ nguyên.
 - Asset tĩnh game chưa có code: `frontend/public/assets/games/zodiac/` — xem [`../tasks/backlog.md`](../tasks/backlog.md).
 
 ## Tests
