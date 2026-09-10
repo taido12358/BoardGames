@@ -233,8 +233,30 @@ IN_PROGRESS (vòng lặp liên tục, không có điểm "DONE" cố định —
     lỗi mạng, đúng query string khi có/không filter, và xác nhận `fetchStats` cố ý im lặng bỏ qua
     lỗi (thống kê chỉ phụ trợ, không chặn trang — đúng thiết kế trong code, không phải thiếu sót).
 
-Tổng test hiện tại: backend 189/189 pass (`dotnet test backend/BoardGame.sln`), frontend 190/190
-pass (`npm run test` trong `frontend/`) — cả 2 đúng lệnh CI dùng; 5 test backend cần Docker.
+33. **Test HTTP tích hợp qua `WebApplicationFactory`** (16 test mới) — trả nợ kỹ thuật lớn nhất
+    còn lại trong tầng test backend: `RoomServiceIntegrationTests` (mục trước) chỉ gọi thẳng
+    `RoomService`, bỏ qua HOÀN TOÀN tầng controller/`[Authorize]`/cookie JWT; phân quyền Admin
+    (`[Authorize(Roles = "Admin")]`) trước đó chỉ verify tới tầng tạo/validate JWT thuần
+    (`TokenServiceTests`), CHƯA BAO GIỜ chạy qua đúng pipeline HTTP thật — một lỗ hổng cấu hình ở
+    tầng routing/middleware có thể lọt qua mọi test hiện có. Thêm `AuthApiFactory.cs`
+    (`WebApplicationFactory<Program>` + Testcontainers Postgres, dùng chung 1 factory/container
+    cho mọi test trong class) + `AuthControllerIntegrationTests.cs` (9 test: luồng OTP đầy đủ,
+    sai mã, hết hạn, đổi tên hiển thị + refresh cookie, đăng xuất) +
+    `AdminControllerIntegrationTests.cs` (7 test: role Admin/non-Admin qua middleware thật —
+    200/403/401 đúng như thiết kế). Cần thêm `public partial class Program {}` marker cuối
+    `Program.cs` (không đổi hành vi runtime) + gói `Microsoft.AspNetCore.Mvc.Testing`.
+    **Gotcha hạ tầng test đáng kể nhất phiên này**: `ConfigureAppConfiguration` của
+    `WebApplicationFactory` KHÔNG ghi đè được config mà `Program.cs` đọc EAGER lúc boot
+    (`ADMIN_EMAILS`/`JWT_SECRET` qua `new TokenService(builder.Configuration)`, chạy trước
+    `Build()`) — chỉ ghi đè đúng cho config đọc LAZY (vd `AddDbContext`). Tự xác nhận bằng cách in
+    trực tiếp giá trị config ra file ngay tại điểm đọc — ra rỗng dù đã override. Sửa bằng
+    `ConfigureTestServices` đăng ký lại `TokenService` qua factory LAZY resolve `IConfiguration`
+    từ DI (không dựng sẵn secret khác — sẽ lệch khoá ký/xác thực với `AddJwtBearer` đã chốt từ
+    instance gốc, gây 401 toàn bộ). Xem chi tiết đầy đủ trong `rules/coding/testing.md` mục "Test
+    HTTP tích hợp qua WebApplicationFactory".
+
+Tổng test hiện tại: backend 205/205 pass (`dotnet test backend/BoardGame.sln`), frontend 190/190
+pass (`npm run test` trong `frontend/`) — cả 2 đúng lệnh CI dùng; 5+16=21 test backend cần Docker.
 
 **Đã verify cả 17 commit (14-33) chạy thật trên GitHub Actions** — run
 `34518584349`/`34519404921`/`34519619027`/`34521278895`/`34523008065`/`34524664240`/

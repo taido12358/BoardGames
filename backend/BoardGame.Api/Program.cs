@@ -157,3 +157,7 @@ app.MapGet("/health", async (AppDbContext db, IConnectionMultiplexer redis, Rabb
 });
 
 app.Run();
+
+/// <summary>Marker cho <c>WebApplicationFactory&lt;Program&gt;</c> — top-level statements sinh ra
+/// class `Program` internal, cần khai báo partial public để project test tham chiếu được.</summary>
+public partial class Program { }

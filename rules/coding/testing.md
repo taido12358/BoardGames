@@ -6,7 +6,8 @@
 |---|---|---|
 | Unit (backend) | **Engine** (`IGameEngine` — luật chơi), helper (`GameJson`) | xUnit |
 | Unit (frontend) | Logic thuần phía client — helper hiển thị/gợi ý UI của từng game (`games/<ten>/types.ts`), `platform/gameStore.ts` | Vitest (`frontend/`, mới 2026-09-11 — `npm run test`) |
-| Integration | Controller + Hub + DB thật, khoá hàng thật (`FOR UPDATE`/`SKIP LOCKED`) | xUnit + Testcontainers (`Platform/RoomServiceIntegrationTests.cs`, mới 2026-09-11 — cần Docker) |
+| Integration (service) | Service tầng dưới + DB thật, khoá hàng thật (`FOR UPDATE`/`SKIP LOCKED`) — gọi thẳng `RoomService`, KHÔNG qua HTTP/[Authorize] | xUnit + Testcontainers (`Platform/RoomServiceIntegrationTests.cs`, 2026-09-11 — cần Docker) |
+| Integration (HTTP) | Controller THẬT qua `WebApplicationFactory` — đúng pipeline routing/model binding/`[Authorize]`/cookie JWT, DB thật (Testcontainers) | xUnit + `Microsoft.AspNetCore.Mvc.Testing` (`Platform/Auth/AuthControllerIntegrationTests.cs` + `AdminControllerIntegrationTests.cs`, mới 2026-09-11 — cần Docker, xem mục "Test HTTP tích hợp qua WebApplicationFactory" bên dưới) |
 | E2E | 2 client thật chơi một ván qua trình duyệt | Playwright (Chromium) + 2 SignalR client — **chưa có trong repo**, chỉ live-test thủ công qua Chrome DevTools/2 tab tới giờ |
 
 Ưu tiên đầu tư theo thứ tự: **engine unit test** (rẻ, giá trị cao nhất — luật chơi là phần dễ sai nhất) → integration cho luồng `MakeMove` → E2E smoke.
@@ -143,6 +144,48 @@ mock cũ, không cần "unstub" gì giữa các lần.
 - Chạy trên PostgreSQL thật (compose/Testcontainers), không InMemory provider — dự án dựa vào JSONB và raw SQL bootstrap, InMemory không kiểm chứng được.
 - Case bắt buộc: bootstrap SQL chạy idempotent trên DB đã có data cũ (chính là lớp bug `ADD COLUMN IF NOT EXISTS`, xem [`database.md`](./database.md)).
 - Redis/RabbitMQ tắt → `MakeMove` vẫn phải thành công và broadcast (kiểm chứng nguyên tắc "hạ tầng phụ không chặn luồng chính").
+
+### Test HTTP tích hợp qua `WebApplicationFactory` (mới 2026-09-11)
+
+`RoomServiceIntegrationTests` gọi thẳng `RoomService` — bỏ qua toàn bộ tầng controller/
+`[Authorize]`/cookie JWT, nên KHÔNG BAO GIỜ phát hiện được lỗi cấu hình sai ở tầng đó (routing,
+model binding, role check qua middleware thật). Trước 2026-09-11, phân quyền Admin (
+`[Authorize(Roles = "Admin")]`) chỉ được verify tới tầng tạo/validate JWT thuần
+(`TokenServiceTests`) — chưa từng chạy qua đúng pipeline HTTP thật. `Platform/Auth/AuthApiFactory.cs`
+(`WebApplicationFactory<Program>` + Testcontainers Postgres, dùng CHUNG 1 factory cho mọi test
+trong class qua `IClassFixture` — mỗi test tự dùng email ngẫu nhiên riêng nên an toàn) lấp khoảng
+trống này cho `AuthController`/`AdminController` (2 controller không đụng Redis/RabbitMQ/
+OpenSearch/MinIO — cả 3 service đó đều kết nối lazy nên host vẫn boot bình thường không có chúng).
+
+**Bài học hạ tầng test quan trọng nhất khi dựng cái này** — `Program.cs` đọc `ADMIN_EMAILS`/
+`JWT_SECRET` **NGAY LÚC BOOT** (`var tokenService = new TokenService(builder.Configuration);`,
+chạy TRƯỚC `builder.Build()`) để fail sớm nếu thiếu secret. `WebApplicationFactory.ConfigureWebHost`
+→ `ConfigureAppConfiguration` chỉ ghi đè đúng cho config đọc **LAZY** (vd `AddDbContext`'s
+optionsAction — 1 closure, chỉ evaluate lúc `DbContext` được resolve qua DI, đã sau `Build()`) —
+KHÔNG kịp ghi đè giá trị đã đọc eager trước đó. Tự xác nhận bằng cách in trực tiếp
+`builder.Configuration["ADMIN_EMAILS"]` ra file ngay tại dòng đọc trong `Program.cs`: ra rỗng dù
+factory đã `AddInMemoryCollection` giá trị khác từ trước — chứng minh override không có tác dụng
+với đọc eager. Cách sửa ĐÚNG: đăng ký lại `TokenService` qua `ConfigureTestServices` (chạy SAU
+`ConfigureServices` của `Program.cs`, override đúng vì DI resolve theo đăng ký CUỐI CÙNG) bằng
+factory LAZY — `services.AddSingleton(sp => new TokenService(sp.GetRequiredService<IConfiguration>()));`
+— resolve `IConfiguration` từ DI ở thời điểm dùng thật (sau `Build()`, đã gộp đủ override), thay
+vì dựng sẵn 1 `IConfiguration` riêng với secret khác. **Không được dùng secret khác** cho instance
+thay thế: `AddJwtBearer` trong `Program.cs` đã chốt `TokenValidationParameters` từ secret của
+`TokenService` GỐC lúc app khởi động — nếu instance thay thế ký token bằng secret khác, mọi
+request có cookie sẽ trả 401 (ký/xác thực lệch khoá, tự phát hiện được khi thử secret ngẫu nhiên
+trước khi chốt cách trên).
+
+Bài học phụ: `request-otp` có cooldown 60s/email (`AuthController.ResendCooldownSeconds`) — nhiều
+test admin chạy trong vài trăm ms nếu dùng CHUNG 1 email admin sẽ khiến các lần sau bị 429, và
+`ExtractOtpCode()` (đọc log OTP capture qua `ILoggerProvider` tự viết, tương đương
+`docker compose logs backend | grep "OTP cho"` nhưng chạy trong-process) đọc nhầm mã của lần
+trước đã bị consume → verify-otp thất bại âm thầm (không assert response status trong helper dùng
+chung) → test sau đó tưởng đang test "đăng nhập admin" nhưng thực ra request KHÔNG có cookie hợp
+lệ. Sửa bằng cách cấp phát 1 email admin RIÊNG cho mỗi test cần role Admin
+(`AuthApiFactory.NextAdminEmail()`). Và: `.env` thật ở root repo (đọc qua `DotEnv.Load()`) có thể
+có `EMAIL_PROVIDER=smtp` + SMTP thật — override `EMAIL_PROVIDER=""` trong config test (đây LÀ đọc
+lazy, qua `SmtpOtpSender` — singleton DI, resolve lần đầu lúc request thật tới, nên override qua
+`ConfigureAppConfiguration` hoạt động bình thường) để test không thật sự gửi email qua mạng.
 
 ## E2E
 
