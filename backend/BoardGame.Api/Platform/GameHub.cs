@@ -156,6 +156,22 @@ public class GameHub : Hub
     }
 
     /// <summary>
+    /// Báo cho những người còn đang xem màn thắng/thua ở phòng CŨ rằng đã có phòng chơi lại —
+    /// chỉ rebroadcast, không tạo phòng (đó là việc của REST <c>POST /api/games/{id}/rematch</c>,
+    /// xem GamesController.Rematch/RoomService.CreateRematchAsync). Người tạo tự điều hướng
+    /// bằng response của REST, không cần nhận lại broadcast của chính mình.
+    /// </summary>
+    public async Task AnnounceRematch(string oldRoomId, string newRoomId)
+    {
+        if (!_connections.TryGetValue(Context.ConnectionId, out var info) || info.RoomId != oldRoomId)
+        {
+            await Err("Bạn không ở trong phòng này.");
+            return;
+        }
+        await Clients.OthersInGroup(oldRoomId).SendAsync("RematchAvailable", new { newRoomId, byDisplayName = CallerDisplayName });
+    }
+
+    /// <summary>
     /// Thực hiện một nước đi. moveJson là payload tuỳ game; hub xác định ghế của
     /// người chơi (theo JWT, không theo tham số client) rồi giao cho engine tương ứng.
     /// </summary>

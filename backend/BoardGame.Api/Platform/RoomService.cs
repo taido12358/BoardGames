@@ -139,6 +139,27 @@ public class RoomService
         return (room, null);
     }
 
+    /// <summary>
+    /// "Chơi lại" — tạo phòng MỚI cùng game/cùng số ghế với phòng đã kết thúc, cho người vừa
+    /// chơi ván đó. Chỉ tạo phòng cho NGƯỜI GỌI (ngồi ghế 0) — không tự động mời lại đối thủ ở
+    /// tầng này (RoomService không có SignalR, xem class doc); nơi gọi (GameHub.AnnounceRematch)
+    /// tự lo báo cho những người còn đang xem màn thắng/thua trong phòng cũ.
+    /// Đơn giản hoá có chủ đích: không giữ lại tuỳ chọn tạo phòng ban đầu (vd `maxRedTurns` của
+    /// VayBat) — engine không có cách "đọc ngược" tuỳ chọn từ state đã chơi xong, chỉ giữ được
+    /// `seatCount` (lưu thẳng trên GameRoom, không cần biết cấu trúc JSON riêng của từng game).
+    /// </summary>
+    public async Task<(GameRoom? Room, string? Error)> CreateRematchAsync(Guid oldRoomId, Guid userId, string displayName)
+    {
+        var oldRoom = await _db.GameRooms.FindAsync(oldRoomId);
+        if (oldRoom is null) return (null, "Không tìm thấy phòng cũ.");
+        if (oldRoom.Status != RoomStatus.Finished) return (null, "Chỉ chơi lại được sau khi ván đã kết thúc.");
+        if (!SeatCodec.SeatsOf(oldRoom).Any(s => s?.UserId == userId))
+            return (null, "Bạn không phải người chơi trong ván này.");
+
+        var options = JsonSerializer.SerializeToElement(new { seatCount = oldRoom.SeatCount });
+        return await CreateRoomAsync(oldRoom.GameKey, userId, displayName, options);
+    }
+
     public async Task<(GameRoom? Room, string? Side, string? Error)> JoinRoomAsync(Guid roomId, Guid userId, string displayName)
     {
         // SELECT FOR UPDATE: serialize concurrent joins để hai người không cùng lấy một ghế.

@@ -16,6 +16,8 @@ import {
 interface Props {
   makeMove: (roomId: string, move: unknown) => void;
   onLeave: () => void;
+  onRematch: () => void;
+  rematching: boolean;
 }
 
 /** Bài nào cần chọn mục tiêu khi đánh (Calamity dùng Trượt! như Bang! nên cũng cần). */
@@ -51,7 +53,7 @@ function isValidTarget(kind: CardKind, p: BangPublicPlayer, isMe: boolean): bool
   return false;
 }
 
-export default function BangBoard({ makeMove, onLeave }: Props) {
+export default function BangBoard({ makeMove, onLeave, onRematch, rematching }: Props) {
   const { room, error, connectionState } = useGameStore();
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
   const [discardIds, setDiscardIds] = useState<string[]>([]);
@@ -154,7 +156,14 @@ export default function BangBoard({ makeMove, onLeave }: Props) {
 
   return (
     <div className="flex flex-col gap-3 w-full max-w-2xl mx-auto">
-      {state.phase === "finished" && <VictoryScreen state={state} onLeave={onLeave} />}
+      {state.phase === "finished" && (
+        <VictoryScreen
+          state={state}
+          onLeave={onLeave}
+          onRematch={me ? onRematch : undefined}
+          rematching={rematching}
+        />
+      )}
 
       {/* Top bar */}
       <div className="bg-gradient-to-r from-[#241a10] to-[#2b2013] rounded-2xl px-4 py-2.5 shadow-lg flex items-center justify-between">

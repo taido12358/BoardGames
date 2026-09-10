@@ -41,6 +41,16 @@ IN_PROGRESS (vòng lặp liên tục, không có điểm "DONE" cố định)
    chat được. Xem backlog mục "Đơn giản hoá có chủ đích" của Bang (nay đã gạch mục chat).
    `dotnet build`/`dotnet test`: 118/118 pass. `tsc`/`vite build`: sạch. CHƯA live-test qua
    Docker Compose (cùng lý do các việc UI trước — không cần bật stack/OTP chỉ để xem UI).
+7. **Nút "CHƠI LẠI"** ở màn thắng/thua (VayBat + Bang) — `RoomService.CreateRematchAsync` +
+   `POST /api/games/{id}/rematch` + `GameHub.AnnounceRematch` (báo người khác còn ở phòng cũ
+   qua SignalR). UI dùng chung `RoomShell.RematchButton`/`RematchInviteBanner`. Xem backlog mục
+   "Đơn giản hoá có chủ đích" của Bang (nay đã gạch mục CHƠI LẠI) để biết giới hạn đã chấp nhận
+   (không giữ tuỳ chọn tạo phòng ban đầu, không tự ghép cả nhóm). `dotnet build`/`dotnet test`:
+   118/118 pass. `tsc`/`vite build`: sạch. Không có test DB thật cho `CreateRematchAsync` (nợ kỹ
+   thuật có sẵn từ trước cho `RoomService`, không riêng tính năng này). CHƯA live-test qua Docker
+   Compose — tính năng này CẦN 2 danh tính thật để test đầy đủ (người kia có thấy banner mời
+   không), giống các kịch bản "Việc dở dang từ đợt trước" bên dưới; chỉ verify được qua code
+   review + build xanh.
 
 ## Việc đang làm / tiếp theo (thứ tự ưu tiên gợi ý, không bắt buộc theo đúng thứ tự)
 
@@ -48,8 +58,9 @@ IN_PROGRESS (vòng lặp liên tục, không có điểm "DONE" cố định)
   chưa gắn game nào) — quy mô lớn, chỉ làm khi các việc "hoàn thiện game cũ" đã ổn.
 - Cân nhắc thêm thao tác quản trị có phá huỷ (huỷ phòng treo thủ công từ `/admin`) — CHỈ làm
   nếu người dùng xác nhận cần, kèm log ai-làm-gì-lúc-nào (xem "Chủ ý CHƯA làm" ở trên).
-- Nút "CHƠI LẠI" ở màn thắng/thua (Bang/VayBat) — còn lại trong backlog mục "Đơn giản hoá có
-  chủ đích", chưa làm (cần thiết kế lại luồng rematch 2 người, không chỉ 1 nút UI).
+- Debug panel cho Bang (spec §51 trong `van-de.md`) — dev-only, đụng vào `BangRules.cs` (engine
+  lớn/nhạy cảm nhất repo) để thêm force-draw/force-damage; cân nhắc kỹ trước khi làm vì đây là
+  action mutate state bỏ qua luật chơi bình thường, dù chỉ bật ở Development.
 
 ## Việc dở dang từ đợt trước (2026-09-05, tạm gác — không chặn việc mới)
 

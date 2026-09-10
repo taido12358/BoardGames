@@ -8,6 +8,7 @@ export interface GameRoomHubActions {
   subscribeLobby: () => Promise<void> | undefined;
   unsubscribeLobby: () => Promise<void> | undefined;
   sendChatMessage: (roomId: string, text: string) => void;
+  announceRematch: (oldRoomId: string, newRoomId: string) => void;
 }
 
 // useGameRoomHub() mở MỘT kết nối SignalR (useEffect trong hook) — không được gọi hook

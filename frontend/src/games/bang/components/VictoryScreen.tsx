@@ -1,8 +1,12 @@
+import { RematchButton } from "../../../platform/RoomShell";
 import type { BangViewerState } from "../types";
 
 interface Props {
   state: BangViewerState;
   onLeave: () => void;
+  /** undefined = khán giả, không cho chơi lại (chỉ người từng ngồi ghế mới rematch được). */
+  onRematch?: () => void;
+  rematching: boolean;
 }
 
 const WINNER_TITLE: Record<string, { title: string; color: string }> = {
@@ -12,7 +16,7 @@ const WINNER_TITLE: Record<string, { title: string; color: string }> = {
 };
 
 /** Màn hình chiến thắng — che toàn màn hình khi ván kết thúc (§29). */
-export default function VictoryScreen({ state, onLeave }: Props) {
+export default function VictoryScreen({ state, onLeave, onRematch, rematching }: Props) {
   const winnerKey = (state.winner ?? "").toLowerCase();
   const info = WINNER_TITLE[winnerKey] ?? { title: `${state.winner ?? "?"} CHIẾN THẮNG`, color: "text-amber-300" };
   const alive = state.players.filter((p) => p.alive);
@@ -43,6 +47,7 @@ export default function VictoryScreen({ state, onLeave }: Props) {
 
         <div className="text-xs text-slate-500">Tổng số lượt: {state.turnNumber}</div>
 
+        {onRematch && <RematchButton onRematch={onRematch} loading={rematching} />}
         <button
           onClick={onLeave}
           className="w-full rounded-xl bg-amber-700 hover:bg-amber-600 px-4 py-3 font-bold text-sm transition-colors"

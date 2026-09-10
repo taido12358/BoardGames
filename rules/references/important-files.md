@@ -26,9 +26,9 @@ Mọi đường dẫn dưới đây đã xác nhận tồn tại trong repo (c�
 
 - `backend/BoardGame.Api/Platform/Abstractions/IGameEngine.cs` — contract mọi game phải implement (nay có thêm `SideForSeat`/`OnRoomFull`/`OnSeatTimedOut`, default interface method).
 - `backend/BoardGame.Api/Platform/Abstractions/GameEngineRegistry.cs`.
-- `backend/BoardGame.Api/Platform/RoomService.cs` (mới, 2026-09-05) — toàn bộ logic phòng/ghế/ván (join/create/cancel/quick-match/timeout), gom về một chỗ thay cho việc `GameHub`/`GamesController` mỗi nơi tự rẽ nhánh riêng trước đây.
-- `backend/BoardGame.Api/Platform/GameHub.cs` — SignalR hub (`/hubs/game`), giờ chỉ là lớp transport gọi `RoomService`. `SendChatMessage` (mới 2026-09-10) — chat GENERIC trong phòng, chỉ broadcast qua nhóm SignalR, KHÔNG lưu DB (mất khi phòng đóng/tải lại trang); player lẫn spectator đều gọi được, chỉ cần đã `JoinRoom` đúng phòng.
-- `backend/BoardGame.Api/Platform/GamesController.cs` — REST lobby (`/api/games`, có thêm `POST /quick-match`), cũng chỉ gọi `RoomService`.
+- `backend/BoardGame.Api/Platform/RoomService.cs` (mới, 2026-09-05) — toàn bộ logic phòng/ghế/ván (join/create/cancel/quick-match/timeout), gom về một chỗ thay cho việc `GameHub`/`GamesController` mỗi nơi tự rẽ nhánh riêng trước đây. `CreateRematchAsync` (mới 2026-09-10) — tạo phòng mới cùng `gameKey`/`seatCount` cho người TỪNG chơi ván `Finished`, không tự mời lại đối thủ (đó là việc của `GameHub.AnnounceRematch`).
+- `backend/BoardGame.Api/Platform/GameHub.cs` — SignalR hub (`/hubs/game`), giờ chỉ là lớp transport gọi `RoomService`. `SendChatMessage` (mới 2026-09-10) — chat GENERIC trong phòng, chỉ broadcast qua nhóm SignalR, KHÔNG lưu DB (mất khi phòng đóng/tải lại trang); player lẫn spectator đều gọi được, chỉ cần đã `JoinRoom` đúng phòng. `AnnounceRematch` (mới 2026-09-10) — rebroadcast cho người khác còn ở phòng cũ biết có phòng chơi lại, không tự tạo phòng.
+- `backend/BoardGame.Api/Platform/GamesController.cs` — REST lobby (`/api/games`, có thêm `POST /quick-match`, `POST /{id}/rematch` mới 2026-09-10), cũng chỉ gọi `RoomService`.
 - `backend/BoardGame.Api/Platform/RoomDto.cs`, `GameJson.cs`, `GameMapper` (trong `RoomDto.cs`) — tính `MySide`/`IsMine` theo caller.
 - `backend/BoardGame.Api/Platform/Models/SeatSlot.cs` (mới) — `SeatSlot` record + `SeatCodec` (mã hoá/giải mã `GameRoom.SeatsJson`).
 - `backend/BoardGame.Api/Platform/Models/RoomStatus.cs` (mới) — hằng số 5 trạng thái + `IsOpen`.
@@ -53,7 +53,7 @@ Mọi đường dẫn dưới đây đã xác nhận tồn tại trong repo (c�
 
 ## Frontend
 
-- Platform (dùng chung mọi game): `frontend/src/platform/` — `authStore.ts`, `gameStore.ts` (có `chatMessages`, mới 2026-09-10), `useGameRoomHub.ts`, `useLobbyHub.ts` (mới), `GameRoomHubContext.tsx`, `RoomShell.tsx` (mới — banner/leave button dùng chung giữa các game), `ChatPanel.tsx` (mới 2026-09-10 — chat GENERIC, mount 1 lần ở `RoomRoute.tsx` cho mọi game), `ScrollToTop.tsx`, `types.ts`, `gameLibraryTypes.ts`, `gameRegistry.ts`.
+- Platform (dùng chung mọi game): `frontend/src/platform/` — `authStore.ts`, `gameStore.ts` (có `chatMessages`/`rematchInvite`, mới 2026-09-10), `useGameRoomHub.ts`, `useLobbyHub.ts` (mới), `GameRoomHubContext.tsx`, `RoomShell.tsx` (banner/leave button dùng chung giữa các game — có thêm `RematchButton`/`RematchInviteBanner`, mới 2026-09-10), `ChatPanel.tsx` (mới 2026-09-10 — chat GENERIC, mount 1 lần ở `RoomRoute.tsx` cho mọi game), `ScrollToTop.tsx`, `types.ts`, `gameLibraryTypes.ts`, `gameRegistry.ts`.
 - Điều hướng theo game: `frontend/src/components/GameView.tsx` (luôn render `<Routes>`) + `RoomRoute.tsx` (mới, route `/games/:gameKey/room/:roomId` — route trong-ván thật, thay cho rẽ nhánh theo `gameStore.room` trước đây; render board + `ChatPanel` cùng lúc).
 - Thư viện trò chơi: `frontend/src/components/{GameLibrary,GameCard,GameDetails,GameInstructions}.tsx`.
 - Quản trị (mới, 2026-09-10): `frontend/src/components/AdminPage.tsx` (route `/admin`, xem `GameView.tsx`) + `frontend/src/platform/adminStore.ts`. Chỉ hiện link "Quản trị" trong `App.tsx` khi `adminStore.isAdmin` — server (`AdminController`) mới là lớp chặn thật.

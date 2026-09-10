@@ -80,6 +80,37 @@ export function LeaveRoomButton({ onLeave, label = "← Rời phòng" }: { onLea
   );
 }
 
+/** Nút "chơi lại" — chỉ hiện cho người TỪNG chơi ván vừa kết thúc (server cũng tự kiểm lại, xem RoomService.CreateRematchAsync). */
+export function RematchButton({ onRematch, loading }: { onRematch: () => void; loading: boolean }) {
+  return (
+    <button
+      onClick={onRematch}
+      disabled={loading}
+      className="w-full rounded-xl bg-emerald-700 hover:bg-emerald-600 active:bg-emerald-500 disabled:opacity-50 disabled:cursor-wait px-4 py-3 font-medium text-base transition-colors"
+    >
+      {loading ? "Đang tạo phòng…" : "🔄 CHƠI LẠI"}
+    </button>
+  );
+}
+
+/** Lời mời chơi lại từ người khác còn đang ở phòng này — xem GameHub.AnnounceRematch. */
+export function RematchInviteBanner({
+  invite, onJoin,
+}: { invite: { newRoomId: string; byDisplayName: string } | null; onJoin: (roomId: string) => void }) {
+  if (!invite) return null;
+  return (
+    <div className="rounded-2xl p-3 bg-emerald-900/30 text-emerald-300 text-sm border border-emerald-700/50 flex items-center justify-between gap-2">
+      <span>🔄 {invite.byDisplayName} đã tạo phòng chơi lại</span>
+      <button
+        onClick={() => onJoin(invite.newRoomId)}
+        className="shrink-0 rounded-lg bg-emerald-700 hover:bg-emerald-600 px-3 py-1.5 text-xs font-semibold"
+      >
+        VÀO PHÒNG
+      </button>
+    </div>
+  );
+}
+
 /** Phòng mở (còn hiển thị trong sảnh) là Waiting/Playing — dùng thay cho `status !== "Finished"` cũ. */
 export function isOpenStatus(status: RoomStatus): boolean {
   return status === "Waiting" || status === "Playing";

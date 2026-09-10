@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import type { ChatMessageDto, EngineInfo, RoomDto, RoomSummaryDto } from "./types";
+import type { ChatMessageDto, EngineInfo, RematchInviteDto, RoomDto, RoomSummaryDto } from "./types";
 
 /** Giới hạn số tin nhắn giữ trong bộ nhớ — chat không lưu DB, chỉ cần đủ để cuộn lại gần đây. */
 const MAX_CHAT_MESSAGES = 200;
@@ -36,6 +36,8 @@ interface GameStore {
   connectionState: ConnectionState;
   /** Chat phòng hiện tại — chỉ trong bộ nhớ (không lưu DB), xoá khi rời phòng (xem RoomRoute). */
   chatMessages: ChatMessageDto[];
+  /** Lời mời "chơi lại" từ người khác trong phòng cũ, null nếu chưa có — xoá khi rời phòng. */
+  rematchInvite: RematchInviteDto | null;
 
   setPlayerName: (name: string) => void;
   setRoom: (room: RoomDto | null) => void;
@@ -45,6 +47,7 @@ interface GameStore {
   setConnectionState: (s: ConnectionState) => void;
   addChatMessage: (msg: ChatMessageDto) => void;
   clearChat: () => void;
+  setRematchInvite: (invite: RematchInviteDto | null) => void;
 
   fetchEngines: () => Promise<void>;
   /** Chỉ dùng để paint lần đầu — cập nhật realtime sau đó qua useLobbyHub, không polling. */
@@ -71,6 +74,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   error: "",
   connectionState: "connected",
   chatMessages: [],
+  rematchInvite: null,
 
   setPlayerName: (name) => {
     localStorage.setItem("playerName", name);
@@ -84,6 +88,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   addChatMessage: (msg) =>
     set((s) => ({ chatMessages: [...s.chatMessages, msg].slice(-MAX_CHAT_MESSAGES) })),
   clearChat: () => set({ chatMessages: [] }),
+  setRematchInvite: (rematchInvite) => set({ rematchInvite }),
 
   fetchEngines: async () => {
     set({ enginesLoading: true, enginesError: "" });

@@ -1,16 +1,18 @@
 import { useMemo, useRef, useState } from "react";
 import { useGameStore } from "../../platform/gameStore";
-import { ConnectionBanner, DisconnectBadge, LeaveRoomButton, RoomErrorBanner, RoomStatusBanner } from "../../platform/RoomShell";
+import { ConnectionBanner, DisconnectBadge, LeaveRoomButton, RematchButton, RoomErrorBanner, RoomStatusBanner } from "../../platform/RoomShell";
 import { legalMoves, occupancy, side, type GameState, type MapDef } from "./types";
 
 interface Props {
   makeMove: (roomId: string, move: unknown) => void;
   onLeave: () => void;
+  onRematch: () => void;
+  rematching: boolean;
 }
 
 interface DragState { pieceId: string; svgX: number; svgY: number; }
 
-export default function VayBatBoard({ makeMove, onLeave }: Props) {
+export default function VayBatBoard({ makeMove, onLeave, onRematch, rematching }: Props) {
   const { room, mySide, selected, setSelected, error, connectionState } = useGameStore();
   const svgRef = useRef<SVGSVGElement>(null);
   const [drag, setDrag] = useState<DragState | null>(null);
@@ -244,6 +246,7 @@ export default function VayBatBoard({ makeMove, onLeave }: Props) {
       <RoomStatusBanner room={room} mySide={mySide} />
       <RoomErrorBanner error={error} />
 
+      {state.winner && mySide && <RematchButton onRematch={onRematch} loading={rematching} />}
       <LeaveRoomButton onLeave={onLeave} />
     </div>
   );

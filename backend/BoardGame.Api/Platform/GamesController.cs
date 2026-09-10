@@ -77,6 +77,32 @@ public class GamesController : ControllerBase
         return Ok(GameMapper.ToDto(room!, engine, userId));
     }
 
+    /// <summary>
+    /// "Chơi lại" — tạo phòng mới cùng game/cùng số ghế với phòng vừa kết thúc, người gọi ngồi
+    /// ghế 0. Chỉ tạo phòng cho người gọi; báo cho những người khác còn đang xem màn thắng/thua
+    /// là việc của <c>GameHub.AnnounceRematch</c> (SignalR), REST ở đây không biết ai đang online.
+    /// </summary>
+    [HttpPost("{id:guid}/rematch")]
+    public async Task<ActionResult<RoomDto>> Rematch(Guid id)
+    {
+        var userId = User.TryGetUserId();
+        if (userId is null) return Unauthorized(new { error = "Phiên đăng nhập không hợp lệ." });
+        var displayName = User.GetDisplayName();
+
+        var (room, error) = await _rooms.CreateRematchAsync(id, userId.Value, displayName);
+        if (error is not null) return BadRequest(new { error });
+
+        try { await _cache.SetAsync($"game:{room!.Id}:state", room.StateJson); }
+        catch (Exception ex) { _log.LogWarning(ex, "Ghi Redis cache thất bại"); }
+        try { _queue.PublishGameEvent(GameJson.Serialize(new { type = "RoomCreated", roomId = room!.Id, gameKey = room.GameKey })); }
+        catch (Exception ex) { _log.LogWarning(ex, "Publish RoomCreated thất bại"); }
+
+        await PublishLobbyUpdated(room!);
+
+        var engine = _engines.Get(room!.GameKey);
+        return Ok(GameMapper.ToDto(room!, engine, userId));
+    }
+
     /// <summary>Huỷ phòng do chính mình tạo — chỉ khi còn "Waiting" (chưa đủ người/chưa bắt đầu).</summary>
     [HttpPost("{id:guid}/cancel")]
     public async Task<IActionResult> Cancel(Guid id)

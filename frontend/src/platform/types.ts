@@ -47,6 +47,12 @@ export interface ChatMessageDto {
   sentAt: string;
 }
 
+/** Lời mời "chơi lại" nhận được từ một người khác còn đang ở phòng cũ (xem GameHub.AnnounceRematch). */
+export interface RematchInviteDto {
+  newRoomId: string;
+  byDisplayName: string;
+}
+
 export interface EngineInfo {
   key: string;
   displayName: string;

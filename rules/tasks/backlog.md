@@ -47,8 +47,17 @@ chưa gắn với game nào; có thể dùng cho game thứ ba hoặc reskin BAN
   khi phòng đóng/tải lại trang) + `platform/ChatPanel.tsx` mount MỘT LẦN ở `RoomRoute.tsx` cho
   mọi game (không phải riêng Bang) — VayBat có chat cùng lúc luôn, không cần code riêng. Cả
   player lẫn spectator chat được, theo đúng bảng phân quyền trong `rules/coding/security.md`.
-- Không có nút "CHƠI LẠI" ở màn thắng/thua (chỉ có "VỀ PHÒNG CHỜ") — tạo phòng mới lại từ
-  sảnh, giống VayBat.
+- ~~Không có nút "CHƠI LẠI" ở màn thắng/thua~~ — ĐÃ LÀM (2026-09-10): `RoomService.CreateRematchAsync`
+  (tạo phòng mới cùng `gameKey`/`seatCount`, chỉ cho người TỪNG chơi ván đó) + `POST /api/games/
+  {id}/rematch` + `GameHub.AnnounceRematch` (báo cho người khác còn đang xem màn thắng/thua ở
+  phòng cũ qua SignalR — họ thấy banner "🔄 X đã tạo phòng chơi lại" kèm nút vào thẳng). UI dùng
+  chung `RoomShell.RematchButton`/`RematchInviteBanner` cho cả 2 game.
+  **Đơn giản hoá có chủ đích**: không giữ lại tuỳ chọn tạo phòng ban đầu (vd `maxRedTurns` của
+  VayBat) — chỉ giữ được `seatCount` (lưu thẳng trên `GameRoom`, generic); không tự động ghép cả
+  nhóm vào lại (chỉ người bấm "CHƠI LẠI" được xếp ghế 0 trước, người khác phải tự bấm "VÀO PHÒNG"
+  ở banner — không có gì đảm bảo họ giữ đúng ghế cũ/thứ tự cũ). Không có test DB thật cho
+  `CreateRematchAsync` (cùng lý do "chưa có test tích hợp chạm Postgres" đã ghi ở mục "Việc kỹ
+  thuật chưa làm" — nợ kỹ thuật có sẵn, không phải riêng tính năng này).
 - Debug panel (spec §51) chưa làm — có thể thêm sau nếu cần, chỉ nên bật ở Development.
 
 ## Thư viện trò chơi — ĐÃ LÀM (2026-08-05)

@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { HubConnection, HubConnectionBuilder } from "@microsoft/signalr";
 import { useGameStore } from "./gameStore";
-import type { ChatMessageDto, RoomDto, RoomSummaryDto } from "./types";
+import type { ChatMessageDto, RematchInviteDto, RoomDto, RoomSummaryDto } from "./types";
 
 /**
  * Kết nối SignalR tới GameHub (GENERIC cho mọi game). makeMove gửi payload
@@ -22,6 +22,7 @@ export function useGameRoomHub() {
     conn.on("Error", (msg: string) => useGameStore.getState().setError(msg));
     conn.on("LobbyUpdated", (room: RoomSummaryDto) => useGameStore.getState().upsertRoom(room));
     conn.on("ChatMessageReceived", (msg: ChatMessageDto) => useGameStore.getState().addChatMessage(msg));
+    conn.on("RematchAvailable", (invite: RematchInviteDto) => useGameStore.getState().setRematchInvite(invite));
 
     conn.onreconnecting(() => useGameStore.getState().setConnectionState("reconnecting"));
 
@@ -93,5 +94,10 @@ export function useGameRoomHub() {
     connRef.current?.invoke("SendChatMessage", roomId, text).catch(surface);
   };
 
-  return { joinRoom, makeMove, leaveRoom, subscribeLobby, unsubscribeLobby, sendChatMessage };
+  /** Báo cho người khác còn ở phòng cũ là đã có phòng chơi lại — chính mình tự điều hướng bằng response REST, không cần chờ broadcast này. */
+  const announceRematch = (oldRoomId: string, newRoomId: string) => {
+    connRef.current?.invoke("AnnounceRematch", oldRoomId, newRoomId).catch(console.error);
+  };
+
+  return { joinRoom, makeMove, leaveRoom, subscribeLobby, unsubscribeLobby, sendChatMessage, announceRematch };
 }
