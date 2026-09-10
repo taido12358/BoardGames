@@ -98,9 +98,23 @@ trong [`../history/decisions.md`](../history/decisions.md) cho quyết định p
   endpoint `rooms`, không có bảng audit log persist) — đủ dùng vì hiện tại toàn bộ hành động là
   READ-ONLY.
 
-## Việc kỹ thuật chưa làm
+## CI/CD — ĐÃ LÀM bản tối thiểu (2026-09-11)
 
-- CI/CD pipeline tự động: chưa có thư mục `.github/workflows/` hay pipeline config nào trong repo — pipeline mô tả trong `rules/workflow/deployment.md` là **mong muốn**, chưa có thật.
+~~CI/CD pipeline tự động: chưa có thư mục `.github/workflows/`~~ — đã thêm `.github/workflows/ci.yml`
+đúng 3 bước tối thiểu mô tả trong `rules/workflow/deployment.md`: (1) `dotnet build`+`dotnet test`
+trên `backend/BoardGame.sln`, (2) frontend `npm ci` → `npm run build` (đã gồm `tsc --noEmit`,
+xem `package.json`), (3) build thử 2 Docker image (backend + frontend, không push đi đâu — chưa
+có registry/secret nào cấu hình) chỉ khi push thẳng lên `master`. Trigger trên `push`/`pull_request`
+nhắm `master`.
+
+**Chưa làm (có chủ đích):**
+- Không có bước "lint" riêng — frontend chưa có ESLint config/script (`package.json` chỉ có
+  `dev`/`build`/`preview`). Thêm lint là việc riêng, không lặng lẽ bỏ qua.
+- Không cache NuGet packages (không có `packages.lock.json` để làm cache key ổn định) — restore
+  cục bộ từng thấy chậm/timeout tải gói (`Microsoft.CodeAnalysis.CSharp`), CI có thể gặp tương
+  tự; thêm cache sau nếu CI thật sự chậm/hay fail vì restore.
+- Docker job chỉ BUILD để bắt sớm lỗi Dockerfile, KHÔNG push image lên registry nào — repo chưa
+  có thông tin registry/secret. Deploy thật vẫn là thao tác thủ công theo `rules/workflow/deployment.md`.
 
 ## Test — ĐÃ LÀM (2026-09-10, đợt 2)
 

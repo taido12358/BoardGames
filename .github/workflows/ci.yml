@@ -1,0 +1,59 @@
+name: CI
+
+# Pipeline toi thieu mo ta trong rules/workflow/deployment.md:
+#   1. dotnet build + dotnet test
+#   2. frontend: npm ci -> type-check (tsc --noEmit) -> build
+#   3. build Docker image (chi tren branch chinh / tag)
+# Khong co buoc "lint" rieng vi frontend chua co ESLint config/script (package.json chi co
+# dev/build/preview) - xem rules/tasks/backlog.md muc "Viec ky thuat chua lam".
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  backend:
+    name: Backend build + test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+      - name: Restore
+        run: dotnet restore backend/BoardGame.sln
+      - name: Build
+        run: dotnet build backend/BoardGame.sln --no-restore --configuration Release
+      - name: Test
+        run: dotnet test backend/BoardGame.sln --no-build --configuration Release --logger "console;verbosity=normal"
+
+  frontend:
+    name: Frontend type-check + build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install
+        run: npm ci
+        working-directory: frontend
+      - name: Build (tsc --noEmit + vite build)
+        run: npm run build
+        working-directory: frontend
+
+  docker:
+    name: Docker image build (smoke test)
+    needs: [backend, frontend]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build backend image
+        run: docker build -t boardgame-backend:ci ./backend/BoardGame.Api
+      - name: Build frontend image
+        run: docker build -t boardgame-frontend:ci ./frontend

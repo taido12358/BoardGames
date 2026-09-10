@@ -2,55 +2,35 @@
 
 ## Objective
 
-**2026-09-10, chỉ thị mới (`/goal`, tự động, không hỏi lại người dùng)**: liên tục nâng cấp web —
-thêm game/hoàn thiện game còn dang dở, xoá trang không cần thiết, code lại giao diện quản lý
-game, tự commit/push lên `master` sau mỗi việc hoàn chỉnh. Chạy theo vòng lặp nhiều phiên nhỏ,
-mỗi phiên: chọn 1 việc cụ thể trong backlog/known-issues → làm → build+test xanh → cập nhật
-rules → commit+push. Không chờ xác nhận người dùng cho từng bước.
+**Chỉ thị `/goal` liên tục** (bắt đầu 2026-09-10, gia hạn 2026-09-11 — "tự suy nghĩ hướng phát
+triển, lên kế hoạch chi tiết, triển khai kế hoạch đó cho đến khi người dùng bảo dừng"): tự chọn
+việc trong backlog/khảo sát code, lên kế hoạch, làm, build+test xanh, cập nhật rules, commit+push
+lên `master`, lặp lại. Không chờ xác nhận người dùng cho từng bước; chỉ dừng lại hỏi khi việc có
+tính phá huỷ/không đảo ngược được hoặc mơ hồ tới mức đoán sai sẽ tốn kém (xem các lần đã hỏi:
+live-test Docker Compose 2026-09-10). Người dùng có thể bảo dừng bất cứ lúc nào — không tự ý kết
+thúc goal.
 
 ## Status
 
-IN_PROGRESS (vòng lặp liên tục, không có điểm "DONE" cố định)
+IN_PROGRESS (vòng lặp liên tục, không có điểm "DONE" cố định — dừng khi người dùng yêu cầu)
 
-## Việc đã xong trong đợt này
+## Việc đã xong (tóm tắt — chi tiết đầy đủ nằm ở `../tasks/backlog.md` mục ĐÃ LÀM tương ứng + `../logs/`)
 
-1. **Xoá demo "Hello World" khỏi backend** — xem [`../tasks/backlog.md`](../tasks/backlog.md) mục
-   "Dọn dẹp — ĐÃ LÀM (2026-09-10)". `dotnet build`/`dotnet test` (97/97) và `tsc`/`vite build` xanh.
-2. **`/health` kiểm tra thật DB/Redis/RabbitMQ** thay vì trả tĩnh — cùng mục backlog trên.
-3. **Bang: UI chọn bài để bỏ khi vượt giới hạn tay bài** (`BangBoard.tsx`/`ActionBar.tsx`/
-   `HandFan.tsx`) — xem mục "Đơn giản hoá có chủ đích" trong backlog (nay đã gạch mục này).
-   Chỉ verify bằng `tsc`/`vite build` xanh, CHƯA live-test qua Docker Compose (người dùng xác
-   nhận không cần bật stack/OTP chỉ để xem UI thuần React này).
-4. **Unit test cho `VayBatRules.cs`** (luật thuần) — `VayBat/VayBatRulesTests.cs` (17 test mới,
-   xem backlog mục "Test — ĐÃ LÀM").
-5. **Trang "Quản lý game" (`/admin`)** — repo trước đó KHÔNG có trang quản trị nào (chỉ có Thư
-   viện trò chơi phía người chơi), nên hiểu "code lại giao diện quản lý game" là LÀM MỚI. Đã làm
-   bản READ-ONLY: xem tổng quan phòng/ván toàn hệ thống + thống kê nhanh, lọc theo trạng thái.
-   Backend: `AdminController.cs` (`/api/admin/check|rooms|stats`), role "Admin" gán qua JWT claim
-   lúc đăng nhập (`TokenService.CreateToken`) theo email trong `ADMIN_EMAILS` (env, rỗng mặc
-   định), `[Authorize(Roles = "Admin")]` chuẩn ASP.NET — đúng pattern đã ghi sẵn trong
-   `rules/coding/security.md` mục "Phân quyền". Frontend: `AdminPage.tsx` + `adminStore.ts`,
-   route `/admin`, link "🛠 Quản trị" trong header chỉ hiện khi `isAdmin`.
-   **Chủ ý CHƯA làm**: không có thao tác phá huỷ (huỷ/xoá phòng thủ công) — tránh lặp lại sự cố
-   mất dữ liệu 2026-09-05; làm sau nếu người dùng thật sự cần, với xác nhận riêng + log đầy đủ.
-   Test: `TokenServiceTests.cs` (4 test, round-trip JWT thật qua `JwtSecurityTokenHandler` để
-   xác nhận role claim hoạt động đúng — xem backlog). Tổng test backend: 118/118 pass.
-6. **Chat trong phòng** (Platform, generic cho mọi game) — `GameHub.SendChatMessage` (broadcast
-   qua nhóm SignalR, KHÔNG lưu DB) + `platform/ChatPanel.tsx` mount 1 lần ở `RoomRoute.tsx`, cả
-   VayBat lẫn Bang có chat cùng lúc (không phải sửa riêng từng game). Cả player lẫn spectator
-   chat được. Xem backlog mục "Đơn giản hoá có chủ đích" của Bang (nay đã gạch mục chat).
-   `dotnet build`/`dotnet test`: 118/118 pass. `tsc`/`vite build`: sạch. CHƯA live-test qua
-   Docker Compose (cùng lý do các việc UI trước — không cần bật stack/OTP chỉ để xem UI).
-7. **Nút "CHƠI LẠI"** ở màn thắng/thua (VayBat + Bang) — `RoomService.CreateRematchAsync` +
-   `POST /api/games/{id}/rematch` + `GameHub.AnnounceRematch` (báo người khác còn ở phòng cũ
-   qua SignalR). UI dùng chung `RoomShell.RematchButton`/`RematchInviteBanner`. Xem backlog mục
-   "Đơn giản hoá có chủ đích" của Bang (nay đã gạch mục CHƠI LẠI) để biết giới hạn đã chấp nhận
-   (không giữ tuỳ chọn tạo phòng ban đầu, không tự ghép cả nhóm). `dotnet build`/`dotnet test`:
-   118/118 pass. `tsc`/`vite build`: sạch. Không có test DB thật cho `CreateRematchAsync` (nợ kỹ
-   thuật có sẵn từ trước cho `RoomService`, không riêng tính năng này). CHƯA live-test qua Docker
-   Compose — tính năng này CẦN 2 danh tính thật để test đầy đủ (người kia có thấy banner mời
-   không), giống các kịch bản "Việc dở dang từ đợt trước" bên dưới; chỉ verify được qua code
-   review + build xanh.
+**2026-09-10:**
+1. Xoá demo "Hello World" khỏi backend (frontend đã xoá từ trước).
+2. `/health` kiểm tra thật DB/Redis/RabbitMQ thay vì trả tĩnh.
+3. Bang: UI chọn bài để bỏ khi vượt giới hạn tay bài cuối lượt.
+4. 17 unit test mới cho luật thuần `VayBatRules.cs`.
+5. Trang quản trị `/admin` (READ-ONLY) — role "Admin" qua JWT claim, xem ADR trong `../history/decisions.md`.
+6. Chat trong phòng (Platform generic, dùng chung VayBat + Bang).
+7. Nút "CHƠI LẠI" ở màn thắng/thua (VayBat + Bang) + banner mời người khác qua SignalR.
+
+**2026-09-11:**
+8. CI/CD tối thiểu (`.github/workflows/ci.yml`) — build+test backend/frontend mọi push/PR vào
+   `master`, build thử Docker image (không push) khi push thẳng `master`. Xem backlog mục
+   "CI/CD — ĐÃ LÀM bản tối thiểu".
+
+Tổng test backend hiện tại: 118/118 pass (chạy qua `dotnet test backend/BoardGame.sln`, đúng lệnh CI dùng).
 
 ## Việc đang làm / tiếp theo (thứ tự ưu tiên gợi ý, không bắt buộc theo đúng thứ tự)
 

@@ -12,6 +12,7 @@ Mọi đường dẫn dưới đây đã xác nhận tồn tại trong repo (c�
 - Environment: `.env` (gitignored, local) / `.env.example` (committed, mẫu) — nạp bởi `backend/BoardGame.Api/Services/DotEnv.cs` khi chạy ngoài Docker. Có `ADMIN_EMAILS` (mới 2026-09-10 — CSV email được cấp role "Admin" lúc đăng nhập, xem `AdminController.cs`).
 - Backend config: `backend/BoardGame.Api/appsettings.json`, `appsettings.Development.json`.
 - Docker: `docker-compose.yml` (root), `backend/BoardGame.Api/Dockerfile`, `frontend/Dockerfile`, `.dockerignore` ở mỗi phía.
+- CI: `.github/workflows/ci.yml` (mới 2026-09-11) — build+test backend/frontend trên mọi push/PR nhắm `master`, build thử (không push) 2 Docker image khi push thẳng `master`.
 - Kubernetes: `k8s/*.yaml` (namespace, config, mỗi service hạ tầng, backend, frontend, ingress).
 - Frontend build: `frontend/vite.config.ts`, `frontend/tailwind.config.js`, `frontend/tsconfig.json`.
 
