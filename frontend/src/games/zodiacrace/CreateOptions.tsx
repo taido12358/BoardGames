@@ -5,8 +5,10 @@ export default function ZodiacRaceCreateOptions({ value, onChange }: CreateOptio
   const seatCount = typeof value.seatCount === "number" ? value.seatCount : 4;
   return (
     <div>
-      <label className="text-slate-400 text-xs uppercase tracking-wide">Số người chơi</label>
-      <div className="mt-1 grid grid-cols-5 gap-1.5">
+      {/* Nhóm nút chọn 1-trong-N, không phải input đơn lẻ — dùng role="group" + aria-labelledby
+          thay vì <label> (label không có "for" chỏ tới input thì screen reader bỏ qua). */}
+      <span id="zodiacrace-seat-count-label" className="text-slate-400 text-xs uppercase tracking-wide">Số người chơi</span>
+      <div role="group" aria-labelledby="zodiacrace-seat-count-label" className="mt-1 grid grid-cols-5 gap-1.5">
         {[2, 3, 4, 5, 6].map((n) => (
           <button
             key={n}

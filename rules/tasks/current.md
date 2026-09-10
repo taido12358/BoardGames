@@ -190,7 +190,19 @@ IN_PROGRESS (vòng lặp liên tục, không có điểm "DONE" cố định —
     HTTP lỗi, lỗi mạng, merge dữ liệu). Cùng khuôn `authStore.test.ts` — áp dụng ngay bài học
     KHÔNG dùng `vi.unstubAllGlobals()` (mục 25) ngay từ đầu, không lặp lại sự cố.
 
-Tổng test hiện tại: backend 189/189 pass (`dotnet test backend/BoardGame.sln`), frontend 157/157
+29. **Sửa bug a11y thật: `<label>` không gắn với input/nhóm nút** — phát hiện qua audit tĩnh
+    (`grep` tìm mẫu HTML thiếu ngữ nghĩa, không cần trình duyệt) tại cả 3 form
+    `games/*/CreateOptions.tsx`. VayBat có `<input>` đơn lẻ nhưng `<label>` thiếu `htmlFor`/`id`
+    — sửa bằng cách thêm cặp `htmlFor`/`id`. Bang/ZodiacRace là nhóm NÚT chọn 1-trong-N (không
+    phải input đơn lẻ) nên `<label htmlFor>` sai ngữ nghĩa — sửa bằng `role="group"` +
+    `aria-labelledby` (đổi `<label>` thành `<span id=...>`). Thêm
+    `platform/createOptionsAccessibility.test.tsx` (3 test) làm regression guard. Cũng phát hiện
+    (nhưng KHÔNG có bug) khi audit rộng hơn: không có `<div onClick>` nào trong toàn bộ frontend,
+    không có `<img>` nào thiếu `alt` (dự án không dùng `<img>` — đúng chủ trương không dùng
+    artwork thật), input còn lại (`GameLibrary`/`ChatPanel`/`LoginPage`) đều đã có
+    `aria-label`/`<label htmlFor>` đúng.
+
+Tổng test hiện tại: backend 189/189 pass (`dotnet test backend/BoardGame.sln`), frontend 160/160
 pass (`npm run test` trong `frontend/`) — cả 2 đúng lệnh CI dùng; 5 test backend cần Docker.
 
 **Đã verify cả 15 commit (14-31) chạy thật trên GitHub Actions** — run

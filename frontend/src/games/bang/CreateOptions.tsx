@@ -5,8 +5,10 @@ export default function BangCreateOptions({ value, onChange }: CreateOptionsForm
   const seatCount = typeof value.seatCount === "number" ? value.seatCount : 4;
   return (
     <div>
-      <label className="text-slate-400 text-xs uppercase tracking-wide">Số người tối đa</label>
-      <div className="mt-1 grid grid-cols-5 gap-1.5">
+      {/* Nhóm nút chọn 1-trong-N, không phải input đơn lẻ — dùng role="group" + aria-labelledby
+          thay vì <label> (label không có "for" chỏ tới input thì screen reader bỏ qua). */}
+      <span id="bang-seat-count-label" className="text-slate-400 text-xs uppercase tracking-wide">Số người tối đa</span>
+      <div role="group" aria-labelledby="bang-seat-count-label" className="mt-1 grid grid-cols-5 gap-1.5">
         {[4, 5, 6, 7, 8].map((n) => (
           <button
             key={n}

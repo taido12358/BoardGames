@@ -5,8 +5,9 @@ export default function VayBatCreateOptions({ value, onChange }: CreateOptionsFo
   const maxRedTurns = typeof value.maxRedTurns === "number" ? value.maxRedTurns : 15;
   return (
     <div>
-      <label className="text-slate-400 text-xs uppercase tracking-wide">Giới hạn lượt Đỏ</label>
+      <label htmlFor="vaybat-max-red-turns" className="text-slate-400 text-xs uppercase tracking-wide">Giới hạn lượt Đỏ</label>
       <input
+        id="vaybat-max-red-turns"
         type="number"
         min={1}
         value={maxRedTurns}
