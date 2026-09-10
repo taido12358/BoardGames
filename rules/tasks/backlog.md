@@ -137,11 +137,16 @@ có registry/secret nào cấu hình) chỉ khi push thẳng lên `master`. Trig
 nhắm `master`.
 
 **Chưa làm (có chủ đích):**
-- Không cache NuGet packages (không có `packages.lock.json` để làm cache key ổn định) — restore
-  cục bộ từng thấy chậm/timeout tải gói (`Microsoft.CodeAnalysis.CSharp`), CI có thể gặp tương
-  tự; thêm cache sau nếu CI thật sự chậm/hay fail vì restore.
 - Docker job chỉ BUILD để bắt sớm lỗi Dockerfile, KHÔNG push image lên registry nào — repo chưa
   có thông tin registry/secret. Deploy thật vẫn là thao tác thủ công theo `rules/workflow/deployment.md`.
+
+**Đã bổ sung sau đó (2026-09-11, cùng ngày)**: cache NuGet packages trong job backend bằng
+`actions/cache@v4` trực tiếp (`path: ~/.nuget/packages`, key = hash mọi `*.csproj` trong
+`backend/`) — KHÔNG cần `packages.lock.json` như dự tính ban đầu ở trên (dự án không dùng
+`--use-lock-file`, thêm lock file riêng chỉ cho mục đích cache là rườm rà không cần thiết); hash
+trực tiếp file `.csproj` đơn giản hơn và tự động invalidate đúng lúc khi thêm/đổi version
+package. Job frontend đã có cache `npm` sẵn từ đầu qua `actions/setup-node@v4` (`cache: "npm"`),
+không cần thêm gì.
 
 ## ESLint cho frontend — ĐÃ LÀM (2026-09-11)
 

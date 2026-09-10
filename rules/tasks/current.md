@@ -78,6 +78,10 @@ IN_PROGRESS (vòng lặp liên tục, không có điểm "DONE" cố định —
     `../coding/testing.md` mục "Unit test frontend (Vitest)" bài học thứ 4. **Không còn nợ kỹ
     thuật test component frontend** — cả 3 board game đều có test.
 
+16. **Cache NuGet packages trong CI** — job backend thêm `actions/cache@v4` (`path:
+    ~/.nuget/packages`, key = hash mọi `*.csproj`), không cần `packages.lock.json` như dự tính
+    ban đầu (xem backlog mục "CI/CD"). Job frontend đã có cache npm sẵn từ đầu.
+
 Tổng test hiện tại: backend 141/141 pass (`dotnet test backend/BoardGame.sln`), frontend 54/54
 pass (`npm run test` trong `frontend/`) — cả 2 đúng lệnh CI dùng; 5 test backend cần Docker.
 
