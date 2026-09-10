@@ -117,6 +117,10 @@ IN_PROGRESS (vòng lặp liên tục, không có điểm "DONE" cố định —
     Dọn dẹp: `docker compose down` sau khi xong (không chạy trước đó), không sửa file cấu hình
     nào, dữ liệu test còn lại trong volume Postgres vô hại.
 
+20. **Live-test 3 kịch bản treo từ 2026-09-05** (ngắt mạng giữa ván, ghép trận nhanh đồng thời,
+    sảnh realtime 2 tab) — cùng kỹ thuật mục 19, xem chi tiết kết quả ở mục "Việc dở dang từ đợt
+    trước" bên dưới (đã chuyển thành ĐÃ XONG). Không còn việc nào treo từ đợt 2026-09-05.
+
 Tổng test hiện tại: backend 179/179 pass (`dotnet test backend/BoardGame.sln`), frontend 70/70
 pass (`npm run test` trong `frontend/`) — cả 2 đúng lệnh CI dùng; 5 test backend cần Docker.
 
@@ -137,25 +141,33 @@ pass (`npm run test` trong `frontend/`) — cả 2 đúng lệnh CI dùng; 5 tes
   trong `../history/decisions.md`.
 - (Đã xong 2026-09-11 — mục 19) ~~Live-test Ô Ăn Quan VÀ Đua Xe Hoàng Đạo~~ — xem "Việc dở dang
   từ đợt trước" bên dưới, blocker "cần tài khoản Gmail thật" hoá ra không có thật (dev-log OTP).
-- Áp dụng lại kỹ thuật live-test mới (xem `../coding/testing.md` mục "Live-test nhiều người chơi
-  thật") cho 3 kịch bản còn treo từ 2026-09-05 (ngắt mạng giữa ván, ghép trận nhanh đồng thời,
-  sảnh realtime nhiều tab) — không còn bị chặn kỹ thuật, chỉ là việc chưa làm, ưu tiên thấp hơn
-  việc mới vì đã verify bằng test tự động + review code.
+- (Đã xong 2026-09-11 — mục 20) ~~Áp dụng kỹ thuật live-test mới cho 3 kịch bản còn treo từ
+  2026-09-05~~ — xem "Việc dở dang từ đợt trước" bên dưới, cả 3 đều đã verify qua hệ thống sống
+  thật, không còn mục nào treo từ đợt đó.
 
-## Việc dở dang từ đợt trước (2026-09-05, tạm gác — không chặn việc mới)
+## Việc dở dang từ đợt trước (2026-09-05) — ĐÃ XONG 2026-09-11
 
-Rebuild cơ chế phòng/ghép trận đã xong code (commit `07155fc`, `15ae7b2`), nhưng **live test qua
-Docker Compose bị dừng giữa chừng ở bước đăng nhập OTP** và **Docker Compose của phiên đó đã
-tắt** (không còn chạy — kiểm tra lại bằng `docker compose ps` trước khi giả định gì về trạng thái
-container). Việc còn thiếu (3 kịch bản dưới đây) từng bị ghi là "cần 2 danh tính Gmail khác nhau
-thật" — **KHÔNG còn đúng nữa**, xem phát hiện 2026-09-11 trong `../coding/testing.md` mục
-"Live-test nhiều người chơi thật mà KHÔNG cần nhiều tài khoản Gmail thật" (dev-log OTP + script
-Node dùng `@microsoft/signalr` sẵn có trong `frontend/node_modules`). Vẫn chưa làm 3 kịch bản cụ
-thể này (chỉ mới dùng kỹ thuật để verify Ô Ăn Quan + Đua Xe Hoàng Đạo), không phải vì bị chặn mà
-vì ưu tiên thấp hơn — vẫn đã verify qua code review + test tự động:
-- Ngắt mạng giữa ván (VayBat xử thua, Bang auto end-turn/auto-fail-respond)
-- Ghép trận nhanh 2 người đồng thời, đua `Cancel`/`JoinRoom`
-- Sảnh realtime 2 tab
+Rebuild cơ chế phòng/ghép trận đã xong code (commit `07155fc`, `15ae7b2`) từ 2026-09-05, nhưng
+live-test bị dừng giữa chừng lúc đó vì tưởng cần nhiều tài khoản Gmail thật. Sau phát hiện
+2026-09-11 (dev-log OTP, xem mục 19 + `../coding/testing.md`), đã live-test đủ cả 3 kịch bản còn
+thiếu qua hệ thống sống thật (Docker Compose + script Node/`@microsoft/signalr`), tất cả đều
+đúng như thiết kế:
+- **Ngắt mạng giữa ván (VayBat)**: ngắt kết nối RED đột ngột (`conn.stop()`, không gọi
+  `LeaveRoom`) → sau grace period 45s + 1 lần quét của `SeatTimeoutService` (~55s thực tế) →
+  phòng chuyển `Finished`, `winner: "WHITE"` đúng như `VayBatEngine.OnSeatTimedOut`. (Bang's
+  auto-end-turn/auto-fail-respond KHÔNG live-test lại — đã có `BangSeatTimeoutTests.cs` unit test
+  trực tiếp hành vi này, live-test VayBat đủ để xác nhận phần plumbing generic `SeatTimeoutService`
+  dùng chung hoạt động đúng.)
+- **Ghép trận nhanh 2 người đồng thời**: bắn 2 request `POST /api/games/quick-match` cùng lúc
+  (`curl ... & curl ... & wait`) từ 2 tài khoản khác nhau, cùng `gameKey` chưa có phòng chờ nào —
+  cả 2 đúng vào CHUNG 1 phòng (không tạo 2 phòng trùng/không double-book 1 ghế), phòng tự chuyển
+  `Playing` ngay khi đủ ghế. Khớp đúng guarantee `FOR UPDATE SKIP LOCKED` đã verify ở tầng service
+  (`RoomServiceIntegrationTests`), nay xác nhận thêm qua tầng REST controller thật.
+- **Sảnh realtime 2 tab**: tab A `SubscribeLobby` qua SignalR (không tạo phòng gì), tab B tạo
+  phòng qua REST — tab A nhận đúng sự kiện `LobbyUpdated` gần như ngay lập tức với đúng thông tin
+  phòng vừa tạo, không cần tự polling REST lại.
+
+Xem log đầy đủ: `rules/logs/2026-09-11.md` Task 22.
 
 ## Known Issues (từ đợt trước, chưa liên quan việc đang làm)
 

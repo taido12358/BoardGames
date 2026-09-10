@@ -80,7 +80,10 @@ hợp nhất cấu trúc code Platform và rebuild UI:
   reconnect; `RoomShell` dùng chung banner/leave-button giữa các game; UI tuỳ chọn tạo phòng
   chuyển ra khỏi `GameDetails.tsx` vào registry mỗi game.
 - Verify: `dotnet build`/`dotnet test` 97/97 xanh (85 cũ + 12 mới), `tsc`/`vite build` xanh.
-  **Chưa verify sống qua Docker Compose** — xem [`../tasks/current.md`](../tasks/current.md).
+  **Verify sống qua Docker Compose hoàn tất 2026-09-11** (trễ do tưởng nhầm cần nhiều tài khoản
+  Gmail thật) — ngắt mạng giữa ván, ghép trận nhanh đồng thời, sảnh realtime 2 tab đều đúng thiết
+  kế qua hệ thống sống thật. Xem [`../logs/2026-09-11.md`](../logs/2026-09-11.md) Task 22 +
+  [`../coding/testing.md`](../coding/testing.md) mục "Live-test nhiều người chơi thật".
 - **Sự cố**: agent thực thi lỡ chạy `DROP TABLE "GameRooms" CASCADE` trên database dev thật
   (không phải DB test cách ly) lúc thử migration SQL — mất 9 phòng dev thật, không backup nên
   không khôi phục được. Migration sau đó được verify đúng cách trên DB cách ly. Chi tiết:
