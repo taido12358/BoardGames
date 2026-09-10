@@ -107,10 +107,9 @@ IN_PROGRESS (vòng lặp liên tục, không có điểm "DONE" cố định —
 Tổng test hiện tại: backend 179/179 pass (`dotnet test backend/BoardGame.sln`), frontend 70/70
 pass (`npm run test` trong `frontend/`) — cả 2 đúng lệnh CI dùng; 5 test backend cần Docker.
 
-**Đã verify cả 4 commit (14/15/16/17) chạy thật trên GitHub Actions** — run
-`34518584349`/`34519404921`/`34519619027`/`34521278895` đều `completed`/`success` (gồm cả job
-`docker` build thử smoke test), không chỉ xanh cục bộ. (Commit 18 — game thứ tư — đang chờ verify
-tương tự sau khi push.)
+**Đã verify cả 5 commit (14/15/16/17/18) chạy thật trên GitHub Actions** — run
+`34518584349`/`34519404921`/`34519619027`/`34521278895`/`34523008065` đều `completed`/`success`
+(gồm cả job `docker` build thử smoke test), không chỉ xanh cục bộ.
 
 ## Việc đang làm / tiếp theo (thứ tự ưu tiên gợi ý, không bắt buộc theo đúng thứ tự)
 
