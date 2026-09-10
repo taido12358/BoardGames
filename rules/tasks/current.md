@@ -70,7 +70,15 @@ IN_PROGRESS (vòng lặp liên tục, không có điểm "DONE" cố định —
     không tồn tại (component `GameLogPanel`) — polyfill no-op thêm vào `test-setup.ts`. Xem
     `../coding/testing.md` mục "Unit test frontend (Vitest)".
 
-Tổng test hiện tại: backend 141/141 pass (`dotnet test backend/BoardGame.sln`), frontend 47/47
+15. **Test component `VayBatBoard.tsx`** (7 test) — component khó nhất để test (hình học SVG
+    thật, jsdom không triển khai `createSVGPoint`/`getScreenCTM`). Phát hiện bug hạ tầng test
+    nghiêm trọng hơn các lần trước: jsdom không có global `PointerEvent` nên
+    `fireEvent.pointerDown` mất hẳn `clientX`/`clientY`, khiến chọn quân thất bại ÂM THẦM (không
+    lỗi gì để lộ ra) — phải tự dựng `MouseEvent` kiểu `"pointerdown"` để thay thế. Xem
+    `../coding/testing.md` mục "Unit test frontend (Vitest)" bài học thứ 4. **Không còn nợ kỹ
+    thuật test component frontend** — cả 3 board game đều có test.
+
+Tổng test hiện tại: backend 141/141 pass (`dotnet test backend/BoardGame.sln`), frontend 54/54
 pass (`npm run test` trong `frontend/`) — cả 2 đúng lệnh CI dùng; 5 test backend cần Docker.
 
 ## Việc đang làm / tiếp theo (thứ tự ưu tiên gợi ý, không bắt buộc theo đúng thứ tự)
@@ -80,8 +88,7 @@ pass (`npm run test` trong `frontend/`) — cả 2 đúng lệnh CI dùng; 5 tes
   (relay/ăn quân/hết vốn), chỉ verify được bằng unit test tới giờ, chưa ai thực sự chơi thử.
   Ít nhất nên tự chơi 1 mình qua 2 tab (không test được race-condition 2-người-thật nhưng vẫn
   xác nhận được UI/luồng render/click hoạt động đúng).
-- Test component `VayBatBoard.tsx` (nợ kỹ thuật còn lại duy nhất trong mảng test component
-  frontend) — cần mock hình học SVG hoặc chuyển sang Playwright, xem `../coding/testing.md`.
+- (Đã xong 2026-09-11 — mục 15) ~~Test component `VayBatBoard.tsx`~~.
 - Cân nhắc thêm thao tác quản trị có phá huỷ (huỷ phòng treo thủ công từ `/admin`) — CHỈ làm
   nếu người dùng xác nhận cần, kèm log ai-làm-gì-lúc-nào (xem "Chủ ý CHƯA làm" ở trên).
 - Debug panel cho Bang (spec §51 trong `van-de.md`) — dev-only, đụng vào `BangRules.cs` (engine

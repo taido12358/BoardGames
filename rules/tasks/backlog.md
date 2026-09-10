@@ -264,8 +264,17 @@ tính năng ở các component đó. `VayBatBoard.tsx` khó test hơn (SVG geome
 **Đã bổ sung tiếp cùng ngày**: `BangBoard.test.tsx` (8 test, luồng bỏ bài khi vượt giới hạn tay
 bài — tính năng thêm sớm hơn cùng ngày, xem mục ngay phía trên, chưa có test tự động lúc đó).
 Phát hiện thêm 1 lỗ hổng jsdom cùng dạng `scrollTo`: `Element.prototype.scrollIntoView` không
-tồn tại (`GameLogPanel` dùng chung VayBat/Bang) — polyfill no-op thêm vào `test-setup.ts`. Còn
-lại đúng 1 nợ kỹ thuật: `VayBatBoard.tsx` (SVG geometry API jsdom không có).
+tồn tại (`GameLogPanel` dùng chung VayBat/Bang) — polyfill no-op thêm vào `test-setup.ts`.
+
+**Đã bổ sung tiếp lần nữa cùng ngày**: `VayBatBoard.test.tsx` (7 test) — trả nốt nợ kỹ thuật
+cuối cùng của mảng test component frontend. Cần mock hình học SVG (`createSVGPoint`/
+`getScreenCTM`) cục bộ trong file test (không đưa vào `test-setup.ts` vì chỉ component này
+cần). Phát hiện bug hạ tầng test nặng nhất tới giờ: jsdom không có global `PointerEvent` nên
+`fireEvent.pointerDown` mất `clientX`/`clientY`, chọn quân thất bại HOÀN TOÀN ÂM THẦM (không
+lỗi/warning gì) — phải cô lập bằng test thử nghiệm riêng mới lộ ra, khắc phục bằng cách tự dựng
+`new MouseEvent("pointerdown", {...})` thay cho `fireEvent.pointerDown`. Chi tiết đầy đủ +
+lý do kỹ thuật: `rules/coding/testing.md` mục "Unit test frontend (Vitest)" bài học thứ 4.
+Không còn nợ kỹ thuật test component frontend nào.
 
 **`npm audit`**: cài `vitest`/`jsdom` không phát sinh lỗ hổng MỚI ngoài `esbuild`/`vite` đã biết
 (vitest tự kéo theo 1 bản `vite-node` nội bộ dùng chung gốc `esbuild` cũ) — không đổi quyết định

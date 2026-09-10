@@ -73,11 +73,31 @@ thứ 3**: `Element.prototype.scrollIntoView` cũng không tồn tại trong jsd
 (component `GameLogPanel` dùng chung cho VayBat/Bang tự cuộn xuống log mới) — polyfill no-op
 thêm vào `test-setup.ts` cùng chỗ với `scrollTo`.
 
-**Còn lại chưa làm** (nợ kỹ thuật, không phải bị bỏ qua): `VayBatBoard.tsx` vẫn chỉ verify bằng
-`tsc`/build/lint + review thủ công, chưa có test tự động — làm dần khi sửa/thêm tính năng ở
-component đó. Khó test bằng RTL/jsdom hơn các component khác — dùng API hình học SVG
-(`createSVGPoint`/`getScreenCTM`/`matrixTransform`) mà jsdom không triển khai, cần mock hình học
-riêng hoặc chuyển sang Playwright (trình duyệt thật) nếu muốn test tương tác kéo-thả/click quân.
+Thêm `games/vaybat/VayBatBoard.test.tsx` (7 test) — component khó nhất trong repo để test vì
+dùng API hình học SVG thật (`createSVGPoint`/`getScreenCTM`/`matrixTransform`) mà jsdom không
+triển khai. Giải quyết bằng mock tối giản coi toạ độ client == toạ độ SVG (identity transform,
+khai báo trực tiếp trong file test này, KHÔNG đưa vào `test-setup.ts` dùng chung vì chỉ
+`VayBatBoard` cần hình học SVG). Test: chọn quân của mình rồi tap ô kề hợp lệ gửi đúng
+`{pieceId, to}`, không chọn được quân đối phương, không đi được khi chưa tới lượt, khán giả
+không chọn được quân nào, hiện đúng thông báo thắng/số lượt Đỏ đã dùng, ẩn nút CHƠI LẠI cho
+khán giả.
+
+**Bài học thứ 4 — jsdom không có `PointerEvent`**: `fireEvent.pointerDown()` của RTL rơi về
+`Event` trần khi jsdom thiếu global `PointerEvent`, mất hẳn `clientX`/`clientY` — khiến
+`toSvg()` của component tính ra `NaN` và không bao giờ khớp node nào (chọn quân luôn thất bại
+âm thầm, không throw lỗi gì để lộ ra). Phát hiện bằng cách log trực tiếp `useGameStore.getState()`
+giữa 2 bước click, rồi cô lập bằng 1 test thử nghiệm tối giản kiểm tra `event.clientX` sau
+`fireEvent.pointerDown`. Khắc phục: tự dựng `new MouseEvent("pointerdown", {clientX, clientY,
+bubbles: true})` rồi `fireEvent(el, event)` thay vì gọi `fireEvent.pointerDown` — React lắng
+nghe native event theo `type` chuỗi nên vẫn khớp đúng `onPointerDown`, chỉ mất `pointerId`
+(không ảnh hưởng vì `setPointerCapture` đã mock no-op). Riêng `setPointerCapture` cũng phải mock
+ghi đè HẲN (không chỉ polyfill khi thiếu) vì bản jsdom hiện tại có triển khai nhưng ném lỗi khi
+`pointerId` không khớp một pointer thật đang hoạt động — lỗi này chặn hẳn `setSelected()` chạy
+tiếp vì nó đứng ngay trước trong cùng nhánh code.
+
+**Nợ kỹ thuật frontend còn lại**: không còn — cả 3 board component (`OAnQuanBoard`, `BangBoard`,
+`VayBatBoard`) đều đã có test. Việc tiếp theo (nếu có) là bổ sung ca test khi tính năng mới được
+thêm, không phải một đợt phủ test riêng.
 
 ## Integration test
 
