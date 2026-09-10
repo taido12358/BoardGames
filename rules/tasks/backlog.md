@@ -108,13 +108,38 @@ có registry/secret nào cấu hình) chỉ khi push thẳng lên `master`. Trig
 nhắm `master`.
 
 **Chưa làm (có chủ đích):**
-- Không có bước "lint" riêng — frontend chưa có ESLint config/script (`package.json` chỉ có
-  `dev`/`build`/`preview`). Thêm lint là việc riêng, không lặng lẽ bỏ qua.
 - Không cache NuGet packages (không có `packages.lock.json` để làm cache key ổn định) — restore
   cục bộ từng thấy chậm/timeout tải gói (`Microsoft.CodeAnalysis.CSharp`), CI có thể gặp tương
   tự; thêm cache sau nếu CI thật sự chậm/hay fail vì restore.
 - Docker job chỉ BUILD để bắt sớm lỗi Dockerfile, KHÔNG push image lên registry nào — repo chưa
   có thông tin registry/secret. Deploy thật vẫn là thao tác thủ công theo `rules/workflow/deployment.md`.
+
+## ESLint cho frontend — ĐÃ LÀM (2026-09-11)
+
+~~Không có bước "lint" riêng — frontend chưa có ESLint config/script~~ — đã thêm
+`frontend/eslint.config.js` (flat config chuẩn Vite React-TS: `@eslint/js` + `typescript-eslint`
++ `eslint-plugin-react-hooks` + `eslint-plugin-react-refresh`), script `npm run lint`, wire vào
+CI (`.github/workflows/ci.yml`, job frontend, chạy trước `npm run build`).
+
+**Lint bắt được 1 bug thật ngay lần chạy đầu** (không phải chỉ style): `VayBatBoard.tsx` gọi 3
+`useMemo` SAU một `return null` sớm (`if (!room) return null`) — vi phạm Rules of Hooks (số hook
+gọi ra khác nhau giữa lần render `room=null` và `room` có giá trị, React sẽ crash "Rendered more
+hooks than during the previous render" nếu component này từng nhận render với `room=null` mà
+không unmount trước đó). Đã sửa: tính `map`/`state` dạng optional, gọi mọi hook KHÔNG điều kiện,
+`return null` thật sự chỉ sau khi mọi hook đã chạy — xem `rules/logs/2026-09-11.md` để biết chi
+tiết vì sao bug này chưa từng crash trong thực tế (may mắn nhờ cách `RoomRoute.tsx` unmount board
+trước khi `room` kịp về null), nhưng vẫn là vi phạm thật cần sửa.
+
+**Chưa làm (có chủ đích):** 2 warning `react-refresh/only-export-components` ở
+`GameRoomHubContext.tsx`/`RoomShell.tsx` (file export cả component lẫn hook/helper) — không sửa
+vì đây là cảnh báo trải nghiệm dev (fast refresh), không phải lỗi đúng/sai; tách file chỉ để hết
+warning này sẽ phá cấu trúc "mọi thứ dùng chung 1 phòng nằm 1 chỗ" đã chọn có chủ đích trước đó.
+
+**`npm audit`:** lúc cài devDependencies mới phát hiện 8 lỗ hổng có sẵn từ trước (không phải do
+lint gây ra) — chạy `npm audit fix` (không `--force`) xử lý được 4 (baseline-browser-mapping,
+browserslist, nanoid, postcss). Còn lại 2 gói cần bump major (`vite` → 8, `react-router-dom` → 7)
+mới hết — CHƯA làm vì đây là breaking change cần test riêng, không gộp vào cùng commit lint; ghi
+làm việc riêng bên dưới.
 
 ## Test — ĐÃ LÀM (2026-09-10, đợt 2)
 
@@ -129,3 +154,16 @@ code review thường). Tổng test backend: 118/118 pass.
 thắng/thua, khởi tạo state) giờ có `VayBat/VayBatRulesTests.cs` (17 test) — trước đó
 `VayBatEngineTests.cs` (2026-09-05) mới chỉ phủ `SideForSeat`/`OnSeatTimedOut` (lớp adapter),
 chưa test luật lõi. Tổng test backend: 114/114 pass.
+
+## Nâng cấp dependency frontend có breaking change — chưa làm
+
+`npm audit` (2026-09-11) còn 2 lỗ hổng cần bump major version mới hết:
+- `vite` 5.x → 8.x (kéo theo `esbuild` mới) — Vite 6/7/8 đổi khá nhiều (Rolldown, Node version tối
+  thiểu, plugin API); cần đọc changelog + test lại `npm run dev`/`npm run build` kỹ trước khi đổi.
+- `react-router-dom` 6.x → 7.x — đổi API đáng kể (data router, loader/action…); dự án hiện chỉ
+  dùng `<BrowserRouter>`/`<Routes>`/`<Route>`/`useNavigate`/`useParams`/`<Link>` cơ bản nên có thể
+  không bị ảnh hưởng nhiều, nhưng vẫn cần test lại toàn bộ routing (`/games`, `/games/:gameKey`,
+  `/games/:gameKey/room/:roomId`, `/admin`, redirect `*` → `/games`) sau khi nâng.
+
+Không làm gộp vào việc thêm ESLint (2026-09-11) vì đây là thay đổi runtime/behavior thật, cần
+verify riêng — không phải chỉ thêm tool dev-time như ESLint.

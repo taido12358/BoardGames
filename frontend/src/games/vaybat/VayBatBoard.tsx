@@ -19,23 +19,27 @@ export default function VayBatBoard({ makeMove, onLeave, onRematch, rematching }
   const pressRef = useRef<DragState | null>(null);
   const didDrag = useRef(false);
 
-  if (!room) return null;
-
-  const map = room.map as MapDef;
-  const state = room.state as GameState;
-  const myTurn = room.status === "Playing" && !state.winner && state.turn === mySide;
+  // Mọi hook phải gọi KHÔNG điều kiện (Rules of Hooks) — không được return sớm trước các
+  // useMemo bên dưới rồi mới gọi chúng, nếu không React sẽ thấy số hook khác nhau giữa các lần
+  // render khi `room` chuyển null <-> có giá trị. Vì vậy tính map/state dạng optional trước,
+  // return null thật sự chỉ SAU khi mọi hook đã chạy xong.
+  const map = room?.map as MapDef | undefined;
+  const state = room?.state as GameState | undefined;
+  const myTurn = !!room && room.status === "Playing" && !state?.winner && state?.turn === mySide;
 
   // Tính lại khi state/selected thay đổi, không tính lại khi chỉ drag thay đổi
-  const occ = useMemo(() => occupancy(state), [state]);
+  const occ = useMemo(() => (state ? occupancy(state) : new Map<number, string>()), [state]);
   const highlights = useMemo(
-    () => selected && myTurn ? new Set(legalMoves(map, state, selected)) : new Set<number>(),
+    () => (map && state && selected && myTurn ? new Set(legalMoves(map, state, selected)) : new Set<number>()),
     [selected, myTurn, map, state]
   );
   // Lookup O(1) thay vì O(N) linear scan trong mỗi edge render
   const nodeById = useMemo(
-    () => new Map(map.nodes.map(n => [n.id, n])),
+    () => new Map((map?.nodes ?? []).map(n => [n.id, n])),
     [map]
   );
+
+  if (!room || !map || !state) return null;
 
   function toSvg(clientX: number, clientY: number) {
     const svg = svgRef.current!;
@@ -47,7 +51,7 @@ export default function VayBatBoard({ makeMove, onLeave, onRematch, rematching }
 
   function nearestNode(x: number, y: number, threshold = 35) {
     let best: number | null = null, bestDist = threshold;
-    for (const n of map.nodes) {
+    for (const n of map!.nodes) {
       const d = Math.hypot(n.x - x, n.y - y);
       if (d < bestDist) { bestDist = d; best = n.id; }
     }
@@ -98,7 +102,7 @@ export default function VayBatBoard({ makeMove, onLeave, onRematch, rematching }
     if (didDrag.current && press) {
       const pos = toSvg(e.clientX, e.clientY);
       let best: number | null = null, bestDist = 40;
-      for (const n of map.nodes) {
+      for (const n of map!.nodes) {
         if (!highlights.has(n.id)) continue;
         const d = Math.hypot(n.x - pos.x, n.y - pos.y);
         if (d < bestDist) { bestDist = d; best = n.id; }

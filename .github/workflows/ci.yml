@@ -2,10 +2,8 @@ name: CI
 
 # Pipeline toi thieu mo ta trong rules/workflow/deployment.md:
 #   1. dotnet build + dotnet test
-#   2. frontend: npm ci -> type-check (tsc --noEmit) -> build
+#   2. frontend: npm ci -> lint -> type-check (tsc --noEmit) -> build
 #   3. build Docker image (chi tren branch chinh / tag)
-# Khong co buoc "lint" rieng vi frontend chua co ESLint config/script (package.json chi co
-# dev/build/preview) - xem rules/tasks/backlog.md muc "Viec ky thuat chua lam".
 
 on:
   push:
@@ -30,7 +28,7 @@ jobs:
         run: dotnet test backend/BoardGame.sln --no-build --configuration Release --logger "console;verbosity=normal"
 
   frontend:
-    name: Frontend type-check + build
+    name: Frontend lint + type-check + build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -41,6 +39,9 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
       - name: Install
         run: npm ci
+        working-directory: frontend
+      - name: Lint
+        run: npm run lint
         working-directory: frontend
       - name: Build (tsc --noEmit + vite build)
         run: npm run build

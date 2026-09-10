@@ -28,7 +28,12 @@ IN_PROGRESS (vòng lặp liên tục, không có điểm "DONE" cố định —
 **2026-09-11:**
 8. CI/CD tối thiểu (`.github/workflows/ci.yml`) — build+test backend/frontend mọi push/PR vào
    `master`, build thử Docker image (không push) khi push thẳng `master`. Xem backlog mục
-   "CI/CD — ĐÃ LÀM bản tối thiểu".
+   "CI/CD — ĐÃ LÀM bản tối thiểu". **Đã verify chạy thật trên GitHub Actions** (không chỉ local) —
+   run đầu tiên `success`.
+9. ESLint cho frontend (`eslint.config.js` + `npm run lint`, wire vào CI) — bắt được 1 bug Rules
+   of Hooks THẬT trong `VayBatBoard.tsx` ngay lần chạy đầu (đã sửa). `npm audit fix` xử lý 4/6 lỗ
+   hổng dev dependency có sẵn; còn `vite`/`react-router-dom` cần bump major, để riêng (xem backlog
+   mục "Nâng cấp dependency frontend có breaking change").
 
 Tổng test backend hiện tại: 118/118 pass (chạy qua `dotnet test backend/BoardGame.sln`, đúng lệnh CI dùng).
 
