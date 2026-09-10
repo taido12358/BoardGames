@@ -82,7 +82,16 @@ IN_PROGRESS (vòng lặp liên tục, không có điểm "DONE" cố định —
     ~/.nuget/packages`, key = hash mọi `*.csproj`), không cần `packages.lock.json` như dự tính
     ban đầu (xem backlog mục "CI/CD"). Job frontend đã có cache npm sẵn từ đầu.
 
-Tổng test hiện tại: backend 141/141 pass (`dotnet test backend/BoardGame.sln`), frontend 54/54
+17. **Test riêng cho `GameMapper`** (`Platform/GameMapperTests.cs`, 11 test) — logic thuần
+    (`MySideOf`/`ToDto`/`ToSummaryDto`/`SeatDtosOf`) tính `MySide`/`IsMine` theo caller, trước đó
+    chỉ được exercise gián tiếp qua `RoomServiceIntegrationTests`, chưa có test trực tiếp dù đây
+    là nơi quyết định đúng ghế/quyền hiển thị cho đúng người xem (`GameHub.BroadcastRoomStateAsync`
+    dùng `MySideOf` để redact state — sai ở đây có thể lộ thông tin ẩn sai người). Test dùng lại
+    engine thật (`VayBatEngine`/`BangEngine`) thay vì fake, đúng pattern
+    `RoomServiceIntegrationTests` đã dùng. Gồm cả 2 test phòng thủ dữ liệu hỏng (`SeatsJson`
+    rỗng/không parse được → trả ghế trống thay vì throw, xem `SeatCodec`).
+
+Tổng test hiện tại: backend 152/152 pass (`dotnet test backend/BoardGame.sln`), frontend 54/54
 pass (`npm run test` trong `frontend/`) — cả 2 đúng lệnh CI dùng; 5 test backend cần Docker.
 
 **Đã verify cả 3 commit (14/15/16) chạy thật trên GitHub Actions** — run
