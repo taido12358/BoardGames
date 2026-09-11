@@ -322,7 +322,17 @@ hiện được sau khi chủ động `docker compose down` + chạy lại ĐÚN
     nối được trong môi trường phiên này — chỉ verify bằng test logic + review code, CHƯA xác nhận
     trực quan. Ghi rõ trong backlog để làm tiếp khi có Chrome khả dụng.
 
-Tổng test hiện tại: backend 220/220 pass (`dotnet test backend/BoardGame.sln`), frontend 201/201
+38. **Test `useGameRoomHub.ts`/`useLobbyHub.ts`** (17 test mới) — 2 hook SignalR trước đó chưa có
+    test tự động (mock `@microsoft/signalr` qua `vi.mock` + `vi.hoisted()` để bắt handler đăng ký
+    qua `.on()`/`.onreconnected()` rồi tự gọi lại trong test, không cần server thật). Verify wiring
+    6 sự kiện hub → gameStore, logic reconnect (tự JoinRoom lại phòng cũ HOẶC SubscribeLobby tuỳ
+    đang ở đâu — đúng logic dễ sai đã ghi chú sẵn trong code), và các action gửi invoke.
+
+**Người dùng yêu cầu dừng (2026-09-11)** — dừng vòng lặp `/goal` tại đây. `npm run test`: 218/218
+pass (201 cũ + 17 mới), lint/build sạch. Đã commit + push lên `master`, CHƯA verify CI cho commit
+cuối (dừng trước khi kịp poll).
+
+Tổng test hiện tại: backend 220/220 pass (`dotnet test backend/BoardGame.sln`), frontend 218/218
 pass (`npm run test` trong `frontend/`) — cả 2 đúng lệnh CI dùng; 5+16+13+2=36 test backend cần Docker.
 
 **Đã verify cả 17 commit (14-33) chạy thật trên GitHub Actions** — run
