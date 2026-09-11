@@ -336,7 +336,8 @@ thường; `d6b4950`/`f98086d` (test HTTP tích hợp mới) xanh; `d7c4d913` (t
 `9146ebc` (lần sửa đầu, sai nguyên nhân) đều ĐỎ trên Actions — xem sự cố đầy đủ +
 nguyên nhân thật + cách chẩn đoán trong `rules/coding/testing.md` mục "Sự cố CI thật + bài học
 chẩn đoán". `8701989` (sửa đúng nguyên nhân: `MinioStorageService` trả rỗng thay vì throw khi mất
-kết nối) đã verify `completed`/`success` trên Actions — master xanh trở lại.
+kết nối) đã verify `completed`/`success` trên Actions — master xanh trở lại. `7239b77` (ghi log)
+và `df61a9b` (animation rung mất máu, mục 37) cũng đã verify `completed`/`success`.
 
 **Kết quả 2 đợt audit tĩnh bổ sung (không tìm thấy vấn đề mới)**: rà `key={index}` trong
 `.map()` toàn frontend — hầu hết là false positive (mảng tĩnh không đổi thứ tự, hoặc biến vòng
