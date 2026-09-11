@@ -30,6 +30,23 @@ lại đúng kịch bản VayBat "ngắt kết nối đột ngột" đã phát h
 seats/winner/moves thật. Chưa live-test riêng cho đường debug panel (Bang cần 4 tài khoản, cùng
 code path/cùng mức tin cậy nên không lặp lại thiết lập).
 
+## Animation Bang! (van-de.md §46) — bắt đầu 1 hiệu ứng nhỏ (2026-09-11), còn nhiều mục chưa làm
+
+Audit spec gốc (`van-de.md` §46) liệt kê nhiều animation mong muốn: muzzle-flash lúc bắn BANG!,
+rung/giảm tim khi mất máu, bài rút từ deck bay ra, hiệu ứng trang bị vũ khí — trước 2026-09-11 dự
+án gần như KHÔNG CÓ animation nào ngoài 1 hiệu ứng hover CSS chung
+(`transition-all duration-150` trên vài component). Đã làm 1 mục nhỏ nhất/rẻ nhất: **rung khi mất
+máu** — hook dùng chung `useDamageShake(hp)` (`frontend/src/games/bang/useDamageShake.ts`, 5 test)
++ class CSS `.animate-shake` (`@keyframes shake` trong `index.css`), áp vào `PlayerSeat.tsx`
+(người khác) và `LocalPlayerPanel.tsx` (chính mình). **CHƯA live-test qua trình duyệt thật** —
+Chrome extension không kết nối được trong môi trường phiên này (`tabs_context_mcp` báo "Browser
+extension is not connected"), chỉ verify được bằng test logic (hook bật/tắt đúng theo hp) + review
+code, KHÔNG xác nhận trực quan animation CSS thật sự chạy mượt/đúng như mong đợi trên trình duyệt.
+Nên live-test qua Chrome khi có dịp trước khi coi là hoàn thiện.
+
+Còn lại CHƯA làm: muzzle-flash BANG!, animation rút bài/bài bay ra khỏi deck, hiệu ứng trang bị vũ
+khí, animation bàn thắng/thua. Layout mobile riêng (§45) cũng vẫn CHƯA làm — xem chú thích riêng.
+
 ## Replay — chỉ xem danh sách nước đi, chưa dựng lại bàn cờ animate (ghi chú từ lúc làm, 2026-09-11)
 
 `GameReplayPage.tsx` (xem `rules/tasks/current.md` mục 35) chỉ hiện tóm tắt + danh sách nước đi

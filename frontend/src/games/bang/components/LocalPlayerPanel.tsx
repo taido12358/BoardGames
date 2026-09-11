@@ -1,4 +1,5 @@
 import type { BangPublicPlayer, BangYourView } from "../types";
+import { useDamageShake } from "../useDamageShake";
 
 interface Props {
   me: BangPublicPlayer;
@@ -8,9 +9,12 @@ interface Props {
 /** Thông tin của CHÍNH người chơi — luôn ở dưới cùng màn hình (xem BangBoard). */
 export default function LocalPlayerPanel({ me, you }: Props) {
   const hearts = Array.from({ length: me.maxHp }, (_, i) => i < me.hp);
+  const shaking = useDamageShake(me.hp);
 
   return (
-    <div className="rounded-xl border-2 border-amber-600/60 bg-gradient-to-b from-[#2b2013] to-[#1c150c] p-3">
+    <div
+      className={`rounded-xl border-2 border-amber-600/60 bg-gradient-to-b from-[#2b2013] to-[#1c150c] p-3 ${shaking ? "animate-shake" : ""}`}
+    >
       <div className="flex items-center justify-between">
         <div>
           <div className="text-xs text-amber-300/80 uppercase tracking-wide">Bạn</div>

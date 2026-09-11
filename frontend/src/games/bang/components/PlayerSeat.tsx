@@ -1,4 +1,5 @@
 import { ROLE_ICON, type BangPublicPlayer } from "../types";
+import { useDamageShake } from "../useDamageShake";
 
 interface Props {
   player: BangPublicPlayer;
@@ -12,6 +13,7 @@ interface Props {
 /** HUD của MỘT người chơi quanh bàn — không bao giờ lộ mặt bài của họ, chỉ số lượng. */
 export default function PlayerSeat({ player, isCurrentTurn, isMe, targetable, targeting, onClick }: Props) {
   const hearts = Array.from({ length: player.maxHp }, (_, i) => i < player.hp);
+  const shaking = useDamageShake(player.hp);
 
   return (
     <button
@@ -23,6 +25,7 @@ export default function PlayerSeat({ player, isCurrentTurn, isMe, targetable, ta
         ${isCurrentTurn ? "border-amber-400 shadow-[0_0_12px_rgba(251,191,36,0.5)]" : "border-[#4a3620]"}
         ${targeting && !targetable ? "opacity-35" : ""}
         ${targetable ? "cursor-pointer ring-2 ring-amber-300 hover:ring-amber-200" : "cursor-default"}
+        ${shaking ? "animate-shake" : ""}
       `}
     >
       <div className="flex items-center justify-between gap-1">

@@ -316,7 +316,13 @@ hiện được sau khi chủ động `docker compose down` + chạy lại ĐÚN
 (`--configuration Release`). Xem chi tiết đầy đủ + bài học chẩn đoán trong
 `rules/coding/testing.md` mục "Sự cố CI thật + bài học chẩn đoán".
 
-Tổng test hiện tại: backend 220/220 pass (`dotnet test backend/BoardGame.sln`), frontend 196/196
+37. **Animation đầu tiên cho Bang! — rung khi mất máu** (§46, xem `rules/tasks/backlog.md` mục
+    cùng tên) — hook dùng chung `useDamageShake(hp)` (5 test) + `.animate-shake` CSS, áp vào
+    `PlayerSeat.tsx`/`LocalPlayerPanel.tsx`. Định live-test qua Chrome nhưng extension không kết
+    nối được trong môi trường phiên này — chỉ verify bằng test logic + review code, CHƯA xác nhận
+    trực quan. Ghi rõ trong backlog để làm tiếp khi có Chrome khả dụng.
+
+Tổng test hiện tại: backend 220/220 pass (`dotnet test backend/BoardGame.sln`), frontend 201/201
 pass (`npm run test` trong `frontend/`) — cả 2 đúng lệnh CI dùng; 5+16+13+2=36 test backend cần Docker.
 
 **Đã verify cả 17 commit (14-33) chạy thật trên GitHub Actions** — run
