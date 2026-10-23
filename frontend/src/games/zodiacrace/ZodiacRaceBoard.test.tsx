@@ -48,7 +48,7 @@ describe("ZodiacRaceBoard — phòng chờ", () => {
     setRoom(makeState({ started: false, positions: [], cratesCollected: [] }), null, "Waiting");
     render(<ZodiacRaceBoard makeMove={vi.fn()} onLeave={vi.fn()} onRematch={vi.fn()} rematching={false} />);
 
-    expect(screen.getByText(/ĐANG CHỜ/)).toBeInTheDocument();
+    expect(screen.getByText(/ĐUA XE HOÀNG ĐẠO/)).toBeInTheDocument();
   });
 });
 
