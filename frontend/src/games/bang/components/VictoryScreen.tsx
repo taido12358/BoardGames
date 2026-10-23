@@ -66,13 +66,13 @@ export default function VictoryScreen({ state, onLeave, onRematch, rematching }:
         {/* Player lists */}
         <div className="grid grid-cols-2 gap-3 text-left text-sm">
           <div>
-            <div className="text-emerald-400 text-xs font-bold mb-1.5 uppercase tracking-wide">✅ Còn sống</div>
+            <div className="text-amber-400 text-xs font-bold mb-1.5 uppercase tracking-wide">✅ Còn sống</div>
             {alive.length === 0
-              ? <div className="text-slate-600 text-xs">—</div>
+              ? <div className="text-amber-900/40 text-xs">—</div>
               : alive.map((p) => (
-                <div key={p.id} className="text-slate-200 text-xs py-0.5">
+                <div key={p.id} className="text-amber-200 text-xs py-0.5">
                   {p.name}
-                  <span className="text-slate-500 ml-1">({p.publicRole})</span>
+                  <span className="text-amber-700/60 ml-1">({p.publicRole})</span>
                 </div>
               ))
             }
@@ -80,18 +80,18 @@ export default function VictoryScreen({ state, onLeave, onRematch, rematching }:
           <div>
             <div className="text-red-400 text-xs font-bold mb-1.5 uppercase tracking-wide">💀 Bị loại</div>
             {dead.length === 0
-              ? <div className="text-slate-600 text-xs">—</div>
+              ? <div className="text-amber-900/40 text-xs">—</div>
               : dead.map((p) => (
-                <div key={p.id} className="text-slate-400 text-xs py-0.5">
+                <div key={p.id} className="text-amber-700/50 text-xs py-0.5">
                   {p.name}
-                  <span className="text-slate-600 ml-1">({p.publicRole})</span>
+                  <span className="text-amber-900/60 ml-1">({p.publicRole})</span>
                 </div>
               ))
             }
           </div>
         </div>
 
-        <div className="text-[10px] text-slate-600 font-mono">
+        <div className="text-[10px] text-amber-900/60 font-mono">
           {state.turnNumber} lượt
         </div>
 
@@ -100,7 +100,7 @@ export default function VictoryScreen({ state, onLeave, onRematch, rematching }:
           {onRematch && <RematchButton onRematch={onRematch} loading={rematching} />}
           <button
             onClick={onLeave}
-            className="w-full rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 px-4 py-2.5 font-semibold text-sm text-slate-300 hover:text-white transition-colors"
+            className="w-full rounded-xl border border-amber-950/80 bg-[#140e0b]/90 px-4 py-2.5 text-sm font-semibold uppercase tracking-wide text-amber-700/70 shadow-[inset_0_1px_3px_rgba(0,0,0,0.6)] hover:border-amber-700/60 hover:bg-[#1a120d] hover:text-amber-400 transition-all"
           >
             VỀ PHÒNG CHỜ
           </button>
