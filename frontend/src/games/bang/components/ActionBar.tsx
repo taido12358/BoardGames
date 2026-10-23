@@ -76,7 +76,7 @@ export default function ActionBar({
         <button
           onClick={onEndTurn}
           disabled={!canEndTurn}
-          className={`${btnBase} bg-amber-700 hover:bg-amber-600 active:bg-amber-800 border-amber-500 text-white disabled:opacity-40 disabled:cursor-not-allowed shadow-sm`}
+          className="relative shrink-0 rounded-lg bg-gradient-to-b from-amber-600 via-amber-700 to-amber-800 px-3 py-1.5 text-sm font-semibold text-amber-50 border-t border-amber-400/50 shadow-[0_3px_0_0_#451a03,0_6px_12px_rgba(0,0,0,0.4)] transition-all hover:brightness-110 active:top-[2px] active:shadow-[0_1px_0_0_#451a03] disabled:opacity-40 disabled:cursor-not-allowed"
         >
           KẾT THÚC LƯỢT
         </button>
