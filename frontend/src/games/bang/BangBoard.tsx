@@ -11,7 +11,7 @@ import CardView from "./components/CardView";
 import BangDebugPanel from "./components/BangDebugPanel";
 import { useMuzzleFlash } from "./useMuzzleFlash";
 import {
-  awaitingMyResponse, isMyTurn, myPlayer,
+  awaitingMyResponse, isMyTurn, myPlayer, CARD_DISPLAY,
   type BangMove, type BangPublicPlayer, type BangViewerState, type Card, type CardKind,
 } from "./types";
 
@@ -84,7 +84,7 @@ export default function BangBoard({ makeMove, onLeave, onRematch, rematching }: 
     return (
       <div className="flex flex-col gap-3 w-full max-w-md mx-auto">
         <ConnectionBanner connectionState={connectionState} />
-        <div className="relative overflow-hidden rounded-2xl border border-amber-500/20 bg-stone-900/80 p-1 shadow-2xl">
+        <div className="relative overflow-hidden rounded-2xl border border-amber-500/20 bg-[#1a1208]/80 p-1 shadow-2xl">
           <div className="pointer-events-none absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-amber-400/40 to-transparent" />
           <div className="rounded-xl border border-amber-500/30 bg-gradient-to-b from-[#2b2013] to-[#1a1208] p-6 text-center">
             <div className="text-4xl mb-2">🤠</div>
@@ -106,8 +106,8 @@ export default function BangBoard({ makeMove, onLeave, onRematch, rematching }: 
               ))}
             </div>
 
-            <p className="text-amber-200/80 text-sm mb-3">
-              <span className="font-bold text-amber-300">{joined}</span>
+            <p className="text-[#d4b996]/80 text-sm mb-3">
+              <span className="font-bold text-[#e8c07e]">{joined}</span>
               <span className="text-amber-400/50">/{room.seatCount}</span>
               {" "}người chơi
             </p>
@@ -118,7 +118,7 @@ export default function BangBoard({ makeMove, onLeave, onRematch, rematching }: 
                   <div key={i} className="relative overflow-hidden flex flex-col items-center rounded-xl border border-amber-600/50 bg-gradient-to-b from-[#251810] to-[#140d08] p-2.5 shadow-[0_4px_12px_rgba(0,0,0,0.7),inset_0_1px_0_rgba(245,158,11,0.25)]">
                     <div className="pointer-events-none absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-amber-400/40 to-transparent" />
                     <div className="h-10 w-10 rounded-full border-2 border-amber-500/80 bg-amber-950/60 flex items-center justify-center text-lg shadow-[0_0_10px_rgba(245,158,11,0.3)]">🤠</div>
-                    <span className="mt-1.5 text-[11px] font-bold text-amber-200 truncate max-w-full [text-shadow:0_1px_2px_rgba(0,0,0,0.8)]">{seat.displayName}</span>
+                    <span className="mt-1.5 text-[11px] font-bold text-[#f5d09d] truncate max-w-full [text-shadow:0_1px_2px_rgba(0,0,0,0.8)]">{seat.displayName}</span>
                     <span className="text-[9px] uppercase tracking-wider text-amber-600/80">Sẵn sàng</span>
                   </div>
                 ) : (
@@ -153,7 +153,7 @@ export default function BangBoard({ makeMove, onLeave, onRematch, rematching }: 
 
   function canPlayCard(card: Card): boolean {
     if (!me?.alive || connectionState !== "connected") return false;
-    if (discarding) return true;
+    if (discarding) return discardIds.includes(card.id) || discardIds.length < discardOverflow;
     if (awaitingResp && state.pendingResponse)
       return allowedResponseKinds(state.pendingResponse.kind, isCalamity).includes(card.kind);
     if (!myTurn || !playableInActionPhase(card.kind, isCalamity)) return false;
@@ -213,7 +213,7 @@ export default function BangBoard({ makeMove, onLeave, onRematch, rematching }: 
   }
 
   function handleSeatClick(target: BangPublicPlayer) {
-    if (!selectedCard || !myTurn || !isValidTarget(selectedCard.kind, target, target.id === me?.id)) return;
+    if (!selectedCard || !myTurn || !canPlayCard(selectedCard) || !isValidTarget(selectedCard.kind, target, target.id === me?.id)) return;
     send({ type: "PLAY_CARD", cardId: selectedCard.id, targetPlayerId: target.id });
     setSelectedCardId(null);
   }
@@ -221,7 +221,14 @@ export default function BangBoard({ makeMove, onLeave, onRematch, rematching }: 
   const opponents = state.players.filter((p) => p.id !== me?.id);
 
   return (
-    <div className="relative flex flex-col gap-3 w-full max-w-2xl mx-auto">
+    <div className="relative flex flex-col gap-3 w-full max-w-2xl mx-auto"
+      onKeyDown={(event) => {
+        if (event.key !== "Escape" || event.nativeEvent.isComposing) return;
+        if (!discarding && !selectedCardId) return;
+        event.preventDefault();
+        setSelectedCardId(null);
+        handleCancelDiscard();
+      }}>
       {muzzleFlash && (
         <div
           aria-hidden="true"
@@ -354,11 +361,14 @@ export default function BangBoard({ makeMove, onLeave, onRematch, rematching }: 
             myTurn={myTurn}
             awaitingResponse={awaitingResp}
             selectingTarget={selectingTarget}
+            targetCardName={selectedCard ? CARD_DISPLAY[selectedCard.kind].name : undefined}
+            targetCount={selectedCard ? opponents.filter((p) => isValidTarget(selectedCard.kind, p, false)).length : 0}
             canEndTurn={myTurn && connectionState === "connected" && me.alive}
             onEndTurn={handleEndTurnClick}
             onRespondPass={() => send({ type: "RESPOND" })}
             onCancelTarget={() => setSelectedCardId(null)}
             hasBarrel={(state.pendingResponse?.kind === "bang" || state.pendingResponse?.kind === "gatling") && me.equipment.includes("Thùng rượu")}
+            hasDefenseCard={you.hand.some((card) => state.pendingResponse && allowedResponseKinds(state.pendingResponse.kind, isCalamity).includes(card.kind))}
             responseKind={state.pendingResponse?.kind}
             isCalamity={isCalamity}
             waitingFor={state.pendingResponse
