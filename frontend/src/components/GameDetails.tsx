@@ -197,10 +197,9 @@ export default function GameDetails() {
               { icon: "🎯", label: "Độ khó", value: metadata.difficulty },
               { icon: "🏆", label: "Thể loại", value: metadata.category.join(" / ") || "—" },
             ].map(({ icon, label, value }) => (
-              <div key={label} className="relative overflow-hidden rounded-lg border border-amber-800/40 bg-gradient-to-b from-[#1c130d] to-[#120b07] p-3 shadow-[inset_0_1px_0_rgba(245,158,11,0.15),0_4px_12px_rgba(0,0,0,0.6)]">
-                <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-amber-500/30 to-transparent" />
-                <div className="text-[10px] font-bold uppercase tracking-widest text-amber-700/90 [text-shadow:0_1px_0_rgba(255,255,255,0.05)]">{icon} {label}</div>
-                <div className="mt-0.5 font-semibold text-amber-200 truncate [text-shadow:0_1px_2px_rgba(0,0,0,0.9),0_0_8px_rgba(245,158,11,0.2)]">{value}</div>
+              <div key={label} className="p-3 bg-gradient-to-b from-[#26170d] to-[#170e08] border border-[#6f4520]/50 rounded-sm shadow-[inset_0_1px_2px_rgba(0,0,0,0.7)] flex flex-col justify-between">
+                <div className="flex items-center gap-1 text-[11px] font-serif font-semibold uppercase tracking-wider text-[#c99a5e]"><span>{icon}</span><span>{label}</span></div>
+                <div className="mt-1 text-sm font-bold text-[#fcebd6] tracking-wide truncate">{value}</div>
               </div>
             ))}
           </div>

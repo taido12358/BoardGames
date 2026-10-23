@@ -22,8 +22,11 @@ export interface AdminStats {
 interface AdminStore {
   /** null = chưa kiểm tra xong (đừng vội hiện/ẩn mục "Quản trị"). */
   isAdmin: boolean | null;
+  accessError: string;
   rooms: AdminRoomRow[];
   stats: AdminStats | null;
+  statsLoading: boolean;
+  statsError: string;
   loading: boolean;
   error: string;
 
@@ -36,21 +39,26 @@ async function api(path: string): Promise<Response> {
   return fetch(`/api/admin/${path}`, { credentials: "include" });
 }
 
-export const useAdminStore = create<AdminStore>((set) => ({
+export const useAdminStore = create<AdminStore>((set, get) => ({
   isAdmin: null,
+  accessError: "",
   rooms: [],
   stats: null,
+  statsLoading: false,
+  statsError: "",
   loading: false,
   error: "",
 
   checkAdmin: async () => {
+    set({ isAdmin: null, accessError: "" });
     try {
       const res = await api("check");
-      if (!res.ok) { set({ isAdmin: false }); return; }
+      if (res.status === 401 || res.status === 403) { set({ isAdmin: false }); return; }
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const body = (await res.json()) as { isAdmin: boolean };
       set({ isAdmin: body.isAdmin });
     } catch {
-      set({ isAdmin: false });
+      set({ isAdmin: false, accessError: "Chưa kiểm tra được quyền truy cập. Kiểm tra kết nối rồi thử lại." });
     }
   },
 
@@ -77,13 +85,17 @@ export const useAdminStore = create<AdminStore>((set) => ({
   },
 
   fetchStats: async () => {
+    if (get().statsLoading) return;
+    set({ statsLoading: true, statsError: "" });
     try {
       const res = await api("stats");
-      if (!res.ok) return;
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const stats = (await res.json()) as AdminStats;
       set({ stats });
     } catch {
-      /* thống kê chỉ là phụ trợ — im lặng bỏ qua nếu lỗi, không chặn trang */
+      set({ statsError: "Chưa cập nhật được thống kê. Số liệu trước đó có thể đã cũ." });
+    } finally {
+      set({ statsLoading: false });
     }
   },
 }));

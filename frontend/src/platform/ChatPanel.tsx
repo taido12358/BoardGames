@@ -1,14 +1,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { useGameStore } from "./gameStore";
 import { useGameRoomHubActions } from "./GameRoomHubContext";
-
-function formatTime(iso: string): string {
-  try {
-    return new Date(iso).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
-  } catch {
-    return "";
-  }
-}
+import { formatTimestamp } from "./formatTimestamp";
 
 /**
  * Chat trong phòng — GENERIC cho mọi game (Platform, không phải riêng VayBat/Bang). Mount MỘT
@@ -89,9 +82,9 @@ export default function ChatPanel({ roomId }: { roomId: string }) {
             )}
             {chatMessages.map((m, i) => (
               <div key={i} className="text-sm">
-                <span className="text-amber-300 font-medium">{m.displayName}</span>{" "}
-                <span className="text-amber-700/50 text-xs">{formatTime(m.sentAt)}</span>
-                <div className="text-amber-100/80 break-words">{m.text}</div>
+                <span className="text-[#e8c07e] font-medium">{m.displayName}</span>{" "}
+                <span className="text-amber-700/50 text-xs">{formatTimestamp(m.sentAt, { hour: "2-digit", minute: "2-digit" })}</span>
+                <div className="text-[#d4b996]/80 break-words">{m.text}</div>
               </div>
             ))}
           </div>

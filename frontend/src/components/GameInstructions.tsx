@@ -23,7 +23,7 @@ function FlowSection({ steps }: { steps: string[] }) {
     <div className="flex flex-col items-center gap-1.5 py-2">
       {steps.map((step, i) => (
         <div key={i} className="flex flex-col items-center gap-1.5">
-          <div className="rounded-xl border border-amber-700/50 bg-amber-950/30 px-4 py-2 text-sm font-semibold text-amber-200 text-center">
+          <div className="rounded-xl border border-amber-700/50 bg-amber-950/30 px-4 py-2 text-sm font-semibold text-[#d4b996] text-center">
             {step}
           </div>
           {i < steps.length - 1 && <span className="text-amber-600/70 text-lg leading-none">↓</span>}
@@ -71,7 +71,7 @@ function CardEntry({ card }: { card: CardGuideEntry }) {
       className="text-left rounded-xl border border-[#7a5c2e]/60 bg-gradient-to-b from-[#2b2013] to-[#1c150c] p-3 hover:border-amber-500/60 transition-colors"
     >
       <div className="text-2xl text-center">{card.icon}</div>
-      <div className="text-sm font-bold text-amber-100 text-center mt-1">{card.name}</div>
+      <div className="text-sm font-bold text-[#f5d09d] text-center mt-1">{card.name}</div>
       <div className="text-[10px] text-amber-300/60 text-center uppercase tracking-wide">{card.type}</div>
       {open && (
         <div className="mt-2 pt-2 border-t border-amber-900/40 space-y-1">
@@ -150,7 +150,7 @@ export default function GameInstructions({ sections }: Props) {
 
   return (
     <div>
-      <div role="tablist" aria-label="Mục hướng dẫn" className="flex flex-wrap gap-1 rounded-lg border border-amber-950/80 bg-[#100a07] p-1.5 mb-4 shadow-[inset_0_2px_5px_rgba(0,0,0,0.8)]">
+      <div role="tablist" aria-label="Mục hướng dẫn" className="flex flex-wrap gap-1 p-1.5 bg-[#1b110a] border border-[#5a3818]/70 rounded-md shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)] mb-4 overflow-x-auto">
         {sections.map((s) => (
           <button
             key={s.id}
@@ -174,10 +174,10 @@ export default function GameInstructions({ sections }: Props) {
               setActive(sections[next].id);
               tabs.current[sections[next].id]?.focus();
             }}
-            className={`rounded-lg px-3 py-2.5 text-xs font-semibold uppercase tracking-wide transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-300 ${
+            className={`rounded-sm px-4 py-2 text-xs uppercase tracking-wider transition-all whitespace-nowrap focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-300 ${
               s.id === section.id
-                ? "relative border-t border-amber-400/40 bg-gradient-to-b from-amber-700/80 via-amber-800 to-amber-950 text-amber-100 shadow-[0_2px_6px_rgba(0,0,0,0.6),0_0_12px_rgba(217,119,6,0.25)]"
-                : "text-amber-700/70 hover:bg-amber-950/40 hover:text-amber-400 active:scale-95"
+                ? "font-extrabold text-[#241105] bg-gradient-to-b from-[#f5ca80] via-[#cf8c3c] to-[#995919] shadow-[0_2px_6px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.3)] border-b border-[#522906]"
+                : "font-bold text-[#a89078] hover:text-[#f3d4a2] hover:bg-[#2b1b11] active:scale-95"
             }`}
           >
             {s.label}
