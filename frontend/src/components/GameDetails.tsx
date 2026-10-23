@@ -21,9 +21,20 @@ export default function GameDetails() {
   const [creating, setCreating] = useState(false);
   const [matching, setMatching] = useState(false);
   const [cancelingId, setCancelingId] = useState<string | null>(null);
-  const [options, setOptions] = useState<Record<string, unknown>>({});
+  const [optionDraft, setOptionDraft] = useState<{ gameKey: string; value: Record<string, unknown> }>({ gameKey, value: {} });
+  const options = optionDraft.gameKey === gameKey ? optionDraft.value : {};
+  const setOptions = (value: Record<string, unknown>) => setOptionDraft({ gameKey, value });
   const roomPanelRef = useRef<HTMLDivElement>(null);
   const actionLock = useRef(false);
+  const pageVersion = useRef(0);
+  useEffect(() => {
+    pageVersion.current += 1;
+    actionLock.current = false;
+    setCreating(false);
+    setMatching(false);
+    setCancelingId(null);
+    return () => { pageVersion.current += 1; };
+  }, [gameKey]);
   const busy = creating || matching || cancelingId !== null;
   const playTarget = searchParams.get("play") === "1" ? gameKey : null;
   const gameReady = !enginesLoading && engines.some((entry) => entry.key === gameKey);
@@ -62,48 +73,57 @@ export default function GameDetails() {
 
   async function handleCreate() {
     if (actionLock.current) return;
+    const version = pageVersion.current;
     actionLock.current = true;
     setError("");
     setCreating(true);
     try {
       const room = await createRoom(gameKey, options);
-      if (room) navigate(`/games/${gameKey}/room/${room.id}`);
+      if (room && version === pageVersion.current) navigate(`/games/${gameKey}/room/${room.id}`);
     } catch {
-      setError("Không kết nối được máy chủ để tạo phòng. Vui lòng thử lại.");
+      if (version === pageVersion.current) setError("Không kết nối được máy chủ để tạo phòng. Vui lòng thử lại.");
     } finally {
-      actionLock.current = false;
-      setCreating(false);
+      if (version === pageVersion.current) {
+        actionLock.current = false;
+        setCreating(false);
+      }
     }
   }
 
   async function handleQuickMatch() {
     if (actionLock.current) return;
+    const version = pageVersion.current;
     actionLock.current = true;
     setError("");
     setMatching(true);
     try {
       const room = await quickMatch(gameKey);
-      if (room) navigate(`/games/${gameKey}/room/${room.id}`);
+      if (room && version === pageVersion.current) navigate(`/games/${gameKey}/room/${room.id}`);
     } catch {
-      setError("Không kết nối được máy chủ để tìm trận. Vui lòng thử lại.");
+      if (version === pageVersion.current) setError("Không kết nối được máy chủ để tìm trận. Vui lòng thử lại.");
     } finally {
-      actionLock.current = false;
-      setMatching(false);
+      if (version === pageVersion.current) {
+        actionLock.current = false;
+        setMatching(false);
+      }
     }
   }
 
   async function handleCancel(roomId: string) {
     if (actionLock.current) return;
+    const version = pageVersion.current;
     actionLock.current = true;
     setError("");
     setCancelingId(roomId);
     try {
       await cancelRoom(roomId);
     } catch {
-      setError("Không kết nối được máy chủ để hủy phòng. Vui lòng thử lại.");
+      if (version === pageVersion.current) setError("Không kết nối được máy chủ để hủy phòng. Vui lòng thử lại.");
     } finally {
-      actionLock.current = false;
-      setCancelingId(null);
+      if (version === pageVersion.current) {
+        actionLock.current = false;
+        setCancelingId(null);
+      }
     }
     // Không cần fetchRooms thủ công nữa — huỷ thành công server tự phát LobbyUpdated qua SignalR.
   }
@@ -117,7 +137,7 @@ export default function GameDetails() {
     return (
       <div className="mx-auto max-w-md space-y-4 py-10 text-center">
         <p role="alert" className="text-red-300">{enginesError}</p>
-        <p className="text-sm text-slate-400">Kiểm tra kết nối rồi tải lại danh sách trò chơi.</p>
+        <p className="text-sm text-amber-700/60">Kiểm tra kết nối rồi tải lại danh sách trò chơi.</p>
         <button onClick={() => fetchEngines()} className="rounded-xl bg-amber-700 px-4 py-3 font-semibold text-white hover:bg-amber-600">Thử lại</button>
       </div>
     );
@@ -126,8 +146,8 @@ export default function GameDetails() {
   if (enginesLoading || (!engine && engines.length === 0)) {
     return (
       <div role="status" aria-label="Đang tải trò chơi" className="w-full max-w-4xl mx-auto animate-pulse space-y-4">
-        <div className="h-8 w-40 bg-slate-800 rounded" />
-        <div className="h-64 bg-slate-800/60 rounded-2xl" />
+        <div className="h-8 w-40 bg-amber-950/40 rounded" />
+        <div className="h-64 bg-amber-950/30 rounded-2xl" />
       </div>
     );
   }
@@ -136,10 +156,10 @@ export default function GameDetails() {
     return (
       <div className="w-full max-w-md mx-auto text-center space-y-4 py-10">
         <div className="text-3xl">❓</div>
-        <p className="text-slate-300">Không tìm thấy trò chơi này.</p>
+        <p className="text-amber-300/70">Không tìm thấy trò chơi này.</p>
         <button
           onClick={() => navigate("/games")}
-          className="rounded-xl bg-slate-700 hover:bg-slate-600 px-4 py-2 text-sm font-medium"
+          className="rounded-xl border border-amber-950/80 bg-[#140e0b]/90 hover:border-amber-700/60 hover:bg-[#1a120d] px-4 py-2 text-sm font-medium text-amber-700/70 hover:text-amber-400 transition-colors"
         >
           ← QUAY LẠI THƯ VIỆN
         </button>
@@ -151,7 +171,7 @@ export default function GameDetails() {
     <div className="w-full max-w-4xl mx-auto space-y-6 pb-24 sm:pb-6">
       <button
         onClick={() => navigate("/games")}
-        className="text-sm text-slate-400 hover:text-slate-200 flex items-center gap-1"
+        className="text-sm text-amber-700/60 hover:text-amber-300 flex items-center gap-1 transition-colors"
       >
         ← QUAY LẠI
       </button>
@@ -207,7 +227,7 @@ export default function GameDetails() {
       </div>
 
       {/* Hướng dẫn */}
-      <div className="relative overflow-hidden rounded-2xl border border-amber-900/20 bg-slate-900/40 p-4">
+      <div className="relative overflow-hidden rounded-2xl border border-amber-900/20 bg-[#1a1208]/40 p-4">
         <div className="pointer-events-none absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-amber-400/25 to-transparent" />
         <GameInstructions sections={instructions} />
       </div>
@@ -229,7 +249,7 @@ export default function GameDetails() {
 
         <fieldset disabled={busy} aria-busy={busy} className="min-w-0 rounded-2xl border border-amber-700/40 bg-[#1c150c] p-4 space-y-3">
           <h3 className="text-sm font-semibold text-amber-200">TẠO PHÒNG MỚI</h3>
-          <p className="text-xs text-slate-400">Bạn sẽ vào phòng với tên: <span className="text-slate-200 font-medium">{playerName}</span></p>
+          <p className="text-xs text-amber-700/60">Bạn sẽ vào phòng với tên: <span className="text-amber-200 font-medium">{playerName}</span></p>
 
           {CreateOptionsForm && <CreateOptionsForm value={options} onChange={setOptions} />}
 
@@ -276,7 +296,7 @@ export default function GameDetails() {
                       <button
                         onClick={() => handleCancel(r.id)}
                         disabled={busy}
-                        className="rounded-lg bg-slate-800/80 hover:bg-red-900/60 border border-slate-700/50 hover:border-red-700/50 disabled:opacity-50 px-3 py-1.5 text-xs font-medium text-slate-400 hover:text-red-300 transition-colors"
+                        className="rounded-lg bg-[#140e0b]/90 hover:bg-red-900/60 border border-amber-950/80 hover:border-red-700/50 disabled:opacity-50 px-3 py-1.5 text-xs font-medium text-amber-700/60 hover:text-red-300 transition-colors"
                         title="Huỷ phòng"
                       >
                         {cancelingId === r.id ? "…" : "HUỶ"}

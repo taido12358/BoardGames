@@ -134,10 +134,10 @@ export default function RoomRoute() {
     return (
       <div className="w-full max-w-md mx-auto text-center space-y-4 py-10">
         <div className="text-3xl">❓</div>
-        <p className="text-slate-300">Không tìm thấy phòng này — có thể đã bị đóng.</p>
+        <p className="text-amber-300/70">Không tìm thấy phòng này — có thể đã bị đóng.</p>
         <button
           onClick={() => navigate(`/games/${gameKey}`)}
-          className="rounded-xl bg-slate-700 hover:bg-slate-600 px-4 py-2 text-sm font-medium"
+          className="rounded-xl border border-amber-950/80 bg-[#140e0b]/90 hover:border-amber-700/60 hover:bg-[#1a120d] px-4 py-2 text-sm font-medium text-amber-700/70 hover:text-amber-400 transition-colors"
         >
           ← QUAY LẠI
         </button>
@@ -151,7 +151,7 @@ export default function RoomRoute() {
         <p role="alert" className="text-sm text-red-300">{loadError}</p>
         <div className="flex flex-wrap justify-center gap-3">
           <button onClick={() => setLoadAttempt((attempt) => attempt + 1)} className="rounded-xl bg-amber-700 px-4 py-3 font-semibold text-white hover:bg-amber-600">Thử vào lại</button>
-          <button onClick={() => navigate(`/games/${gameKey}`)} className="rounded-xl bg-slate-700 px-4 py-3 text-sm text-slate-200 hover:bg-slate-600">Về sảnh trò chơi</button>
+          <button onClick={() => navigate(`/games/${gameKey}`)} className="rounded-xl border border-amber-950/80 bg-[#140e0b]/90 hover:border-amber-700/60 hover:bg-[#1a120d] px-4 py-3 text-sm text-amber-700/70 hover:text-amber-400 transition-colors">Về sảnh trò chơi</button>
         </div>
       </div>
     );
@@ -159,7 +159,7 @@ export default function RoomRoute() {
 
   if (loading || !room || room.id !== roomId) {
     return (
-      <div role="status" className="w-full max-w-md mx-auto text-center py-10 text-slate-400 text-sm animate-pulse">
+      <div role="status" className="w-full max-w-md mx-auto text-center py-10 text-amber-700/60 text-sm animate-pulse italic">
         Đang vào phòng…
       </div>
     );
@@ -169,12 +169,12 @@ export default function RoomRoute() {
     return (
       <div className="w-full max-w-md mx-auto text-center space-y-4 py-10">
         <div className="text-3xl">🚪</div>
-        <p className="text-slate-300">
+        <p className="text-amber-300/70">
           {room.status === "Cancelled" ? "Phòng đã bị huỷ." : "Phòng đã đóng do mất kết nối kéo dài."}
         </p>
         <button
           onClick={() => navigate(`/games/${gameKey}`)}
-          className="rounded-xl bg-slate-700 hover:bg-slate-600 px-4 py-2 text-sm font-medium"
+          className="rounded-xl border border-amber-950/80 bg-[#140e0b]/90 hover:border-amber-700/60 hover:bg-[#1a120d] px-4 py-2 text-sm font-medium text-amber-700/70 hover:text-amber-400 transition-colors"
         >
           ← QUAY LẠI
         </button>
@@ -194,11 +194,11 @@ export default function RoomRoute() {
         return <ZodiacRaceBoard makeMove={makeMove} onLeave={handleLeave} onRematch={handleRematch} rematching={rematching} />;
       default:
         return (
-          <div className="bg-slate-800 rounded-2xl p-6 text-center space-y-4">
-            <p>Game "{room.gameKey}" chưa có giao diện.</p>
+          <div className="rounded-2xl border border-amber-900/30 bg-[#1a1208]/40 p-6 text-center space-y-4">
+            <p className="text-amber-300/70">Game "{room.gameKey}" chưa có giao diện.</p>
             <button
               onClick={handleLeave}
-              className="rounded-lg bg-slate-700 hover:bg-slate-600 px-4 py-2 font-medium"
+              className="rounded-lg border border-amber-950/80 bg-[#140e0b]/90 hover:border-amber-700/60 hover:bg-[#1a120d] px-4 py-2 font-medium text-amber-700/70 hover:text-amber-400 transition-colors"
             >
               ← Rời phòng
             </button>
