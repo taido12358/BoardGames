@@ -118,7 +118,7 @@ export default function GameLibrary() {
               aria-pressed={filter === chip.id}
               className={`rounded-full px-3.5 py-1.5 text-xs font-medium border transition-colors ${
                 filter === chip.id
-                  ? "bg-amber-700 border-amber-600 text-white"
+                  ? "bg-gradient-to-b from-amber-600 to-amber-800 border-amber-500/60 text-amber-50 shadow-[0_2px_0_0_#451a03]"
                   : "bg-slate-800/70 border-slate-700 text-slate-300 hover:bg-slate-700"
               }`}
             >
