@@ -112,21 +112,21 @@ export default function AdminPage() {
       {!loading && !error && rooms.length > 0 && (
         <div className="overflow-x-auto rounded-2xl border border-amber-900/30">
           <table className="w-full text-sm">
-            <thead className="bg-gradient-to-r from-[#2b2013] to-[#1c150c] text-amber-400/70 text-xs uppercase border-b border-amber-900/30">
+            <thead className="border-b border-amber-900/60 bg-[#120b07] text-[11px] font-western uppercase tracking-widest text-amber-700/80">
               <tr>
-                <th className="text-left px-3 py-2.5 tracking-widest">Game</th>
-                <th className="text-left px-3 py-2.5 tracking-widest">Trạng thái</th>
-                <th className="text-left px-3 py-2.5 tracking-widest">Người chơi</th>
-                <th className="text-left px-3 py-2.5 tracking-widest">Chủ phòng</th>
-                <th className="text-left px-3 py-2.5 tracking-widest">Thắng</th>
-                <th className="text-left px-3 py-2.5 tracking-widest">Cập nhật</th>
+                <th className="text-left px-3 py-3">Game</th>
+                <th className="text-left px-3 py-3">Trạng thái</th>
+                <th className="text-left px-3 py-3">Người chơi</th>
+                <th className="text-left px-3 py-3">Chủ phòng</th>
+                <th className="text-left px-3 py-3">Thắng</th>
+                <th className="text-left px-3 py-3">Cập nhật</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-amber-900/20">
+            <tbody className="divide-y divide-amber-950/40">
               {rooms.map((r) => {
                 const status = STATUS_LABEL[r.status] ?? { label: r.status, color: "text-amber-700/70 bg-amber-950/40" };
                 return (
-                  <tr key={r.id} className="hover:bg-amber-950/20 transition-colors">
+                  <tr key={r.id} className="group odd:bg-[#140e0a] even:bg-[#18110c] transition-colors duration-150 hover:bg-gradient-to-r hover:from-amber-950/30 hover:via-amber-900/20 hover:to-transparent">
                     <td className="px-3 py-2 font-medium text-amber-200">{r.gameKey}</td>
                     <td className="px-3 py-2">
                       <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${status.color}`}>{status.label}</span>
