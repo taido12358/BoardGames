@@ -154,7 +154,8 @@ export default function GameDetails() {
       </div>
 
       {/* Hướng dẫn */}
-      <div className="rounded-2xl border border-slate-800 bg-slate-900/40 p-4">
+      <div className="relative overflow-hidden rounded-2xl border border-amber-900/20 bg-slate-900/40 p-4">
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-amber-400/25 to-transparent" />
         <GameInstructions sections={instructions} />
       </div>
 
