@@ -53,7 +53,7 @@ export default function VictoryScreen({ state, onLeave, onRematch, rematching }:
         <div className="text-5xl">{cfg.emoji}</div>
 
         {badge && (
-          <div className={`inline-block text-sm font-bold tracking-wide px-4 py-1.5 rounded-full border ${badge.cls}`}>
+          <div className={`inline-block text-sm font-bold uppercase tracking-widest px-4 py-1.5 rounded-sm border ${badge.cls}`}>
             {badge.text}
           </div>
         )}
