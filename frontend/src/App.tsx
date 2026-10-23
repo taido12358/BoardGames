@@ -22,11 +22,13 @@ export default function App() {
   return (
     <BrowserRouter>
       <ScrollToTop />
-      <div className="min-h-screen bg-[#0d1117] text-slate-100" style={{ backgroundImage: "radial-gradient(ellipse at 20% 10%, rgba(30,20,10,0.5) 0%, transparent 60%), radial-gradient(ellipse at 80% 90%, rgba(20,10,5,0.4) 0%, transparent 60%)" }}>
+      <div className="min-h-screen bg-[#0d0a07] text-slate-100" style={{ backgroundImage: "radial-gradient(ellipse 80% 80% at 50% -20%, rgba(217,119,6,0.12), rgba(13,10,7,0.95))" }}>
+        {/* Noise texture overlay — mix-blend-overlay hòa tan grain vào nền tối (gợi ý Gemini #3) */}
+        <div className="pointer-events-none fixed inset-0 opacity-[0.035] mix-blend-overlay z-0" style={{ backgroundImage: "url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIj48ZmlsdGVyIGlkPSJuIj48ZmVUdXJidWxlbmNlIHR5cGU9ImZyYWN0YWxOb2lzZSIgYmFzZUZyZXF1ZW5jeT0iMC44IiBudW1PY3RhdmVzPSIzIiBzdGl0Y2hUaWxlcz0ic3RpdGNoIi8+PC9maWx0ZXI+PHJlY3Qgd2lkdGg9IjIwMCIgaGVpZ2h0PSIyMDAiIGZpbHRlcj0idXJsKCNuKSIgb3BhY2l0eT0iMSIvPjwvc3ZnPg==')" }} />
         {/* max-w rộng hơn max-w-lg cũ — Thư viện trò chơi cần chỗ cho lưới 3-4 thẻ/hàng
             trên desktop (xem GameLibrary/GameDetails). Nội dung hẹp hơn (bàn cờ, form
             đăng nhập) tự căn giữa bên trong, không bị ảnh hưởng. */}
-        <div className="w-full max-w-6xl mx-auto flex flex-col min-h-screen">
+        <div className="relative z-10 w-full max-w-6xl mx-auto flex flex-col min-h-screen">
           <header className="px-4 pt-4 pb-3 mb-1 shrink-0 flex items-center justify-between border-b border-slate-800/60">
             <Link to="/games" className="text-2xl font-western tracking-wide text-amber-100 hover:text-amber-300 transition-colors drop-shadow-sm">🎲 BoardGame</Link>
             {user && (

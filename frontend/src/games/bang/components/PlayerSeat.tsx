@@ -31,10 +31,18 @@ function HpBullets({ hp, maxHp }: { hp: number; maxHp: number }) {
   );
 }
 
+const FACTION_BORDER: Record<string, string> = {
+  Sheriff:  "border-amber-500/60 shadow-[0_0_15px_-3px_rgba(245,158,11,0.3)]",
+  Outlaw:   "border-red-700/50 shadow-[0_0_15px_-3px_rgba(220,38,38,0.25)]",
+  Renegade: "border-slate-500/50 shadow-[0_0_15px_-3px_rgba(100,116,139,0.3)]",
+  Deputy:   "border-amber-700/40",
+};
+
 /** HUD của MỘT người chơi quanh bàn — không bao giờ lộ mặt bài của họ, chỉ số lượng. */
 export default function PlayerSeat({ player, isCurrentTurn, isMe, targetable, targeting, onClick }: Props) {
   const shaking = useDamageShake(player.hp);
   const weaponEquipped = useWeaponEquipFlash(player.weapon);
+  const factionCls = FACTION_BORDER[player.publicRole] ?? "border-[#4a3620]";
 
   return (
     <button
@@ -48,7 +56,7 @@ export default function PlayerSeat({ player, isCurrentTurn, isMe, targetable, ta
           : "bg-[#141010] grayscale opacity-50",
         isCurrentTurn
           ? "border-amber-400 shadow-[0_0_14px_rgba(251,191,36,0.55)]"
-          : "border-[#4a3620]",
+          : factionCls,
         targeting && !targetable ? "opacity-30" : "",
         targetable ? "cursor-pointer ring-2 ring-amber-300 hover:ring-amber-200 hover:border-amber-300" : "cursor-default",
         shaking ? "animate-shake" : "",

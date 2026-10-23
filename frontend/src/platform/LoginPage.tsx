@@ -29,8 +29,9 @@ export default function LoginPage() {
         <p className="text-slate-400 text-sm">Chơi board game cùng bạn bè — mọi lúc, mọi nơi.</p>
       </div>
 
-      {/* Login card */}
-      <div className="w-full max-w-sm bg-slate-800/80 rounded-2xl border border-slate-700/60 p-6 shadow-[0_0_40px_rgba(180,100,20,0.12)] space-y-4">
+      {/* Login card — double border theo gợi ý Gemini */}
+      <div className="w-full max-w-sm rounded-xl border border-amber-500/20 bg-stone-900/80 p-1 shadow-2xl backdrop-blur-sm">
+      <div className="rounded-lg border border-amber-500/30 p-6 bg-gradient-to-b from-[#241a14] to-[#1a120c] space-y-4">
         <div className="text-center space-y-1">
           <h2 className="text-base font-bold text-slate-100">
             {step === "email" ? "🔐 Đăng nhập" : "📬 Nhập mã xác nhận"}
@@ -66,7 +67,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading || !email.trim()}
-              className="w-full rounded-xl bg-amber-700 hover:bg-amber-600 active:bg-amber-800 disabled:opacity-50 disabled:cursor-not-allowed px-4 py-3 font-bold text-sm transition-colors shadow-md"
+              className="relative w-full rounded-lg bg-gradient-to-b from-amber-600 via-amber-700 to-amber-800 px-4 py-3 font-bold text-sm text-amber-50 border-t border-amber-400/50 shadow-[0_4px_0_0_#451a03,0_8px_16px_rgba(0,0,0,0.5)] transition-all hover:brightness-110 active:top-[2px] active:shadow-[0_2px_0_0_#451a03] disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? "Đang gửi mã…" : "📧 Gửi mã đăng nhập"}
             </button>
@@ -94,7 +95,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading || code.length !== 6}
-              className="w-full rounded-xl bg-amber-700 hover:bg-amber-600 active:bg-amber-800 disabled:opacity-50 disabled:cursor-not-allowed px-4 py-3 font-bold text-sm transition-colors shadow-md"
+              className="relative w-full rounded-lg bg-gradient-to-b from-amber-600 via-amber-700 to-amber-800 px-4 py-3 font-bold text-sm text-amber-50 border-t border-amber-400/50 shadow-[0_4px_0_0_#451a03,0_8px_16px_rgba(0,0,0,0.5)] transition-all hover:brightness-110 active:top-[2px] active:shadow-[0_2px_0_0_#451a03] disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? "Đang kiểm tra…" : "✅ Đăng nhập"}
             </button>
@@ -119,6 +120,7 @@ export default function LoginPage() {
             ⚠️ {error}
           </p>
         )}
+      </div>
       </div>
 
       {/* Games preview */}
