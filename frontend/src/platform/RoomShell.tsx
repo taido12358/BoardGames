@@ -9,8 +9,9 @@ export function RoomStatusBanner({ room, mySide }: { room: RoomDto; mySide: stri
   if (room.status === "Waiting") {
     const occupied = room.seats.filter((s) => s.displayName !== null).length;
     return (
-      <div className="rounded-2xl p-3 text-center bg-amber-900/30 text-amber-300 text-sm border border-amber-800/50">
-        Đang chờ {occupied}/{room.seatCount} người vào phòng… (chưa thể bắt đầu)
+      <div className="rounded-2xl p-3 text-center bg-amber-900/30 text-amber-300 text-sm border border-amber-800/50 flex items-center justify-center gap-2">
+        <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse shrink-0" />
+        Đang chờ {occupied}/{room.seatCount} người vào phòng…
       </div>
     );
   }
@@ -103,7 +104,7 @@ export function RematchInviteBanner({
       <span>🔄 {invite.byDisplayName} đã tạo phòng chơi lại</span>
       <button
         onClick={() => onJoin(invite.newRoomId)}
-        className="shrink-0 rounded-lg bg-emerald-700 hover:bg-emerald-600 px-3 py-1.5 text-xs font-semibold"
+        className="relative shrink-0 rounded-md bg-gradient-to-b from-amber-600 to-amber-800 px-3 py-1.5 text-xs font-semibold text-amber-50 border-t border-amber-400/40 shadow-[0_2px_0_0_#451a03] transition-all hover:brightness-110 active:top-[1px] active:shadow-none"
       >
         VÀO PHÒNG
       </button>
