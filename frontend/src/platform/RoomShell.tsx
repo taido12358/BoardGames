@@ -29,14 +29,14 @@ export function RoomStatusBanner({ room, mySide }: { room: RoomDto; mySide: stri
   }
   if (room.status === "Cancelled") {
     return (
-      <div className="rounded-2xl p-3 text-center bg-slate-700/60 text-slate-300 text-sm border border-slate-600">
+      <div className="rounded-2xl p-3 text-center bg-[#1a1208] text-amber-700/60 text-sm border border-amber-900/30">
         Phòng đã bị huỷ.
       </div>
     );
   }
   if (room.status === "Abandoned") {
     return (
-      <div className="rounded-2xl p-3 text-center bg-slate-700/60 text-slate-300 text-sm border border-slate-600">
+      <div className="rounded-2xl p-3 text-center bg-[#1a1208] text-amber-700/60 text-sm border border-amber-900/30">
         Phòng đã đóng do mất kết nối kéo dài.
       </div>
     );
@@ -80,7 +80,7 @@ export function LeaveRoomButton({ onLeave, label = "← Rời phòng" }: { onLea
   return (
     <button
       onClick={onLeave}
-      className="w-full rounded-xl bg-slate-800 hover:bg-slate-700 active:bg-slate-600 border border-slate-700/60 px-4 py-3 font-medium text-base text-slate-300 hover:text-slate-100 transition-colors"
+      className="w-full rounded-xl border border-amber-950/80 bg-[#140e0b]/90 px-4 py-3 text-sm font-medium uppercase tracking-wide text-amber-700/70 shadow-[inset_0_1px_3px_rgba(0,0,0,0.6)] hover:border-amber-700/60 hover:bg-[#1a120d] hover:text-amber-400 transition-all"
     >
       {label}
     </button>
@@ -106,7 +106,8 @@ export function RematchInviteBanner({
 }: { invite: { newRoomId: string; byDisplayName: string } | null; onJoin: (roomId: string) => void }) {
   if (!invite) return null;
   return (
-    <div className="rounded-2xl p-3 bg-emerald-900/30 text-emerald-300 text-sm border border-emerald-700/50 flex items-center justify-between gap-2">
+    <div className="relative overflow-hidden rounded-2xl p-3 bg-amber-950/30 text-amber-200 text-sm border border-amber-700/40 flex items-center justify-between gap-2">
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-amber-500/30 to-transparent" />
       <span>🔄 {invite.byDisplayName} đã tạo phòng chơi lại</span>
       <button
         onClick={() => onJoin(invite.newRoomId)}
