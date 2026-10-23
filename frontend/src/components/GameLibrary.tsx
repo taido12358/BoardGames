@@ -22,14 +22,14 @@ function playerCountLabel(m: GameMetadata): string {
 
 function SkeletonCard() {
   return (
-    <div className="rounded-2xl border border-slate-800 bg-[#1a140c] overflow-hidden animate-pulse">
-      <div className="h-40 sm:h-48 bg-slate-800/60" />
+    <div className="rounded-2xl border border-amber-900/30 bg-[#1a140c] overflow-hidden animate-pulse">
+      <div className="h-40 sm:h-48 bg-amber-950/30" />
       <div className="p-4 space-y-2">
-        <div className="h-4 w-2/3 bg-slate-800 rounded" />
-        <div className="h-3 w-1/2 bg-slate-800/70 rounded" />
-        <div className="h-3 w-full bg-slate-800/50 rounded" />
-        <div className="h-8 w-full bg-slate-800/60 rounded-xl mt-3" />
-        <div className="h-9 w-full bg-slate-800/80 rounded-xl" />
+        <div className="h-4 w-2/3 bg-amber-950/40 rounded" />
+        <div className="h-3 w-1/2 bg-amber-950/30 rounded" />
+        <div className="h-3 w-full bg-amber-950/20 rounded" />
+        <div className="h-8 w-full bg-amber-950/30 rounded-xl mt-3" />
+        <div className="h-9 w-full bg-amber-950/40 rounded-xl" />
       </div>
     </div>
   );
@@ -114,7 +114,7 @@ export default function GameLibrary() {
       {/* Header */}
       <div className="text-center space-y-2 pt-2">
         <h1 className="text-2xl sm:text-3xl font-black tracking-wide text-amber-100 [text-shadow:0_1px_0_rgba(255,255,255,0.15),0_2px_4px_rgba(0,0,0,0.9)]">🎲 THƯ VIỆN TRÒ CHƠI</h1>
-        <p className="text-sm text-slate-400">Chọn một trò chơi và bắt đầu cuộc phiêu lưu.</p>
+        <p className="text-sm text-amber-700/60">Chọn một trò chơi và bắt đầu cuộc phiêu lưu.</p>
         <div className="flex items-center justify-center gap-2 opacity-30 text-base">
           <span>─────</span><span>✦</span><span>─────</span>
         </div>
@@ -138,7 +138,7 @@ export default function GameLibrary() {
           aria-label="Tìm kiếm trò chơi"
           className="w-full rounded-md border border-amber-900/40 bg-[#120c08] px-4 py-2.5 text-amber-100 placeholder-amber-900/40 shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)] outline-none transition-colors focus:border-amber-500/70 focus:shadow-[inset_0_2px_4px_rgba(0,0,0,0.6),0_0_10px_rgba(217,119,6,0.15)] text-sm placeholder:text-amber-900/40"
         />
-        {search && <button type="button" onClick={() => setSearch("")} className="rounded-lg bg-slate-800 px-3 py-2 text-xs text-slate-200 hover:bg-slate-700">Xóa từ khóa</button>}
+        {search && <button type="button" onClick={() => setSearch("")} className="rounded-lg border border-amber-950/80 bg-[#140e0b]/90 px-3 py-2 text-xs text-amber-700/70 hover:border-amber-700/60 hover:bg-[#1a120d] hover:text-amber-400">Xóa từ khóa</button>}
         <div className="flex flex-wrap gap-2">
           {filterChips.map((chip) => (
             <button
@@ -182,14 +182,14 @@ export default function GameLibrary() {
 
       {/* Trống sau lọc */}
       {!enginesLoading && !enginesError && filtered.length === 0 && (filter !== "waiting" || (!roomsLoading && !roomsError)) && (
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/40 p-10 text-center space-y-3">
+        <div className="rounded-2xl border border-amber-900/30 bg-[#1a1208]/40 p-10 text-center space-y-3">
           <div className="text-3xl">🔍</div>
-          <p className="text-slate-300 font-medium">Không tìm thấy trò chơi</p>
-          <p className="text-slate-500 text-sm">Thử thay đổi từ khóa hoặc bộ lọc.</p>
+          <p className="text-amber-300/70 font-medium">Không tìm thấy trò chơi</p>
+          <p className="text-amber-700/50 text-sm italic">Thử thay đổi từ khóa hoặc bộ lọc.</p>
           <button
             type="button"
             onClick={clearFilters}
-            className="rounded-xl bg-slate-700 hover:bg-slate-600 px-4 py-2 text-sm font-medium"
+            className="rounded-xl border border-amber-950/80 bg-[#140e0b]/90 hover:border-amber-700/60 hover:bg-[#1a120d] px-4 py-2 text-sm font-medium text-amber-700/70 hover:text-amber-400 transition-colors"
           >
             XÓA BỘ LỌC
           </button>

@@ -18,11 +18,11 @@ const ACCENT_RING: Record<GameMetadata["accent"], string> = {
 };
 
 function StarRating({ count }: { count: number }) {
-  if (count <= 0) return <span className="text-slate-500 text-xs">Chưa đánh giá</span>;
+  if (count <= 0) return <span className="text-amber-900/50 text-xs">Chưa đánh giá</span>;
   return (
     <span className="text-amber-400 text-sm tracking-tight" aria-label={`Độ khó ${count} trên 5 sao`}>
       {"★".repeat(count)}
-      <span className="text-slate-600">{"★".repeat(5 - count)}</span>
+      <span className="text-amber-900/40">{"★".repeat(5 - count)}</span>
     </span>
   );
 }
@@ -69,7 +69,7 @@ export default function GameCard({ metadata: m, waitingRooms, onViewDetails, onP
           <p className="text-xs text-amber-200/60">{m.subtitle}</p>
         </div>
 
-        <p className="text-sm text-slate-300/90 leading-snug line-clamp-2">{m.description}</p>
+        <p className="text-sm text-amber-200/70 leading-snug line-clamp-2">{m.description}</p>
 
         <div className="mt-1 flex flex-wrap items-center gap-1.5">
           <span className="rounded-full border border-amber-900/50 bg-amber-950/40 px-2 py-0.5 text-[10px] text-amber-400/80">
@@ -98,7 +98,7 @@ export default function GameCard({ metadata: m, waitingRooms, onViewDetails, onP
           <button
             type="button"
             onClick={onViewDetails}
-            className="w-full rounded-xl bg-slate-800/80 hover:bg-slate-700 border border-slate-700 px-3 py-2.5 text-xs font-semibold text-slate-200 transition-colors"
+            className="w-full rounded-xl border border-amber-950/80 bg-[#140e0b]/90 hover:border-amber-700/60 hover:bg-[#1a120d] px-3 py-2.5 text-xs font-semibold text-amber-400/70 hover:text-amber-300 transition-colors shadow-[inset_0_1px_3px_rgba(0,0,0,0.6)]"
           >
             XEM HƯỚNG DẪN
           </button>

@@ -23,7 +23,7 @@ export default function App() {
     <BrowserRouter>
       <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-amber-200 focus:px-4 focus:py-3 focus:font-semibold focus:text-slate-950">Bỏ qua đến nội dung</a>
       <ScrollToTop />
-      <div className="min-h-screen bg-[#0d0a07] text-slate-100" style={{ backgroundImage: "radial-gradient(ellipse 80% 80% at 50% -20%, rgba(217,119,6,0.12), rgba(13,10,7,0.95))" }}>
+      <div className="min-h-screen bg-[#0d0a07] text-amber-100" style={{ backgroundImage: "radial-gradient(ellipse 80% 80% at 50% -20%, rgba(217,119,6,0.12), rgba(13,10,7,0.95))" }}>
         {/* Noise texture overlay — mix-blend-overlay hòa tan grain vào nền tối (gợi ý Gemini #3) */}
         <div className="pointer-events-none fixed inset-0 opacity-[0.035] mix-blend-overlay z-0" style={{ backgroundImage: "url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIj48ZmlsdGVyIGlkPSJuIj48ZmVUdXJidWxlbmNlIHR5cGU9ImZyYWN0YWxOb2lzZSIgYmFzZUZyZXF1ZW5jeT0iMC44IiBudW1PY3RhdmVzPSIzIiBzdGl0Y2hUaWxlcz0ic3RpdGNoIi8+PC9maWx0ZXI+PHJlY3Qgd2lkdGg9IjIwMCIgaGVpZ2h0PSIyMDAiIGZpbHRlcj0idXJsKCNuKSIgb3BhY2l0eT0iMSIvPjwvc3ZnPg==')" }} />
         {/* max-w rộng hơn max-w-lg cũ — Thư viện trò chơi cần chỗ cho lưới 3-4 thẻ/hàng
@@ -64,7 +64,7 @@ export default function App() {
 
           {checking ? (
             <main id="main-content" tabIndex={-1} className="flex-1 px-4 pb-6 flex items-center justify-center">
-              <p role="status" className="text-slate-400 text-sm">Đang kiểm tra phiên đăng nhập…</p>
+              <p role="status" className="text-amber-700/60 text-sm italic">Đang kiểm tra phiên đăng nhập…</p>
             </main>
           ) : sessionError ? (
             <main id="main-content" tabIndex={-1} className="flex-1 px-4 py-10">

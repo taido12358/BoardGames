@@ -28,7 +28,7 @@ export default function RoomInvite() {
         <p className="text-sm font-semibold text-amber-200">Mời bạn vào cùng phòng</p>
         <button type="button" disabled={copying} onClick={copy} className="rounded-lg bg-amber-800 px-3 py-2 text-sm text-white hover:bg-amber-700 disabled:opacity-50">{copying ? "Đang sao chép…" : "Sao chép liên kết"}</button>
       </div>
-      <input aria-label="Liên kết phòng" readOnly value={url} onFocus={(event) => event.currentTarget.select()} className="w-full min-w-0 rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-xs text-slate-300 focus:outline-amber-400" />
+      <input aria-label="Liên kết phòng" readOnly value={url} onFocus={(event) => event.currentTarget.select()} className="w-full min-w-0 rounded-lg border border-amber-900/50 bg-[#120c08] px-3 py-2 text-xs text-amber-300/70 shadow-[inset_0_2px_3px_rgba(0,0,0,0.7)] outline-none focus:border-amber-500/60" />
       {notice && <p role="status" className="text-xs text-amber-200/80">{notice}</p>}
     </section>
   );
