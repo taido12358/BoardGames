@@ -90,8 +90,15 @@ export default function PlayerSeat({ player, isCurrentTurn, isMe, targetable, ta
 
       {/* Equipment */}
       {player.equipment.length > 0 && (
-        <div className="mt-0.5 text-[10px] text-amber-300/60 truncate">
-          🛡 {player.equipment.join(" · ")}
+        <div className="mt-1 flex flex-wrap gap-1">
+          {player.equipment.map((eq) => (
+            <span
+              key={eq}
+              className="inline-flex items-center gap-0.5 text-[9px] rounded-full bg-purple-900/40 border border-purple-700/30 px-1.5 py-0.5 text-purple-300/80"
+            >
+              {eq === "Thùng rượu" ? "🛢" : eq === "Ngựa" ? "🐎" : "🛡"} {eq}
+            </span>
+          ))}
         </div>
       )}
 

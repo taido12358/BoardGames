@@ -6,6 +6,7 @@ interface Props {
   onEndTurn: () => void;
   onRespondPass: () => void;
   onCancelTarget: () => void;
+  hasBarrel?: boolean;
   discarding?: boolean;
   discardOverflow?: number;
   discardSelectedCount?: number;
@@ -18,6 +19,7 @@ const btnBase = "shrink-0 rounded-lg px-3 py-1.5 text-sm font-semibold transitio
 /** Thanh hành động — chỉ hiện nút hợp lệ theo giai đoạn hiện tại. */
 export default function ActionBar({
   myTurn, awaitingResponse, selectingTarget, canEndTurn, onEndTurn, onRespondPass, onCancelTarget,
+  hasBarrel = false,
   discarding, discardOverflow = 0, discardSelectedCount = 0, onConfirmDiscard, onCancelDiscard,
 }: Props) {
   if (discarding) {
@@ -57,9 +59,11 @@ export default function ActionBar({
   if (awaitingResponse) {
     return (
       <div className="flex items-center justify-between gap-2 rounded-xl bg-red-950/50 border border-red-700/50 px-3 py-2.5 shadow-md">
-        <span className="text-red-300 text-sm font-medium">⚠️ Chọn lá bài để đỡ hoặc bỏ qua</span>
-        <button onClick={onRespondPass} className={`${btnBase} bg-slate-800 hover:bg-red-900 border-red-800/60 text-red-300 hover:text-red-200`}>
-          Chịu đòn
+        <span className="text-red-300 text-sm font-medium">
+          {hasBarrel ? "🛢 Chọn Missed! hoặc kích hoạt Barrel" : "⚠️ Chọn lá bài để đỡ hoặc bỏ qua"}
+        </span>
+        <button onClick={onRespondPass} className={`${btnBase} ${hasBarrel ? "bg-amber-900/60 hover:bg-amber-800 border-amber-700/60 text-amber-200 hover:text-amber-100" : "bg-slate-800 hover:bg-red-900 border-red-800/60 text-red-300 hover:text-red-200"}`}>
+          {hasBarrel ? "🛢 Lật Barrel" : "Chịu đòn"}
         </button>
       </div>
     );

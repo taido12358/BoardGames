@@ -312,6 +312,7 @@ export default function BangBoard({ makeMove, onLeave, onRematch, rematching }: 
             onEndTurn={handleEndTurnClick}
             onRespondPass={() => send({ type: "RESPOND" })}
             onCancelTarget={() => setSelectedCardId(null)}
+            hasBarrel={me?.equipment.includes("Thùng rượu") ?? false}
             discarding={discarding}
             discardOverflow={discardOverflow}
             discardSelectedCount={discardIds.length}
