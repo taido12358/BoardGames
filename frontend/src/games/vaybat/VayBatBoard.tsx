@@ -122,7 +122,7 @@ export default function VayBatBoard({ makeMove, onLeave, onRematch, rematching }
     <div className="flex flex-col gap-3 w-full max-w-md mx-auto">
 
       {/* Status bar */}
-      <div className="bg-gradient-to-r from-slate-800 to-slate-800/80 rounded-2xl px-4 py-3 shadow-lg border border-slate-700/50">
+      <div className="bg-gradient-to-r from-[#1a1408] via-[#1c1810] to-[#1a1408] rounded-2xl px-4 py-3 shadow-lg border border-amber-900/30">
         <div className="grid grid-cols-3 gap-1 text-center">
           <div>
             <div className="text-slate-400 text-xs mb-0.5">Bạn cầm</div>
@@ -142,8 +142,9 @@ export default function VayBatBoard({ makeMove, onLeave, onRematch, rematching }
           </div>
         </div>
         {myTurn && (
-          <div className="mt-2 text-center text-emerald-400 font-medium text-sm">
-            → Tới lượt bạn! {selected ? "Chọn ô đích hoặc kéo quân" : "Nhấn hoặc kéo quân của bạn"}
+          <div className="mt-2 text-center text-amber-300 font-medium text-sm flex items-center justify-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse shrink-0" />
+            {selected ? "Chọn ô đích hoặc kéo quân" : "Nhấn hoặc kéo quân của bạn"}
           </div>
         )}
         {/* Nói rõ vì sao chưa đi được quân — im lặng khiến người chơi tưởng game lỗi */}
@@ -162,7 +163,7 @@ export default function VayBatBoard({ makeMove, onLeave, onRematch, rematching }
       <DisconnectBadge seats={room.seats} />
 
       {/* Board */}
-      <div className="bg-[#1a2030] rounded-2xl p-2 shadow-lg border border-slate-700/40">
+      <div className="bg-gradient-to-b from-[#1a2030] to-[#141820] rounded-2xl p-2 shadow-lg border border-slate-700/40">
         <svg
           ref={svgRef}
           viewBox="0 0 400 440"
