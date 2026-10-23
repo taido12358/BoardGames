@@ -11,8 +11,8 @@ function logColor(line: string): string {
   if (line.includes("Bang!") || line.includes("🔫") || line.includes("Gatling") || line.includes("Súng")) return "text-orange-300";
   if (line.includes("Trượt") || line.includes("đỡ được")) return "text-blue-300";
   if (line.includes("Bia") || line.includes("hồi máu") || line.includes("❤️")) return "text-green-400";
-  if (line.includes("DEBUG")) return "text-slate-600 italic text-[10px]";
-  return "text-slate-300";
+  if (line.includes("DEBUG")) return "text-amber-900/50 italic text-[10px]";
+  return "text-amber-200/70";
 }
 
 /** Chỉ theo dõi dòng mới khi người chơi đang ở cuối nhật ký, không cuộn cả trang. */
@@ -58,7 +58,7 @@ export default function GameLogPanel({ log }: Props) {
             following.current = element.scrollHeight - element.scrollTop - element.clientHeight < 32;
             if (following.current) setHasNew(false);
           }} className="max-h-36 overflow-y-auto px-3 pb-2 space-y-0.5 focus-visible:outline focus-visible:outline-amber-400">
-          {log.length === 0 && <p className="text-slate-600 text-xs py-1">Chưa có gì xảy ra…</p>}
+          {log.length === 0 && <p className="text-amber-900/40 text-xs py-1 italic">Chưa có gì xảy ra…</p>}
           {log.map((line, i) => (
             <p key={i} className={`text-[11px] leading-snug ${logColor(line)}`}>{line}</p>
           ))}

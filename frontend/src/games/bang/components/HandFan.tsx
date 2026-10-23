@@ -17,7 +17,7 @@ export default function HandFan({ hand, selectedId, selectedIds, playable, canPl
 
   if (hand.length === 0) {
     return (
-      <div className="flex items-center justify-center text-slate-500 text-sm py-5 text-center rounded-xl bg-slate-900/30 border border-slate-800/50">
+      <div className="flex items-center justify-center text-amber-900/50 text-sm py-5 text-center rounded-xl border border-amber-950/60 bg-[#0d0805]/60 italic shadow-[inset_0_2px_6px_rgba(0,0,0,0.8)]">
         Bạn không có lá bài nào.
       </div>
     );
