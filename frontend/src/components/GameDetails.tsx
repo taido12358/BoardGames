@@ -186,8 +186,8 @@ export default function GameDetails() {
 
         <div className="flex flex-col justify-center space-y-3">
           <div>
-            <h1 className="text-3xl font-black tracking-wide text-amber-100">{metadata.title}</h1>
-            <p className="text-amber-200/60">{metadata.subtitle}</p>
+            <h1 className="text-3xl font-black tracking-widest uppercase text-[#f5d09d] drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">{metadata.title}</h1>
+            <p className="text-[#d4b996]/60">{metadata.subtitle}</p>
           </div>
 
           <div className="grid grid-cols-2 gap-2 text-sm">
@@ -318,7 +318,7 @@ export default function GameDetails() {
       </div>
 
       {/* Nút CHƠI NGAY dính đáy màn hình trên mobile — luôn dễ bấm */}
-      <div className="sm:hidden fixed bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-slate-950 via-slate-950/95 to-transparent z-40">
+      <div className="sm:hidden fixed bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-[#0d0a07] via-[#0d0a07]/95 to-transparent z-40">
         <button
           onClick={scrollToRoomPanel}
           className="group relative w-full max-w-md mx-auto block overflow-hidden rounded-lg border-t border-amber-300/60 bg-gradient-to-b from-amber-500 via-amber-600 to-amber-800 py-3.5 px-6 text-sm font-black uppercase tracking-widest text-[#2a1305] shadow-[0_5px_0_0_#451a03,0_10px_20px_rgba(0,0,0,0.8)] transition-all duration-100 hover:brightness-110 active:translate-y-1 active:shadow-[0_1px_0_0_#451a03,0_4px_8px_rgba(0,0,0,0.6)]"

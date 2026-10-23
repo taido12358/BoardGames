@@ -26,7 +26,7 @@ function HpBullets({ hp, maxHp }: { hp: number; maxHp: number }) {
           <div
             key={i}
             aria-hidden="true"
-            className="h-4 w-[6px] rounded-t-sm border border-dashed border-amber-900/40 bg-stone-900/60 opacity-30"
+            className="h-4 w-[6px] rounded-t-sm border border-dashed border-amber-900/40 bg-[#1a1208]/60 opacity-30"
           />
         )
       ))}

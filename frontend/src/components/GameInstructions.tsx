@@ -8,9 +8,9 @@ interface Props {
 function TextSection({ paragraphs, bullets }: { paragraphs: string[]; bullets?: string[] }) {
   return (
     <div className="space-y-3">
-      {paragraphs.map((p, i) => <p key={i} className="text-sm text-amber-200/70 leading-relaxed">{p}</p>)}
+      {paragraphs.map((p, i) => <p key={i} className="text-sm text-[#d4b996]/75 leading-relaxed">{p}</p>)}
       {bullets && bullets.length > 0 && (
-        <ul className="list-disc list-inside space-y-1.5 text-sm text-amber-200/70">
+        <ul className="list-disc list-inside space-y-1.5 text-sm text-[#d4b996]/75">
           {bullets.map((b, i) => <li key={i}>{b}</li>)}
         </ul>
       )}
@@ -44,13 +44,13 @@ function RolesSection({ roles }: { roles: Extract<InstructionSection, { kind: "r
           <div key={r.name} className="relative overflow-hidden rounded-xl border border-amber-900/40 bg-[#1a1208] p-3.5">
               <div className="pointer-events-none absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-amber-500/20 to-transparent" />
             <div className="flex items-center justify-between">
-              <div className="font-bold text-amber-100 flex items-center gap-1.5">
+              <div className="font-bold text-[#f5d09d] flex items-center gap-1.5">
                 <span>{r.icon}</span> {r.name}
               </div>
               {r.hidden ? (
-                <span className="text-[10px] rounded-full bg-[#0d0a07] border border-amber-900/50 px-2 py-0.5 text-amber-700/60">VAI TRÒ ẨN</span>
+                <span className="text-[10px] rounded-sm bg-[#0d0a07] border border-amber-900/50 px-2 py-0.5 text-[#bba182]">VAI TRÒ ẨN</span>
               ) : (
-                <span className="text-[10px] rounded-full bg-amber-900/60 border border-amber-600 px-2 py-0.5 text-amber-300">CÔNG KHAI</span>
+                <span className="text-[10px] rounded-sm bg-amber-900/60 border border-amber-600 px-2 py-0.5 text-amber-300">CÔNG KHAI</span>
               )}
             </div>
             <p className="text-xs text-amber-700/60 mt-1.5"><span className="text-amber-300/70 font-medium">Mục tiêu:</span> {r.goal}</p>
@@ -75,8 +75,8 @@ function CardEntry({ card }: { card: CardGuideEntry }) {
       <div className="text-[10px] text-amber-300/60 text-center uppercase tracking-wide">{card.type}</div>
       {open && (
         <div className="mt-2 pt-2 border-t border-amber-900/40 space-y-1">
-          <p className="text-xs text-amber-200/70">{card.effect}</p>
-          {card.example && <p className="text-[11px] text-amber-300/70 italic">{card.example}</p>}
+          <p className="text-xs text-[#d4b996]/75">{card.effect}</p>
+          {card.example && <p className="text-[11px] text-[#e8c07e]/70 italic">{card.example}</p>}
         </div>
       )}
       {!open && <div className="text-[10px] text-amber-800/50 text-center mt-1">nhấn để xem chi tiết</div>}
@@ -104,7 +104,7 @@ function CharactersSection({ characters }: { characters: Extract<InstructionSect
               {c.name[0]}
             </div>
             <div className="min-w-0">
-              <div className="font-bold text-amber-100">{c.name}</div>
+              <div className="font-bold text-[#f5d09d]">{c.name}</div>
               <div className="text-xs text-red-400">{"❤️".repeat(c.hp)} {c.hp} HP</div>
               <div className="text-xs text-amber-300 font-semibold mt-1">{c.abilityName}</div>
               <p className="text-xs text-amber-700/60 leading-snug">{c.ability}</p>
