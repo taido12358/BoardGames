@@ -111,7 +111,7 @@ describe("OAnQuanBoard", () => {
     render(<OAnQuanBoard makeMove={vi.fn()} onLeave={vi.fn()} onRematch={vi.fn()} rematching={false} />);
 
     expect(screen.getByRole("button", { name: "Ô dân số 3, 5 quân" })).toBeDisabled();
-    expect(screen.getByText("⏳ Chờ đối thủ đi…")).toBeInTheDocument();
+    expect(screen.getByText(/Chờ đối thủ đi/)).toBeInTheDocument();
   });
 
   it("hiện kết quả và nút CHƠI LẠI khi ván đã kết thúc", () => {

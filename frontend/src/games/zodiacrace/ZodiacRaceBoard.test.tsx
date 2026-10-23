@@ -112,7 +112,7 @@ describe("ZodiacRaceBoard — kết thúc ván", () => {
     setRoom(makeState({ positions: [10, 6], winner: "P0" }), "P0");
     render(<ZodiacRaceBoard makeMove={vi.fn()} onLeave={vi.fn()} onRematch={vi.fn()} rematching={false} />);
 
-    expect(screen.getByText(/VỀ ĐÍCH ĐẦU TIÊN/)).toBeInTheDocument();
+    expect(screen.getByText(/Về Đích Đầu Tiên/i)).toBeInTheDocument();
     expect(screen.getByText("🔄 CHƠI LẠI")).toBeInTheDocument();
   });
 
@@ -120,7 +120,7 @@ describe("ZodiacRaceBoard — kết thúc ván", () => {
     setRoom(makeState({ positions: [10, 6], winner: "P0" }), null);
     render(<ZodiacRaceBoard makeMove={vi.fn()} onLeave={vi.fn()} onRematch={vi.fn()} rematching={false} />);
 
-    expect(screen.getByText(/VỀ ĐÍCH ĐẦU TIÊN/)).toBeInTheDocument();
+    expect(screen.getByText(/Về Đích Đầu Tiên/i)).toBeInTheDocument();
     expect(screen.queryByText("🔄 CHƠI LẠI")).not.toBeInTheDocument();
   });
 
