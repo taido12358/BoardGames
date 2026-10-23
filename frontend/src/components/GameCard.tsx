@@ -71,19 +71,22 @@ export default function GameCard({ metadata: m, waitingRooms, onViewDetails, onP
 
         <p className="text-sm text-slate-300/90 leading-snug line-clamp-2">{m.description}</p>
 
-        <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-300">
-          <span>👥 {m.minPlayers === m.maxPlayers ? `${m.minPlayers} người` : `${m.minPlayers}–${m.maxPlayers} người`}</span>
-          <span>⏱ {m.duration}</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <StarRating count={m.difficultyStars} />
-          <span className="text-xs text-slate-400">{m.difficulty}</span>
+        <div className="mt-1 flex flex-wrap items-center gap-1.5">
+          <span className="rounded-full border border-amber-900/50 bg-amber-950/40 px-2 py-0.5 text-[10px] text-amber-400/80">
+            👥 {m.minPlayers === m.maxPlayers ? `${m.minPlayers} người` : `${m.minPlayers}–${m.maxPlayers} người`}
+          </span>
+          <span className="rounded-full border border-amber-900/50 bg-amber-950/40 px-2 py-0.5 text-[10px] text-amber-400/80">
+            ⏱ {m.duration}
+          </span>
+          <span className="rounded-full border border-amber-900/50 bg-amber-950/40 px-2 py-0.5 text-[10px] text-amber-400/80">
+            <StarRating count={m.difficultyStars} /> <span className="text-amber-700/60">{m.difficulty}</span>
+          </span>
         </div>
 
         {m.category.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 mt-1">
+          <div className="flex flex-wrap gap-1 mt-0.5">
             {m.category.map((c) => (
-              <span key={c} className="rounded-full bg-slate-800/80 border border-slate-700 px-2 py-0.5 text-[10px] text-slate-400">
+              <span key={c} className="rounded-sm border border-amber-900/30 bg-[#1a1208] px-1.5 py-0.5 text-[9px] uppercase tracking-wide text-amber-700/60">
                 {c}
               </span>
             ))}

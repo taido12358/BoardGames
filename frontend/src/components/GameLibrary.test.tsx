@@ -23,12 +23,12 @@ describe("GameLibrary — tìm tên không dấu", () => {
     render(<MemoryRouter initialEntries={["/games?q=o+an+quan&filter=players%3A2+ng%C6%B0%E1%BB%9Di"]}><GameLibrary /></MemoryRouter>);
     expect(screen.getByRole("searchbox")).toHaveValue("o an quan");
     expect(screen.getByRole("button", { name: "2 người" })).toHaveAttribute("aria-pressed", "true");
-    expect(screen.getByRole("status")).toHaveTextContent("Tìm thấy 1 trò chơi");
+    expect(screen.getByRole("status")).toHaveTextContent("1 trò chơi");
   });
   it.each(["o an quan", "QUAN   O", "đua xe", "dua xe"])("tìm được với từ khóa %s", async (query) => {
     render(<MemoryRouter><GameLibrary /></MemoryRouter>);
     await userEvent.type(screen.getByRole("searchbox"), query);
-    expect(screen.getByRole("status")).toHaveTextContent("Tìm thấy 1 trò chơi");
+    expect(screen.getByRole("status")).toHaveTextContent("1 trò chơi");
     expect(screen.queryByText("Không tìm thấy trò chơi")).not.toBeInTheDocument();
   });
 
@@ -37,6 +37,6 @@ describe("GameLibrary — tìm tên không dấu", () => {
     await userEvent.type(screen.getByRole("searchbox"), "o an quan");
     await userEvent.click(screen.getByRole("button", { name: "Xóa từ khóa" }));
     expect(screen.getByRole("searchbox")).toHaveValue("");
-    expect(screen.getByRole("status")).toHaveTextContent("Tìm thấy 2 trò chơi");
+    expect(screen.getByRole("status")).toHaveTextContent("2 trò chơi");
   });
 });

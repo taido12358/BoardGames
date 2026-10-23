@@ -149,7 +149,7 @@ export default function GameLibrary() {
               className={`rounded-full px-3.5 py-1.5 text-xs font-medium border transition-colors ${
                 filter === chip.id
                   ? "bg-gradient-to-b from-amber-600 to-amber-800 border-amber-500/60 text-amber-50 shadow-[0_2px_0_0_#451a03]"
-                  : "bg-slate-800/70 border-slate-700 text-slate-300 hover:bg-slate-700"
+                  : "bg-[#1a1208]/80 border-amber-900/40 text-amber-400/60 hover:bg-amber-950/60 hover:text-amber-300/80 hover:border-amber-700/50"
               }`}
             >
               {chip.label}
@@ -197,7 +197,11 @@ export default function GameLibrary() {
       )}
 
       {/* Lưới thẻ game */}
-      {!enginesLoading && !enginesError && filtered.length > 0 && <p role="status" className="text-sm text-slate-400">Tìm thấy {filtered.length} trò chơi.</p>}
+      {!enginesLoading && !enginesError && filtered.length > 0 && (
+        <p role="status" className="text-xs text-amber-600/50 uppercase tracking-widest text-center">
+          ─── {filtered.length} trò chơi ───
+        </p>
+      )}
       {!enginesLoading && !enginesError && filtered.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {filtered.map((m) => (
