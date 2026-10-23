@@ -153,7 +153,7 @@ export default function OAnQuanBoard({ makeMove, onLeave, onRematch, rematching 
           </button>
           <button
             onClick={() => setSelectedPit(null)}
-            className="rounded-lg bg-slate-700 hover:bg-slate-600 px-3 py-2 text-sm"
+            className="rounded-lg border border-amber-950/80 bg-[#140e0b]/90 hover:border-amber-700/60 hover:bg-[#1a120d] px-3 py-2 text-sm text-amber-700/70 hover:text-amber-400 transition-colors"
           >
             Huỷ
           </button>
@@ -162,10 +162,10 @@ export default function OAnQuanBoard({ makeMove, onLeave, onRematch, rematching 
 
       {/* Thông báo kết quả */}
       {state.winner && (
-        <div className={`rounded-2xl p-1 ${state.winner === "DRAW" ? "border border-slate-600/40 bg-slate-800/20" : "border border-amber-600/30 bg-amber-950/20 shadow-[0_0_30px_rgba(251,191,36,0.15)]"}`}>
-          <div className={`rounded-xl p-4 text-center ${state.winner === "DRAW" ? "bg-slate-800/60 border border-slate-600/30" : "bg-gradient-to-b from-[#2b2013] to-[#1c150c] border border-amber-700/30"}`}>
+        <div className={`rounded-2xl p-1 ${state.winner === "DRAW" ? "border border-amber-900/30 bg-amber-950/20" : "border border-amber-600/30 bg-amber-950/20 shadow-[0_0_30px_rgba(251,191,36,0.15)]"}`}>
+          <div className={`rounded-xl p-4 text-center ${state.winner === "DRAW" ? "bg-[#1a1208]/60 border border-amber-900/30" : "bg-gradient-to-b from-[#2b2013] to-[#1c150c] border border-amber-700/30"}`}>
             <div className="text-3xl mb-1">{state.winner === "DRAW" ? "🤝" : "🏆"}</div>
-            <div className={`font-bold text-base [text-shadow:0_1px_0_rgba(255,255,255,0.1),0_2px_4px_rgba(0,0,0,0.8)] ${state.winner === "DRAW" ? "text-slate-200" : "text-amber-200"}`}>
+            <div className={`font-bold text-base [text-shadow:0_1px_0_rgba(255,255,255,0.1),0_2px_4px_rgba(0,0,0,0.8)] ${state.winner === "DRAW" ? "text-amber-200/70" : "text-amber-200"}`}>
               {state.winner === "DRAW"
                 ? `HOÀ — ${state.scores[0]} – ${state.scores[1]}`
                 : `${state.winner === "P0" ? "PHÍA TRÊN" : "PHÍA DƯỚI"} THẮNG`}

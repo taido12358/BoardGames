@@ -3,12 +3,13 @@ import { CARD_DISPLAY, type Card, type CardKind } from "../types";
 interface Props {
   card: Card;
   selected?: boolean;
+  selectionMode?: boolean;
   disabled?: boolean;
   small?: boolean;
   onClick?: () => void;
 }
 
-const suitColor = (suit: string) => (suit === "♥" || suit === "♦" ? "text-red-600" : "text-slate-800");
+const suitColor = (suit: string) => (suit === "♥" || suit === "♦" ? "text-red-600" : "text-amber-900/60");
 
 const CARD_EFFECT: Record<CardKind, string> = {
   bang: "Bắn 1 mục tiêu trong tầm. Trúng: −1 máu.",
@@ -49,7 +50,7 @@ const CATEGORY_STYLE: Record<CardCategory, { bg: string; border: string; text: s
 };
 
 /** Một lá bài trong bộ BANG! — color-coded theo loại (đỏ=tấn công, xanh=phòng thủ, v.v.). */
-export default function CardView({ card, selected, disabled, small, onClick }: Props) {
+export default function CardView({ card, selected, selectionMode, disabled, small, onClick }: Props) {
   const display = CARD_DISPLAY[card.kind];
   const cat = cardCategory(card.kind);
   const cs = CATEGORY_STYLE[cat];
@@ -61,6 +62,8 @@ export default function CardView({ card, selected, disabled, small, onClick }: P
       onClick={onClick}
       title={display.name}
       aria-label={display.name}
+      aria-description={`${card.rank}${card.suit}. ${CARD_EFFECT[card.kind]}`}
+      aria-pressed={selectionMode ? !!selected : undefined}
       className={[
         "relative shrink-0 rounded-lg border-2 text-left transition-all duration-150 select-none overflow-hidden",
         `bg-gradient-to-b ${cs.bg}`,

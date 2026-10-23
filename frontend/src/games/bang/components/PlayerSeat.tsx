@@ -38,7 +38,7 @@ function HpBullets({ hp, maxHp }: { hp: number; maxHp: number }) {
 const FACTION_BORDER: Record<string, string> = {
   Sheriff:  "border-amber-500/60 shadow-[0_0_15px_-3px_rgba(245,158,11,0.3)]",
   Outlaw:   "border-red-700/50 shadow-[0_0_15px_-3px_rgba(220,38,38,0.25)]",
-  Renegade: "border-slate-500/50 shadow-[0_0_15px_-3px_rgba(100,116,139,0.3)]",
+  Renegade: "border-amber-700/30 shadow-[0_0_15px_-3px_rgba(180,120,30,0.2)]",
   Deputy:   "border-amber-700/40",
 };
 
@@ -81,7 +81,7 @@ export default function PlayerSeat({ player, isCurrentTurn, isMe, targetable, ta
         </div>
         <div className="shrink-0 text-[10px] text-amber-300/60 text-right">
           {player.alive
-            ? <span className="text-slate-400">{player.character}</span>
+            ? <span className="text-amber-700/60">{player.character}</span>
             : <span className="text-lg">💀</span>}
         </div>
       </div>

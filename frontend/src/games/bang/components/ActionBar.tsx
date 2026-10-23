@@ -35,12 +35,12 @@ export default function ActionBar({
     const done = discardSelectedCount === discardOverflow;
     return (
       <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-red-950/50 border border-red-700/50 px-3 py-2.5 shadow-md">
-        <span className="text-red-300 text-sm font-medium">
+        <span role="status" className="text-red-300 text-sm font-medium">
           🗑 Vượt giới hạn tay bài — chọn {discardOverflow} lá để bỏ ({discardSelectedCount}/{discardOverflow})
         </span>
         <div className="flex gap-2 shrink-0">
           <button onClick={onCancelDiscard} className={`${btnBase} border-amber-950/80 bg-[#140e0b]/90 text-amber-700/70 shadow-[inset_0_1px_3px_rgba(0,0,0,0.6)] hover:border-amber-700/60 hover:bg-[#1a120d] hover:text-amber-400`}>
-            Hủy
+            Hủy <span aria-hidden="true" className="ml-1 opacity-60">Esc</span>
           </button>
           <button
             onClick={onConfirmDiscard}
@@ -62,7 +62,7 @@ export default function ActionBar({
           <p className="mt-1 text-xs text-amber-200/80">{targetCount === 0 ? "Không còn mục tiêu hợp lệ. Hãy hủy và chọn lá khác." : `Nhấn vào người chơi được tô sáng${targetCount !== undefined ? ` (${targetCount} mục tiêu hợp lệ)` : ""}.`}</p>
         </div>
         <button onClick={onCancelTarget} className={`${btnBase} border-amber-950/80 bg-[#140e0b]/90 text-amber-700/70 shadow-[inset_0_1px_3px_rgba(0,0,0,0.6)] hover:border-amber-700/60 hover:bg-[#1a120d] hover:text-amber-400`}>
-          Hủy
+          Hủy <span aria-hidden="true" className="ml-1 opacity-60">Esc</span>
         </button>
       </div>
     );
@@ -78,7 +78,7 @@ export default function ActionBar({
         <span className="text-red-300 text-sm font-medium">
           {`⚠️ Chọn ${defense} để đỡ. ${hasBarrel ? "Thùng rượu có thể giúp né đòn." : "Bỏ qua sẽ tự mất 1 máu."}`}
         </span>
-        <button onClick={onRespondPass} className={`${btnBase} ${hasBarrel ? "bg-amber-900/60 hover:bg-amber-800 border-amber-700/60 text-amber-200 hover:text-amber-100" : "bg-slate-800 hover:bg-red-900 border-red-800/60 text-red-300 hover:text-red-200"}`}>
+        <button onClick={onRespondPass} className={`${btnBase} ${hasBarrel ? "bg-amber-900/60 hover:bg-amber-800 border-amber-700/60 text-amber-200 hover:text-amber-100" : "bg-[#140e0b]/90 hover:bg-red-900/60 border-red-800/60 text-red-400 hover:text-red-300"}`}>
           {hasBarrel ? "🛢 Thử Thùng rượu (trượt: −1 máu)" : "Chịu đòn (−1 máu)"}
         </button>
       </div>
