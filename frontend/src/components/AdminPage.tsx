@@ -64,7 +64,7 @@ export default function AdminPage() {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <div className="rounded-xl bg-gradient-to-b from-[#2b2013] to-[#1c150c] border border-amber-900/40 p-3 text-center">
             <div className="text-xl font-bold text-amber-200">{stats.totalUsers}</div>
-            <div className="text-xs text-slate-400">Tài khoản</div>
+            <div className="text-xs text-amber-700/70">Tài khoản</div>
           </div>
           {stats.byStatus.map((s) => (
             <div key={s.status} className="relative overflow-hidden rounded-xl border border-amber-900/40 bg-gradient-to-b from-[#1c130d] to-[#120b07] p-3 text-center shadow-[inset_0_1px_0_rgba(245,158,11,0.15)]">

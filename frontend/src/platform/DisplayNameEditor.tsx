@@ -91,7 +91,7 @@ export default function DisplayNameEditor({ displayName, email }: { displayName:
       >
         {saving ? "Đang lưu…" : "Lưu"}
       </button>
-      <button type="button" disabled={saving} onClick={cancel} className="text-xs px-1.5 py-1 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-300 disabled:opacity-50">
+      <button type="button" disabled={saving} onClick={cancel} className="text-xs px-1.5 py-1 rounded-lg border border-amber-950/80 bg-[#140e0b]/90 text-amber-700/70 hover:border-amber-700/60 hover:bg-[#1a120d] hover:text-amber-400 disabled:opacity-50">
         Huỷ
       </button>
       {error && <span role="alert" className="w-full text-xs text-red-400">{error}</span>}

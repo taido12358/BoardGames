@@ -40,22 +40,22 @@ export default function LoginPage() {
       <div className="text-center space-y-2">
         <div className="text-5xl animate-bounce" style={{ animationDuration: "2.5s", animationTimingFunction: "ease-in-out" }}>🎲</div>
         <h1 className="text-3xl font-western tracking-wide text-amber-100">BoardGame</h1>
-        <p className="text-slate-400 text-sm">Chơi board game cùng bạn bè — mọi lúc, mọi nơi.</p>
+        <p className="text-amber-700/60 text-sm">Chơi board game cùng bạn bè — mọi lúc, mọi nơi.</p>
       </div>
 
       {/* Login card — double border theo gợi ý Gemini */}
       <div className="w-full max-w-sm rounded-xl border border-amber-500/20 bg-stone-900/80 p-1 shadow-2xl backdrop-blur-sm">
       <div className="rounded-lg border border-amber-500/30 p-6 bg-gradient-to-b from-[#241a14] to-[#1a120c] space-y-4">
         <div className="text-center space-y-1">
-          <h2 className="text-base font-bold text-slate-100">
+          <h2 className="text-base font-bold text-amber-100">
             {step === "email" ? "🔐 Đăng nhập" : "📬 Nhập mã xác nhận"}
           </h2>
-          <p className="text-slate-400 text-sm leading-snug">
+          <p className="text-amber-700/60 text-sm leading-snug">
             {step === "email"
               ? "Nhập email của bạn — chúng tôi sẽ gửi mã đăng nhập 6 số."
               : <>Mã 6 số đã gửi đến{" "}
                   <span className="text-amber-300 font-medium break-all">{pendingEmail}</span>.
-                  <br /><span className="text-slate-400 text-xs">Mã có hiệu lực 5 phút. Kiểm tra cả mục Spam.</span>
+                  <br /><span className="text-amber-700/50 text-xs">Mã có hiệu lực 5 phút. Kiểm tra cả mục Spam.</span>
                 </>}
           </p>
         </div>
@@ -63,7 +63,7 @@ export default function LoginPage() {
         {step === "email" ? (
           <form onSubmit={submitEmail} aria-busy={loading} className="space-y-3">
             <div>
-              <label htmlFor="login-email" className="text-slate-400 text-xs uppercase tracking-widest font-medium">
+              <label htmlFor="login-email" className="text-amber-700/70 text-xs uppercase tracking-widest font-medium">
                 Email
               </label>
               <input
@@ -92,7 +92,7 @@ export default function LoginPage() {
         ) : (
           <form onSubmit={submitCode} aria-busy={loading} className="space-y-3">
             <div>
-              <label htmlFor="login-code" className="text-slate-400 text-xs uppercase tracking-widest font-medium">
+              <label htmlFor="login-code" className="text-amber-700/70 text-xs uppercase tracking-widest font-medium">
                 Mã xác nhận
               </label>
               <input
@@ -121,7 +121,7 @@ export default function LoginPage() {
                   }
                 }}
               />
-              <p id="login-code-hint" className="mt-2 text-xs text-slate-400">Nhập hoặc dán mã 6 số từ email mới nhất.</p>
+              <p id="login-code-hint" className="mt-2 text-xs text-amber-700/60">Nhập hoặc dán mã 6 số từ email mới nhất.</p>
             </div>
             <button
               type="submit"
@@ -131,14 +131,14 @@ export default function LoginPage() {
               {loading ? "Đang kiểm tra…" : "✅ Đăng nhập"}
             </button>
             <div className="flex justify-between text-sm">
-              <button type="button" disabled={loading} onClick={backToEmail} className="text-slate-400 hover:text-slate-200 transition-colors disabled:opacity-50">
+              <button type="button" disabled={loading} onClick={backToEmail} className="text-amber-700/60 hover:text-amber-300 transition-colors disabled:opacity-50">
                 ← Đổi email
               </button>
               <button
                 type="button"
                 disabled={resendIn > 0 || loading}
                 onClick={resendCode}
-                className="text-amber-400 hover:text-amber-300 disabled:text-slate-500 transition-colors"
+                className="text-amber-400 hover:text-amber-300 disabled:text-amber-900/50 transition-colors"
               >
                 {resendIn > 0 ? `Gửi lại mã (${resendIn}s)` : "Gửi lại mã"}
               </button>
