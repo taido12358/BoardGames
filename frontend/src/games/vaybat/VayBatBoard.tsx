@@ -122,7 +122,7 @@ export default function VayBatBoard({ makeMove, onLeave, onRematch, rematching }
     <div className="flex flex-col gap-3 w-full max-w-md mx-auto">
 
       {/* Status bar */}
-      <div className="bg-slate-800 rounded-2xl px-4 py-3 shadow-lg">
+      <div className="bg-gradient-to-r from-slate-800 to-slate-800/80 rounded-2xl px-4 py-3 shadow-lg border border-slate-700/50">
         <div className="grid grid-cols-3 gap-1 text-center">
           <div>
             <div className="text-slate-400 text-xs mb-0.5">Bạn cầm</div>
@@ -162,7 +162,7 @@ export default function VayBatBoard({ makeMove, onLeave, onRematch, rematching }
       <DisconnectBadge seats={room.seats} />
 
       {/* Board */}
-      <div className="bg-slate-800 rounded-2xl p-2 shadow-lg">
+      <div className="bg-[#1a2030] rounded-2xl p-2 shadow-lg border border-slate-700/40">
         <svg
           ref={svgRef}
           viewBox="0 0 400 440"
