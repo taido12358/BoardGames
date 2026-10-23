@@ -60,7 +60,7 @@ export default function BangDebugPanel({ roomId, players }: Props) {
           <select
             value={selectedId}
             onChange={(e) => setSelectedId(e.target.value)}
-            className="w-full rounded bg-slate-800 text-slate-200 px-2 py-1"
+            className="w-full rounded border border-amber-900/50 bg-[#120c08] text-amber-200 px-2 py-1"
           >
             {players.map((p) => (
               <option key={p.id} value={p.id}>{p.id} — {p.name}</option>
@@ -68,20 +68,20 @@ export default function BangDebugPanel({ roomId, players }: Props) {
           </select>
           <div className="flex flex-wrap gap-1.5">
             <button disabled={busy} onClick={() => call("force-draw", { playerId: selectedId, count: 1 })}
-              className="rounded bg-slate-700 hover:bg-slate-600 px-2 py-1 disabled:opacity-40">+1 lá</button>
+              className="rounded border border-amber-900/50 bg-amber-950/30 hover:bg-amber-900/40 px-2 py-1 text-amber-300/70 text-xs disabled:opacity-40">+1 lá</button>
             <button disabled={busy} onClick={() => call("force-draw", { playerId: selectedId, count: 3 })}
-              className="rounded bg-slate-700 hover:bg-slate-600 px-2 py-1 disabled:opacity-40">+3 lá</button>
+              className="rounded border border-amber-900/50 bg-amber-950/30 hover:bg-amber-900/40 px-2 py-1 text-amber-300/70 text-xs disabled:opacity-40">+3 lá</button>
             <button disabled={busy} onClick={() => call("force-damage", { playerId: selectedId, amount: 1 })}
-              className="rounded bg-slate-700 hover:bg-slate-600 px-2 py-1 disabled:opacity-40">-1 HP</button>
+              className="rounded border border-amber-900/50 bg-amber-950/30 hover:bg-amber-900/40 px-2 py-1 text-amber-300/70 text-xs disabled:opacity-40">-1 HP</button>
             <button disabled={busy} onClick={() => call("force-damage", { playerId: selectedId, amount: 99 })}
-              className="rounded bg-slate-700 hover:bg-slate-600 px-2 py-1 disabled:opacity-40">Loại ngay</button>
+              className="rounded border border-red-900/50 bg-red-950/30 hover:bg-red-900/40 px-2 py-1 text-red-400/70 text-xs disabled:opacity-40">Loại ngay</button>
             <button disabled={busy} onClick={() => call("force-end-turn")}
-              className="rounded bg-slate-700 hover:bg-slate-600 px-2 py-1 disabled:opacity-40">Ép kết thúc lượt</button>
+              className="rounded border border-amber-900/50 bg-amber-950/30 hover:bg-amber-900/40 px-2 py-1 text-amber-300/70 text-xs disabled:opacity-40">Ép kết thúc lượt</button>
             <button disabled={busy} onClick={inspectState}
-              className="rounded bg-slate-700 hover:bg-slate-600 px-2 py-1 disabled:opacity-40">Xem state đầy đủ</button>
+              className="rounded border border-amber-900/50 bg-amber-950/30 hover:bg-amber-900/40 px-2 py-1 text-amber-300/70 text-xs disabled:opacity-40">Xem state đầy đủ</button>
           </div>
           {rawState && (
-            <pre className="max-h-48 overflow-auto rounded bg-slate-900 p-2 text-[10px] text-slate-300 whitespace-pre-wrap">{rawState}</pre>
+            <pre className="max-h-48 overflow-auto rounded border border-amber-900/30 bg-[#0d0a07] p-2 text-[10px] text-amber-300/60 whitespace-pre-wrap">{rawState}</pre>
           )}
         </div>
       )}
