@@ -52,14 +52,17 @@ export default function AdminPage() {
 
   return (
     <div className="w-full max-w-5xl mx-auto space-y-5">
-      <div className="text-center space-y-1 pt-1">
+      <div className="text-center space-y-2 pt-2">
         <h1 className="text-2xl sm:text-3xl font-black tracking-wide text-amber-100">🛠 QUẢN TRỊ</h1>
         <p className="text-sm text-slate-400">Tổng quan phòng/ván trên toàn hệ thống (chỉ đọc).</p>
+        <div className="flex items-center justify-center gap-2 opacity-30 text-base">
+          <span>─────</span><span>✦</span><span>─────</span>
+        </div>
       </div>
 
       {stats && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div className="rounded-xl bg-slate-800/60 border border-slate-700 p-3 text-center">
+          <div className="rounded-xl bg-gradient-to-b from-[#2b2013] to-[#1c150c] border border-amber-900/40 p-3 text-center">
             <div className="text-xl font-bold text-amber-200">{stats.totalUsers}</div>
             <div className="text-xs text-slate-400">Tài khoản</div>
           </div>

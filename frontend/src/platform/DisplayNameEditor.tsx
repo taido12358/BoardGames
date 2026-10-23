@@ -73,7 +73,7 @@ export default function DisplayNameEditor({ displayName, email }: { displayName:
         type="button"
         onClick={save}
         disabled={saving}
-        className="text-xs px-1.5 py-1 rounded-lg bg-amber-700 hover:bg-amber-600 disabled:opacity-50 text-white"
+        className="relative text-xs px-2 py-1 rounded-md bg-gradient-to-b from-amber-600 to-amber-800 border-t border-amber-400/40 shadow-[0_2px_0_0_#451a03] transition-all hover:brightness-110 active:top-[1px] active:shadow-none disabled:opacity-50 text-amber-50 font-semibold"
       >
         Lưu
       </button>
