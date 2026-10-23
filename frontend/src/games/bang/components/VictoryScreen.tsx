@@ -4,75 +4,104 @@ import { localOutcome, type BangViewerState } from "../types";
 interface Props {
   state: BangViewerState;
   onLeave: () => void;
-  /** undefined = khán giả, không cho chơi lại (chỉ người từng ngồi ghế mới rematch được). */
+  /** undefined = khán giả, không cho chơi lại. */
   onRematch?: () => void;
   rematching: boolean;
 }
 
-const WINNER_TITLE: Record<string, { title: string; color: string }> = {
-  sheriff: { title: "CẢNH SÁT TRƯỞNG CHIẾN THẮNG", color: "text-amber-300" },
-  outlaw: { title: "KẺ NGOÀI VÒNG PHÁP LUẬT CHIẾN THẮNG", color: "text-red-400" },
-  renegade: { title: "KẺ PHẢN BỘI CHIẾN THẮNG", color: "text-purple-400" },
+const WINNER_CONFIG: Record<string, { title: string; emoji: string; color: string; glow: string }> = {
+  sheriff: { title: "CẢNH SÁT TRƯỞNG CHIẾN THẮNG", emoji: "⭐", color: "text-amber-300", glow: "shadow-[0_0_40px_rgba(251,191,36,0.3)]" },
+  outlaw:  { title: "KẺ NGOÀI VÒNG PHÁP LUẬT CHIẾN THẮNG", emoji: "🏴", color: "text-red-400",   glow: "shadow-[0_0_40px_rgba(220,38,38,0.3)]" },
+  renegade:{ title: "KẺ PHẢN BỘI CHIẾN THẮNG", emoji: "🎭", color: "text-purple-400", glow: "shadow-[0_0_40px_rgba(168,85,247,0.3)]" },
 };
 
-/** Animation vào màn (van-de.md §46) tuỳ CHÍNH bạn thắng/thua/trung lập (khán giả) —
- * xem localOutcome trong types.ts để biết vì sao so sánh không phân biệt hoa/thường. */
 const OUTCOME_ENTER_CLASS: Record<ReturnType<typeof localOutcome>, string> = {
   win: "animate-victory-win",
   lose: "animate-victory-lose",
   neutral: "animate-victory-neutral",
 };
 
-const OUTCOME_BADGE: Record<ReturnType<typeof localOutcome>, string | null> = {
-  win: "🎉 BẠN THẮNG",
-  lose: "💀 BẠN THUA",
+const OUTCOME_BADGE: Record<ReturnType<typeof localOutcome>, { text: string; cls: string } | null> = {
+  win: { text: "🎉 BẠN THẮNG", cls: "bg-amber-900/60 border-amber-500/50 text-amber-200" },
+  lose: { text: "💀 BẠN THUA", cls: "bg-red-950/60 border-red-700/50 text-red-300" },
   neutral: null,
 };
 
-/** Màn hình chiến thắng — che toàn màn hình khi ván kết thúc (§29). */
+/** Màn hình kết thúc ván — overlay toàn màn, animation theo kết quả cá nhân. */
 export default function VictoryScreen({ state, onLeave, onRematch, rematching }: Props) {
   const winnerKey = (state.winner ?? "").toLowerCase();
-  const info = WINNER_TITLE[winnerKey] ?? { title: `${state.winner ?? "?"} CHIẾN THẮNG`, color: "text-amber-300" };
+  const cfg = WINNER_CONFIG[winnerKey] ?? { title: `${state.winner ?? "?"} THẮNG`, emoji: "🏆", color: "text-amber-300", glow: "" };
   const alive = state.players.filter((p) => p.alive);
   const dead = state.players.filter((p) => !p.alive);
   const outcome = localOutcome(state);
   const badge = OUTCOME_BADGE[outcome];
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-4">
-      <div
-        className={`w-full max-w-md rounded-2xl border-2 border-amber-600 bg-gradient-to-b from-[#241a10] to-[#120d08] p-6 text-center space-y-4 shadow-2xl ${OUTCOME_ENTER_CLASS[outcome]}`}
-      >
-        <div className="text-4xl">🏆</div>
-        {badge && <div className="text-sm font-bold tracking-wide text-amber-200">{badge}</div>}
-        <h2 className={`text-xl font-black tracking-wide ${info.color}`}>{info.title}</h2>
+    <div className="fixed inset-0 z-50 bg-black/88 flex items-center justify-center p-4">
+      <div className={[
+        "w-full max-w-md rounded-2xl border-2 border-amber-700/60",
+        "bg-gradient-to-b from-[#2b2013] via-[#1c150c] to-[#120d08]",
+        "p-6 text-center space-y-4 shadow-2xl",
+        cfg.glow,
+        OUTCOME_ENTER_CLASS[outcome],
+      ].join(" ")}>
 
+        {/* Icon + badge */}
+        <div className="text-5xl">{cfg.emoji}</div>
+
+        {badge && (
+          <div className={`inline-block text-sm font-bold tracking-wide px-4 py-1.5 rounded-full border ${badge.cls}`}>
+            {badge.text}
+          </div>
+        )}
+
+        {/* Winner title */}
+        <h2 className={`text-lg font-black tracking-wide leading-tight ${cfg.color}`}>
+          {cfg.title}
+        </h2>
+
+        {/* Player lists */}
         <div className="grid grid-cols-2 gap-3 text-left text-sm">
           <div>
-            <div className="text-emerald-400 font-semibold mb-1">✅ Còn sống</div>
-            {alive.length === 0 && <div className="text-slate-500">—</div>}
-            {alive.map((p) => (
-              <div key={p.id} className="text-slate-300">{p.name} <span className="text-slate-500">({p.publicRole})</span></div>
-            ))}
+            <div className="text-emerald-400 text-xs font-bold mb-1.5 uppercase tracking-wide">✅ Còn sống</div>
+            {alive.length === 0
+              ? <div className="text-slate-600 text-xs">—</div>
+              : alive.map((p) => (
+                <div key={p.id} className="text-slate-200 text-xs py-0.5">
+                  {p.name}
+                  <span className="text-slate-500 ml-1">({p.publicRole})</span>
+                </div>
+              ))
+            }
           </div>
           <div>
-            <div className="text-red-400 font-semibold mb-1">💀 Đã bị loại</div>
-            {dead.length === 0 && <div className="text-slate-500">—</div>}
-            {dead.map((p) => (
-              <div key={p.id} className="text-slate-400">{p.name} <span className="text-slate-500">({p.publicRole})</span></div>
-            ))}
+            <div className="text-red-400 text-xs font-bold mb-1.5 uppercase tracking-wide">💀 Bị loại</div>
+            {dead.length === 0
+              ? <div className="text-slate-600 text-xs">—</div>
+              : dead.map((p) => (
+                <div key={p.id} className="text-slate-400 text-xs py-0.5">
+                  {p.name}
+                  <span className="text-slate-600 ml-1">({p.publicRole})</span>
+                </div>
+              ))
+            }
           </div>
         </div>
 
-        <div className="text-xs text-slate-500">Tổng số lượt: {state.turnNumber}</div>
+        <div className="text-[10px] text-slate-600 font-mono">
+          {state.turnNumber} lượt
+        </div>
 
-        {onRematch && <RematchButton onRematch={onRematch} loading={rematching} />}
-        <button
-          onClick={onLeave}
-          className="w-full rounded-xl bg-amber-700 hover:bg-amber-600 px-4 py-3 font-bold text-sm transition-colors"
-        >
-          VỀ PHÒNG CHỜ
-        </button>
+        {/* Actions */}
+        <div className="flex flex-col gap-2">
+          {onRematch && <RematchButton onRematch={onRematch} loading={rematching} />}
+          <button
+            onClick={onLeave}
+            className="w-full rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 px-4 py-2.5 font-semibold text-sm text-slate-300 hover:text-white transition-colors"
+          >
+            VỀ PHÒNG CHỜ
+          </button>
+        </div>
       </div>
     </div>
   );

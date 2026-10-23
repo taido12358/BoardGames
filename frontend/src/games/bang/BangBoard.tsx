@@ -72,19 +72,45 @@ export default function BangBoard({ makeMove, onLeave, onRematch, rematching }: 
   const state = room.state as BangViewerState;
 
   if (state.phase === "waitingForPlayers" || room.status === "Waiting") {
+    const joined = room.seats.filter((s) => s.displayName !== null).length;
     return (
       <div className="flex flex-col gap-3 w-full max-w-md mx-auto">
         <ConnectionBanner connectionState={connectionState} />
-        <div className="bg-slate-800 rounded-2xl p-5 text-center space-y-3">
-          <div className="text-3xl">🤠</div>
-          <h2 className="font-bold text-lg text-amber-300">BANG! — ĐANG CHỜ</h2>
-          <p className="text-slate-400 text-sm">
-            {room.seats.filter((s) => s.displayName !== null).length}/{room.seatCount} người chơi đã vào phòng.
+        <div className="bg-gradient-to-b from-[#2b2013] to-[#1a1208] rounded-2xl border border-amber-800/30 p-6 text-center shadow-xl">
+          <div className="text-4xl mb-2">🤠</div>
+          <h2 className="font-black text-xl text-amber-300 tracking-wide mb-1">BANG!</h2>
+          <p className="text-amber-500/60 text-xs uppercase tracking-widest mb-4">Phòng chờ · {room.id.slice(0, 8)}</p>
+
+          <div className="flex items-center justify-center gap-2 mb-4">
+            {Array.from({ length: room.seatCount }, (_, i) => (
+              <div
+                key={i}
+                className={`w-8 h-8 rounded-full border-2 flex items-center justify-center text-sm ${
+                  i < joined
+                    ? "border-amber-500 bg-amber-900/50 text-amber-300"
+                    : "border-slate-700 bg-slate-800/50 text-slate-600"
+                }`}
+              >
+                {i < joined ? "●" : "○"}
+              </div>
+            ))}
+          </div>
+
+          <p className="text-amber-200/80 text-sm mb-3">
+            <span className="font-bold text-amber-300">{joined}</span>
+            <span className="text-amber-400/50">/{room.seatCount}</span>
+            {" "}người chơi
           </p>
-          <ul className="text-sm text-slate-300 space-y-1">
+
+          <ul className="text-sm space-y-1.5 text-left mb-2">
             {room.seats.map((seat, i) => (
-              <li key={i} className={seat.displayName ? "" : "text-slate-600"}>
-                {seat.displayName ? `👤 ${seat.displayName}` : `— (trống)`}
+              <li key={i} className={`flex items-center gap-2 rounded-lg px-2.5 py-1.5 ${
+                seat.displayName
+                  ? "bg-amber-900/30 text-amber-200 border border-amber-800/30"
+                  : "text-slate-600 border border-slate-800/50"
+              }`}>
+                <span>{seat.displayName ? "🤠" : "…"}</span>
+                <span>{seat.displayName ?? "(trống)"}</span>
               </li>
             ))}
           </ul>
