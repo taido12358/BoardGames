@@ -61,7 +61,7 @@ export default function GameHistoryPage() {
     <div className="w-full max-w-5xl mx-auto space-y-5">
       <div className="text-center space-y-2 pt-2">
         <h1 className="text-2xl sm:text-3xl font-black tracking-wide text-amber-100 [text-shadow:0_1px_0_rgba(255,255,255,0.15),0_2px_4px_rgba(0,0,0,0.9)]">📜 LỊCH SỬ VÁN ĐẤU</h1>
-        <p className="text-sm text-slate-400">Tìm theo tên người chơi, người thắng, hoặc trạng thái ván.</p>
+        <p className="text-sm text-amber-600/70">Tìm theo tên người chơi, người thắng, hoặc trạng thái ván.</p>
         <div className="flex items-center justify-center gap-2 opacity-30 text-base">
           <span>─────</span><span>✦</span><span>─────</span>
         </div>
@@ -80,12 +80,12 @@ export default function GameHistoryPage() {
         <p role="alert">{error}</p>
         <button onClick={() => setAttempt((value) => value + 1)} className="rounded-lg bg-red-800 px-4 py-2 font-semibold text-white hover:bg-red-700">Thử lại</button>
       </div>}
-      {loading && <p role="status" className="text-slate-400 text-sm text-center py-4">Đang tải…</p>}
+      {loading && <p role="status" className="text-amber-700/60 text-sm text-center py-4 italic">Đang tải…</p>}
 
       {!loading && !error && records.length === 0 && (
-        <div className="text-slate-400 text-sm text-center py-10 space-y-3">
+        <div className="text-amber-700/50 text-sm text-center py-10 space-y-3 italic">
           <p>Không tìm thấy ván đấu nào khớp.</p>
-          {query.trim() && <button onClick={() => setQuery("")} className="rounded-lg bg-slate-700 px-4 py-2 text-slate-100 hover:bg-slate-600">Xóa tìm kiếm</button>}
+          {query.trim() && <button onClick={() => setQuery("")} className="rounded-lg border border-amber-950/80 bg-[#140e0b]/90 px-4 py-2 text-amber-700/70 hover:border-amber-700/60 hover:text-amber-400 transition-all not-italic">Xóa tìm kiếm</button>}
         </div>
       )}
 
@@ -105,11 +105,11 @@ export default function GameHistoryPage() {
             <tbody className="divide-y divide-amber-900/20">
               {records.map((r) => (
                 <tr key={r.id} className="hover:bg-amber-950/20">
-                  <td className="px-3 py-2 font-medium text-slate-200">{r.gameKey}</td>
-                  <td className="px-3 py-2 text-slate-300">{r.players || "—"}</td>
-                  <td className="px-3 py-2 text-slate-400">{r.winner ?? "—"}</td>
-                  <td className="px-3 py-2 text-slate-400">{r.moveCount}</td>
-                  <td className="px-3 py-2 text-slate-500 text-xs">{formatTime(r.finishedAt)}</td>
+                  <td className="px-3 py-2 font-medium text-amber-200">{r.gameKey}</td>
+                  <td className="px-3 py-2 text-amber-300/70">{r.players || "—"}</td>
+                  <td className="px-3 py-2 text-amber-400/60">{r.winner ?? "—"}</td>
+                  <td className="px-3 py-2 text-amber-400/60 font-mono">{r.moveCount}</td>
+                  <td className="px-3 py-2 text-amber-700/50 text-xs font-mono">{formatTime(r.finishedAt)}</td>
                   <td className="px-3 py-2">
                     {r.status === "Finished" && (
                       <Link to={`/replay/${r.id}`} className="text-xs text-amber-400 hover:text-amber-300 whitespace-nowrap">
