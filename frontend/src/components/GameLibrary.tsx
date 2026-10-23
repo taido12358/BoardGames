@@ -120,6 +120,14 @@ export default function GameLibrary() {
         </div>
       </div>
 
+      {/* Saloon divider */}
+      <div className="relative flex items-center justify-center">
+        <div className="h-px w-full bg-gradient-to-r from-transparent via-amber-600/40 to-transparent" />
+        <div className="absolute flex items-center justify-center bg-[#0d0a07] px-3">
+          <span className="h-2 w-2 rotate-45 border border-amber-500/60 bg-amber-900/60 shadow-[0_0_6px_rgba(245,158,11,0.3)]" />
+        </div>
+      </div>
+
       {/* Tìm kiếm & bộ lọc */}
       <div className="space-y-3">
         <input

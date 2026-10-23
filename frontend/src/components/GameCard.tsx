@@ -38,6 +38,9 @@ export default function GameCard({ metadata: m, waitingRooms, onViewDetails, onP
     >
       {/* Weathered edge highlight — ánh sáng đèn dầu hắt vào mép */}
       <div className="pointer-events-none absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-amber-400/30 to-transparent z-10" />
+      {/* Card glare — ánh đèn chùm hắt vào góc trên-trái */}
+      <div className="pointer-events-none absolute -left-12 -top-12 h-32 w-32 rounded-full bg-gradient-to-br from-amber-400/20 via-amber-500/5 to-transparent blur-xl z-10" />
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-tr from-transparent via-amber-200/[0.03] to-amber-300/[0.07] z-10" />
       {/* Artwork — chiếm ~50% chiều cao thẻ */}
       <button
         type="button"
