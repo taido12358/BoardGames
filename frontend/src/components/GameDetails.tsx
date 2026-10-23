@@ -226,7 +226,7 @@ export default function GameDetails() {
 
       {/* Tạo phòng / Vào phòng */}
       <div ref={roomPanelRef} role="region" aria-label="Tạo và vào phòng" tabIndex={-1} className="space-y-3 scroll-mt-4">
-        <h2 className="text-lg font-bold text-amber-100">🚪 CHƠI {metadata.title}</h2>
+        <h2 className="text-lg font-bold text-amber-100 [text-shadow:0_1px_0_rgba(255,255,255,0.1),0_2px_4px_rgba(0,0,0,0.8)]">🚪 CHƠI {metadata.title}</h2>
         {error && <div role="alert" className="rounded-xl bg-red-900/40 p-3 text-sm text-red-300">{error}</div>}
 
         <fieldset disabled={busy} aria-busy={busy} className="min-w-0 rounded-2xl border border-amber-700/40 bg-[#1c150c] p-4 space-y-3">
@@ -252,32 +252,33 @@ export default function GameDetails() {
           </button>
         </fieldset>
 
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/40 p-4">
-          <h3 className="text-sm font-semibold text-slate-300 mb-2">
-            PHÒNG ĐANG CHỜ {waitingRooms.length > 0 && <span className="text-slate-500">({waitingRooms.length})</span>}
+        <div className="rounded-2xl border border-amber-900/30 bg-[#160f08]/60 p-4">
+          <h3 className="text-sm font-semibold text-amber-300/70 mb-2 uppercase tracking-widest">
+            Phòng Đang Chờ {waitingRooms.length > 0 && <span className="text-amber-700/60">({waitingRooms.length})</span>}
           </h3>
           <LobbyLoadStatus loading={roomsLoading} error={roomsError} onRetry={() => fetchRooms(gameKey)} />
           {!roomsLoading && !roomsError && waitingRooms.length === 0 && (
-            <p className="text-slate-500 text-sm text-center py-4">Chưa có phòng nào đang chờ — hãy tạo phòng mới!</p>
+            <p className="text-amber-900/60 text-sm text-center py-4">Chưa có phòng nào đang chờ — hãy tạo phòng mới!</p>
           )}
           <ul className="space-y-2">
             {waitingRooms.map((r) => {
               const occupied = r.seats.filter((s) => s.displayName !== null).length;
               const owner = r.seats.find((s) => s.displayName !== null)?.displayName ?? null;
               return (
-                <li key={r.id} className="bg-slate-800/60 rounded-xl p-3 flex items-center justify-between gap-2">
+                <li key={r.id} className="relative overflow-hidden rounded-xl border border-amber-900/30 bg-gradient-to-r from-[#1c1408] to-[#150f06] p-3 flex items-center justify-between gap-2">
+                  <div className="pointer-events-none absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-amber-500/20 to-transparent" />
                   <div className="min-w-0">
-                    <div className="text-sm text-slate-200 truncate">
-                      Phòng của {owner ?? "Ẩn danh"}
+                    <div className="text-sm text-amber-100 truncate font-medium">
+                      🚪 Phòng của {owner ?? "Ẩn danh"}
                     </div>
-                    <div className="text-xs text-slate-500">👥 {occupied} / {r.seatCount} · Trạng thái: Đang chờ</div>
+                    <div className="text-xs text-amber-700/70 mt-0.5">👥 {occupied}/{r.seatCount} người · Đang chờ</div>
                   </div>
                   <div className="shrink-0 flex items-center gap-1.5">
                     {r.isMine && (
                       <button
                         onClick={() => handleCancel(r.id)}
                         disabled={busy}
-                        className="rounded-lg bg-slate-700 hover:bg-red-800 disabled:opacity-50 px-3 py-2 text-sm font-medium text-slate-300"
+                        className="rounded-lg bg-slate-800/80 hover:bg-red-900/60 border border-slate-700/50 hover:border-red-700/50 disabled:opacity-50 px-3 py-1.5 text-xs font-medium text-slate-400 hover:text-red-300 transition-colors"
                         title="Huỷ phòng"
                       >
                         {cancelingId === r.id ? "…" : "HUỶ"}
@@ -286,7 +287,7 @@ export default function GameDetails() {
                     <button
                       onClick={() => handleJoin(r.id)}
                       disabled={busy}
-                      className="rounded-lg bg-emerald-700 hover:bg-emerald-600 border border-emerald-600/40 px-3.5 py-2 text-sm font-semibold text-emerald-50 transition-colors"
+                      className="relative rounded-lg bg-gradient-to-b from-amber-600 via-amber-700 to-amber-800 px-3.5 py-1.5 text-xs font-semibold text-amber-50 border-t border-amber-400/50 shadow-[0_2px_0_0_#451a03] transition-all hover:brightness-110 active:top-[1px] active:shadow-none disabled:opacity-50"
                     >
                       VÀO PHÒNG
                     </button>
