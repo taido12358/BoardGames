@@ -113,7 +113,7 @@ export default function GameLibrary() {
     <div className="w-full max-w-5xl mx-auto space-y-5">
       {/* Header */}
       <div className="text-center space-y-2 pt-2">
-        <h1 className="text-2xl sm:text-3xl font-black tracking-wide text-amber-100 [text-shadow:0_1px_0_rgba(255,255,255,0.15),0_2px_4px_rgba(0,0,0,0.9)]">🎲 THƯ VIỆN TRÒ CHƠI</h1>
+        <h1 className="text-2xl sm:text-3xl font-black tracking-widest text-[#f5d09d] uppercase drop-shadow-[0_2px_8px_rgba(0,0,0,0.95)] [text-shadow:0_1px_0_rgba(255,200,120,0.2),0_2px_6px_rgba(0,0,0,0.9)]">🎲 THƯ VIỆN TRÒ CHƠI</h1>
         <p className="text-sm text-amber-700/60">Chọn một trò chơi và bắt đầu cuộc phiêu lưu.</p>
         <div className="flex items-center justify-center gap-2 opacity-30 text-base">
           <span>─────</span><span>✦</span><span>─────</span>
@@ -151,10 +151,10 @@ export default function GameLibrary() {
               type="button"
               onClick={() => setFilter(chip.id)}
               aria-pressed={filter === chip.id}
-              className={`rounded-full px-3.5 py-1.5 text-xs font-medium border transition-colors ${
+              className={`px-3.5 py-1.5 text-xs font-semibold border transition-all duration-150 uppercase tracking-widest ${
                 filter === chip.id
-                  ? "bg-gradient-to-b from-amber-600 to-amber-800 border-amber-500/60 text-amber-50 shadow-[0_2px_0_0_#451a03]"
-                  : "rounded-md border border-amber-950/80 bg-[#140e0b]/90 text-amber-700/80 shadow-[inset_0_1px_3px_rgba(0,0,0,0.6)] hover:border-amber-700/60 hover:bg-[#1a120d] hover:text-amber-400 hover:shadow-[0_2px_8px_rgba(0,0,0,0.5)] active:scale-95 uppercase tracking-wider"
+                  ? "rounded-sm bg-gradient-to-b from-[#f3c87f] via-[#c6893f] to-[#8d5218] border-t border-[#ffe3aa] border-b-2 border-[#542d09] text-[#1a0c04] shadow-[0_3px_8px_rgba(0,0,0,0.6)] active:translate-y-px"
+                  : "rounded-sm border-[#8b5a2b]/40 bg-[#2a1608]/80 text-[#b47a3c] shadow-[inset_0_1px_3px_rgba(0,0,0,0.6)] hover:border-[#b47a3c]/60 hover:bg-[#3a2010]/80 hover:text-[#e8c07e] active:scale-95"
               }`}
             >
               {chip.label}
