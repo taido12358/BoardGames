@@ -22,13 +22,13 @@ export default function App() {
   return (
     <BrowserRouter>
       <ScrollToTop />
-      <div className="min-h-screen bg-slate-900 text-slate-100">
+      <div className="min-h-screen bg-[#0d1117] text-slate-100" style={{ backgroundImage: "radial-gradient(ellipse at 20% 10%, rgba(30,20,10,0.5) 0%, transparent 60%), radial-gradient(ellipse at 80% 90%, rgba(20,10,5,0.4) 0%, transparent 60%)" }}>
         {/* max-w rộng hơn max-w-lg cũ — Thư viện trò chơi cần chỗ cho lưới 3-4 thẻ/hàng
             trên desktop (xem GameLibrary/GameDetails). Nội dung hẹp hơn (bàn cờ, form
             đăng nhập) tự căn giữa bên trong, không bị ảnh hưởng. */}
         <div className="w-full max-w-6xl mx-auto flex flex-col min-h-screen">
-          <header className="px-4 pt-4 pb-2 shrink-0 flex items-center justify-between">
-            <h1 className="text-2xl font-bold tracking-tight">🎲 BoardGame</h1>
+          <header className="px-4 pt-4 pb-3 mb-1 shrink-0 flex items-center justify-between border-b border-slate-800/60">
+            <Link to="/games" className="text-2xl font-bold tracking-tight hover:text-amber-200 transition-colors">🎲 BoardGame</Link>
             {user && (
               <div className="flex items-center gap-2 min-w-0">
                 <DisplayNameEditor displayName={user.displayName} email={user.email} />
