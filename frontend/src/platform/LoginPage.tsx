@@ -39,15 +39,15 @@ export default function LoginPage() {
       {/* Brand header */}
       <div className="text-center space-y-2">
         <div className="text-5xl animate-bounce" style={{ animationDuration: "2.5s", animationTimingFunction: "ease-in-out" }}>🎲</div>
-        <h1 className="text-3xl font-western tracking-wide text-amber-100">BoardGame</h1>
+        <h1 className="text-3xl font-western tracking-wide text-[#f5d09d]">BoardGame</h1>
         <p className="text-amber-700/60 text-sm">Chơi board game cùng bạn bè — mọi lúc, mọi nơi.</p>
       </div>
 
       {/* Login card — double border theo gợi ý Gemini */}
-      <div className="w-full max-w-sm rounded-xl border border-amber-500/20 bg-stone-900/80 p-1 shadow-2xl backdrop-blur-sm">
+      <div className="w-full max-w-sm rounded-xl border border-amber-500/20 bg-[#1a1208]/80 p-1 shadow-2xl backdrop-blur-sm">
       <div className="rounded-lg border border-amber-500/30 p-6 bg-gradient-to-b from-[#241a14] to-[#1a120c] space-y-4">
         <div className="text-center space-y-1">
-          <h2 className="text-base font-bold text-amber-100">
+          <h2 className="text-base font-bold text-[#f5d09d]">
             {step === "email" ? "🔐 Đăng nhập" : "📬 Nhập mã xác nhận"}
           </h2>
           <p className="text-amber-700/60 text-sm leading-snug">

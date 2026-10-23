@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
+import { getGameTitle } from "../platform/gameRegistry";
+import { formatTimestamp as formatTime } from "../platform/formatTimestamp";
 
 interface GameRecord {
   id: string;
@@ -12,15 +14,6 @@ interface GameRecord {
   finishedAt: string | null;
 }
 
-function formatTime(iso: string | null): string {
-  if (!iso) return "—";
-  try {
-    return new Date(iso).toLocaleString("vi-VN");
-  } catch {
-    return iso;
-  }
-}
-
 /**
  * Lịch sử ván đấu — tìm kiếm full-text qua OpenSearch (`GET /api/games/search?q=`), đã có sẵn ở
  * backend từ đầu (`GamesController.Search`/`OpenSearchService.SearchGamesAsync`, index theo
@@ -29,7 +22,14 @@ function formatTime(iso: string | null): string {
  * chỉ đọc, không có thao tác thay đổi dữ liệu nào.
  */
 export default function GameHistoryPage() {
-  const [query, setQuery] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const query = searchParams.get("q") ?? "";
+  const setQuery = (value: string) => setSearchParams((previous) => {
+    const next = new URLSearchParams(previous);
+    if (value) next.set("q", value);
+    else next.delete("q");
+    return next;
+  }, { replace: true });
   const [records, setRecords] = useState<GameRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -60,7 +60,7 @@ export default function GameHistoryPage() {
   return (
     <div className="w-full max-w-5xl mx-auto space-y-5">
       <div className="text-center space-y-2 pt-2">
-        <h1 className="text-2xl sm:text-3xl font-black tracking-wide text-amber-100 [text-shadow:0_1px_0_rgba(255,255,255,0.15),0_2px_4px_rgba(0,0,0,0.9)]">📜 LỊCH SỬ VÁN ĐẤU</h1>
+        <h1 className="text-2xl sm:text-3xl font-black tracking-wide text-[#f5d09d] [text-shadow:0_1px_0_rgba(255,255,255,0.15),0_2px_4px_rgba(0,0,0,0.9)]">📜 LỊCH SỬ VÁN ĐẤU</h1>
         <p className="text-sm text-amber-600/70">Tìm theo tên người chơi, người thắng, hoặc trạng thái ván.</p>
         <div className="flex items-center justify-center gap-2 opacity-30 text-base">
           <span>─────</span><span>✦</span><span>─────</span>
@@ -105,7 +105,7 @@ export default function GameHistoryPage() {
             <tbody className="divide-y divide-amber-950/40">
               {records.map((r) => (
                 <tr key={r.id} className="group odd:bg-[#140e0a] even:bg-[#18110c] transition-colors duration-150 hover:bg-gradient-to-r hover:from-amber-950/30 hover:via-amber-900/20 hover:to-transparent">
-                  <td className="px-3 py-2 font-medium text-amber-200">{r.gameKey}</td>
+                  <td className="px-3 py-2 font-medium text-amber-200">{getGameTitle(r.gameKey)}</td>
                   <td className="px-3 py-2 text-amber-300/70">{r.players || "—"}</td>
                   <td className="px-3 py-2">
                     {r.winner
@@ -117,7 +117,7 @@ export default function GameHistoryPage() {
                   <td className="px-3 py-2 text-amber-700/50 text-xs font-mono">{formatTime(r.finishedAt)}</td>
                   <td className="px-3 py-2">
                     {r.status === "Finished" && (
-                      <Link to={`/replay/${r.id}`} className="text-xs text-amber-400 hover:text-amber-300 whitespace-nowrap">
+                      <Link to={`/replay/${r.id}`} state={{ historySearch: searchParams.toString() }} className="text-xs text-amber-400 hover:text-amber-300 whitespace-nowrap">
                         🎬 Xem lại
                       </Link>
                     )}

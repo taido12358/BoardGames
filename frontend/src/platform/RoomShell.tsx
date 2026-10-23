@@ -10,7 +10,7 @@ export function RoomStatusBanner({ room, mySide }: { room: RoomDto; mySide: stri
     const occupied = room.seats.filter((s) => s.displayName !== null).length;
     return (
       <div className="flex justify-center">
-        <div className="inline-flex items-center gap-2 rounded-full border border-amber-700/40 bg-stone-950/80 px-4 py-1.5 text-xs font-semibold uppercase tracking-widest text-amber-300 shadow-[inset_0_1px_2px_rgba(0,0,0,0.8),0_2px_6px_rgba(0,0,0,0.5)]">
+        <div className="inline-flex items-center gap-2 rounded-full border border-amber-700/40 bg-[#0d0905]/80 px-4 py-1.5 text-xs font-semibold uppercase tracking-widest text-amber-300 shadow-[inset_0_1px_2px_rgba(0,0,0,0.8),0_2px_6px_rgba(0,0,0,0.5)]">
           <span className="relative flex h-2 w-2 shrink-0">
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-75" />
             <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-500 shadow-[0_0_6px_#f59e0b]" />

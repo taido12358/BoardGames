@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useLocation, useParams } from "react-router-dom";
+import { getGameTitle } from "../platform/gameRegistry";
 
 interface MoveEntry {
   moveNumber: number;
@@ -38,6 +39,10 @@ function moveSummary(move: unknown): string {
  */
 export default function GameReplayPage() {
   const { roomId = "" } = useParams();
+  const navigationState: unknown = useLocation().state;
+  const historySearch = navigationState && typeof navigationState === "object" && "historySearch" in navigationState && typeof navigationState.historySearch === "string"
+    ? new URLSearchParams(navigationState.historySearch).toString() : "";
+  const historyUrl = historySearch ? `/history?${historySearch}` : "/history";
   const [state, setState] = useState<LoadState>("loading");
   const [replay, setReplay] = useState<Replay | null>(null);
   const [attempt, setAttempt] = useState(0);
@@ -71,8 +76,8 @@ export default function GameReplayPage() {
   return (
     <div className="w-full max-w-3xl mx-auto space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl sm:text-3xl font-black tracking-wide text-amber-100">🎬 XEM LẠI VÁN ĐẤU</h1>
-        <Link to="/history" className="text-sm text-amber-400/70 hover:text-amber-300 transition-colors">
+        <h1 className="text-2xl sm:text-3xl font-black tracking-wide text-[#f5d09d]">🎬 XEM LẠI VÁN ĐẤU</h1>
+        <Link to={historyUrl} className="text-sm text-amber-400/70 hover:text-amber-300 transition-colors">
           ← Lịch sử
         </Link>
       </div>
@@ -96,11 +101,11 @@ export default function GameReplayPage() {
 
       {state === "ok" && replay && (
         <>
-          <div className="relative overflow-hidden rounded-2xl border border-amber-500/20 bg-stone-900/80 p-1">
+          <div className="relative overflow-hidden rounded-2xl border border-amber-500/20 bg-[#1a1208]/80 p-1">
             <div className="pointer-events-none absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-amber-400/40 to-transparent" />
             <div className="rounded-xl border border-amber-500/30 bg-gradient-to-b from-[#2b2013] to-[#1a1208] p-4 space-y-1 text-sm">
             <p>
-              <span className="text-amber-700/60">Game:</span> <span className="text-amber-200 font-medium">{replay.gameKey}</span>
+              <span className="text-amber-700/60">Trò chơi:</span> <span className="text-amber-200 font-medium">{getGameTitle(replay.gameKey)}</span>
             </p>
             <p>
               <span className="text-amber-700/60">Người chơi:</span>{" "}
