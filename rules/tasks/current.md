@@ -362,6 +362,65 @@ test đang gọi `new VayBatEngine()` v.v. (hàng chục chỗ), đổi lấy 1 
 như không thể xảy ra trong thực tế (state luôn do chính engine đó ghi ra) — rủi ro/công sức không
 tương xứng lợi ích, giữ nguyên hành vi hiện tại (fail-safe im lặng đã có test riêng).
 
+**Phiên làm việc mới 2026-09-14** (task riêng do người dùng giao — KHÔNG phải tiếp tục vòng lặp
+`/goal` đã dừng ở trên; người dùng chỉ định rõ 1 trong 2 việc backlog cụ thể):
+
+39. **Làm nốt animation Bang! còn thiếu (van-de.md §46)** — xem chi tiết đầy đủ trong
+    `rules/tasks/backlog.md` mục "Animation Bang!". Người dùng cho lựa chọn giữa việc này và
+    `InitialStateForMap()` cho replay animate (đánh giá kiến trúc lớn hơn, ưu tiên nếu có thời
+    gian) — CHỌN animation Bang! vì rủi ro thấp hơn nhiều: khảo sát kỹ `InitialStateForMap()` phát
+    hiện vấn đề sâu hơn mô tả gốc trong backlog, xem mục "Đánh giá lại `InitialStateForMap()`" bên
+    dưới, nên không làm trong phiên này để tránh làm ẩu 1 tính năng kiến trúc lớn.
+
+    Làm 4 mục còn thiếu: `useMuzzleFlash` (6 test), `useCardDrawFlash` (5 test),
+    `useWeaponEquipFlash` (4 test), `localOutcome` cho màn thắng/thua (10 test) + wiring vào
+    `VictoryScreen.tsx`/`BangBoard.tsx` (5 test mới trong `BangBoard.test.tsx`). Tổng +30 test
+    frontend. Phát hiện + sửa 1 bug thật không liên quan trực tiếp animation: `RoleKind` sai chính
+    tả (khai báo thường trong khi dây thật viết hoa) — xem chi tiết trong backlog.
+
+    **Test**: backend không đổi gì (không chạm code backend) — `dotnet test
+    backend/BoardGame.sln --configuration Release`: 220/220 pass (không đổi so với trước phiên
+    này). Frontend: `npm run test`: 248/248 pass (218 cũ + 30 mới), `npm run lint`: sạch (2
+    warning cũ đã biết, không mới), `npm run build` (`tsc` + `vite build`): sạch.
+    **CHƯA live-test qua trình duyệt thật** — không thử lại Chrome extension trong phiên này, xem
+    lý do đầy đủ trong backlog.
+
+**Đánh giá lại `InitialStateForMap()` cho replay animate — CHƯA làm, để lại phân tích cho đợt sau**
+
+Backlog mô tả việc này khá đơn giản ("thêm 1 phương thức `InitialStateForMap(mapJson)` vào
+`IGameEngine`, áp lại tuần tự `ApplyMove` từ trạng thái ban đầu"). Khảo sát kỹ trước khi làm phát
+hiện vấn đề sâu hơn nhiều so với mô tả đó — không chỉ là map cố định, mà TRẠNG THÁI BAN ĐẦU thật
+của nhiều game phụ thuộc RNG không tái tạo lại được đúng chỉ từ map:
+- **VayBat**: `VayBatEngine.NewGame` gọi `VayBatRules.CreateState(map, randomRed: true)` — bên
+  nào đi trước (RED/WHITE) chọn NGẪU NHIÊN ngay trong `NewGame()`, KHÔNG phải qua 1 "move" nào
+  được ghi lại. `InitialStateForMap(map)` không có cách nào biết lại đúng lựa chọn ngẫu nhiên đó
+  chỉ từ map — nếu tự đặt mặc định (vd luôn RED trước) mà ván thật đã chọn WHITE trước, việc replay
+  bằng cách gọi lại `ApplyMove` tuần tự sẽ sai ngay từ nước đầu tiên (side không khớp lượt hiện tại
+  trong state vừa dựng).
+- **Bang!**: bài/vai trò/nhân vật được chia lúc `OnRoomFull` gọi `BangRules.StartGame(...,
+  Random.Shared)` — MAY MẮN việc này đã được ghi lại như 1 "move" hệ thống trong `GameMoves` (xem
+  log 2026-09-11 "gồm cả nước `__room_full__` hệ thống tự chèn") NÊN về lý thuyết replay được nếu
+  áp lại đúng move đó — NHƯNG áp lại move đó qua `ApplyMove`/`OnRoomFull` sẽ gọi LẠI
+  `Random.Shared` và chia bài/vai trò KHÁC với ván thật đã diễn ra (không có seed nào được lưu lại
+  để tái tạo đúng NGẪU NHIÊN đã xảy ra) — bàn cờ animate ra sẽ không khớp `finalState` đã lưu.
+- **Đua Xe Hoàng Đạo**: mỗi nước "ROLL" gọi `ZodiacRaceRules.ApplyRoll(..., () =>
+  Random.Shared.Next(1, 7))` — kết quả xúc xắc KHÔNG được lưu trong `moveJson` (chỉ lưu
+  `{type:"ROLL"}`), nên áp lại move này lúc replay sẽ tung ra kết quả xúc xắc MỚI, khác hẳn ván
+  thật — vị trí xe sau khi "replay" chắc chắn lệch khỏi `finalState` thật ngay từ nước đầu.
+
+Kết luận: chỉ thêm `InitialStateForMap()` là KHÔNG đủ để replay animate ĐÚNG cho 3/4 game (chỉ Ô
+Ăn Quan — `OAnQuanRules.CreateState()` không có RNG — mới thật sự tái tạo đúng bằng cách này). Làm
+đúng cần thay đổi sâu hơn nhiều so với ước tính gốc trong backlog — hoặc lưu THÊM seed/kết quả RNG
+của mỗi move (đổi format `GameMoves`/replay artifact, ảnh hưởng dữ liệu đã lưu trước đó), hoặc lưu
+snapshot state SAU MỖI NƯỚC ĐI thay vì chỉ moveJson (tăng dung lượng lưu trữ MinIO đáng kể), hoặc
+chấp nhận replay animate "gần đúng" (bàn cờ hợp lệ nhưng có thể lệch so với ván thật ở đúng những
+chỗ có RNG). Đây là quyết định kiến trúc cần cân nhắc đánh đổi rõ ràng — KHÔNG tự chọn 1 hướng và
+làm ẩu trong 1 phiên ngắn, nhất là sau sự cố mất dữ liệu 2026-09-05 đã dạy bài học "cẩn thận hơn
+tốc độ" cho những thay đổi chạm vào dữ liệu đã lưu. Để lại nguyên trạng
+(`GameReplayPage.tsx` chỉ hiện danh sách nước đi, không animate) cho tới khi có quyết định rõ ràng
+hướng nào — xem `rules/tasks/backlog.md` mục "Replay — chỉ xem danh sách nước đi" đã cập nhật
+thêm phân tích này.
+
 ## Việc đang làm / tiếp theo (thứ tự ưu tiên gợi ý, không bắt buộc theo đúng thứ tự)
 
 - (Đã xong 2026-09-11 — mục 15) ~~Test component `VayBatBoard.tsx`~~.

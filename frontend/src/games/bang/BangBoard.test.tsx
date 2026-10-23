@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import BangBoard from "./BangBoard";
 import { useGameStore } from "../../platform/gameStore";
@@ -64,7 +64,7 @@ function myTurnState(overrides: Partial<BangViewerState> = {}): BangViewerState 
     gameLog: [],
     you: {
       id: "p0",
-      role: "outlaw",
+      role: "Outlaw",
       roleDisplay: "Kẻ ngoài vòng pháp luật",
       hand: [card("c1", "bang"), card("c2", "missed"), card("c3", "beer"), card("c4", "duel")], // 4 lá, vượt hp=2 -> overflow=2
       weapon: "Colt .45",
@@ -151,7 +151,7 @@ describe("BangBoard — chế độ bỏ bài khi vượt giới hạn tay bài"
 
   it("không vào chế độ bỏ bài khi tay bài chưa vượt giới hạn", async () => {
     const user = userEvent.setup();
-    setRoom(myTurnState({ you: { id: "p0", role: "outlaw", roleDisplay: "x", hand: [card("c1", "bang")], weapon: "Colt .45", weaponRange: 1 } }));
+    setRoom(myTurnState({ you: { id: "p0", role: "Outlaw", roleDisplay: "x", hand: [card("c1", "bang")], weapon: "Colt .45", weaponRange: 1 } }));
     const makeMove = vi.fn();
     render(<BangBoard makeMove={makeMove} onLeave={vi.fn()} onRematch={vi.fn()} rematching={false} />);
 
@@ -177,5 +177,47 @@ describe("BangBoard — kết thúc ván", () => {
 
     expect(screen.getByText(/CHIẾN THẮNG/)).toBeInTheDocument();
     expect(screen.queryByText("🔄 CHƠI LẠI")).not.toBeInTheDocument();
+  });
+
+  it("bạn thắng → hiện huy hiệu BẠN THẮNG (van-de.md §46)", () => {
+    setRoom(myTurnState({ phase: "finished", winner: "outlaw" })); // you.role="outlaw" trong myTurnState
+    render(<BangBoard makeMove={vi.fn()} onLeave={vi.fn()} onRematch={vi.fn()} rematching={false} />);
+
+    expect(screen.getByText("🎉 BẠN THẮNG")).toBeInTheDocument();
+  });
+
+  it("bạn thua → hiện huy hiệu BẠN THUA (van-de.md §46)", () => {
+    setRoom(myTurnState({ phase: "finished", winner: "sheriff" })); // you.role="outlaw" != sheriff
+    render(<BangBoard makeMove={vi.fn()} onLeave={vi.fn()} onRematch={vi.fn()} rematching={false} />);
+
+    expect(screen.getByText("💀 BẠN THUA")).toBeInTheDocument();
+  });
+
+  it("khán giả không thấy huy hiệu thắng/thua (trung lập)", () => {
+    setRoom(myTurnState({ phase: "finished", winner: "outlaw", you: null }));
+    render(<BangBoard makeMove={vi.fn()} onLeave={vi.fn()} onRematch={vi.fn()} rematching={false} />);
+
+    expect(screen.queryByText(/BẠN THẮNG|BẠN THUA/)).not.toBeInTheDocument();
+  });
+});
+
+describe("BangBoard — muzzle flash khi bắn Bang! (van-de.md §46)", () => {
+  it("chưa có phát súng nào → không hiện hiệu ứng", () => {
+    setRoom(myTurnState());
+    render(<BangBoard makeMove={vi.fn()} onLeave={vi.fn()} onRematch={vi.fn()} rematching={false} />);
+
+    expect(screen.queryByTestId("muzzle-flash")).not.toBeInTheDocument();
+  });
+
+  it("gameLog vừa thêm dòng bắn Bang! → hiện hiệu ứng muzzle flash", () => {
+    const initial = myTurnState();
+    setRoom(initial);
+    render(<BangBoard makeMove={vi.fn()} onLeave={vi.fn()} onRematch={vi.fn()} rematching={false} />);
+
+    act(() => {
+      setRoom({ ...initial, gameLog: ["An sử dụng Bang! lên Bình."] });
+    });
+
+    expect(screen.getByTestId("muzzle-flash")).toBeInTheDocument();
   });
 });

@@ -20,7 +20,15 @@ export interface Card {
   rank: string;
 }
 
-export type RoleKind = "sheriff" | "deputy" | "outlaw" | "renegade";
+// LƯU Ý chính tả: KHÔNG camelCase như CardKind/GamePhase/PendingResponseKind phía trên (những
+// cái đó thật sự là kiểu enum C# nên đi qua JsonStringEnumConverter(CamelCase), xem
+// BangJsonContractTests.cs). `BangYourView.Role` ở backend là kiểu `string` THƯỜNG (gán bằng
+// `viewer.Role.ToString()` — giữ nguyên chữ hoa tên enum C#, KHÔNG qua converter đó) — xác nhận
+// bằng test backend thật `BangHiddenInfoTests.cs`: `Assert.Equal("Renegade", payload.You!.Role)`.
+// Phát hiện lúc thêm `localOutcome` (van-de.md §46, animation màn thắng/thua) — trước đó field
+// này CHƯA từng được đọc ở đâu trong frontend (chỉ khai báo kiểu), nên chính tả sai không gây
+// lỗi thấy được cho tới khi có logic thật đầu tiên dùng tới.
+export type RoleKind = "Sheriff" | "Deputy" | "Outlaw" | "Renegade";
 export type GamePhase = "waitingForPlayers" | "action" | "awaitingResponse" | "finished";
 export type PendingResponseKind = "bang" | "duel" | "indians" | "gatling";
 
@@ -119,4 +127,30 @@ export function isMyTurn(state: BangViewerState): boolean {
 
 export function awaitingMyResponse(state: BangViewerState): boolean {
   return state.phase === "awaitingResponse" && !!state.pendingResponse?.itsYourTurn;
+}
+
+export type LocalOutcome = "win" | "lose" | "neutral";
+
+/**
+ * Người xem hiện tại (state.you) THẮNG hay THUA ván vừa kết thúc — dùng để chọn animation/màu
+ * sắc phù hợp cho VictoryScreen (van-de.md §46, "Player eliminated"/màn thắng-thua) thay vì luôn
+ * hiện cùng 1 kiểu cho mọi người. Khán giả (you=null) hoặc chưa có winner → "neutral" (không
+ * animate thắng/thua riêng, chỉ hiện thông báo trung tính).
+ *
+ * So sánh KHÔNG phân biệt hoa/thường: `you.role` (vd "Sheriff") tới từ
+ * `BangRules.BuildViewerPayload` gọi thẳng `RoleKind.ToString()` (giữ nguyên chữ hoa của tên
+ * enum C#), trong khi `state.winner` tới từ `BangRules.CheckVictory` (chuỗi literal "Sheriff"/
+ * "Outlaw"/"Renegade" cũng viết hoa) — khác quy ước camelCase mà `CardKind`/`RoleKind` dùng khi
+ * chính CHÚNG được serialize trực tiếp qua JsonStringEnumConverter (xem BangJsonContractTests).
+ * `VictoryScreen.tsx` gốc đã tự vệ bằng `.toLowerCase()` cho `winner`; hàm này áp dụng y hệt cho
+ * cả 2 vế để không phụ thuộc đúng/sai quy ước hoa-thường ở tầng trên.
+ */
+export function localOutcome(state: BangViewerState): LocalOutcome {
+  if (!state.you || !state.winner) return "neutral";
+  const role = state.you.role.toLowerCase();
+  const winner = state.winner.toLowerCase();
+  if (winner === "sheriff") return role === "sheriff" || role === "deputy" ? "win" : "lose";
+  if (winner === "outlaw") return role === "outlaw" ? "win" : "lose";
+  if (winner === "renegade") return role === "renegade" ? "win" : "lose";
+  return "neutral";
 }

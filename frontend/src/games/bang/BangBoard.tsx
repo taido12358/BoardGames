@@ -9,6 +9,7 @@ import GameLogPanel from "./components/GameLogPanel";
 import VictoryScreen from "./components/VictoryScreen";
 import CardView from "./components/CardView";
 import BangDebugPanel from "./components/BangDebugPanel";
+import { useMuzzleFlash } from "./useMuzzleFlash";
 import {
   awaitingMyResponse, isMyTurn, myPlayer,
   type BangMove, type BangPublicPlayer, type BangViewerState, type Card, type CardKind,
@@ -59,8 +60,15 @@ export default function BangBoard({ makeMove, onLeave, onRematch, rematching }: 
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
   const [discardIds, setDiscardIds] = useState<string[]>([]);
   const [discarding, setDiscarding] = useState(false);
+  // Hook phải gọi KHÔNG điều kiện (Rules of Hooks, xem bug ESLint 2026-09-11 ở VayBatBoard.tsx)
+  // — tính state dạng optional TRƯỚC nhánh return sớm bên dưới thay vì gọi hook sau đó. Khai báo
+  // lại `state` KHÔNG optional NGAY SAU nhánh return (thay vì dùng thẳng biến optional này) vì
+  // TypeScript không lan truyền narrowing của "state" optional vào các closure khai báo bên dưới
+  // (vd handleCardClick dùng state.pendingResponse).
+  const stateOrUndefined = room?.state as BangViewerState | undefined;
+  const muzzleFlash = useMuzzleFlash(stateOrUndefined?.gameLog ?? []);
 
-  if (!room) return null;
+  if (!room || !stateOrUndefined) return null;
   const state = room.state as BangViewerState;
 
   if (state.phase === "waitingForPlayers" || room.status === "Waiting") {
@@ -156,7 +164,17 @@ export default function BangBoard({ makeMove, onLeave, onRematch, rematching }: 
   const opponents = state.players.filter((p) => p.id !== me?.id);
 
   return (
-    <div className="flex flex-col gap-3 w-full max-w-2xl mx-auto">
+    <div className="relative flex flex-col gap-3 w-full max-w-2xl mx-auto">
+      {muzzleFlash && (
+        <div
+          aria-hidden="true"
+          data-testid="muzzle-flash"
+          className="animate-muzzle-flash pointer-events-none absolute inset-0 z-40 flex items-center justify-center text-6xl"
+        >
+          💥
+        </div>
+      )}
+
       {state.phase === "finished" && (
         <VictoryScreen
           state={state}
@@ -167,18 +185,23 @@ export default function BangBoard({ makeMove, onLeave, onRematch, rematching }: 
       )}
 
       {/* Top bar */}
-      <div className="bg-gradient-to-r from-[#241a10] to-[#2b2013] rounded-2xl px-4 py-2.5 shadow-lg flex items-center justify-between">
+      <div className="bg-gradient-to-r from-[#1a1008] via-[#241a10] to-[#1a1008] rounded-2xl px-4 py-3 shadow-lg border border-amber-900/30 flex items-center justify-between">
         <div>
-          <div className="font-bold text-amber-200 text-sm">🤠 BANG!</div>
-          <div className="text-[11px] text-amber-300/60 font-mono">Phòng {room.id.slice(0, 8)}</div>
+          <div className="font-bold text-amber-300 text-base tracking-wide">🤠 BANG!</div>
+          <div className="text-[10px] text-amber-400/50 font-mono">#{room.id.slice(0, 8)}</div>
         </div>
         <div className="text-center">
-          <div className="text-[11px] text-amber-300/70 uppercase">Lượt {state.turnNumber}</div>
-          <div className="font-semibold text-amber-100 text-sm">
-            {state.currentPlayerId === me?.id ? "ĐẾN LƯỢT BẠN" : `${state.players.find((p) => p.id === state.currentPlayerId)?.name ?? "…"} đang đi`}
+          <div className="text-[10px] text-amber-400/60 uppercase tracking-widest">Lượt {state.turnNumber}</div>
+          <div className={`font-bold text-sm ${state.currentPlayerId === me?.id ? "text-amber-300" : "text-amber-100"}`}>
+            {state.currentPlayerId === me?.id
+              ? "⚡ ĐẾN LƯỢT BẠN"
+              : `${state.players.find((p) => p.id === state.currentPlayerId)?.name ?? "…"} đang đi`}
           </div>
         </div>
-        <button onClick={onLeave} className="text-xs px-2.5 py-1.5 rounded-lg bg-slate-700/80 hover:bg-slate-600 text-slate-200">
+        <button
+          onClick={onLeave}
+          className="text-xs px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-300 hover:text-white transition-colors"
+        >
           Thoát
         </button>
       </div>
@@ -193,7 +216,7 @@ export default function BangBoard({ makeMove, onLeave, onRematch, rematching }: 
       )}
 
       {/* Bàn tròn — đối thủ */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 bg-[#1c150c] rounded-2xl p-3 border border-amber-900/40">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 bg-gradient-to-b from-[#1c150c] to-[#160f08] rounded-2xl p-3 border border-amber-900/30 shadow-inner">
         {opponents.map((p) => (
           <PlayerSeat
             key={p.id}
@@ -208,25 +231,46 @@ export default function BangBoard({ makeMove, onLeave, onRematch, rematching }: 
       </div>
 
       {/* Giữa bàn: nọc bài / chồng bài bỏ / hiệu ứng đang treo */}
-      <div className="flex items-center justify-center gap-4 bg-[#1c150c] rounded-2xl p-3 border border-amber-900/40">
-        <div className="text-center">
-          <div className="text-2xl">🂠</div>
-          <div className="text-[11px] text-amber-300/70">Nọc bài: {state.deckCount}</div>
+      <div className="flex items-center justify-center gap-6 bg-gradient-to-b from-[#1c150c] to-[#160f08] rounded-2xl px-5 py-3 border border-amber-900/30 shadow-inner">
+        {/* Nọc bài */}
+        <div className="flex flex-col items-center gap-1">
+          <div
+            className="w-16 h-24 rounded-lg border-2 border-amber-900/60 bg-gradient-to-b from-[#2b2013] to-[#1c150c] flex items-center justify-center shadow-lg"
+            aria-label="Nọc bài"
+          >
+            <span className="text-3xl">🂠</span>
+          </div>
+          <div className="text-[10px] text-amber-400/60 font-mono">{state.deckCount} lá</div>
         </div>
-        {state.discardPile.length > 0 && (
-          <div className="flex flex-col items-center">
+
+        {/* Divider */}
+        <div className="w-px h-16 bg-amber-900/30" />
+
+        {/* Chồng bài bỏ */}
+        <div className="flex flex-col items-center gap-1">
+          {state.discardPile.length > 0 ? (
             <CardView card={state.discardPile[state.discardPile.length - 1]} small />
-            <div className="text-[11px] text-amber-300/70 mt-0.5">Chồng bài bỏ</div>
-          </div>
-        )}
+          ) : (
+            <div className="w-16 h-24 rounded-lg border-2 border-dashed border-amber-900/30 flex items-center justify-center">
+              <span className="text-amber-900/40 text-2xl">∅</span>
+            </div>
+          )}
+          <div className="text-[10px] text-amber-400/60">bỏ bài</div>
+        </div>
+
+        {/* Pending response */}
         {state.pendingResponse && (
-          <div className="text-center text-xs text-red-300 bg-red-950/50 rounded-lg px-2 py-1">
-            ⏳ Đang chờ{" "}
-            {state.pendingResponse.targetIds
-              .map((id) => state.players.find((p) => p.id === id)?.name ?? id)
-              .join(", ")}{" "}
-            phản hồi
-          </div>
+          <>
+            <div className="w-px h-16 bg-amber-900/30" />
+            <div className="text-center text-xs text-red-300 bg-red-950/60 rounded-lg px-3 py-2 border border-red-800/40 max-w-[140px]">
+              <div className="font-bold mb-0.5">⏳ Đang chờ</div>
+              <div className="text-red-400/80 text-[10px]">
+                {state.pendingResponse.targetIds
+                  .map((id) => state.players.find((p) => p.id === id)?.name ?? id)
+                  .join(", ")}
+              </div>
+            </div>
+          </>
         )}
       </div>
 

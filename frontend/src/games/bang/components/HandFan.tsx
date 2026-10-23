@@ -1,5 +1,6 @@
 import type { Card } from "../types";
 import CardView from "./CardView";
+import { useCardDrawFlash } from "../useCardDrawFlash";
 
 interface Props {
   hand: Card[];
@@ -9,15 +10,29 @@ interface Props {
   onSelect: (card: Card) => void;
 }
 
-/** Bài trên tay của CHÍNH người chơi — luôn thấy mặt bài (đối thủ chỉ thấy số lá, xem PlayerSeat). */
+/** Bài trên tay của CHÍNH người chơi — fan layout, hover nâng bài lên. */
 export default function HandFan({ hand, selectedId, selectedIds, playable, onSelect }: Props) {
+  const justDrew = useCardDrawFlash(hand.length);
+
   if (hand.length === 0) {
-    return <div className="text-slate-500 text-sm py-4 text-center">Bạn không có lá bài nào.</div>;
+    return (
+      <div className="flex items-center justify-center text-slate-500 text-sm py-5 text-center rounded-xl bg-slate-900/30 border border-slate-800/50">
+        Bạn không có lá bài nào.
+      </div>
+    );
   }
+
   return (
-    <div className="flex overflow-x-auto gap-[-8px] px-2 py-3 -mx-2" style={{ gap: "-8px" }}>
+    <div
+      className={[
+        "flex overflow-x-auto pb-3 pt-1 px-3 -mx-1 rounded-xl",
+        "bg-gradient-to-b from-[#1a1208] to-[#130e06]",
+        "border border-amber-900/20 shadow-inner",
+        justDrew ? "animate-card-draw" : "",
+      ].join(" ")}
+    >
       {hand.map((card) => (
-        <div key={card.id} className="-ml-3 first:ml-0">
+        <div key={card.id} className="-ml-4 first:ml-0 transition-transform hover:z-10 relative">
           <CardView
             card={card}
             selected={selectedId === card.id || !!selectedIds?.includes(card.id)}

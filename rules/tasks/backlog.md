@@ -30,22 +30,74 @@ lại đúng kịch bản VayBat "ngắt kết nối đột ngột" đã phát h
 seats/winner/moves thật. Chưa live-test riêng cho đường debug panel (Bang cần 4 tài khoản, cùng
 code path/cùng mức tin cậy nên không lặp lại thiết lập).
 
-## Animation Bang! (van-de.md §46) — bắt đầu 1 hiệu ứng nhỏ (2026-09-11), còn nhiều mục chưa làm
+## Animation Bang! (van-de.md §46) — ĐÃ LÀM hết 4 mục còn thiếu (2026-09-14)
 
 Audit spec gốc (`van-de.md` §46) liệt kê nhiều animation mong muốn: muzzle-flash lúc bắn BANG!,
-rung/giảm tim khi mất máu, bài rút từ deck bay ra, hiệu ứng trang bị vũ khí — trước 2026-09-11 dự
-án gần như KHÔNG CÓ animation nào ngoài 1 hiệu ứng hover CSS chung
-(`transition-all duration-150` trên vài component). Đã làm 1 mục nhỏ nhất/rẻ nhất: **rung khi mất
-máu** — hook dùng chung `useDamageShake(hp)` (`frontend/src/games/bang/useDamageShake.ts`, 5 test)
-+ class CSS `.animate-shake` (`@keyframes shake` trong `index.css`), áp vào `PlayerSeat.tsx`
-(người khác) và `LocalPlayerPanel.tsx` (chính mình). **CHƯA live-test qua trình duyệt thật** —
-Chrome extension không kết nối được trong môi trường phiên này (`tabs_context_mcp` báo "Browser
-extension is not connected"), chỉ verify được bằng test logic (hook bật/tắt đúng theo hp) + review
-code, KHÔNG xác nhận trực quan animation CSS thật sự chạy mượt/đúng như mong đợi trên trình duyệt.
-Nên live-test qua Chrome khi có dịp trước khi coi là hoàn thiện.
+rung/giảm tim khi mất máu, bài rút từ deck bay ra, hiệu ứng trang bị vũ khí, animation màn
+thắng/thua — trước 2026-09-11 dự án gần như KHÔNG CÓ animation nào ngoài 1 hiệu ứng hover CSS
+chung (`transition-all duration-150` trên vài component). 2026-09-11 đã làm mục nhỏ nhất/rẻ nhất:
+**rung khi mất máu** — hook dùng chung `useDamageShake(hp)`
+(`frontend/src/games/bang/useDamageShake.ts`, 5 test) + class CSS `.animate-shake`
+(`@keyframes shake` trong `index.css`), áp vào `PlayerSeat.tsx` (người khác) và
+`LocalPlayerPanel.tsx` (chính mình).
 
-Còn lại CHƯA làm: muzzle-flash BANG!, animation rút bài/bài bay ra khỏi deck, hiệu ứng trang bị vũ
-khí, animation bàn thắng/thua. Layout mobile riêng (§45) cũng vẫn CHƯA làm — xem chú thích riêng.
+**2026-09-14 — làm nốt 4 mục còn lại**, cùng khuôn `useDamageShake` (hook trạng thái transient
+bật/tắt sau N ms, đo bằng diff so với lần render trước, không có event bus riêng nên phải suy ra
+"vừa xảy ra gì" từ chính state/log đã có):
+- **Muzzle-flash lúc bắn BANG!/Gatling**: `useMuzzleFlash(gameLog)`
+  (`frontend/src/games/bang/useMuzzleFlash.ts`, 6 test) — khác `useDamageShake` ở chỗ trigger dựa
+  trên NỘI DUNG các dòng gameLog MỚI thêm vào (regex khớp "sử dụng Bang!/Súng Gatling"/"đáp trả
+  bằng Bang!", cố tình KHÔNG khớp "bỏ Bang! để né Người da đỏ" — đó là phòng thủ, không phải bắn),
+  vì không có field state riêng nào đánh dấu "vừa bắn". Overlay 💥 phủ toàn bàn
+  (`BangBoard.tsx`, `pointer-events-none`, `data-testid="muzzle-flash"`) — không gắn vào đúng ghế
+  người bắn vì suy luận người bắn từ tên trong chuỗi log không đáng tin cậy (trùng tên) và không
+  cần thiết cho một hiệu ứng chỉ mang tính trang trí (van-de.md: "Do not overdo animations. Gameplay
+  clarity is more important").
+- **Bài bay từ nọc vào tay lúc rút bài**: `useCardDrawFlash(handLength)`
+  (`frontend/src/games/bang/useCardDrawFlash.ts`, 5 test, đảo chiều so với `useDamageShake` — kích
+  hoạt khi số lá TĂNG, không phải giảm) — áp glow/viền sáng vào chính `HandFan.tsx` khi vừa rút,
+  không tự dựng animation "bay" thật giữa 2 toạ độ (nọc bài ở khu vực giữa bàn, tay bài ở dưới
+  cùng, khoảng cách/layout đổi theo số người chơi và kích thước màn hình) — đơn giản hoá có chủ
+  đích, xem "Chưa làm" bên dưới.
+- **Hiệu ứng trang bị vũ khí**: `useWeaponEquipFlash(weaponName)`
+  (`frontend/src/games/bang/useWeaponEquipFlash.ts`, 4 test, so sánh THAY ĐỔI chuỗi thay vì
+  tăng/giảm số) — áp vào cả `LocalPlayerPanel.tsx` (chính mình) lẫn `PlayerSeat.tsx` (người khác,
+  vì trang bị vũ khí là thông tin công khai, không phải bài trên tay).
+- **Animation màn thắng/thua**: hàm thuần `localOutcome(state)` mới trong `types.ts` (10 test
+  trong `types.test.ts`) xác định CHÍNH bạn thắng/thua/trung lập (khán giả) dựa trên `you.role` +
+  `state.winner`, dùng chọn 1 trong 3 class CSS entrance khác nhau
+  (`.animate-victory-win`/`-lose`/`-neutral`, `@keyframes victoryPop`/`defeatFade` trong
+  `index.css`) cho `VictoryScreen.tsx` + huy hiệu "🎉 BẠN THẮNG"/"💀 BẠN THUA" (khán giả không thấy
+  huy hiệu này). 5 test mới trong `BangBoard.test.tsx` verify wiring qua component thật.
+
+**Phát hiện bug thật khi làm `localOutcome`** (không phải do việc animation gây ra, có sẵn từ khi
+thêm field): `frontend/src/games/bang/types.ts` khai báo `RoleKind`/`BangYourView.role` dạng
+camelCase thường (`"sheriff"` v.v.) NHƯNG dây thật gửi `"Sheriff"`/`"Outlaw"`/`"Deputy"`/
+`"Renegade"` viết hoa — `BangRules.BuildViewerPayload` gán `you.role` bằng
+`viewer.Role.ToString()` (giữ nguyên chữ hoa tên enum C#, KHÔNG qua
+`JsonStringEnumConverter(CamelCase)` như `CardKind`/`GamePhase` vì field này là kiểu `string`
+thường ở backend, không phải enum) — xác nhận bằng test backend có sẵn
+`BangHiddenInfoTests.cs`: `Assert.Equal("Renegade", payload.You!.Role)`. Trước đây field này CHƯA
+từng được đọc ở đâu trong frontend (chỉ khai báo kiểu, không có logic nào dùng tới) nên sai chính
+tả không gây lỗi thấy được — `localOutcome` là chỗ dùng đầu tiên. Đã sửa `RoleKind` sang đúng
+chính tả viết hoa khớp dây thật; `localOutcome` vẫn tự vệ bằng `.toLowerCase()` cho cả 2 vế (giống
+`VictoryScreen.tsx` gốc đã làm cho `winner`) để không phụ thuộc đúng/sai quy ước hoa-thường ở tầng
+trên trong tương lai.
+
+**Chưa làm (có chủ đích, để đợt sau nếu cần)**:
+- Animation "bài bay" thật sự di chuyển giữa 2 toạ độ cụ thể (nọc bài → tay) — hiện chỉ có
+  glow/viền sáng trên `HandFan.tsx` khi vừa rút, không phải 1 lá bài thật di chuyển qua quãng
+  đường. Cần tính toạ độ tuyệt đối của nọc bài + từng lá trong tay (đổi liên tục theo layout
+  responsive/số người chơi, xem `van-de.md` §45) — phức tạp hơn nhiều so với 1 hook boolean đơn
+  giản, để dành nếu người dùng thấy hiệu ứng hiện tại chưa đủ rõ.
+- Muzzle-flash không gắn vào đúng vị trí người bắn/mục tiêu (chỉ phủ toàn bàn) — xem lý do ở trên.
+- **CHƯA live-test qua trình duyệt thật** — cùng tình trạng đợt 2026-09-11 (`useDamageShake`),
+  không thử lại Chrome extension trong phiên này (ưu tiên làm đủ + test kỹ cả 4 mục hơn là dừng
+  giữa chừng để chờ môi trường live-test). Chỉ verify bằng test logic (30 test mới, toàn bộ
+  248/248 frontend pass) + review code, KHÔNG xác nhận trực quan animation CSS chạy mượt/đúng như
+  mong đợi trên trình duyệt thật.
+- Layout mobile riêng (§45) vẫn CHƯA làm — không liên quan animation, xem chú thích riêng (nếu
+  có) hoặc audit lại khi cần.
 
 ## Replay — chỉ xem danh sách nước đi, chưa dựng lại bàn cờ animate (ghi chú từ lúc làm, 2026-09-11)
 
@@ -57,6 +109,18 @@ kiểu `InitialStateForMap(mapJson)` vào `IGameEngine` cho cả 4 engine trư�
 bước bằng cách áp lại tuần tự `ApplyMove` từ trạng thái ban đầu. Việc kiến trúc lớn hơn phạm vi 1
 task, để dành nếu có nhu cầu thật (spec `van-de.md` §37 chỉ nói chung chung "replay lại được",
 không yêu cầu animate).
+
+**Cập nhật 2026-09-14 — khảo sát kỹ hơn trước khi làm, phát hiện vấn đề sâu hơn mô tả ở trên**:
+chỉ thêm `InitialStateForMap()` KHÔNG đủ để replay animate ĐÚNG cho 3/4 game, vì trạng thái ban
+đầu THẬT của VayBat (bên đi trước chọn ngẫu nhiên trong `NewGame()`, không qua move nào ghi lại),
+Bang! (chia bài/vai trò dùng `Random.Shared` không lưu seed) và Đua Xe Hoàng Đạo (mỗi move "ROLL"
+không lưu kết quả xúc xắc thật, replay sẽ tung xúc xắc MỚI) đều phụ thuộc RNG không tái tạo lại
+đúng được chỉ từ map + danh sách move đã lưu — chỉ Ô Ăn Quan (không có RNG trong `CreateState`)
+mới thật sự replay đúng bằng cách này. Xem phân tích đầy đủ + các hướng khắc phục khả dĩ (lưu
+seed/kết quả RNG mỗi move, hoặc lưu snapshot state sau mỗi nước đi, hoặc chấp nhận replay "gần
+đúng") trong `rules/tasks/current.md` mục "Đánh giá lại `InitialStateForMap()`" (2026-09-14) —
+KHÔNG tự chọn 1 hướng và làm trong 1 phiên ngắn vì đây là quyết định kiến trúc có đánh đổi thật,
+cần cân nhắc kỹ hơn phạm vi 1 task, đặc biệt sau bài học 2026-09-05 "cẩn thận hơn tốc độ".
 
 ## Ghép phòng / vào phòng — Giai đoạn 2 & 3 — ĐÃ LÀM (2026-09-05, rebuild toàn bộ cơ chế phòng/ghép trận)
 

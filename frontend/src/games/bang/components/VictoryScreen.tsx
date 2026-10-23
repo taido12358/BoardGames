@@ -1,5 +1,5 @@
 import { RematchButton } from "../../../platform/RoomShell";
-import type { BangViewerState } from "../types";
+import { localOutcome, type BangViewerState } from "../types";
 
 interface Props {
   state: BangViewerState;
@@ -15,17 +15,36 @@ const WINNER_TITLE: Record<string, { title: string; color: string }> = {
   renegade: { title: "KẺ PHẢN BỘI CHIẾN THẮNG", color: "text-purple-400" },
 };
 
+/** Animation vào màn (van-de.md §46) tuỳ CHÍNH bạn thắng/thua/trung lập (khán giả) —
+ * xem localOutcome trong types.ts để biết vì sao so sánh không phân biệt hoa/thường. */
+const OUTCOME_ENTER_CLASS: Record<ReturnType<typeof localOutcome>, string> = {
+  win: "animate-victory-win",
+  lose: "animate-victory-lose",
+  neutral: "animate-victory-neutral",
+};
+
+const OUTCOME_BADGE: Record<ReturnType<typeof localOutcome>, string | null> = {
+  win: "🎉 BẠN THẮNG",
+  lose: "💀 BẠN THUA",
+  neutral: null,
+};
+
 /** Màn hình chiến thắng — che toàn màn hình khi ván kết thúc (§29). */
 export default function VictoryScreen({ state, onLeave, onRematch, rematching }: Props) {
   const winnerKey = (state.winner ?? "").toLowerCase();
   const info = WINNER_TITLE[winnerKey] ?? { title: `${state.winner ?? "?"} CHIẾN THẮNG`, color: "text-amber-300" };
   const alive = state.players.filter((p) => p.alive);
   const dead = state.players.filter((p) => !p.alive);
+  const outcome = localOutcome(state);
+  const badge = OUTCOME_BADGE[outcome];
 
   return (
     <div className="fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-4">
-      <div className="w-full max-w-md rounded-2xl border-2 border-amber-600 bg-gradient-to-b from-[#241a10] to-[#120d08] p-6 text-center space-y-4 shadow-2xl">
+      <div
+        className={`w-full max-w-md rounded-2xl border-2 border-amber-600 bg-gradient-to-b from-[#241a10] to-[#120d08] p-6 text-center space-y-4 shadow-2xl ${OUTCOME_ENTER_CLASS[outcome]}`}
+      >
         <div className="text-4xl">🏆</div>
+        {badge && <div className="text-sm font-bold tracking-wide text-amber-200">{badge}</div>}
         <h2 className={`text-xl font-black tracking-wide ${info.color}`}>{info.title}</h2>
 
         <div className="grid grid-cols-2 gap-3 text-left text-sm">
