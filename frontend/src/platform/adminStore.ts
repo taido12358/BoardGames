@@ -1,4 +1,5 @@
 import { create } from "zustand";
+let roomsRequestId = 0;
 
 export interface AdminRoomRow {
   id: string;
@@ -54,19 +55,23 @@ export const useAdminStore = create<AdminStore>((set) => ({
   },
 
   fetchRooms: async (filter) => {
+    const requestId = ++roomsRequestId;
     set({ loading: true, error: "" });
     try {
       const qs = new URLSearchParams();
       if (filter?.status) qs.set("status", filter.status);
       if (filter?.gameKey) qs.set("gameKey", filter.gameKey);
       const res = await api(`rooms?${qs.toString()}`);
+      if (requestId !== roomsRequestId) return;
       if (!res.ok) {
         set({ error: `Không tải được danh sách phòng (${res.status}).`, loading: false });
         return;
       }
       const rooms = (await res.json()) as AdminRoomRow[];
+      if (requestId !== roomsRequestId) return;
       set({ rooms, loading: false });
     } catch {
+      if (requestId !== roomsRequestId) return;
       set({ error: "Không kết nối được máy chủ.", loading: false });
     }
   },

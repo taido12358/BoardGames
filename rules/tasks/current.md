@@ -519,3 +519,184 @@ IN_PROGRESS
 ## Tests
 - [ ] ...
 ```
+
+## 2026-10-24 — Sửa lỗi gửi OTP SMTP
+- DONE: tắt Windows EventLog provider trong Development vì tài khoản chạy local không có quyền ghi, gây HTTP 500 khi ghi lỗi SMTP.
+- Chạy lại backend ngoài sandbox; request-otp qua frontend trả 200 với SMTP thật; health healthy; 9/9 AuthControllerIntegrationTests pass.
+
+
+## 2026-10-24 — BANG!: máu tự động và UX chơi bài
+- DONE: tắt debug mặc định ở API/Compose; sửa đấu súng không trừ máu khi gửi sai lá; log hồi Bia ghi lượng thực tế.
+- Bài có mô tả hiệu ứng, bố cục không chồng; chỉ bật lá phù hợp, phản hồi theo loại tấn công; Thùng rượu chỉ hiện cho Bang!/Gatling; khóa thao tác khi mất kết nối/bị loại.
+- Kiểm tra: 100 backend Bang tests, 51 frontend Bang tests đạt; build frontend đạt; lint 0 lỗi, 2 cảnh báo Fast Refresh có sẵn.
+
+
+## 2026-10-24 — Vòng cải thiện UX/UI liên tục: trạng thái bàn BANG!
+- DONE: reset lựa chọn lá/bỏ bài khi đổi phòng, lượt, giai đoạn hoặc người đang đi; chặn xác nhận bỏ bài nếu lựa chọn không còn hợp lệ.
+- Hiển thị rõ người đang được chờ, thông báo theo dõi sau khi bị loại, lỗi ở đầu bàn; thanh thao tác tự xuống dòng trên màn hình hẹp.
+- Validation: 53/53 test frontend Bang đạt, production build đạt; ESLint 0 lỗi / 2 cảnh báo có sẵn.
+- Mục tiêu cải thiện liên tục vẫn ACTIVE; tiếp tục khảo sát luồng đăng nhập và sảnh ở vòng tiếp theo.
+
+
+## 2026-10-24 — UX đăng nhập OTP
+- DONE: dán mã có khoảng trắng/gạch nối nhận đúng 6 số; gửi lại thành công xóa mã cũ và focus ô nhập; chuyển bước/email xóa mã cũ.
+- Khóa input/đổi email khi loading, aria-busy/aria-invalid/hướng dẫn mã mới nhất, hiển thị thời hạn 5 phút, dùng từ email thay Gmail.
+- 31/31 LoginPage/authStore tests đạt; production build đạt, lint 0 lỗi / 2 warning có sẵn.
+- Sửa mô tả security rule lỗi thời về gate debug Bang. Mục tiêu UX/UI liên tục vẫn ACTIVE.
+
+
+## 2026-10-24 — UX sảnh và tạo phòng
+- DONE: GameDetails hiển thị lỗi tải engines và nút Thử lại thay skeleton vô hạn.
+- Tạo/hủy/tìm phòng xử lý lỗi mạng bằng catch/finally; mở lại nút sau lỗi. Khóa chung ngăn tạo phòng và tìm trận đồng thời; khóa tùy chọn phòng khi đang gửi.
+- Lỗi hiển thị ngay trên phần tạo/vào phòng; skeleton có nhãn trạng thái truy cập.
+- 20/20 GameDetails tests đạt; production build đạt; lint 0 lỗi/2 warning có sẵn. Mục tiêu liên tục vẫn ACTIVE.
+
+
+## 2026-10-24 — Trạng thái tải phòng
+- DONE: roomsLoading/roomsError riêng trong store; lỗi mạng không bị nuốt, vẫn giữ danh sách đã có.
+- LobbyLoadStatus dùng chung GameDetails/GameLibrary có trạng thái đang tải, cảnh báo dữ liệu cũ và tải lại. Không hiện thông báo sảnh trống khi chưa tải được phòng.
+- Phản hồi request cũ không ghi đè trạng thái lần tải mới khi chuyển trò chơi nhanh.
+- 45/45 GameDetails/gameStore tests đạt, build đạt, lint 0 errors/2 warnings có sẵn. Goal liên tục ACTIVE.
+
+
+## 2026-10-24 — Phục hồi khi vào phòng lỗi
+- DONE: RoomRoute dùng trạng thái loadError riêng, nút Thử vào lại và Về sảnh; không kẹt Đang vào phòng khi REST lỗi.
+- Phân biệt 404 và 401/403; trạng thái loading có role status; URL sai gameKey được sửa cả khi phòng đã có trong cache.
+- 3/3 RoomRoute tests mới đạt; build đạt, lint 0 errors/2 warnings có sẵn. Goal liên tục ACTIVE.
+
+
+## 2026-10-24 — Chat giữ bản nháp khi lỗi
+- DONE: gửi chat chờ SignalR xác nhận, thất bại giữ nội dung và hiện lỗi; đang gửi khóa thao tác trùng.
+- Mất kết nối vẫn soạn nhưng không gửi; trạng thái đang gửi rõ ràng; aria-expanded/controls/log hỗ trợ truy cập; input min-w-0 tránh tràn mobile.
+- ChatPanel key theo roomId để không mang bản nháp phòng cũ sang phòng mới.
+- 25/25 ChatPanel/hub tests đạt, build đạt, lint 0 lỗi/2 warning có sẵn. Goal liên tục ACTIVE.
+
+
+## 2026-10-24 — Tìm kiếm lịch sử
+- DONE: hủy request cũ và bỏ qua response muộn khi đổi query/unmount; loading hiện ngay khi nhập từ khóa.
+- Thêm Thử lại khi tải lỗi, Xóa tìm kiếm khi không có kết quả; không hiển thị bảng kết quả cũ dưới thông báo lỗi mới.
+- 8/8 history tests pass, production build pass, lint 0 errors/2 warnings có sẵn. Goal liên tục ACTIVE.
+
+
+## 2026-10-24 — UX xem lại ván đấu
+- DONE: retry khi replay lỗi/503; abort request cũ và chặn response muộn khi đổi ván/rời trang; reset dữ liệu cũ.
+- Hiện mô tả thao tác Bang bằng tiếng Việt, tên người theo ghế, JSON nằm trong Chi tiết nước đi. Header wrap cho màn nhỏ.
+- 8/8 replay tests pass, build pass, lint 0 errors/2 warnings có sẵn. Goal liên tục ACTIVE.
+
+
+## 2026-10-24 — Hướng dẫn dùng bàn phím
+- DONE: tabs hướng dẫn hỗ trợ ArrowLeft/Right (vòng), Home/End; chỉ tab được chọn nằm trong thứ tự Tab; tiêu điểm đi cùng nội dung.
+- Tab/panel có id/aria-controls/aria-labelledby; panel nhận focus; viền focus rõ và vùng bấm tab cao hơn.
+- 24/24 GameInstructions/GameDetails tests pass, build pass, lint 0 errors/2 warnings có sẵn. Goal liên tục ACTIVE.
+
+
+## 2026-10-24 — Đổi tên hiển thị
+- DONE: khóa yêu cầu trùng và input/hủy khi đang lưu; trạng thái Đang lưu rõ ràng, không xử lý Enter trong lúc IME composition.
+- Tên rỗng hiện lỗi và giữ form; lỗi bất ngờ được catch/finally và giữ draft để thử lại. Form wrap, lỗi role alert.
+- 10/10 DisplayNameEditor tests pass, build pass, lint 0 errors/2 warnings có sẵn. Goal liên tục ACTIVE.
+
+
+## 2026-10-24 — Tìm trò chơi không dấu
+- DONE: tìm kiếm thư viện chuẩn hóa dấu tiếng Việt (gồm đ/d), chữ hoa/thường; nhiều từ khóa không bắt buộc cùng thứ tự; khoảng trắng thừa không gây bỏ sót.
+- Thêm Xóa từ khóa giữ bộ lọc hiện tại; thông báo số trò chơi tìm thấy.
+- 5/5 GameLibrary tests pass, build pass, lint 0 errors/2 warnings có sẵn. Goal liên tục ACTIVE.
+
+
+## 2026-10-24 — Bàn chơi khi mất kết nối
+- DONE: Ô Ăn Quan chỉ chọn/gửi khi connected, hủy ô đã chọn khi đổi lượt/phòng/trạng thái/kết nối. Thanh chọn chiều wrap trên mobile.
+- Đua Xe khóa nút và guard ROLL khi mất kết nối/không phải lượt.
+- 19/19 board tests pass, build pass, lint 0 errors/2 warnings có sẵn. Goal liên tục ACTIVE.
+
+
+## 2026-10-24 — Vây Bắt khi mất kết nối
+- DONE: chặn pointer chọn/kéo/thả khi không connected; không tô đích hợp lệ hoặc hiện hướng dẫn đi quân lúc offline.
+- Reset chọn/drag/press khi đổi phòng/trạng thái/lượt/kết quả/kết nối/ghế; nối lại phải chọn quân mới.
+- 9/9 VayBatBoard tests pass, build pass, lint 0 errors/2 warnings có sẵn. Goal liên tục ACTIVE.
+
+
+## 2026-10-24 — Thông báo truy cập dùng chung
+- DONE: ConnectionBanner dùng status cho reconnect, alert cho disconnected; DisconnectBadge status atomic; RoomErrorBanner alert và break-words.
+- 2 test semantics mới. Toàn frontend 31/31 files, 287/287 tests pass. Goal liên tục ACTIVE.
+
+
+## 2026-10-24 — Giữ vị trí đọc nhật ký BANG!
+- DONE: thay scrollIntoView bằng cuộn trong khung; chỉ tự theo dõi khi người dùng ở cuối. Đọc phía trên không bị kéo xuống.
+- Có nút Xem mới nhất khi thêm diễn biến; tabIndex/aria-expanded/controls hỗ trợ bàn phím.
+- 54/54 frontend Bang tests pass, build pass, lint 0 errors/2 warnings có sẵn. Goal liên tục ACTIVE.
+
+
+## 2026-10-24 — Đếm ngược gửi lại OTP
+- DONE: resendIn tính từ deadline thời gian thực, không giảm theo số callback timer; không kéo dài chờ khi tab nền bị trì hoãn.
+- Dừng timer/reset resendIn sau verify thành công và logout.
+- 33/33 auth/LoginPage tests pass, build pass, lint 0 errors/2 warnings có sẵn. Goal liên tục ACTIVE.
+
+
+## 2026-10-24 — Đăng xuất xác nhận bởi server
+- DONE: logout kiểm tra HTTP/exception; giữ user khi chưa xác nhận, báo logoutError riêng. loggingOut khóa request trùng và nút báo tiến trình.
+- Thành công xóa dữ liệu phòng/chat/ghế/cache của phiên cũ. Header wrap trên màn hình nhỏ.
+- 35/35 auth/LoginPage tests pass, build pass, lint 0 errors/2 warnings có sẵn. Goal liên tục ACTIVE.
+
+
+## 2026-10-24 — Khôi phục phiên khi lỗi mạng
+- DONE: restoreSession phân biệt HTTP401 với lỗi mạng/server; sessionError riêng và App có Kiểm tra lại phiên thay form OTP khi chưa xác định phiên.
+- Retry đặt checking/loading rõ, xóa lỗi cũ; khôi phục thành công không cần yêu cầu OTP lại.
+- 36/36 auth/LoginPage tests pass, build pass, lint 0 errors/2 warnings có sẵn. Goal liên tục ACTIVE.
+
+
+## 2026-10-24 — Trạng thái realtime chính xác
+- DONE: trạng thái connecting lúc start, connected sau start thành công; thất bại disconnected + lỗi.
+- Reconnect chỉ connected sau đăng ký lại room/lobby thành công; thất bại báo lỗi và khóa thao tác. Callback vòng đời bỏ qua connection đã cleanup.
+- 18 hub tests + 28 RoomShell tests đạt; build pass, lint 0 errors/2 warnings có sẵn. Goal liên tục ACTIVE.
+
+
+## 2026-10-24 — Vào phòng khi realtime đang khởi tạo
+- DONE: joinRoom chờ promise start trước invoke; kiểm tra connection instance còn đúng trước gửi.
+- subscribeLobby ghi nhớ nhu cầu nếu connection chưa có/đang start; start đăng ký sảnh trước báo connected; unsubscribe xóa nhu cầu.
+- 20 hub + 1 lobby test pass; build pass, lint 0 errors/2 warnings có sẵn. Goal liên tục ACTIVE.
+
+
+## 2026-10-24 — Hủy yêu cầu vào phòng cũ
+- DONE: RoomRoute có AbortController cho fetch và joinRoom đang chờ; cleanup hủy khi đổi route/rời trang/thử lại.
+- joinRoom nhận signal tùy chọn, kiểm tra trước/sau chờ start; yêu cầu bị hủy không invoke và không báo lỗi giả.
+- 24/24 hub/RoomRoute tests pass, build pass, lint 0 errors/2 warnings có sẵn. Goal liên tục ACTIVE.
+
+
+## 2026-10-24 — Bộ lọc quản trị
+- DONE: fetchRooms admin bỏ phản hồi cũ sau khi đổi filter; loading/error chỉ cập nhật từ request mới nhất.
+- Filter có aria-pressed, lỗi role alert/nút Tải lại danh sách giữ filter; không hiển thị bảng cũ dưới lỗi mới.
+- 19/19 admin tests pass, build pass, lint 0 errors/2 warnings có sẵn. Goal liên tục ACTIVE.
+
+
+## 2026-10-24 — Điều hướng bàn phím toàn trang
+- DONE: App có skip link Bỏ qua đến nội dung và main focusable trong mọi trạng thái phiên.
+- Chuyển pathname đưa focus vào main sau scrollToTop; lần mount đầu giữ autofocus của form.
+- Regression test pass, build pass, lint 0 errors/2 warnings có sẵn. Goal liên tục ACTIVE.
+
+
+## 2026-10-24 — Mời bạn vào phòng
+- DONE: RoomInvite dùng chung trong RoomRoute khi Waiting, hiển thị URL đúng phòng và Sao chép liên kết.
+- Clipboard fail có thông báo + input readonly chọn toàn bộ để copy thủ công; loading chống nhấn lại, layout wrap.
+- 5/5 invite/route tests pass, build pass, lint 0 errors/2 warnings có sẵn. Goal liên tục ACTIVE.
+
+
+## 2026-10-24 — Giữ tìm kiếm/bộ lọc thư viện trong URL
+- DONE: GameLibrary dùng query q/filter thay local state; back/refresh/link chia sẻ giữ lựa chọn.
+- Replace history khi gõ/chọn để không tạo một mục lịch sử mỗi ký tự; clear filter xóa q/filter cùng lúc và giữ query khác.
+- 6/6 GameLibrary tests pass, build pass, lint 0 errors/2 warnings có sẵn. Goal liên tục ACTIVE.
+
+
+## 2026-10-24 — Giữ vị trí đọc chat
+- DONE: ChatPanel chỉ tự cuộn nếu đang ở cuối; khi đọc phía trên giữ vị trí và hiện Xem tin mới. Mở lại panel theo dõi cuối.
+- Khung log focusable để đọc bằng bàn phím. 10/10 ChatPanel tests pass, build pass, lint 0 errors/2 warnings có sẵn. Goal liên tục ACTIVE.
+
+
+## 2026-10-24 — Lý do lỗi thao tác phòng
+- DONE: create/cancel/quickMatch hiển thị error cụ thể từ server; body lỗi không JSON có fallback, HTTP401 có hướng dẫn đăng nhập lại.
+- 47/47 gameStore/GameDetails tests pass, build pass, lint 0 errors/2 warnings có sẵn. Goal liên tục ACTIVE.
+
+
+## 2026-10-24 — Chơi ngay khi dữ liệu tải chậm
+- DONE: play=1 đợi gameReady và panel thật mới scroll/focus, chỉ tự cuộn một lần cho mỗi game đích.
+- Nút Chơi ngay cũng focus vùng Tạo và vào phòng, có nhãn truy cập/scroll margin.
+- 23/23 GameDetails tests pass, build pass, lint 0 errors/2 warnings có sẵn. Goal liên tục ACTIVE.
+

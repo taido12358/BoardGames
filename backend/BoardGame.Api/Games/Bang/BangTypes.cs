@@ -99,7 +99,7 @@ public record BangPublicPlayer(
     int? Distance, bool? InRange);
 
 /// <summary>Chỉ có mặt trong payload gửi cho ĐÚNG người chơi đó — không ai khác nhận được field này.</summary>
-public record BangYourView(string Id, string Role, string RoleDisplay, List<Card> Hand, string Weapon, int WeaponRange);
+public record BangYourView(string Id, string Role, string RoleDisplay, List<Card> Hand, string Weapon, int WeaponRange, bool CanFire = true);
 
 public record PendingResponseView(string Kind, string FromPlayerId, List<string> TargetIds, bool ItsYourTurn);
 

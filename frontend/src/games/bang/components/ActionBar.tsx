@@ -1,3 +1,5 @@
+import type { PendingResponseKind } from "../types";
+
 interface Props {
   myTurn: boolean;
   awaitingResponse: boolean;
@@ -7,6 +9,9 @@ interface Props {
   onRespondPass: () => void;
   onCancelTarget: () => void;
   hasBarrel?: boolean;
+  responseKind?: PendingResponseKind;
+  isCalamity?: boolean;
+  waitingFor?: string;
   discarding?: boolean;
   discardOverflow?: number;
   discardSelectedCount?: number;
@@ -20,12 +25,13 @@ const btnBase = "shrink-0 rounded-lg px-3 py-1.5 text-sm font-semibold transitio
 export default function ActionBar({
   myTurn, awaitingResponse, selectingTarget, canEndTurn, onEndTurn, onRespondPass, onCancelTarget,
   hasBarrel = false,
+  responseKind, isCalamity = false, waitingFor,
   discarding, discardOverflow = 0, discardSelectedCount = 0, onConfirmDiscard, onCancelDiscard,
 }: Props) {
   if (discarding) {
     const done = discardSelectedCount === discardOverflow;
     return (
-      <div className="flex items-center justify-between gap-2 rounded-xl bg-red-950/50 border border-red-700/50 px-3 py-2.5 shadow-md">
+      <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-red-950/50 border border-red-700/50 px-3 py-2.5 shadow-md">
         <span className="text-red-300 text-sm font-medium">
           🗑 Vượt giới hạn tay bài — chọn {discardOverflow} lá để bỏ ({discardSelectedCount}/{discardOverflow})
         </span>
@@ -47,7 +53,7 @@ export default function ActionBar({
 
   if (selectingTarget) {
     return (
-      <div className="flex items-center justify-between gap-2 rounded-xl bg-amber-950/60 border border-amber-600/50 px-3 py-2.5 shadow-md">
+      <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-amber-950/60 border border-amber-600/50 px-3 py-2.5 shadow-md">
         <span className="text-amber-300 text-sm font-semibold">🎯 CHỌN MỤC TIÊU — nhấn vào người chơi</span>
         <button onClick={onCancelTarget} className={`${btnBase} bg-slate-800 hover:bg-slate-700 border-slate-600 text-slate-300`}>
           Hủy
@@ -57,13 +63,17 @@ export default function ActionBar({
   }
 
   if (awaitingResponse) {
+    const needsBang = responseKind === "duel" || responseKind === "indians";
+    const defense = needsBang
+      ? (isCalamity && responseKind === "duel" ? "Bang! hoặc Trượt!" : "Bang!")
+      : (isCalamity ? "Trượt! hoặc Bang!" : "Trượt!");
     return (
-      <div className="flex items-center justify-between gap-2 rounded-xl bg-red-950/50 border border-red-700/50 px-3 py-2.5 shadow-md">
+      <div role="status" className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-red-950/50 border border-red-700/50 px-3 py-2.5 shadow-md">
         <span className="text-red-300 text-sm font-medium">
-          {hasBarrel ? "🛢 Chọn Missed! hoặc kích hoạt Barrel" : "⚠️ Chọn lá bài để đỡ hoặc bỏ qua"}
+          {`⚠️ Chọn ${defense} để đỡ. ${hasBarrel ? "Thùng rượu có thể giúp né đòn." : "Bỏ qua sẽ tự mất 1 máu."}`}
         </span>
         <button onClick={onRespondPass} className={`${btnBase} ${hasBarrel ? "bg-amber-900/60 hover:bg-amber-800 border-amber-700/60 text-amber-200 hover:text-amber-100" : "bg-slate-800 hover:bg-red-900 border-red-800/60 text-red-300 hover:text-red-200"}`}>
-          {hasBarrel ? "🛢 Lật Barrel" : "Chịu đòn"}
+          {hasBarrel ? "🛢 Thử Thùng rượu (trượt: −1 máu)" : "Chịu đòn (−1 máu)"}
         </button>
       </div>
     );
@@ -71,8 +81,8 @@ export default function ActionBar({
 
   if (myTurn) {
     return (
-      <div className="flex items-center justify-between gap-2 rounded-xl bg-emerald-950/50 border border-emerald-700/50 px-3 py-2.5 shadow-md">
-        <span className="text-emerald-300 text-sm font-semibold">⚡ Đến lượt bạn — chọn bài để đánh</span>
+      <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-emerald-950/50 border border-emerald-700/50 px-3 py-2.5 shadow-md">
+        <span className="text-emerald-300 text-sm font-semibold flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />Đến lượt bạn — chọn bài để đánh</span>
         <button
           onClick={onEndTurn}
           disabled={!canEndTurn}
@@ -85,8 +95,9 @@ export default function ActionBar({
   }
 
   return (
-    <div className="rounded-xl bg-slate-900/60 border border-slate-700/50 px-3 py-2.5 text-center text-slate-500 text-sm">
-      ⏳ Chờ đối thủ…
+    <div className="rounded-xl bg-gradient-to-r from-amber-950/30 to-slate-900/40 border border-amber-900/30 px-3 py-2.5 flex items-center justify-center gap-2 text-amber-400/60 text-sm">
+      <span className="w-1.5 h-1.5 rounded-full bg-amber-500/60 animate-pulse shrink-0" />
+      {waitingFor ? `Đang chờ ${waitingFor}${responseKind ? " phản hồi" : " chơi bài"}…` : "Chờ đối thủ…"}
     </div>
   );
 }

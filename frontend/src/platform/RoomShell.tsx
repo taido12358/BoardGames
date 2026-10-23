@@ -43,7 +43,7 @@ export function DisconnectBadge({ seats }: { seats: SeatSlotDto[] }) {
   const disconnected = seats.filter((s) => s.displayName !== null && !s.connected);
   if (disconnected.length === 0) return null;
   return (
-    <div className="rounded-xl p-2 text-center bg-orange-900/30 text-orange-300 text-xs border border-orange-800/50">
+    <div role="status" aria-atomic="true" className="rounded-xl p-2 text-center bg-orange-900/30 text-orange-300 text-xs border border-orange-800/50">
       {disconnected.map((s) => `⚠ ${s.displayName} mất kết nối`).join(" · ")}
     </div>
   );
@@ -51,15 +51,16 @@ export function DisconnectBadge({ seats }: { seats: SeatSlotDto[] }) {
 
 export function ConnectionBanner({ connectionState }: { connectionState: ConnectionState }) {
   if (connectionState === "connected") return null;
+  if (connectionState === "connecting") return <div role="status" className="rounded-xl bg-amber-900/40 p-2 text-center text-xs text-amber-300">Đang kết nối máy chủ trò chơi…</div>;
   if (connectionState === "reconnecting") {
     return (
-      <div className="rounded-xl p-2 text-center bg-amber-900/40 text-amber-300 text-xs">
+      <div role="status" aria-atomic="true" className="rounded-xl p-2 text-center bg-amber-900/40 text-amber-300 text-xs">
         Đang kết nối lại…
       </div>
     );
   }
   return (
-    <div className="rounded-xl p-2 text-center bg-red-900/40 text-red-300 text-xs">
+    <div role="alert" className="rounded-xl p-2 text-center bg-red-900/40 text-red-300 text-xs">
       Mất kết nối tới máy chủ — vui lòng tải lại trang.
     </div>
   );
@@ -67,7 +68,7 @@ export function ConnectionBanner({ connectionState }: { connectionState: Connect
 
 export function RoomErrorBanner({ error }: { error: string | null }) {
   if (!error) return null;
-  return <div className="rounded-xl p-2.5 text-center bg-red-900/40 text-red-300 text-sm">{error}</div>;
+  return <div role="alert" className="rounded-xl p-2.5 text-center bg-red-900/40 text-red-300 text-sm break-words">{error}</div>;
 }
 
 export function LeaveRoomButton({ onLeave, label = "← Rời phòng" }: { onLeave: () => void; label?: string }) {

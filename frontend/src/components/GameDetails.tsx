@@ -5,13 +5,14 @@ import { useLobbyHub } from "../platform/useLobbyHub";
 import { getGameInstructions, getGameMetadata, getCreateOptionsForm } from "../platform/gameRegistry";
 import { ARTWORK_BG } from "../platform/artworkTheme";
 import GameInstructions from "./GameInstructions";
+import LobbyLoadStatus from "../platform/LobbyLoadStatus";
 
 export default function GameDetails() {
   const { gameKey = "" } = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const {
-    engines, enginesLoading, rooms, playerName, error,
+    engines, enginesLoading, enginesError, rooms, roomsLoading, roomsError, playerName, error,
     fetchEngines, fetchRooms, createRoom, cancelRoom, quickMatch, setError,
   } = useGameStore();
 
@@ -22,6 +23,11 @@ export default function GameDetails() {
   const [cancelingId, setCancelingId] = useState<string | null>(null);
   const [options, setOptions] = useState<Record<string, unknown>>({});
   const roomPanelRef = useRef<HTMLDivElement>(null);
+  const actionLock = useRef(false);
+  const busy = creating || matching || cancelingId !== null;
+  const playTarget = searchParams.get("play") === "1" ? gameKey : null;
+  const gameReady = !enginesLoading && engines.some((entry) => entry.key === gameKey);
+  const jumpedTo = useRef<string | null>(null);
 
   useEffect(() => {
     if (engines.length === 0) fetchEngines();
@@ -33,10 +39,13 @@ export default function GameDetails() {
   }, [gameKey, fetchRooms]);
 
   useEffect(() => {
-    if (searchParams.get("play") === "1") {
+    if (!playTarget) { jumpedTo.current = null; return; }
+    if (gameReady && jumpedTo.current !== playTarget && roomPanelRef.current) {
+      jumpedTo.current = playTarget;
+      roomPanelRef.current.focus({ preventScroll: true });
       roomPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     }
-  }, [searchParams]);
+  }, [gameReady, playTarget]);
 
   const engine = engines.find((e) => e.key === gameKey);
   const metadata = engine ? getGameMetadata(engine) : null;
@@ -46,39 +55,77 @@ export default function GameDetails() {
   const waitingRooms = gameRooms.filter((r) => r.status === "Waiting");
   const myActiveRoom = gameRooms.find((r) => r.status === "Playing" && r.isMine);
 
-  const scrollToRoomPanel = () => roomPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  const scrollToRoomPanel = () => {
+    roomPanelRef.current?.focus({ preventScroll: true });
+    roomPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
 
   async function handleCreate() {
+    if (actionLock.current) return;
+    actionLock.current = true;
     setError("");
     setCreating(true);
-    const room = await createRoom(gameKey, options);
-    setCreating(false);
-    if (room) navigate(`/games/${gameKey}/room/${room.id}`);
+    try {
+      const room = await createRoom(gameKey, options);
+      if (room) navigate(`/games/${gameKey}/room/${room.id}`);
+    } catch {
+      setError("Không kết nối được máy chủ để tạo phòng. Vui lòng thử lại.");
+    } finally {
+      actionLock.current = false;
+      setCreating(false);
+    }
   }
 
   async function handleQuickMatch() {
+    if (actionLock.current) return;
+    actionLock.current = true;
     setError("");
     setMatching(true);
-    const room = await quickMatch(gameKey);
-    setMatching(false);
-    if (room) navigate(`/games/${gameKey}/room/${room.id}`);
+    try {
+      const room = await quickMatch(gameKey);
+      if (room) navigate(`/games/${gameKey}/room/${room.id}`);
+    } catch {
+      setError("Không kết nối được máy chủ để tìm trận. Vui lòng thử lại.");
+    } finally {
+      actionLock.current = false;
+      setMatching(false);
+    }
   }
 
   async function handleCancel(roomId: string) {
+    if (actionLock.current) return;
+    actionLock.current = true;
     setError("");
     setCancelingId(roomId);
-    await cancelRoom(roomId);
-    setCancelingId(null);
+    try {
+      await cancelRoom(roomId);
+    } catch {
+      setError("Không kết nối được máy chủ để hủy phòng. Vui lòng thử lại.");
+    } finally {
+      actionLock.current = false;
+      setCancelingId(null);
+    }
     // Không cần fetchRooms thủ công nữa — huỷ thành công server tự phát LobbyUpdated qua SignalR.
   }
 
   function handleJoin(roomId: string) {
+    if (actionLock.current) return;
     navigate(`/games/${gameKey}/room/${roomId}`);
+  }
+
+  if (!engine && enginesError && !enginesLoading) {
+    return (
+      <div className="mx-auto max-w-md space-y-4 py-10 text-center">
+        <p role="alert" className="text-red-300">{enginesError}</p>
+        <p className="text-sm text-slate-400">Kiểm tra kết nối rồi tải lại danh sách trò chơi.</p>
+        <button onClick={() => fetchEngines()} className="rounded-xl bg-amber-700 px-4 py-3 font-semibold text-white hover:bg-amber-600">Thử lại</button>
+      </div>
+    );
   }
 
   if (enginesLoading || (!engine && engines.length === 0)) {
     return (
-      <div className="w-full max-w-4xl mx-auto animate-pulse space-y-4">
+      <div role="status" aria-label="Đang tải trò chơi" className="w-full max-w-4xl mx-auto animate-pulse space-y-4">
         <div className="h-8 w-40 bg-slate-800 rounded" />
         <div className="h-64 bg-slate-800/60 rounded-2xl" />
       </div>
@@ -170,10 +217,11 @@ export default function GameDetails() {
       )}
 
       {/* Tạo phòng / Vào phòng */}
-      <div ref={roomPanelRef} className="space-y-3">
+      <div ref={roomPanelRef} role="region" aria-label="Tạo và vào phòng" tabIndex={-1} className="space-y-3 scroll-mt-4">
         <h2 className="text-lg font-bold text-amber-100">🚪 CHƠI {metadata.title}</h2>
+        {error && <div role="alert" className="rounded-xl bg-red-900/40 p-3 text-sm text-red-300">{error}</div>}
 
-        <div className="rounded-2xl border border-amber-700/40 bg-[#1c150c] p-4 space-y-3">
+        <fieldset disabled={busy} aria-busy={busy} className="min-w-0 rounded-2xl border border-amber-700/40 bg-[#1c150c] p-4 space-y-3">
           <h3 className="text-sm font-semibold text-amber-200">TẠO PHÒNG MỚI</h3>
           <p className="text-xs text-slate-400">Bạn sẽ vào phòng với tên: <span className="text-slate-200 font-medium">{playerName}</span></p>
 
@@ -194,13 +242,14 @@ export default function GameDetails() {
           >
             {matching ? "ĐANG TÌM TRẬN…" : "⚡ TÌM TRẬN NHANH"}
           </button>
-        </div>
+        </fieldset>
 
         <div className="rounded-2xl border border-slate-800 bg-slate-900/40 p-4">
           <h3 className="text-sm font-semibold text-slate-300 mb-2">
             PHÒNG ĐANG CHỜ {waitingRooms.length > 0 && <span className="text-slate-500">({waitingRooms.length})</span>}
           </h3>
-          {waitingRooms.length === 0 && (
+          <LobbyLoadStatus loading={roomsLoading} error={roomsError} onRetry={() => fetchRooms(gameKey)} />
+          {!roomsLoading && !roomsError && waitingRooms.length === 0 && (
             <p className="text-slate-500 text-sm text-center py-4">Chưa có phòng nào đang chờ — hãy tạo phòng mới!</p>
           )}
           <ul className="space-y-2">
@@ -219,7 +268,7 @@ export default function GameDetails() {
                     {r.isMine && (
                       <button
                         onClick={() => handleCancel(r.id)}
-                        disabled={cancelingId === r.id}
+                        disabled={busy}
                         className="rounded-lg bg-slate-700 hover:bg-red-800 disabled:opacity-50 px-3 py-2 text-sm font-medium text-slate-300"
                         title="Huỷ phòng"
                       >
@@ -228,6 +277,7 @@ export default function GameDetails() {
                     )}
                     <button
                       onClick={() => handleJoin(r.id)}
+                      disabled={busy}
                       className="rounded-lg bg-emerald-700 hover:bg-emerald-600 border border-emerald-600/40 px-3.5 py-2 text-sm font-semibold text-emerald-50 transition-colors"
                     >
                       VÀO PHÒNG
@@ -239,8 +289,6 @@ export default function GameDetails() {
           </ul>
         </div>
       </div>
-
-      {error && <div className="rounded-xl p-2.5 text-center bg-red-900/40 text-red-300 text-sm">{error}</div>}
 
       {/* Nút CHƠI NGAY dính đáy màn hình trên mobile — luôn dễ bấm */}
       <div className="sm:hidden fixed bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-slate-950 via-slate-950/95 to-transparent z-40">

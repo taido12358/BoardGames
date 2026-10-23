@@ -11,6 +11,7 @@ import type { RoomDto } from "./types";
 const mocks = vi.hoisted(() => {
   const handlers: Record<string, (...args: unknown[]) => unknown> = {};
   const conn = {
+    state: "Connected",
     on: vi.fn((event: string, cb: (...args: unknown[]) => unknown) => { handlers[event] = cb; }),
     invoke: vi.fn(() => Promise.resolve()),
     start: vi.fn(() => Promise.resolve()),
@@ -23,6 +24,7 @@ const mocks = vi.hoisted(() => {
 });
 
 vi.mock("@microsoft/signalr", () => ({
+  HubConnectionState: { Connected: "Connected" },
   HubConnectionBuilder: vi.fn().mockImplementation(() => ({
     withUrl: vi.fn().mockReturnThis(),
     withAutomaticReconnect: vi.fn().mockReturnThis(),
@@ -38,6 +40,7 @@ const room = { id: "r1", gameKey: "vaybat" } as RoomDto;
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mocks.conn.state = "Connected";
   for (const key of Object.keys(mocks.handlers)) delete mocks.handlers[key];
   useGameStore.setState({
     room: null, mySide: null, error: "", connectionState: "connected",
@@ -91,6 +94,51 @@ describe("useGameRoomHub — wiring sự kiện hub vào gameStore", () => {
 });
 
 describe("useGameRoomHub — trạng thái kết nối", () => {
+  it("hủy khi đang chờ start không vào phòng cũ", async () => {
+    let finish!: () => void;
+    mocks.conn.start.mockReturnValueOnce(new Promise<void>((resolve) => { finish = resolve; }));
+    const { result } = renderHook(() => useGameRoomHub());
+    const controller = new AbortController();
+    const joining = result.current.joinRoom("r1", controller.signal);
+    controller.abort();
+    finish();
+    await joining;
+    expect(mocks.conn.invoke).not.toHaveBeenCalledWith("JoinRoom", "r1");
+  });
+  it("vào phòng chờ start xong mới invoke JoinRoom", async () => {
+    let finish!: () => void;
+    mocks.conn.start.mockReturnValueOnce(new Promise<void>((resolve) => { finish = resolve; }));
+    const { result } = renderHook(() => useGameRoomHub());
+    const joining = result.current.joinRoom("r1");
+    expect(mocks.conn.invoke).not.toHaveBeenCalled();
+    finish();
+    await joining;
+    expect(mocks.conn.invoke).toHaveBeenCalledWith("JoinRoom", "r1");
+  });
+
+  it("ghi nhớ đăng ký sảnh trong lúc kết nối đang khởi động", async () => {
+    let finish!: () => void;
+    mocks.conn.state = "Connecting";
+    mocks.conn.start.mockReturnValueOnce(new Promise<void>((resolve) => { finish = resolve; }));
+    const { result } = renderHook(() => useGameRoomHub());
+    result.current.subscribeLobby();
+    expect(mocks.conn.invoke).not.toHaveBeenCalled();
+    finish();
+    await waitFor(() => expect(mocks.conn.invoke).toHaveBeenCalledWith("SubscribeLobby"));
+  });
+  it("đăng ký lại phòng lỗi không báo connected", async () => {
+    renderHook(() => useGameRoomHub());
+    await waitFor(() => expect(useGameStore.getState().connectionState).toBe("connected"));
+    mocks.conn.invoke.mockRejectedValueOnce(new Error("join failed"));
+    await fire("__reconnected");
+    expect(useGameStore.getState().connectionState).toBe("disconnected");
+    expect(useGameStore.getState().error).toContain("Chưa khôi phục được kết nối phòng");
+  });
+  it("khởi tạo hiển thị connecting rồi connected sau start", async () => {
+    renderHook(() => useGameRoomHub());
+    expect(useGameStore.getState().connectionState).toBe("connecting");
+    await waitFor(() => expect(useGameStore.getState().connectionState).toBe("connected"));
+  });
   it("onreconnecting -> connectionState = reconnecting", () => {
     renderHook(() => useGameRoomHub());
     fire("__reconnecting");

@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useGameStore } from "../../platform/gameStore";
 import { ConnectionBanner, DisconnectBadge, LeaveRoomButton, RematchButton, RoomErrorBanner, RoomStatusBanner } from "../../platform/RoomShell";
 import { legalMoves, occupancy, side, type GameState, type MapDef } from "./types";
@@ -26,12 +26,19 @@ export default function VayBatBoard({ makeMove, onLeave, onRematch, rematching }
   const map = room?.map as MapDef | undefined;
   const state = room?.state as GameState | undefined;
   const myTurn = !!room && room.status === "Playing" && !state?.winner && state?.turn === mySide;
+  const canInteract = myTurn && connectionState === "connected";
+  useEffect(() => {
+    pressRef.current = null;
+    didDrag.current = false;
+    setDrag(null);
+    setSelected(null);
+  }, [room?.id, room?.status, state?.turn, state?.winner, connectionState, mySide, setSelected]);
 
   // Tính lại khi state/selected thay đổi, không tính lại khi chỉ drag thay đổi
   const occ = useMemo(() => (state ? occupancy(state) : new Map<number, string>()), [state]);
   const highlights = useMemo(
-    () => (map && state && selected && myTurn ? new Set(legalMoves(map, state, selected)) : new Set<number>()),
-    [selected, myTurn, map, state]
+    () => (map && state && selected && canInteract ? new Set(legalMoves(map, state, selected)) : new Set<number>()),
+    [selected, canInteract, map, state]
   );
   // Lookup O(1) thay vì O(N) linear scan trong mỗi edge render
   const nodeById = useMemo(
@@ -59,6 +66,7 @@ export default function VayBatBoard({ makeMove, onLeave, onRematch, rematching }
   }
 
   function onSvgPointerDown(e: React.PointerEvent<SVGSVGElement>) {
+    if (!canInteract) return;
     const pos = toSvg(e.clientX, e.clientY);
     const nodeId = nearestNode(pos.x, pos.y);
     if (nodeId === null) { setSelected(null); return; }
@@ -81,6 +89,7 @@ export default function VayBatBoard({ makeMove, onLeave, onRematch, rematching }
   }
 
   function onSvgPointerMove(e: React.PointerEvent<SVGSVGElement>) {
+    if (!canInteract) return;
     const press = pressRef.current;
     if (!press) return;
     e.preventDefault();
@@ -99,7 +108,7 @@ export default function VayBatBoard({ makeMove, onLeave, onRematch, rematching }
     // Đọc press trước khi null hoá — tránh stale closure nếu setDrag chưa trigger re-render
     const press = pressRef.current;
     pressRef.current = null;
-    if (didDrag.current && press) {
+    if (canInteract && didDrag.current && press) {
       const pos = toSvg(e.clientX, e.clientY);
       let best: number | null = null, bestDist = 40;
       for (const n of map!.nodes) {
@@ -141,7 +150,7 @@ export default function VayBatBoard({ makeMove, onLeave, onRematch, rematching }
             <div className="font-bold text-sm">{state.redTurnsUsed} / {state.maxRedTurns}</div>
           </div>
         </div>
-        {myTurn && (
+        {canInteract && (
           <div className="mt-2 text-center text-amber-300 font-medium text-sm flex items-center justify-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse shrink-0" />
             {selected ? "Chọn ô đích hoặc kéo quân" : "Nhấn hoặc kéo quân của bạn"}
@@ -200,7 +209,7 @@ export default function VayBatBoard({ makeMove, onLeave, onRematch, rematching }
               : isHi ? "#36d399" : "#3d4a6b";
 
             return (
-              <g key={n.id} style={{ cursor: myTurn ? "pointer" : "default" }}>
+              <g key={n.id} style={{ cursor: canInteract ? "pointer" : "default" }}>
                 {/* Vùng chạm rộng */}
                 <circle cx={n.x} cy={n.y} r={34} fill="transparent" />
                 <text x={n.x} y={n.y - 27} textAnchor="middle" fontSize={11}

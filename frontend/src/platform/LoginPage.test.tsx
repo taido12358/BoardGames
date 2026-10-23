@@ -35,6 +35,33 @@ describe("LoginPage — bước nhập email", () => {
 });
 
 describe("LoginPage — bước nhập mã", () => {
+  it("dán mã có khoảng trắng vẫn nhận đủ 6 số", async () => {
+    const user = userEvent.setup();
+    useAuthStore.setState({ step: "code", pendingEmail: "test@example.com" });
+    render(<LoginPage />);
+    await user.click(screen.getByLabelText("Mã xác nhận"));
+    await user.paste("123 456");
+    expect(screen.getByLabelText("Mã xác nhận")).toHaveValue("123456");
+    expect(screen.getByRole("button", { name: /Đăng nhập/ })).toBeEnabled();
+  });
+
+  it("gửi lại thành công xóa mã cũ và đưa con trỏ về ô nhập", async () => {
+    const user = userEvent.setup();
+    useAuthStore.setState({ step: "code", pendingEmail: "test@example.com", requestOtp: vi.fn().mockResolvedValue(undefined) });
+    render(<LoginPage />);
+    await user.type(screen.getByLabelText("Mã xác nhận"), "123456");
+    await user.click(screen.getByRole("button", { name: "Gửi lại mã" }));
+    expect(screen.getByLabelText("Mã xác nhận")).toHaveValue("");
+    expect(screen.getByLabelText("Mã xác nhận")).toHaveFocus();
+  });
+
+  it("đang xử lý thì không thể đổi email hoặc thay mã", () => {
+    useAuthStore.setState({ step: "code", pendingEmail: "test@example.com", loading: true });
+    render(<LoginPage />);
+    expect(screen.getByRole("button", { name: "← Đổi email" })).toBeDisabled();
+    expect(screen.getByLabelText("Mã xác nhận")).toBeDisabled();
+  });
+
   function setCodeStep(overrides: Partial<ReturnType<typeof useAuthStore.getState>> = {}) {
     useAuthStore.setState({ step: "code", pendingEmail: "test@gmail.com", ...overrides });
   }

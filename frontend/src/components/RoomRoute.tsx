@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useGameStore } from "../platform/gameStore";
 import { useGameRoomHubActions } from "../platform/GameRoomHubContext";
 import ChatPanel from "../platform/ChatPanel";
+import RoomInvite from "../platform/RoomInvite";
 import { RematchInviteBanner } from "../platform/RoomShell";
 import type { RoomDto } from "../platform/types";
 import VayBatBoard from "../games/vaybat/VayBatBoard";
@@ -25,12 +26,22 @@ export default function RoomRoute() {
   const [loading, setLoading] = useState(room?.id !== roomId);
   const [notFound, setNotFound] = useState(false);
   const [rematching, setRematching] = useState(false);
+  const [loadError, setLoadError] = useState("");
+  const [loadAttempt, setLoadAttempt] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
+    const controller = new AbortController();
 
     async function ensureRoom() {
-      if (useGameStore.getState().room?.id === roomId) {
+      setNotFound(false);
+      setLoadError("");
+      const cached = useGameStore.getState().room;
+      if (cached?.id === roomId) {
+        if (cached.gameKey !== gameKey) {
+          navigate(`/games/${cached.gameKey}/room/${roomId}`, { replace: true });
+          return;
+        }
         setLoading(false);
         return;
       }
@@ -39,9 +50,13 @@ export default function RoomRoute() {
       setLoading(true);
       setNotFound(false);
       try {
-        const res = await fetch(`/api/games/${roomId}`, { credentials: "include" });
+        const res = await fetch(`/api/games/${roomId}`, { credentials: "include", signal: controller.signal });
         if (res.status === 404) {
           if (!cancelled) setNotFound(true);
+          return;
+        }
+        if (res.status === 401 || res.status === 403) {
+          if (!cancelled) setLoadError("Bạn chưa có quyền vào phòng hoặc phiên đăng nhập đã hết hạn. Hãy đăng nhập lại.");
           return;
         }
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -55,9 +70,9 @@ export default function RoomRoute() {
         }
 
         setRoom(dto);
-        await joinRoom(roomId);
+        await joinRoom(roomId, controller.signal);
       } catch {
-        if (!cancelled) setError("Không tải được phòng — thử tải lại trang.");
+        if (!cancelled) setLoadError("Không tải được phòng. Kiểm tra kết nối rồi thử lại.");
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -66,9 +81,10 @@ export default function RoomRoute() {
     ensureRoom();
     return () => {
       cancelled = true;
+      controller.abort();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [roomId]);
+  }, [roomId, gameKey, loadAttempt]);
 
   const handleLeave = () => {
     leaveRoom(roomId);
@@ -129,9 +145,21 @@ export default function RoomRoute() {
     );
   }
 
+  if (loadError) {
+    return (
+      <div className="mx-auto w-full max-w-md space-y-4 py-10 text-center">
+        <p role="alert" className="text-sm text-red-300">{loadError}</p>
+        <div className="flex flex-wrap justify-center gap-3">
+          <button onClick={() => setLoadAttempt((attempt) => attempt + 1)} className="rounded-xl bg-amber-700 px-4 py-3 font-semibold text-white hover:bg-amber-600">Thử vào lại</button>
+          <button onClick={() => navigate(`/games/${gameKey}`)} className="rounded-xl bg-slate-700 px-4 py-3 text-sm text-slate-200 hover:bg-slate-600">Về sảnh trò chơi</button>
+        </div>
+      </div>
+    );
+  }
+
   if (loading || !room || room.id !== roomId) {
     return (
-      <div className="w-full max-w-md mx-auto text-center py-10 text-slate-400 text-sm animate-pulse">
+      <div role="status" className="w-full max-w-md mx-auto text-center py-10 text-slate-400 text-sm animate-pulse">
         Đang vào phòng…
       </div>
     );
@@ -182,8 +210,9 @@ export default function RoomRoute() {
   return (
     <div className="flex flex-col gap-3">
       <RematchInviteBanner invite={rematchInvite} onJoin={handleJoinRematch} />
+      {room.status === "Waiting" && <RoomInvite key={roomId} />}
       {board}
-      <ChatPanel roomId={roomId} />
+      <ChatPanel key={roomId} roomId={roomId} />
     </div>
   );
 }

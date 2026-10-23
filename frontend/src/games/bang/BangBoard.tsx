@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useGameStore } from "../../platform/gameStore";
 import { ConnectionBanner, DisconnectBadge, LeaveRoomButton, RoomErrorBanner } from "../../platform/RoomShell";
 import PlayerSeat from "./components/PlayerSeat";
@@ -68,6 +68,14 @@ export default function BangBoard({ makeMove, onLeave, onRematch, rematching }: 
   const stateOrUndefined = room?.state as BangViewerState | undefined;
   const muzzleFlash = useMuzzleFlash(stateOrUndefined?.gameLog ?? []);
 
+  // Lựa chọn chỉ có hiệu lực trong đúng lượt/giai đoạn hiện tại, kể cả khi server
+  // tự chuyển lượt vì mất kết nối hoặc người chơi chuyển sang phòng chơi lại.
+  useEffect(() => {
+    setSelectedCardId(null);
+    setDiscardIds([]);
+    setDiscarding(false);
+  }, [room?.id, stateOrUndefined?.turnNumber, stateOrUndefined?.phase, stateOrUndefined?.currentPlayerId]);
+
   if (!room || !stateOrUndefined) return null;
   const state = room.state as BangViewerState;
 
@@ -135,7 +143,21 @@ export default function BangBoard({ makeMove, onLeave, onRematch, rematching }: 
 
   const send = (move: BangMove) => makeMove(room.id, move);
 
+  function canPlayCard(card: Card): boolean {
+    if (!me?.alive || connectionState !== "connected") return false;
+    if (discarding) return true;
+    if (awaitingResp && state.pendingResponse)
+      return allowedResponseKinds(state.pendingResponse.kind, isCalamity).includes(card.kind);
+    if (!myTurn || !playableInActionPhase(card.kind, isCalamity)) return false;
+    if (you?.canFire === false && (card.kind === "bang" || card.kind === "gatling" || (card.kind === "missed" && isCalamity))) return false;
+    if (card.kind === "beer" && me.hp >= me.maxHp) return false;
+    if (needsTarget(card.kind, isCalamity))
+      return state.players.some((p) => isValidTarget(card.kind, p, p.id === me.id));
+    return true;
+  }
+
   function handleCardClick(card: Card) {
+    if (!canPlayCard(card)) return;
     if (discarding) {
       setDiscardIds((ids) => {
         if (ids.includes(card.id)) return ids.filter((id) => id !== card.id);
@@ -171,6 +193,7 @@ export default function BangBoard({ makeMove, onLeave, onRematch, rematching }: 
   }
 
   function handleConfirmDiscard() {
+    if (!myTurn || discardIds.length !== discardOverflow || !discardIds.every((id) => you?.hand.some((c) => c.id === id))) return;
     send({ type: "END_TURN", discardCardIds: discardIds });
     setDiscarding(false);
     setDiscardIds([]);
@@ -182,7 +205,7 @@ export default function BangBoard({ makeMove, onLeave, onRematch, rematching }: 
   }
 
   function handleSeatClick(target: BangPublicPlayer) {
-    if (!selectedCard) return;
+    if (!selectedCard || !myTurn || !isValidTarget(selectedCard.kind, target, target.id === me?.id)) return;
     send({ type: "PLAY_CARD", cardId: selectedCard.id, targetPlayerId: target.id });
     setSelectedCardId(null);
   }
@@ -234,6 +257,13 @@ export default function BangBoard({ makeMove, onLeave, onRematch, rematching }: 
 
       <ConnectionBanner connectionState={connectionState} />
       <DisconnectBadge seats={room.seats} />
+      <RoomErrorBanner error={error} />
+
+      {me && !me.alive && state.phase !== "finished" && (
+        <div role="status" className="rounded-xl border border-slate-600 bg-slate-900/70 p-3 text-sm text-slate-200">
+          Bạn đã bị loại. Bạn có thể tiếp tục theo dõi ván đấu và chờ kết quả.
+        </div>
+      )}
 
       {isSpectator && (
         <div className="rounded-xl p-2 text-center bg-amber-900/30 text-amber-300 text-sm">
@@ -310,17 +340,22 @@ export default function BangBoard({ makeMove, onLeave, onRematch, rematching }: 
 
       {/* Local player + action bar + hand */}
       {me && you && (
-        <>
+        <fieldset disabled={connectionState !== "connected" || !me.alive} className="flex min-w-0 flex-col gap-3">
           <LocalPlayerPanel me={me} you={you} />
           <ActionBar
             myTurn={myTurn}
             awaitingResponse={awaitingResp}
             selectingTarget={selectingTarget}
-            canEndTurn={myTurn}
+            canEndTurn={myTurn && connectionState === "connected" && me.alive}
             onEndTurn={handleEndTurnClick}
             onRespondPass={() => send({ type: "RESPOND" })}
             onCancelTarget={() => setSelectedCardId(null)}
-            hasBarrel={me?.equipment.includes("Thùng rượu") ?? false}
+            hasBarrel={(state.pendingResponse?.kind === "bang" || state.pendingResponse?.kind === "gatling") && me.equipment.includes("Thùng rượu")}
+            responseKind={state.pendingResponse?.kind}
+            isCalamity={isCalamity}
+            waitingFor={state.pendingResponse
+              ? state.pendingResponse.targetIds.map((id) => state.players.find((p) => p.id === id)?.name ?? "người chơi").join(", ")
+              : state.players.find((p) => p.id === state.currentPlayerId)?.name}
             discarding={discarding}
             discardOverflow={discardOverflow}
             discardSelectedCount={discardIds.length}
@@ -332,14 +367,15 @@ export default function BangBoard({ makeMove, onLeave, onRematch, rematching }: 
             selectedId={selectedCardId}
             selectedIds={discarding ? discardIds : undefined}
             playable={discarding || myTurn || awaitingResp}
+            canPlay={canPlayCard}
             onSelect={handleCardClick}
           />
-        </>
+          <p className="text-xs text-amber-200/70 px-2">Máu tự cập nhật theo hiệu ứng lá bài. Lá mờ chưa thể dùng ở bước này.</p>
+          {myTurn && you.canFire === false && <p role="status" className="px-2 text-xs text-amber-200">Bạn đã dùng lượt bắn. Hãy dùng lá khác hoặc kết thúc lượt; Volcanic cho phép bắn thêm.</p>}
+        </fieldset>
       )}
 
       <GameLogPanel log={state.gameLog} />
-
-      <RoomErrorBanner error={error} />
 
       <BangDebugPanel roomId={room.id} players={state.players} />
     </div>

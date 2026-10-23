@@ -7,11 +7,12 @@ interface Props {
   selectedId?: string | null;
   selectedIds?: string[];
   playable: boolean;
+  canPlay?: (card: Card) => boolean;
   onSelect: (card: Card) => void;
 }
 
 /** Bài trên tay của CHÍNH người chơi — fan layout, hover nâng bài lên. */
-export default function HandFan({ hand, selectedId, selectedIds, playable, onSelect }: Props) {
+export default function HandFan({ hand, selectedId, selectedIds, playable, canPlay, onSelect }: Props) {
   const justDrew = useCardDrawFlash(hand.length);
 
   if (hand.length === 0) {
@@ -25,18 +26,18 @@ export default function HandFan({ hand, selectedId, selectedIds, playable, onSel
   return (
     <div
       className={[
-        "flex overflow-x-auto pb-3 pt-1 px-3 -mx-1 rounded-xl",
+        "flex gap-2 overflow-x-auto pb-3 pt-4 px-3 -mx-1 rounded-xl",
         "bg-gradient-to-b from-[#1a1208] to-[#130e06]",
         "border border-amber-900/40 shadow-inner shadow-black/50",
         justDrew ? "animate-card-draw" : "",
       ].join(" ")}
     >
       {hand.map((card) => (
-        <div key={card.id} className="-ml-4 first:ml-0 transition-transform hover:z-10 relative">
+        <div key={card.id} className="shrink-0 transition-transform hover:z-10 relative">
           <CardView
             card={card}
             selected={selectedId === card.id || !!selectedIds?.includes(card.id)}
-            disabled={!playable}
+            disabled={!playable || (canPlay && !canPlay(card))}
             onClick={playable ? () => onSelect(card) : undefined}
           />
         </div>

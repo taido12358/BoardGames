@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { HubConnection, HubConnectionBuilder } from "@microsoft/signalr";
+import { HubConnection, HubConnectionBuilder, HubConnectionState } from "@microsoft/signalr";
 import { useGameStore } from "./gameStore";
 import type { ChatMessageDto, RematchInviteDto, RoomDto, RoomSummaryDto } from "./types";
 
@@ -9,8 +9,12 @@ import type { ChatMessageDto, RematchInviteDto, RoomDto, RoomSummaryDto } from "
  */
 export function useGameRoomHub() {
   const connRef = useRef<HubConnection | null>(null);
+  const readyRef = useRef<Promise<void> | null>(null);
+  const lobbyWanted = useRef(false);
 
   useEffect(() => {
+    let active = true;
+    useGameStore.getState().setConnectionState("connecting");
     const conn = new HubConnectionBuilder()
       .withUrl("/hubs/game")
       // Danh sách delay tường minh thay vì mặc định — dễ kiểm soát/log khi debug reconnect.
@@ -24,14 +28,15 @@ export function useGameRoomHub() {
     conn.on("ChatMessageReceived", (msg: ChatMessageDto) => useGameStore.getState().addChatMessage(msg));
     conn.on("RematchAvailable", (invite: RematchInviteDto) => useGameStore.getState().setRematchInvite(invite));
 
-    conn.onreconnecting(() => useGameStore.getState().setConnectionState("reconnecting"));
+    conn.onreconnecting(() => { if (active) useGameStore.getState().setConnectionState("reconnecting"); });
 
     // Sau khi SignalR tự nối lại, ConnectionId đổi → server không còn biết ta đang ở phòng/sảnh
     // nào (map connectionId→user chỉ được set lúc JoinRoom/SubscribeLobby) — phải gọi lại đúng
     // method đó, đọc state MỚI NHẤT (không dùng closure cũ chụp lúc mount) để không bỏ sót
     // trường hợp người dùng đã chuyển phòng ngay trước khi mất kết nối.
     conn.onreconnected(async () => {
-      useGameStore.getState().setConnectionState("connected");
+      if (!active) return;
+      useGameStore.getState().setConnectionState("reconnecting");
       try {
         const roomId = useGameStore.getState().room?.id;
         if (roomId) {
@@ -39,24 +44,39 @@ export function useGameRoomHub() {
         } else {
           await conn.invoke("SubscribeLobby");
         }
+        if (active) useGameStore.getState().setConnectionState("connected");
       } catch (err) {
         console.error("Không re-đăng ký được sau khi reconnect:", err);
+        if (active) {
+          useGameStore.getState().setConnectionState("disconnected");
+          useGameStore.getState().setError("Chưa khôi phục được kết nối phòng. Vui lòng tải lại trang.");
+        }
       }
     });
 
-    conn.onclose(() => useGameStore.getState().setConnectionState("disconnected"));
+    conn.onclose(() => { if (active) useGameStore.getState().setConnectionState("disconnected"); });
 
     // Đăng nhập hết hạn giữa chừng → hub từ chối connection (Hub yêu cầu [Authorize]) —
     // phải báo lên UI, không chỉ console, để người dùng biết cần đăng nhập lại.
-    conn.start().catch((err) => {
+    const started = conn.start();
+    readyRef.current = started;
+    started.then(async () => {
+      if (!active) return;
+      if (lobbyWanted.current) await conn.invoke("SubscribeLobby");
+      if (active) useGameStore.getState().setConnectionState("connected");
+    }).catch((err) => {
+      if (!active) return;
+      useGameStore.getState().setConnectionState("disconnected");
       console.error("SignalR error:", err);
       useGameStore.getState().setError("Không kết nối được máy chủ trò chơi — thử tải lại trang hoặc đăng nhập lại.");
     });
     connRef.current = conn;
 
     return () => {
+      active = false;
       conn.stop();
       connRef.current = null;
+      readyRef.current = null;
     };
   }, []);
 
@@ -69,8 +89,15 @@ export function useGameRoomHub() {
 
   // Danh tính lấy từ cookie JWT ở server (Context.User trong GameHub) — không còn gửi
   // playerName từ client nữa (bài học bảo mật 2026-08-05: xem rules/history/decisions.md).
-  const joinRoom = (roomId: string) => {
-    return connRef.current?.invoke("JoinRoom", roomId).catch(surface);
+  const joinRoom = async (roomId: string, signal?: AbortSignal) => {
+    if (signal?.aborted) return;
+    const connection = connRef.current;
+    if (!connection) { surface(new Error("Kết nối trò chơi chưa sẵn sàng.")); return; }
+    try {
+      await readyRef.current;
+      if (connRef.current !== connection || signal?.aborted) return;
+      await connection.invoke("JoinRoom", roomId);
+    } catch (error) { if (!signal?.aborted) surface(error); }
   };
 
   /** move: payload tuỳ game (vd. Vây Bắt = { pieceId, to }). */
@@ -83,15 +110,27 @@ export function useGameRoomHub() {
   };
 
   const subscribeLobby = () => {
-    return connRef.current?.invoke("SubscribeLobby").catch(console.error);
+    lobbyWanted.current = true;
+    const connection = connRef.current;
+    if (connection?.state === HubConnectionState.Connected)
+      return connection.invoke("SubscribeLobby").catch(surface);
   };
 
   const unsubscribeLobby = () => {
+    lobbyWanted.current = false;
     return connRef.current?.invoke("UnsubscribeLobby").catch(console.error);
   };
 
-  const sendChatMessage = (roomId: string, text: string) => {
-    connRef.current?.invoke("SendChatMessage", roomId, text).catch(surface);
+  const sendChatMessage = async (roomId: string, text: string): Promise<boolean> => {
+    const connection = connRef.current;
+    if (!connection || connection.state !== HubConnectionState.Connected) return false;
+    try {
+      await connection.invoke("SendChatMessage", roomId, text);
+      return true;
+    } catch (error) {
+      surface(error);
+      return false;
+    }
   };
 
   /** Báo cho người khác còn ở phòng cũ là đã có phòng chơi lại — chính mình tự điều hướng bằng response REST, không cần chờ broadcast này. */

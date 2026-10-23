@@ -1,14 +1,19 @@
-import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useMemo } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useGameStore } from "../platform/gameStore";
 import { useLobbyHub } from "../platform/useLobbyHub";
 import { getGameMetadata } from "../platform/gameRegistry";
 import type { GameMetadata } from "../platform/gameLibraryTypes";
 import GameCard from "./GameCard";
+import LobbyLoadStatus from "../platform/LobbyLoadStatus";
 
 interface FilterChip {
   id: string;
   label: string;
+}
+
+function normalizeSearch(value: string): string {
+  return value.toLowerCase().normalize("NFD").replace(/\p{M}/gu, "").replace(/đ/g, "d").trim();
 }
 
 function playerCountLabel(m: GameMetadata): string {
@@ -32,9 +37,20 @@ function SkeletonCard() {
 
 export default function GameLibrary() {
   const navigate = useNavigate();
-  const { engines, enginesLoading, enginesError, rooms, fetchEngines, fetchRooms } = useGameStore();
-  const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState("all");
+  const { engines, enginesLoading, enginesError, rooms, roomsLoading, roomsError, fetchEngines, fetchRooms } = useGameStore();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const search = searchParams.get("q") ?? "";
+  const filter = searchParams.get("filter") ?? "all";
+  function updateSearch(key: string, value: string) {
+    setSearchParams((previous) => {
+      const next = new URLSearchParams(previous);
+      if (!value || (key === "filter" && value === "all")) next.delete(key);
+      else next.set(key, value);
+      return next;
+    }, { replace: true });
+  }
+  const setSearch = (value: string) => updateSearch("q", value);
+  const setFilter = (value: string) => updateSearch("filter", value);
 
   useLobbyHub();
 
@@ -72,11 +88,11 @@ export default function GameLibrary() {
   }, [allMetadata]);
 
   const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
+    const terms = normalizeSearch(search).split(/\s+/).filter(Boolean);
     return allMetadata.filter((m) => {
-      if (q) {
-        const haystack = `${m.title} ${m.subtitle} ${m.description} ${m.category.join(" ")}`.toLowerCase();
-        if (!haystack.includes(q)) return false;
+      if (terms.length > 0) {
+        const haystack = normalizeSearch(`${m.title} ${m.subtitle} ${m.description} ${m.category.join(" ")}`);
+        if (!terms.every((term) => haystack.includes(term))) return false;
       }
       if (filter === "all") return true;
       if (filter === "waiting") return (waitingCountByGame[m.gameKey] ?? 0) > 0;
@@ -86,7 +102,12 @@ export default function GameLibrary() {
     });
   }, [allMetadata, search, filter, waitingCountByGame]);
 
-  const clearFilters = () => { setSearch(""); setFilter("all"); };
+  const clearFilters = () => setSearchParams((previous) => {
+    const next = new URLSearchParams(previous);
+    next.delete("q");
+    next.delete("filter");
+    return next;
+  }, { replace: true });
 
   return (
     <div className="w-full max-w-5xl mx-auto space-y-5">
@@ -109,6 +130,7 @@ export default function GameLibrary() {
           aria-label="Tìm kiếm trò chơi"
           className="w-full rounded-md border border-amber-900/40 bg-[#120c08] px-4 py-2.5 text-amber-100 placeholder-amber-900/40 shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)] outline-none transition-colors focus:border-amber-500/70 focus:shadow-[inset_0_2px_4px_rgba(0,0,0,0.6),0_0_10px_rgba(217,119,6,0.15)] text-sm placeholder:text-amber-900/40"
         />
+        {search && <button type="button" onClick={() => setSearch("")} className="rounded-lg bg-slate-800 px-3 py-2 text-xs text-slate-200 hover:bg-slate-700">Xóa từ khóa</button>}
         <div className="flex flex-wrap gap-2">
           {filterChips.map((chip) => (
             <button
@@ -129,6 +151,7 @@ export default function GameLibrary() {
       </div>
 
       {/* Trạng thái lỗi */}
+      <LobbyLoadStatus loading={roomsLoading} error={roomsError} onRetry={() => fetchRooms()} />
       {enginesError && !enginesLoading && (
         <div className="rounded-2xl border border-red-800/50 bg-red-950/30 p-6 text-center space-y-3">
           <p className="text-red-300 text-sm">{enginesError}</p>
@@ -150,7 +173,7 @@ export default function GameLibrary() {
       )}
 
       {/* Trống sau lọc */}
-      {!enginesLoading && !enginesError && filtered.length === 0 && (
+      {!enginesLoading && !enginesError && filtered.length === 0 && (filter !== "waiting" || (!roomsLoading && !roomsError)) && (
         <div className="rounded-2xl border border-slate-800 bg-slate-900/40 p-10 text-center space-y-3">
           <div className="text-3xl">🔍</div>
           <p className="text-slate-300 font-medium">Không tìm thấy trò chơi</p>
@@ -166,6 +189,7 @@ export default function GameLibrary() {
       )}
 
       {/* Lưới thẻ game */}
+      {!enginesLoading && !enginesError && filtered.length > 0 && <p role="status" className="text-sm text-slate-400">Tìm thấy {filtered.length} trò chơi.</p>}
       {!enginesLoading && !enginesError && filtered.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {filtered.map((m) => (

@@ -76,6 +76,14 @@ describe("DisconnectBadge", () => {
 });
 
 describe("ConnectionBanner", () => {
+  it("kết nối lại dùng status, mất kết nối dùng alert", () => {
+    const view = render(<ConnectionBanner connectionState="reconnecting" />);
+    expect(screen.getByRole("status")).toHaveTextContent("Đang kết nối lại");
+    view.rerender(<ConnectionBanner connectionState="disconnected" />);
+    expect(screen.getByRole("alert")).toHaveTextContent("Mất kết nối");
+    view.rerender(<ConnectionBanner connectionState="connected" />);
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
   it("connected: không hiện gì", () => {
     const { container } = render(<ConnectionBanner connectionState="connected" />);
     expect(container.firstChild).toBeNull();
@@ -93,6 +101,10 @@ describe("ConnectionBanner", () => {
 });
 
 describe("RoomErrorBanner", () => {
+  it("lỗi thao tác được công bố bằng alert", () => {
+    render(<RoomErrorBanner error="Nước đi không hợp lệ." />);
+    expect(screen.getByRole("alert")).toHaveTextContent("Nước đi không hợp lệ.");
+  });
   it("có lỗi: hiện đúng nội dung", () => {
     render(<RoomErrorBanner error="Không thể kết nối." />);
     expect(screen.getByText("Không thể kết nối.")).toBeInTheDocument();

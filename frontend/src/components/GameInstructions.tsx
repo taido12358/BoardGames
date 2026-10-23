@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useId, useRef, useState } from "react";
 import type { CardGuideEntry, InstructionSection } from "../platform/gameLibraryTypes";
 
 interface Props {
@@ -139,6 +139,8 @@ function DistanceDemoSection({ paragraphs }: { paragraphs: string[] }) {
 /** Bộ tab hướng dẫn theo game — kind của từng section quyết định cách vẽ, không hard-code theo gameKey. */
 export default function GameInstructions({ sections }: Props) {
   const [active, setActive] = useState(sections[0]?.id ?? "");
+  const baseId = useId();
+  const tabs = useRef<Record<string, HTMLButtonElement | null>>({});
   if (sections.length === 0) {
     return <p className="text-slate-500 text-sm">Trò chơi này chưa có hướng dẫn chi tiết.</p>;
   }
@@ -152,9 +154,25 @@ export default function GameInstructions({ sections }: Props) {
             key={s.id}
             type="button"
             role="tab"
+            id={`${baseId}-tab-${s.id}`}
+            aria-controls={`${baseId}-panel`}
             aria-selected={s.id === section.id}
+            tabIndex={s.id === section.id ? 0 : -1}
+            ref={(element) => { tabs.current[s.id] = element; }}
             onClick={() => setActive(s.id)}
-            className={`rounded-lg px-3 py-1.5 text-xs font-semibold uppercase tracking-wide transition-colors ${
+            onKeyDown={(event) => {
+              const index = sections.findIndex((entry) => entry.id === s.id);
+              let next = index;
+              if (event.key === "ArrowRight") next = (index + 1) % sections.length;
+              else if (event.key === "ArrowLeft") next = (index - 1 + sections.length) % sections.length;
+              else if (event.key === "Home") next = 0;
+              else if (event.key === "End") next = sections.length - 1;
+              else return;
+              event.preventDefault();
+              setActive(sections[next].id);
+              tabs.current[sections[next].id]?.focus();
+            }}
+            className={`rounded-lg px-3 py-2.5 text-xs font-semibold uppercase tracking-wide transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-300 ${
               s.id === section.id
                 ? "bg-gradient-to-b from-amber-600 to-amber-800 text-amber-50 shadow-[0_2px_0_0_#451a03] border-t border-amber-400/40"
                 : "bg-slate-800/70 text-slate-400 hover:bg-slate-700 hover:text-slate-200"
@@ -165,7 +183,7 @@ export default function GameInstructions({ sections }: Props) {
         ))}
       </div>
 
-      <div role="tabpanel">
+      <div role="tabpanel" id={`${baseId}-panel`} aria-labelledby={`${baseId}-tab-${section.id}`} tabIndex={0} className="rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-amber-300">
         {section.kind === "text" && <TextSection paragraphs={section.paragraphs} bullets={section.bullets} />}
         {section.kind === "flow" && <FlowSection steps={section.steps} />}
         {section.kind === "roles" && <RolesSection roles={section.roles} />}

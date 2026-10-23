@@ -349,6 +349,9 @@ public static class BangRules
             return (true, null, null); // vòng đấu tiếp tục
         }
 
+        if (card is not null)
+            return (false, "Chỉ có thể dùng Bang! để đáp trả đấu súng.", null);
+
         ApplyDamage(state, player, pr.Damage, pr.DuelOtherId, rng);
         state.GameLog.Add($"{player.Name} thua đấu súng.");
         EndPendingResponse(state);
@@ -380,8 +383,8 @@ public static class BangRules
     {
         if (player.Hp >= player.MaxHp) return (false, "HP đã đầy.", null);
         MoveToDiscard(state, player, card);
-        var heal = player.Character == CharacterKind.Doc ? 2 : 1;
-        player.Hp = Math.Min(player.MaxHp, player.Hp + heal);
+        var heal = Math.Min(player.MaxHp - player.Hp, player.Character == CharacterKind.Doc ? 2 : 1);
+        player.Hp += heal;
         state.GameLog.Add($"{player.Name} uống Bia, hồi {heal} HP ({player.Hp}/{player.MaxHp}).");
         return (true, null, null);
     }
@@ -611,7 +614,9 @@ public static class BangRules
 
         BangYourView? you = viewer is null ? null : new BangYourView(
             viewer.Id, viewer.Role.ToString(), RoleDisplay(viewer.Role),
-            viewer.Hand, BangCards.WeaponName(viewer.WeaponCard?.Kind), EffectiveWeaponRange(viewer));
+            viewer.Hand, BangCards.WeaponName(viewer.WeaponCard?.Kind), EffectiveWeaponRange(viewer),
+            viewer.Alive && state.Phase == GamePhase.Action && state.CurrentPlayerId == viewer.Id &&
+            (!state.BangPlayedThisTurn || viewer.WeaponCard?.Kind == CardKind.Volcanic));
 
         PendingResponseView? prView = state.PendingResponse is null ? null : new PendingResponseView(
             state.PendingResponse.Kind.ToString(), state.PendingResponse.FromPlayerId,

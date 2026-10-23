@@ -36,6 +36,17 @@ beforeEach(() => {
 });
 
 describe("OAnQuanBoard", () => {
+  it("mất kết nối khóa ô dân, không gửi nước đi", async () => {
+    setRoom(fullState(), "P0");
+    useGameStore.setState({ connectionState: "reconnecting" });
+    const makeMove = vi.fn();
+    render(<OAnQuanBoard makeMove={makeMove} onLeave={vi.fn()} onRematch={vi.fn()} rematching={false} />);
+    const pit = screen.getByRole("button", { name: "Ô dân số 3, 5 quân" });
+    expect(pit).toBeDisabled();
+    await userEvent.click(pit);
+    expect(makeMove).not.toHaveBeenCalled();
+    expect(screen.queryByText("Phải →")).not.toBeInTheDocument();
+  });
   it("không hiện nút chọn chiều trước khi chọn ô nào", () => {
     setRoom(fullState(), "P0");
     render(<OAnQuanBoard makeMove={vi.fn()} onLeave={vi.fn()} onRematch={vi.fn()} rematching={false} />);

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import VayBatBoard from "./VayBatBoard";
 import { useGameStore } from "../../platform/gameStore";
 import type { GameState, MapDef } from "./types";
@@ -100,6 +100,35 @@ function pointerDownAt(svg: SVGSVGElement, x: number, y: number) {
 }
 
 describe("VayBatBoard — chọn quân và đi bằng click (tap-tap)", () => {
+  it("mất kết nối không chọn hoặc gửi nước đi", () => {
+    setRoom(makeState());
+    useGameStore.setState({ connectionState: "reconnecting" });
+    const makeMove = vi.fn();
+    const { container } = render(<VayBatBoard makeMove={makeMove} onLeave={vi.fn()} onRematch={vi.fn()} rematching={false} />);
+    const svg = container.querySelector("svg")!;
+    pointerDownAt(svg, 10, 10);
+    pointerDownAt(svg, 100, 10);
+    expect(makeMove).not.toHaveBeenCalled();
+    expect(useGameStore.getState().selected).toBeNull();
+  });
+
+  it("mất kết nối xóa quân chọn cũ; nối lại phải chọn lại quân", () => {
+    setRoom(makeState());
+    const makeMove = vi.fn();
+    const { container } = render(<VayBatBoard makeMove={makeMove} onLeave={vi.fn()} onRematch={vi.fn()} rematching={false} />);
+    const svg = container.querySelector("svg")!;
+    pointerDownAt(svg, 10, 10);
+    expect(useGameStore.getState().selected).toBe("R0");
+    act(() => useGameStore.setState({ connectionState: "disconnected" }));
+    expect(useGameStore.getState().selected).toBeNull();
+    act(() => useGameStore.setState({ connectionState: "connected" }));
+    pointerDownAt(svg, 100, 10);
+    expect(makeMove).not.toHaveBeenCalled();
+    pointerDownAt(svg, 10, 10);
+    pointerDownAt(svg, 100, 10);
+    expect(makeMove).toHaveBeenCalledTimes(1);
+  });
+
   it("chọn quân của mình rồi tap ô kề hợp lệ thì gửi đúng nước đi", () => {
     setRoom(makeState());
     const makeMove = vi.fn();

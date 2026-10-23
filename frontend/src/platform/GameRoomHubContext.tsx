@@ -2,12 +2,12 @@ import { createContext, useContext } from "react";
 
 /** Chữ ký khớp với giá trị trả về của useGameRoomHub() — xem useGameRoomHub.ts. */
 export interface GameRoomHubActions {
-  joinRoom: (roomId: string) => Promise<void> | undefined;
+  joinRoom: (roomId: string, signal?: AbortSignal) => Promise<void> | undefined;
   makeMove: (roomId: string, move: unknown) => void;
   leaveRoom: (roomId: string) => void;
   subscribeLobby: () => Promise<void> | undefined;
   unsubscribeLobby: () => Promise<void> | undefined;
-  sendChatMessage: (roomId: string, text: string) => void;
+  sendChatMessage: (roomId: string, text: string) => Promise<boolean> | void;
   announceRematch: (oldRoomId: string, newRoomId: string) => void;
 }
 

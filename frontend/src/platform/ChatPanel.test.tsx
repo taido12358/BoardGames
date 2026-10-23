@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import ChatPanel from "./ChatPanel";
 import { useGameStore } from "./gameStore";
@@ -29,10 +29,45 @@ const msg = (displayName: string, text: string): ChatMessageDto => ({
 });
 
 beforeEach(() => {
-  useGameStore.setState({ chatMessages: [] });
+  useGameStore.setState({ chatMessages: [], connectionState: "connected" });
 });
 
 describe("ChatPanel", () => {
+  it("đọc tin cũ không bị kéo xuống khi có tin mới", async () => {
+    const user = userEvent.setup();
+    renderPanel();
+    await user.click(screen.getByText("💬 Trò chuyện"));
+    const list = screen.getByRole("log");
+    const scroll = vi.fn();
+    list.scrollTo = scroll;
+    Object.defineProperties(list, { scrollHeight: { value: 600 }, clientHeight: { value: 100 } });
+    fireEvent.scroll(list, { target: { scrollTop: 0 } });
+    act(() => useGameStore.setState({ chatMessages: [msg("An", "tin mới")] }));
+    expect(scroll).not.toHaveBeenCalled();
+    await user.click(screen.getByRole("button", { name: /Xem tin mới/ }));
+    expect(scroll).toHaveBeenCalledWith({ top: 600 });
+  });
+  it("gửi thất bại giữ nguyên bản nháp và báo lỗi", async () => {
+    const user = userEvent.setup();
+    renderPanel(vi.fn().mockResolvedValue(false));
+    await user.click(screen.getByText("💬 Trò chuyện"));
+    await user.type(screen.getByLabelText("Nhập tin nhắn"), "tin cần gửi lại");
+    await user.click(screen.getByRole("button", { name: "Gửi" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Nội dung được giữ lại");
+    expect(screen.getByLabelText("Nhập tin nhắn")).toHaveValue("tin cần gửi lại");
+  });
+
+  it("mất kết nối vẫn soạn được nhưng không gửi", async () => {
+    const user = userEvent.setup();
+    useGameStore.setState({ connectionState: "reconnecting" });
+    const { sendChatMessage } = renderPanel();
+    await user.click(screen.getByText("💬 Trò chuyện"));
+    await user.type(screen.getByLabelText("Nhập tin nhắn"), "bản nháp");
+    expect(screen.getByRole("button", { name: "Gửi" })).toBeDisabled();
+    expect(screen.getByRole("status")).toHaveTextContent("Đang mất kết nối");
+    expect(sendChatMessage).not.toHaveBeenCalled();
+  });
+
   it("mặc định thu gọn, không hiện số tin nhắn khi chưa có tin nào", () => {
     renderPanel();
 

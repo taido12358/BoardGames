@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useAuthStore } from "./authStore";
 
 /**
@@ -12,6 +12,7 @@ export default function DisplayNameEditor({ displayName, email }: { displayName:
   const [draft, setDraft] = useState(displayName);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const saveLock = useRef(false);
 
   function startEdit() {
     setDraft(displayName);
@@ -20,23 +21,34 @@ export default function DisplayNameEditor({ displayName, email }: { displayName:
   }
 
   function cancel() {
+    if (saveLock.current) return;
     setEditing(false);
     setError("");
   }
 
   async function save() {
+    if (saveLock.current) return;
     const trimmed = draft.trim();
-    if (!trimmed || trimmed === displayName) {
+    if (!trimmed) {
+      setError("Tên hiển thị không được để trống.");
+      return;
+    }
+    if (trimmed === displayName) {
       setEditing(false);
       return;
     }
+    saveLock.current = true;
     setSaving(true);
-    const ok = await updateDisplayName(trimmed);
-    setSaving(false);
-    if (ok) {
-      setEditing(false);
-    } else {
-      setError(useAuthStore.getState().error || "Không đổi được tên.");
+    setError("");
+    try {
+      const ok = await updateDisplayName(trimmed);
+      if (ok) setEditing(false);
+      else setError(useAuthStore.getState().error || "Không đổi được tên.");
+    } catch {
+      setError("Không kết nối được máy chủ. Tên đang soạn được giữ lại để thử lại.");
+    } finally {
+      saveLock.current = false;
+      setSaving(false);
     }
   }
 
@@ -54,13 +66,15 @@ export default function DisplayNameEditor({ displayName, email }: { displayName:
   }
 
   return (
-    <div className="flex items-center gap-1">
+    <div aria-busy={saving} className="flex flex-wrap items-center gap-1">
       <input
         type="text"
+        disabled={saving}
+        aria-invalid={!!error}
         value={draft}
         onChange={(e) => setDraft(e.target.value)}
         onKeyDown={(e) => {
-          if (e.key === "Enter") save();
+          if (e.key === "Enter" && !e.nativeEvent.isComposing) { e.preventDefault(); save(); }
           if (e.key === "Escape") cancel();
         }}
         maxLength={30}
@@ -75,12 +89,12 @@ export default function DisplayNameEditor({ displayName, email }: { displayName:
         disabled={saving}
         className="relative text-xs px-2 py-1 rounded-md bg-gradient-to-b from-amber-600 to-amber-800 border-t border-amber-400/40 shadow-[0_2px_0_0_#451a03] transition-all hover:brightness-110 active:top-[1px] active:shadow-none disabled:opacity-50 text-amber-50 font-semibold"
       >
-        Lưu
+        {saving ? "Đang lưu…" : "Lưu"}
       </button>
-      <button type="button" onClick={cancel} className="text-xs px-1.5 py-1 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-300">
+      <button type="button" disabled={saving} onClick={cancel} className="text-xs px-1.5 py-1 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-300 disabled:opacity-50">
         Huỷ
       </button>
-      {error && <span className="text-xs text-red-400">{error}</span>}
+      {error && <span role="alert" className="w-full text-xs text-red-400">{error}</span>}
     </div>
   );
 }

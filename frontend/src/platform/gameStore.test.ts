@@ -26,6 +26,8 @@ beforeEach(() => {
   useGameStore.setState({
     roomsById: {},
     rooms: [],
+    roomsLoading: false,
+    roomsError: "",
     chatMessages: [],
     rematchInvite: null,
     error: "",
@@ -144,6 +146,30 @@ describe("fetchEngines", () => {
 });
 
 describe("fetchRooms", () => {
+  it("phản hồi cũ không ghi lỗi đè lên lần tải mới đã thành công", async () => {
+    let rejectOld!: (reason: Error) => void;
+    const oldRequest = new Promise<Response>((_, reject) => { rejectOld = reject; });
+    vi.stubGlobal("fetch", vi.fn().mockReturnValueOnce(oldRequest).mockResolvedValueOnce(jsonResponse([])));
+    const first = useGameStore.getState().fetchRooms("bang");
+    expect(useGameStore.getState().roomsLoading).toBe(true);
+    await useGameStore.getState().fetchRooms("vaybat");
+    rejectOld(new Error("late failure"));
+    await first;
+    expect(useGameStore.getState().roomsError).toBe("");
+    expect(useGameStore.getState().roomsLoading).toBe(false);
+  });
+
+  it("lỗi tải giữ phòng đã có và lần thử lại xóa lỗi", async () => {
+    useGameStore.getState().upsertRoom(room({ id: "cached", createdAt: "2026-01-01T00:00:00Z" }));
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValueOnce(new Error("offline")).mockResolvedValueOnce(jsonResponse([])));
+    await useGameStore.getState().fetchRooms();
+    expect(useGameStore.getState().roomsError).toContain("Không thể tải");
+    expect(useGameStore.getState().roomsLoading).toBe(false);
+    expect(useGameStore.getState().rooms[0].id).toBe("cached");
+    await useGameStore.getState().fetchRooms();
+    expect(useGameStore.getState().roomsError).toBe("");
+  });
+
   it("thành công: gộp phòng mới vào roomsById đã có, sắp lại theo createdAt", async () => {
     useGameStore.getState().upsertRoom(room({ id: "old", createdAt: "2026-01-01T00:00:00Z" }));
     vi.stubGlobal("fetch", vi.fn(() => Promise.resolve(jsonResponse([room({ id: "new", createdAt: "2026-01-02T00:00:00Z" })]))));
@@ -162,11 +188,12 @@ describe("fetchRooms", () => {
     expect(fetchMock).toHaveBeenCalledWith("/api/games?gameKey=bang");
   });
 
-  it("lỗi mạng: im lặng bỏ qua (best-effort, không set error nào)", async () => {
+  it("lỗi mạng: báo lỗi sảnh riêng, không ghi đè lỗi ván chơi", async () => {
     vi.stubGlobal("fetch", vi.fn(() => Promise.reject(new Error("network"))));
 
     await expect(useGameStore.getState().fetchRooms()).resolves.toBeUndefined();
     expect(useGameStore.getState().error).toBe("");
+    expect(useGameStore.getState().roomsError).toContain("Không thể tải danh sách phòng");
   });
 });
 
@@ -196,11 +223,22 @@ describe("createRoom", () => {
     const result = await useGameStore.getState().createRoom("khong-ton-tai", {});
 
     expect(result).toBeNull();
-    expect(useGameStore.getState().error).toBe("Không tạo được phòng");
+    expect(useGameStore.getState().error).toBe("Game chưa hỗ trợ");
   });
 });
 
 describe("cancelRoom", () => {
+  it("hiển thị lý do máy chủ từ chối hủy phòng", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(jsonResponse({ error: "Chỉ huỷ được phòng đang chờ." }, false, 400)));
+    expect(await useGameStore.getState().cancelRoom("r1")).toBe(false);
+    expect(useGameStore.getState().error).toBe("Chỉ huỷ được phòng đang chờ.");
+  });
+
+  it("body không phải JSON vẫn có lỗi dự phòng", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false, status: 502, json: async () => { throw new Error("html response"); } }));
+    expect(await useGameStore.getState().cancelRoom("r1")).toBe(false);
+    expect(useGameStore.getState().error).toBe("Không huỷ được phòng.");
+  });
   it("thành công: trả về true", async () => {
     vi.stubGlobal("fetch", vi.fn(() => Promise.resolve(jsonResponse({}))));
     expect(await useGameStore.getState().cancelRoom("r1")).toBe(true);

@@ -10,6 +10,24 @@ interface Props {
 
 const suitColor = (suit: string) => (suit === "♥" || suit === "♦" ? "text-red-600" : "text-slate-800");
 
+const CARD_EFFECT: Record<CardKind, string> = {
+  bang: "Bắn 1 mục tiêu trong tầm. Trúng: −1 máu.",
+  missed: "Đỡ Bang! hoặc Gatling. Không mất máu.",
+  beer: "Hồi 1 máu cho bạn. Doc hồi 2.",
+  gatling: "Bắn tất cả đối thủ. Trúng: −1 máu.",
+  duel: "Luân phiên dùng Bang! Người bỏ cuộc mất 1 máu.",
+  indians: "Mỗi đối thủ bỏ Bang! hoặc mất 1 máu.",
+  panic: "Lấy 1 lá của người ở khoảng cách 1.",
+  catBalou: "Bỏ 1 lá của người chơi khác.",
+  stagecoach: "Rút ngay 2 lá bài.",
+  wellsFargo: "Rút ngay 3 lá bài.",
+  volcanic: "Trang bị: bắn Bang! nhiều lần mỗi lượt.",
+  schofield: "Trang bị: tầm bắn 2.",
+  remington: "Trang bị: tầm bắn 3.",
+  mustang: "Trang bị: đối thủ nhìn bạn xa hơn 1.",
+  barrel: "Trang bị: lật ♥ để né Bang! hoặc Gatling.",
+};
+
 type CardCategory = "attack" | "defense" | "heal" | "weapon" | "equipment" | "action";
 
 function cardCategory(kind: CardKind): CardCategory {
@@ -42,6 +60,7 @@ export default function CardView({ card, selected, disabled, small, onClick }: P
       disabled={disabled || !onClick}
       onClick={onClick}
       title={display.name}
+      aria-label={display.name}
       className={[
         "relative shrink-0 rounded-lg border-2 text-left transition-all duration-150 select-none overflow-hidden",
         `bg-gradient-to-b ${cs.bg}`,
@@ -75,6 +94,7 @@ export default function CardView({ card, selected, disabled, small, onClick }: P
       <div className={`relative text-center font-bold leading-tight ${cs.text} ${small ? "text-[9px]" : "text-[11px]"}`}>
         {display.name}
       </div>
+      {!small && <p className={`relative mt-1 text-[9px] leading-tight ${cs.text}`}>{CARD_EFFECT[card.kind]}</p>}
 
       {/* Bottom-right corner (mirrored rank+suit) — full size only */}
       {!small && (

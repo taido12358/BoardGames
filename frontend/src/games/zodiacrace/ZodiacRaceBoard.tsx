@@ -68,7 +68,10 @@ export default function ZodiacRaceBoard({ makeMove, onLeave, onRematch, rematchi
   const currentName = room.seats[state.turn]?.displayName ?? "…";
   const winnerIdx = state.winner ? seatIndexOfSide(state.winner) : null;
 
-  const send = () => makeMove(room.id, { type: "ROLL" });
+  const send = () => {
+    if (connectionState !== "connected" || !isMyTurn(state, mySide)) return;
+    makeMove(room.id, { type: "ROLL" });
+  };
   const tiles = Array.from({ length: map.trackLength + 1 }, (_, i) => i);
 
   return (
@@ -146,14 +149,20 @@ export default function ZodiacRaceBoard({ makeMove, onLeave, onRematch, rematchi
       )}
 
       {myTurn && !state.winner && (
-        <button onClick={send} className="relative w-full rounded-lg bg-gradient-to-b from-amber-600 via-amber-700 to-amber-800 px-4 py-3 font-bold text-base text-amber-50 border-t border-amber-400/50 shadow-[0_4px_0_0_#451a03,0_8px_16px_rgba(0,0,0,0.5)] transition-all hover:brightness-110 active:top-[2px] active:shadow-[0_2px_0_0_#451a03]">
+        <button onClick={send} disabled={connectionState !== "connected"} className="relative w-full rounded-lg bg-gradient-to-b from-amber-600 via-amber-700 to-amber-800 px-4 py-3 font-bold text-base text-amber-50 border-t border-amber-400/50 shadow-[0_4px_0_0_#451a03,0_8px_16px_rgba(0,0,0,0.5)] transition-all hover:brightness-110 active:top-[2px] active:shadow-[0_2px_0_0_#451a03]">
           🎲 ĐỔ XÚC XẮC
         </button>
       )}
 
       {state.winner && winnerIdx !== null && (
-        <div className="rounded-2xl p-4 text-center font-bold text-base bg-emerald-900/50 text-emerald-200 border border-emerald-700">
-          🏆 {iconForSeat(winnerIdx)} {room.seats[winnerIdx]?.displayName ?? state.winner} VỀ ĐÍCH ĐẦU TIÊN!
+        <div className="rounded-2xl border border-amber-600/30 bg-amber-950/20 p-1 shadow-[0_0_30px_rgba(251,191,36,0.2)]">
+          <div className="rounded-xl border border-amber-700/40 bg-gradient-to-b from-[#2b2013] to-[#1c150c] p-4 text-center">
+            <div className="text-3xl mb-1">🏆</div>
+            <div className="font-western text-lg text-amber-300 tracking-wide [text-shadow:0_1px_0_rgba(255,255,255,0.15),0_2px_6px_rgba(0,0,0,0.9)]">
+              {iconForSeat(winnerIdx)} {room.seats[winnerIdx]?.displayName ?? state.winner}
+            </div>
+            <div className="text-amber-400/60 text-sm mt-0.5 uppercase tracking-widest">Về Đích Đầu Tiên!</div>
+          </div>
         </div>
       )}
 

@@ -1,14 +1,28 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAuthStore } from "./authStore";
 
 /**
- * Đăng nhập không mật khẩu: nhập email Gmail → nhận mã 6 số qua email → nhập mã.
+ * Đăng nhập không mật khẩu: nhập email → nhận mã 6 số qua email → nhập mã.
  */
 export default function LoginPage() {
   const { step, pendingEmail, loading, error, resendIn, requestOtp, verifyOtp, backToEmail } =
     useAuthStore();
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
+  const codeInput = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setCode("");
+    if (step === "code") codeInput.current?.focus();
+  }, [step, pendingEmail]);
+
+  const resendCode = async () => {
+    await requestOtp(pendingEmail);
+    if (!useAuthStore.getState().error) {
+      setCode("");
+      codeInput.current?.focus();
+    }
+  };
 
   const submitEmail = (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,16 +52,16 @@ export default function LoginPage() {
           </h2>
           <p className="text-slate-400 text-sm leading-snug">
             {step === "email"
-              ? "Nhập Gmail của bạn — chúng tôi sẽ gửi mã đăng nhập 6 số."
+              ? "Nhập email của bạn — chúng tôi sẽ gửi mã đăng nhập 6 số."
               : <>Mã 6 số đã gửi đến{" "}
-                  <span className="text-amber-300 font-medium">{pendingEmail}</span>.
-                  <br /><span className="text-slate-500 text-xs">Kiểm tra cả mục Spam.</span>
+                  <span className="text-amber-300 font-medium break-all">{pendingEmail}</span>.
+                  <br /><span className="text-slate-400 text-xs">Mã có hiệu lực 5 phút. Kiểm tra cả mục Spam.</span>
                 </>}
           </p>
         </div>
 
         {step === "email" ? (
-          <form onSubmit={submitEmail} className="space-y-3">
+          <form onSubmit={submitEmail} aria-busy={loading} className="space-y-3">
             <div>
               <label htmlFor="login-email" className="text-slate-400 text-xs uppercase tracking-widest font-medium">
                 Email
@@ -56,6 +70,9 @@ export default function LoginPage() {
                 id="login-email"
                 type="email"
                 autoComplete="email"
+                autoCapitalize="none"
+                spellCheck={false}
+                disabled={loading}
                 required
                 autoFocus
                 className="w-full mt-1.5 rounded-md border border-amber-900/60 bg-[#120c08] px-4 py-2.5 text-amber-100 placeholder-amber-900/50 shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)] outline-none transition-colors focus:border-amber-500/80 focus:bg-[#170f0a] focus:shadow-[inset_0_2px_4px_rgba(0,0,0,0.8),0_0_12px_rgba(217,119,6,0.2)] text-sm"
@@ -73,13 +90,18 @@ export default function LoginPage() {
             </button>
           </form>
         ) : (
-          <form onSubmit={submitCode} className="space-y-3">
+          <form onSubmit={submitCode} aria-busy={loading} className="space-y-3">
             <div>
               <label htmlFor="login-code" className="text-slate-400 text-xs uppercase tracking-widest font-medium">
                 Mã xác nhận
               </label>
               <input
                 id="login-code"
+                ref={codeInput}
+                type="text"
+                disabled={loading}
+                aria-describedby="login-code-hint"
+                aria-invalid={!!error}
                 inputMode="numeric"
                 autoComplete="one-time-code"
                 pattern="[0-9]{6}"
@@ -90,7 +112,16 @@ export default function LoginPage() {
                 placeholder="······"
                 value={code}
                 onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
+                onPaste={(e) => {
+                  const pasted = e.clipboardData.getData("text");
+                  const digits = pasted.replace(/[\s-]/g, "");
+                  if (/^\d{6}$/.test(digits)) {
+                    e.preventDefault();
+                    setCode(digits);
+                  }
+                }}
               />
+              <p id="login-code-hint" className="mt-2 text-xs text-slate-400">Nhập hoặc dán mã 6 số từ email mới nhất.</p>
             </div>
             <button
               type="submit"
@@ -100,13 +131,13 @@ export default function LoginPage() {
               {loading ? "Đang kiểm tra…" : "✅ Đăng nhập"}
             </button>
             <div className="flex justify-between text-sm">
-              <button type="button" onClick={backToEmail} className="text-slate-400 hover:text-slate-200 transition-colors">
+              <button type="button" disabled={loading} onClick={backToEmail} className="text-slate-400 hover:text-slate-200 transition-colors disabled:opacity-50">
                 ← Đổi email
               </button>
               <button
                 type="button"
                 disabled={resendIn > 0 || loading}
-                onClick={() => requestOtp(pendingEmail)}
+                onClick={resendCode}
                 className="text-amber-400 hover:text-amber-300 disabled:text-slate-500 transition-colors"
               >
                 {resendIn > 0 ? `Gửi lại mã (${resendIn}s)` : "Gửi lại mã"}

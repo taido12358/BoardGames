@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import GameHistoryPage from "./GameHistoryPage";
@@ -35,6 +35,31 @@ afterEach(() => {
 });
 
 describe("GameHistoryPage", () => {
+  it("phản hồi cũ không ghi đè kết quả từ khóa mới", async () => {
+    let finishOld!: (response: Response) => void;
+    const oldRequest = new Promise<Response>((resolve) => { finishOld = resolve; });
+    vi.stubGlobal("fetch", vi.fn().mockReturnValueOnce(oldRequest).mockResolvedValue(jsonResponse([record({ players: "Kết quả mới" })])));
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    renderPage();
+    await vi.advanceTimersByTimeAsync(300);
+    await user.type(screen.getByLabelText("Tìm kiếm lịch sử ván đấu"), "mới");
+    await vi.advanceTimersByTimeAsync(300);
+    expect(await screen.findByText("Kết quả mới")).toBeInTheDocument();
+    await act(async () => finishOld(jsonResponse([record({ players: "Kết quả cũ" })])));
+    expect(screen.queryByText("Kết quả cũ")).not.toBeInTheDocument();
+    expect(screen.getByText("Kết quả mới")).toBeInTheDocument();
+  });
+
+  it("lỗi mạng có thể thử lại mà không đổi từ khóa", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValueOnce(new Error("offline")).mockResolvedValue(jsonResponse([record()])));
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    renderPage();
+    await vi.advanceTimersByTimeAsync(300);
+    expect(await screen.findByRole("alert")).toHaveTextContent("Không tải được lịch sử");
+    await user.click(screen.getByRole("button", { name: "Thử lại" }));
+    await vi.advanceTimersByTimeAsync(300);
+    expect(await screen.findByText("An, Bình, Chi, Dung")).toBeInTheDocument();
+  });
   it("tải danh sách lúc mount (query rỗng), hiện đúng dữ liệu", async () => {
     vi.stubGlobal("fetch", vi.fn(() => Promise.resolve(jsonResponse([record()]))));
     renderPage();
@@ -74,7 +99,7 @@ describe("GameHistoryPage", () => {
 
     await vi.advanceTimersByTimeAsync(300);
 
-    expect(fetchMock).toHaveBeenCalledWith("/api/games/search", { credentials: "include" });
+    expect(fetchMock).toHaveBeenCalledWith("/api/games/search", expect.objectContaining({ credentials: "include", signal: expect.any(AbortSignal) }));
   });
 
   it("không có kết quả: hiện thông báo không tìm thấy", async () => {

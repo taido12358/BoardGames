@@ -9,6 +9,29 @@ beforeEach(() => {
 });
 
 describe("DisplayNameEditor", () => {
+  it("tên trống hiện lỗi và giữ form thay vì đóng", async () => {
+    const user = userEvent.setup();
+    render(<DisplayNameEditor displayName="An" email="an@test.local" />);
+    await user.click(screen.getByText(/An/));
+    await user.clear(screen.getByLabelText("Tên hiển thị mới"));
+    await user.click(screen.getByText("Lưu"));
+    expect(screen.getByRole("alert")).toHaveTextContent("không được để trống");
+    expect(screen.getByLabelText("Tên hiển thị mới")).toBeInTheDocument();
+    expect(useAuthStore.getState().updateDisplayName).not.toHaveBeenCalled();
+  });
+
+  it("lỗi mạng giữ bản nháp và cho thử lại", async () => {
+    useAuthStore.setState({ updateDisplayName: vi.fn().mockRejectedValue(new Error("offline")) });
+    const user = userEvent.setup();
+    render(<DisplayNameEditor displayName="An" email="an@test.local" />);
+    await user.click(screen.getByText(/An/));
+    await user.type(screen.getByLabelText("Tên hiển thị mới"), "2");
+    await user.click(screen.getByText("Lưu"));
+    expect(await screen.findByRole("alert")).toHaveTextContent("được giữ lại");
+    expect(screen.getByLabelText("Tên hiển thị mới")).toHaveValue("An2");
+    expect(screen.getByText("Lưu")).toBeEnabled();
+  });
+
   it("hiện tên hiện tại, chưa ở chế độ sửa", () => {
     render(<DisplayNameEditor displayName="An" email="an@test.local" />);
     expect(screen.getByText(/An/)).toBeInTheDocument();

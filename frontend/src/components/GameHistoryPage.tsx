@@ -33,24 +33,29 @@ export default function GameHistoryPage() {
   const [records, setRecords] = useState<GameRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
+    let active = true;
+    const controller = new AbortController();
+    setLoading(true);
+    setError("");
     const handle = setTimeout(() => {
       setLoading(true);
       setError("");
       const qs = query.trim() ? `?q=${encodeURIComponent(query.trim())}` : "";
-      fetch(`/api/games/search${qs}`, { credentials: "include" })
+      fetch(`/api/games/search${qs}`, { credentials: "include", signal: controller.signal })
         .then((res) => {
           if (!res.ok) throw new Error(`HTTP ${res.status}`);
           return res.json();
         })
-        .then((body: GameRecord[]) => setRecords(body))
-        .catch(() => setError("Không tải được lịch sử ván đấu."))
-        .finally(() => setLoading(false));
+        .then((body: GameRecord[]) => { if (active) setRecords(body); })
+        .catch(() => { if (active) setError("Không tải được lịch sử ván đấu."); })
+        .finally(() => { if (active) setLoading(false); });
     }, 300); // debounce — tránh gọi API mỗi phím gõ
 
-    return () => clearTimeout(handle);
-  }, [query]);
+    return () => { active = false; clearTimeout(handle); controller.abort(); };
+  }, [query, attempt]);
 
   return (
     <div className="w-full max-w-5xl mx-auto space-y-5">
@@ -71,14 +76,20 @@ export default function GameHistoryPage() {
         className="w-full rounded-md border border-amber-900/40 bg-[#120c08] px-4 py-2.5 text-amber-100 placeholder-amber-900/40 shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)] outline-none transition-colors focus:border-amber-500/70 focus:shadow-[inset_0_2px_4px_rgba(0,0,0,0.6),0_0_10px_rgba(217,119,6,0.15)] text-sm placeholder:text-amber-900/40"
       />
 
-      {error && <div className="rounded-xl p-2.5 text-center bg-red-900/40 text-red-300 text-sm">{error}</div>}
-      {loading && <p className="text-slate-500 text-sm text-center py-4">Đang tải…</p>}
+      {error && <div className="rounded-xl p-3 text-center bg-red-900/40 text-red-300 text-sm space-y-3">
+        <p role="alert">{error}</p>
+        <button onClick={() => setAttempt((value) => value + 1)} className="rounded-lg bg-red-800 px-4 py-2 font-semibold text-white hover:bg-red-700">Thử lại</button>
+      </div>}
+      {loading && <p role="status" className="text-slate-400 text-sm text-center py-4">Đang tải…</p>}
 
       {!loading && !error && records.length === 0 && (
-        <p className="text-slate-500 text-sm text-center py-10">Không tìm thấy ván đấu nào khớp.</p>
+        <div className="text-slate-400 text-sm text-center py-10 space-y-3">
+          <p>Không tìm thấy ván đấu nào khớp.</p>
+          {query.trim() && <button onClick={() => setQuery("")} className="rounded-lg bg-slate-700 px-4 py-2 text-slate-100 hover:bg-slate-600">Xóa tìm kiếm</button>}
+        </div>
       )}
 
-      {!loading && records.length > 0 && (
+      {!loading && !error && records.length > 0 && (
         <div className="overflow-x-auto rounded-2xl border border-amber-900/30">
           <table className="w-full text-sm">
             <thead className="bg-gradient-to-r from-[#2b2013] to-[#1c150c] text-amber-400/70 text-xs uppercase border-b border-amber-900/30">

@@ -76,3 +76,132 @@ Mobile-first: `max-w-md mx-auto`, flex-col. Thứ tự: Status bar → Board →
 
 - Một hub connection dùng chung cho vòng đời trang chơi, quản lý trong `useGameRoomHub`.
 - Lỗi `invoke` (mất kết nối SignalR) phải đi vào state `error` và hiển thị UI — không chỉ `console.error` (xem lịch sử bug "không thể di chuyển quân" trong [`../history/decisions.md`](../history/decisions.md)).
+
+## Trạng thái tương tác BANG! (2026-10-24)
+- BangBoard hủy lựa chọn lá/mục tiêu/bỏ bài khi đổi phòng, lượt, giai đoạn hoặc người đang đi. Không giữ thao tác từ lượt cũ qua bản cập nhật server.
+- Bài chưa phù hợp giai đoạn được vô hiệu hóa; HP luôn lấy từ state server. Người chơi chỉ chọn lá/phòng thủ/chịu đòn, không chỉnh HP thủ công.
+- Debug Bang mặc định tắt kể cả Development; chỉ bật tường minh bằng Debug:BangPanelEnabled khi cần kiểm thử.
+
+
+## Phục hồi thao tác tại GameDetails (2026-10-24)
+- enginesError hiển thị trạng thái lỗi và nút retry; không tiếp tục skeleton khi request đã thất bại.
+- Tạo phòng, tìm trận, hủy phòng dùng khóa thao tác chung và try/catch/finally để không kẹt loading khi fetch reject. Lỗi đặt ngay trong khu vực chơi.
+
+
+## Tải dữ liệu phòng và lỗi sảnh (2026-10-24)
+- roomsLoading/roomsError tách khỏi error của room/hub. fetchRooms giữ cache khi lỗi, không nuốt lỗi mạng.
+- LobbyLoadStatus dùng chung ở GameLibrary/GameDetails. Empty state chỉ hiện khi không tải và không lỗi; retry giữ đúng scope trò chơi.
+- Chỉ request fetchRooms mới nhất được cập nhật kết quả/trạng thái; response cũ bị bỏ qua khi người dùng chuyển trang nhanh. Realtime vẫn cập nhật qua useLobbyHub, không polling.
+
+
+## RoomRoute: lỗi tải phòng (2026-10-24)
+- Lỗi REST vào phòng dùng local loadError, hiển thị trước nhánh loading/board. Không chỉ set error trong store khi chưa có board để render lỗi.
+- Thử vào lại tăng loadAttempt để chạy lại fetch; reset notFound/loadError theo lần tải. Phân biệt phòng không tồn tại và lỗi phiên/quyền truy cập.
+
+
+## Xác nhận gửi chat (2026-10-24)
+- sendChatMessage trong hub action trả Promise<boolean> (true sau khi invoke hoàn tất, false nếu lỗi/mất kết nối). ChatPanel giữ nội dung cho đến khi server xác nhận.
+- Gửi thất bại giữ draft và lỗi local, không tự gửi lại; khóa yêu cầu trùng và cho người dùng chủ động retry. ChatPanel được key theo roomId để draft không đi sang phòng khác.
+
+
+## Tìm kiếm lịch sử (2026-10-24)
+- GameHistoryPage debounce 300ms; cleanup hủy timer, abort fetch và active guard chặn mọi response cũ khi query đổi/unmount.
+- Retry giữ nguyên query; loading/error/empty/results tách biệt để không trình bày kết quả cũ như dữ liệu query mới.
+
+
+## Hiển thị replay (2026-10-24)
+- Tải replay hủy request và chặn response cũ khi roomId đổi/unmount; retry giữ id. Reset replay trước lượt tải.
+- Diễn biến hiển thị mô tả hành động Bang và tên theo seats; JSON gốc nằm trong details cho tra cứu. Không suy diễn kết quả sát thương từ move vì replay hiện chưa lưu state tái tạo.
+
+
+## Tabs hướng dẫn và truy cập (2026-10-24)
+- GameInstructions dùng roving tabIndex; mũi tên trái/phải và Home/End đồng bộ lựa chọn + focus. Tab tiếp theo đưa vào nội dung panel.
+- useId cấp id riêng mỗi instance; aria-controls/aria-labelledby kết nối tab/panel; panel có viền focus rõ.
+
+
+## Đổi tên tại chỗ (2026-10-24)
+- DisplayNameEditor dùng saveLock để chặn gửi trùng; khóa sửa/hủy trong khi request chưa xong, phục hồi trạng thái bằng finally.
+- Validate rỗng giữ draft/form và thông báo lỗi; lỗi mạng giữ bản nháp cho retry. Không lưu khi Enter còn đang IME composition.
+
+
+## Tìm kiếm thư viện (2026-10-24)
+- Query và metadata chuẩn hóa dấu NFD/combining marks, đ/d, lowercase; mọi từ query đều phải xuất hiện, không ràng buộc thứ tự. Không thay đổi tên hiển thị gốc.
+- Xóa từ khóa giữ filter; xóa bộ lọc trong empty state vẫn khôi phục cả query và filter như trước.
+
+
+## Trạng thái tương tác các board (2026-10-24)
+- Ô Ăn Quan và Đua Xe chỉ gửi nước đi khi connected và đúng lượt; UI khóa đồng bộ, server vẫn validate luật.
+- selectedPit của Ô Ăn Quan hủy khi đổi phòng/lượt/status/kết nối để không tái dùng lựa chọn cũ sau reconnect.
+
+
+## Vây Bắt — vòng đời tương tác SVG (2026-10-24)
+- canInteract = đúng lượt và connected; kiểm tra tại pointer-down/move/up để thao tác kéo dài không vượt qua thay đổi lượt/kết nối.
+- Reset selected/drag/press khi room/status/turn/winner/connection/side đổi; reconnect không phục hồi thao tác đang kéo.
+
+
+## Thông báo trạng thái phòng (2026-10-24)
+- RoomShell dùng role status cho tiến trình kết nối lại/người chơi mất kết nối; role alert cho mất kết nối máy chủ/lỗi thao tác. Thông báo dài break-words, không tràn layout.
+
+
+## Nhật ký BANG! và vị trí cuộn (2026-10-24)
+- GameLogPanel chỉ scrollTo bên trong container khi đang ở cuối; không dùng scrollIntoView gây cuộn trang. Người đọc dòng cũ được giữ vị trí và có nút xem diễn biến mới nhất.
+
+
+## OTP cooldown (2026-10-24)
+- Bộ đếm gửi lại dùng deadline thời gian thực; interval chỉ cập nhật hiển thị, không quyết định thời gian đã trôi qua. Dọn timer sau đăng nhập thành công/đăng xuất. Backend vẫn enforce rate limit.
+
+
+## Đăng xuất (2026-10-24)
+- AuthStore giữ user khi logout chưa được server xác nhận; loggingOut/logoutError tách khỏi lỗi form OTP. HTTP401 được coi là phiên đã hết.
+- Logout thành công dọn dữ liệu phòng/cache/chat của phiên cũ, App trở về form đăng nhập. Không xóa cookie HttpOnly từ JavaScript.
+
+
+## Khôi phục phiên và mạng lỗi (2026-10-24)
+- AuthStore.sessionError tách khỏi form OTP/logout. GET me trả401 mới xác nhận chưa đăng nhập; lỗi mạng/HTTP khác hiển thị màn retry ở App.
+- checking bật lại ở mỗi restoreSession; retry không yêu cầu mã OTP nếu cookie vẫn hợp lệ.
+
+
+## Vòng đời realtime (2026-10-24)
+- ConnectionState thêm connecting, start thành công mới connected. Reconnect chỉ connected sau JoinRoom/SubscribeLobby hoàn tất; đăng ký lỗi đưa disconnected + thông báo.
+- Callback lifecycle kiểm tra active để connection đã unmount không ghi đè trạng thái của instance mới.
+
+
+## Yêu cầu trước realtime ready (2026-10-24)
+- joinRoom chờ readyRef (start promise), không invoke trong Connecting; connection instance thay đổi thì bỏ yêu cầu cũ.
+- lobbyWanted ghi nhớ subscribe trước connection ready, start thực hiện đăng ký này; unsubscribe xóa nhu cầu trước khi gửi server.
+
+
+## Hủy vào phòng đang chờ (2026-10-24)
+- joinRoom nhận AbortSignal tùy chọn để hủy trước khi invoke nếu start còn pending. RoomRoute dùng controller chung cho REST và join, cleanup khi route/attempt đổi.
+- Tín hiệu hủy ngăn gửi mới, không thu hồi invoke đã gửi server.
+
+
+## Danh sách phòng quản trị (2026-10-24)
+- fetchRooms admin chỉ nhận kết quả từ request mới nhất; phản hồi cũ không cập nhật rooms/error/loading. Retry trên trang giữ filter hiện tại; không hiển thị bảng lỗi thời khi tải lỗi.
+
+
+## Điều hướng tiêu điểm (2026-10-24)
+- App cung cấp skip link tới main-content, tất cả nhánh main có tabIndex=-1. ScrollToTop focus main khi pathname đổi, bỏ qua lần mount đầu để giữ autofocus form.
+
+
+## Mời vào phòng chờ (2026-10-24)
+- RoomInvite hiển thị ở RoomRoute cho Waiting, dùng URL origin/pathname hiện tại. Không thay đổi quyền vào phòng; người nhận vẫn đăng nhập và server validate ghế.
+- Clipboard failure không mất liên kết: input readonly cho sao chép thủ công, notice role status.
+
+
+## URL bộ lọc thư viện (2026-10-24)
+- GameLibrary lấy q/filter từ URL; updates dùng replace để không tạo history mỗi phím. Back về URL cũ và reload giữ lựa chọn.
+- Xóa từ khóa chỉ xóa q; Xóa bộ lọc xóa q+filter trong một cập nhật, giữ params khác.
+
+
+## Vị trí đọc chat (2026-10-24)
+- ChatPanel chỉ tự scroll khi ở cuối; đọc tin cũ giữ vị trí, hiện nút xem tin mới. Mở lại hoặc chọn mới nhất phục hồi theo dõi, không tự thay đổi vị trí trang.
+
+
+## Lỗi thao tác phòng (2026-10-24)
+- GameStore đọc error string do controller trả cho create/cancel/quickMatch. Phản hồi không đúng JSON/shape dùng message dự phòng; 401 hướng dẫn đăng nhập lại. Không đưa HTML lỗi lên UI.
+
+
+## Chơi ngay và tải chậm (2026-10-24)
+- GameDetails chỉ xử lý play=1 khi gameReady/panel mount; ref tránh auto-scroll lặp do cập nhật dữ liệu. Panel là region focusable, manual Chơi ngay cũng focus trước scroll.
+

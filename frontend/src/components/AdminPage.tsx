@@ -79,6 +79,7 @@ export default function AdminPage() {
         <button
           type="button"
           onClick={() => setStatusFilter("")}
+          aria-pressed={statusFilter === ""}
           className={`rounded-full px-3.5 py-1.5 text-xs font-medium border transition-colors ${
             statusFilter === "" ? "bg-gradient-to-b from-amber-600 to-amber-800 border-amber-500/60 text-amber-50 shadow-[0_2px_0_0_#451a03]" : "bg-slate-800/70 border-slate-700 text-slate-300 hover:bg-slate-700"
           }`}
@@ -90,6 +91,7 @@ export default function AdminPage() {
             key={key}
             type="button"
             onClick={() => setStatusFilter(key)}
+            aria-pressed={statusFilter === key}
             className={`rounded-full px-3.5 py-1.5 text-xs font-medium border transition-colors ${
               statusFilter === key ? "bg-gradient-to-b from-amber-600 to-amber-800 border-amber-500/60 text-amber-50 shadow-[0_2px_0_0_#451a03]" : "bg-slate-800/70 border-slate-700 text-slate-300 hover:bg-slate-700"
             }`}
@@ -99,14 +101,14 @@ export default function AdminPage() {
         ))}
       </div>
 
-      {error && <div className="rounded-xl p-2.5 text-center bg-red-900/40 text-red-300 text-sm">{error}</div>}
-      {loading && <p className="text-slate-500 text-sm text-center py-4">Đang tải…</p>}
+      {error && <div className="rounded-xl p-3 text-center bg-red-900/40 text-red-300 text-sm space-y-3"><p role="alert">{error}</p><button onClick={() => fetchRooms({ status: statusFilter || undefined })} className="rounded-lg bg-red-800 px-4 py-2 text-white hover:bg-red-700">Tải lại danh sách</button></div>}
+      {loading && <p role="status" className="text-slate-400 text-sm text-center py-4">Đang tải…</p>}
 
       {!loading && rooms.length === 0 && !error && (
         <p className="text-slate-500 text-sm text-center py-10">Không có phòng nào khớp bộ lọc.</p>
       )}
 
-      {!loading && rooms.length > 0 && (
+      {!loading && !error && rooms.length > 0 && (
         <div className="overflow-x-auto rounded-2xl border border-slate-800">
           <table className="w-full text-sm">
             <thead className="bg-slate-800/80 text-slate-400 text-xs uppercase">

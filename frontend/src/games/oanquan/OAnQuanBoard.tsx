@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useGameStore } from "../../platform/gameStore";
 import {
   ConnectionBanner, DisconnectBadge, LeaveRoomButton, RematchButton, RoomErrorBanner, RoomStatusBanner,
@@ -43,19 +43,25 @@ function PitCell({
 export default function OAnQuanBoard({ makeMove, onLeave, onRematch, rematching }: Props) {
   const { room, mySide, error, connectionState } = useGameStore();
   const [selectedPit, setSelectedPit] = useState<number | null>(null);
+  const currentState = room?.state as GameState | undefined;
+  useEffect(() => {
+    setSelectedPit(null);
+  }, [room?.id, currentState?.turn, room?.status, connectionState]);
 
   if (!room) return null;
   const state = room.state as GameState;
   const side = mySide as Side | null;
   const myTurn = room.status === "Playing" && !state.winner && state.turn === side;
+  const canMove = myTurn && connectionState === "connected";
 
   const send = (pitIndex: number, direction: Direction) => {
+    if (!canMove || state.pits[pitIndex] <= 0) return;
     makeMove(room.id, { pitIndex, direction });
     setSelectedPit(null);
   };
 
   function handlePitClick(index: number, owner: Side) {
-    if (!myTurn || owner !== side || isQuanPit(index) || state.pits[index] === 0) return;
+    if (!canMove || owner !== side || isQuanPit(index) || state.pits[index] === 0) return;
     setSelectedPit((cur) => (cur === index ? null : index));
   }
 
@@ -83,10 +89,16 @@ export default function OAnQuanBoard({ makeMove, onLeave, onRematch, rematching 
           </div>
         </div>
         {myTurn && !selectedPit && (
-          <div className="mt-2 text-center text-emerald-400 font-medium text-sm">→ Tới lượt bạn! Chạm 1 ô dân của bạn</div>
+          <div className="mt-2 text-center text-amber-300 font-medium text-sm flex items-center justify-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse shrink-0" />
+            Tới lượt bạn! Chạm 1 ô dân của bạn
+          </div>
         )}
         {!myTurn && room.status === "Playing" && !state.winner && side && (
-          <div className="mt-2 text-center text-slate-400 font-medium text-sm">⏳ Chờ đối thủ đi…</div>
+          <div className="mt-2 text-center text-amber-400/50 font-medium text-sm flex items-center justify-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-600/40 animate-pulse shrink-0" />
+            Chờ đối thủ đi…
+          </div>
         )}
       </div>
 
@@ -103,7 +115,7 @@ export default function OAnQuanBoard({ makeMove, onLeave, onRematch, rematching 
             <div key={i} style={{ gridRow: 1 }}>
               <PitCell
                 index={i} count={state.pits[i]} selected={selectedPit === i}
-                selectable={myTurn && side === "P0" && state.pits[i] > 0}
+                selectable={canMove && side === "P0" && state.pits[i] > 0}
                 onClick={() => handlePitClick(i, "P0")}
               />
             </div>
@@ -115,7 +127,7 @@ export default function OAnQuanBoard({ makeMove, onLeave, onRematch, rematching 
             <div key={i} style={{ gridRow: 2 }}>
               <PitCell
                 index={i} count={state.pits[i]} selected={selectedPit === i}
-                selectable={myTurn && side === "P1" && state.pits[i] > 0}
+                selectable={canMove && side === "P1" && state.pits[i] > 0}
                 onClick={() => handlePitClick(i, "P1")}
               />
             </div>
@@ -124,8 +136,8 @@ export default function OAnQuanBoard({ makeMove, onLeave, onRematch, rematching 
       </div>
 
       {/* Chọn chiều rải */}
-      {selectedPit !== null && side && (
-        <div className="flex items-center justify-center gap-3 bg-amber-900/20 border border-amber-700/40 rounded-xl p-3">
+      {selectedPit !== null && side && canMove && (
+        <div className="flex flex-wrap items-center justify-center gap-3 bg-amber-900/20 border border-amber-700/40 rounded-xl p-3">
           <span className="text-amber-300 text-sm font-medium">🎯 Rải quân sang:</span>
           <button
             onClick={() => send(selectedPit, directionFor(side, "left"))}
@@ -150,12 +162,16 @@ export default function OAnQuanBoard({ makeMove, onLeave, onRematch, rematching 
 
       {/* Thông báo kết quả */}
       {state.winner && (
-        <div className={`rounded-2xl p-4 text-center font-bold text-base border ${
-          state.winner === "DRAW" ? "bg-slate-700/60 text-slate-200 border-slate-500" : "bg-emerald-900/50 text-emerald-200 border-emerald-700"
-        }`}>
-          {state.winner === "DRAW"
-            ? `🤝 HOÀ — ${state.scores[0]} – ${state.scores[1]}`
-            : `🏆 ${state.winner === "P0" ? "PHÍA TRÊN" : "PHÍA DƯỚI"} THẮNG — ${state.scores[0]} – ${state.scores[1]}`}
+        <div className={`rounded-2xl p-1 ${state.winner === "DRAW" ? "border border-slate-600/40 bg-slate-800/20" : "border border-amber-600/30 bg-amber-950/20 shadow-[0_0_30px_rgba(251,191,36,0.15)]"}`}>
+          <div className={`rounded-xl p-4 text-center ${state.winner === "DRAW" ? "bg-slate-800/60 border border-slate-600/30" : "bg-gradient-to-b from-[#2b2013] to-[#1c150c] border border-amber-700/30"}`}>
+            <div className="text-3xl mb-1">{state.winner === "DRAW" ? "🤝" : "🏆"}</div>
+            <div className={`font-bold text-base [text-shadow:0_1px_0_rgba(255,255,255,0.1),0_2px_4px_rgba(0,0,0,0.8)] ${state.winner === "DRAW" ? "text-slate-200" : "text-amber-200"}`}>
+              {state.winner === "DRAW"
+                ? `HOÀ — ${state.scores[0]} – ${state.scores[1]}`
+                : `${state.winner === "P0" ? "PHÍA TRÊN" : "PHÍA DƯỚI"} THẮNG`}
+            </div>
+            {state.winner !== "DRAW" && <div className="text-amber-400/60 text-sm mt-0.5">{state.scores[0]} – {state.scores[1]}</div>}
+          </div>
         </div>
       )}
 

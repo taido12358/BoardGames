@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import GameDetails from "./GameDetails";
@@ -37,12 +37,14 @@ function artworkClassFor(title: string): string {
   return el.parentElement!.className;
 }
 
-function renderDetails(gameKey: string, room?: RoomSummaryDto) {
+function renderDetails(gameKey: string, room?: RoomSummaryDto, search = "", loading = false) {
   useGameStore.setState({
     engines: [engineFor("vaybat"), engineFor("bang"), engineFor("oanquan"), engineFor("zodiacrace")],
-    enginesLoading: false,
+    enginesLoading: loading,
     enginesError: "",
     rooms: room ? [room] : [],
+    roomsLoading: false,
+    roomsError: "",
     playerName: "Người chơi Test",
     error: "",
     fetchEngines: vi.fn(),
@@ -54,7 +56,7 @@ function renderDetails(gameKey: string, room?: RoomSummaryDto) {
   });
 
   return render(
-    <MemoryRouter initialEntries={[`/games/${gameKey}`]}>
+    <MemoryRouter initialEntries={[`/games/${gameKey}${search}`]}>
       <GameRoomHubProvider value={hubActions}>
         <Routes>
           <Route path="/games/:gameKey" element={<GameDetails />} />
@@ -112,6 +114,32 @@ describe("GameDetails — chuyển tab hướng dẫn (GameInstructions, chưa t
 });
 
 describe("GameDetails — hiển thị cơ bản", () => {
+  it("Chơi ngay đợi tải xong mới cuộn tới phần phòng", () => {
+    const scroll = vi.spyOn(Element.prototype, "scrollIntoView").mockImplementation(() => {});
+    renderDetails("bang", undefined, "?play=1", true);
+    expect(scroll).not.toHaveBeenCalled();
+    act(() => useGameStore.setState({ enginesLoading: false }));
+    expect(scroll).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole("region", { name: "Tạo và vào phòng" })).toHaveFocus();
+    act(() => useGameStore.setState({ rooms: [] }));
+    expect(scroll).toHaveBeenCalledTimes(1);
+    scroll.mockRestore();
+  });
+  it("tải phòng thất bại không báo nhầm sảnh trống và cho tải lại", async () => {
+    renderDetails("bang");
+    act(() => useGameStore.setState({ roomsError: "Không thể tải danh sách phòng." }));
+    expect(screen.getByRole("alert")).toHaveTextContent("Không thể tải danh sách phòng.");
+    expect(screen.queryByText(/Chưa có phòng nào đang chờ/)).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Tải lại phòng" }));
+    expect(useGameStore.getState().fetchRooms).toHaveBeenCalledWith("bang");
+  });
+
+  it("đang tải phòng hiện trạng thái tải thay vì thông báo trống", () => {
+    renderDetails("bang");
+    act(() => useGameStore.setState({ roomsLoading: true }));
+    expect(screen.getByRole("status")).toHaveTextContent("Đang tải danh sách phòng");
+    expect(screen.queryByText(/Chưa có phòng nào đang chờ/)).not.toBeInTheDocument();
+  });
   it("hiện đúng tên/mô tả/số người chơi từ metadata", () => {
     renderDetails("zodiacrace");
     expect(screen.getByText(zodiacRaceMetadata.title)).toBeInTheDocument();
@@ -136,6 +164,37 @@ describe("GameDetails — hiển thị cơ bản", () => {
 });
 
 describe("GameDetails — tạo phòng / tìm trận nhanh", () => {
+  it("lỗi tải danh mục hiện Thử lại thay vì khung chờ vô hạn", async () => {
+    renderDetails("bang");
+    act(() => useGameStore.setState({ engines: [], enginesError: "Không thể tải danh sách trò chơi." }));
+    expect(screen.getByRole("alert")).toHaveTextContent("Không thể tải danh sách trò chơi.");
+    expect(screen.queryByRole("status", { name: "Đang tải trò chơi" })).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Thử lại" }));
+    expect(useGameStore.getState().fetchEngines).toHaveBeenCalled();
+  });
+
+  it.each([
+    ["createRoom", "➕ TẠO PHÒNG"],
+    ["quickMatch", "⚡ TÌM TRẬN NHANH"],
+  ] as const)("%s gặp lỗi mạng sẽ mở lại thao tác và báo lỗi", async (action, label) => {
+    renderDetails("bang");
+    const failed = vi.fn().mockRejectedValue(new Error("network down"));
+    useGameStore.setState({ [action]: failed });
+    await userEvent.click(screen.getByRole("button", { name: label }));
+    await waitFor(() => expect(screen.getByRole("button", { name: label })).toBeEnabled());
+    expect(useGameStore.getState().setError).toHaveBeenCalledWith(expect.stringContaining("Không kết nối được máy chủ"));
+  });
+
+  it("đang tạo phòng thì khóa tìm trận cho đến khi yêu cầu kết thúc", async () => {
+    renderDetails("bang");
+    let finish!: (value: null) => void;
+    useGameStore.setState({ createRoom: vi.fn(() => new Promise<null>((resolve) => { finish = resolve; })) });
+    await userEvent.click(screen.getByRole("button", { name: "➕ TẠO PHÒNG" }));
+    expect(screen.getByRole("button", { name: "⚡ TÌM TRẬN NHANH" })).toBeDisabled();
+    await act(async () => finish(null));
+    expect(screen.getByRole("button", { name: "⚡ TÌM TRẬN NHANH" })).toBeEnabled();
+  });
+
   it("bấm TẠO PHÒNG gọi createRoom với đúng gameKey", async () => {
     const user = userEvent.setup();
     renderDetails("zodiacrace");

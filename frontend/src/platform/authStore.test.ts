@@ -58,16 +58,46 @@ describe("restoreSession", () => {
     expect(useAuthStore.getState().checking).toBe(false);
   });
 
-  it("lỗi mạng → coi như chưa đăng nhập, không throw", async () => {
+  it("lỗi mạng → báo chưa kiểm tra được phiên, không throw", async () => {
     vi.stubGlobal("fetch", vi.fn(() => Promise.reject(new Error("network down"))));
 
     await expect(useAuthStore.getState().restoreSession()).resolves.toBeUndefined();
     expect(useAuthStore.getState().checking).toBe(false);
     expect(useAuthStore.getState().user).toBeNull();
+    expect(useAuthStore.getState().sessionError).toContain("Chưa kiểm tra được phiên");
+  });
+
+  it("server lỗi rồi thử lại khôi phục phiên mà không cần OTP", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValueOnce(jsonResponse({}, false, 503)).mockResolvedValueOnce(jsonResponse(user)));
+    await useAuthStore.getState().restoreSession();
+    expect(useAuthStore.getState().sessionError).not.toBe("");
+    await useAuthStore.getState().restoreSession();
+    expect(useAuthStore.getState().user).toEqual(user);
+    expect(useAuthStore.getState().sessionError).toBe("");
+    expect(useAuthStore.getState().checking).toBe(false);
   });
 });
 
 describe("requestOtp", () => {
+  it("timer bị trì hoãn vẫn tính thời gian chờ thực tế", async () => {
+    vi.useFakeTimers();
+    stubFetch({ requestOtp: jsonResponse({}) });
+    await useAuthStore.getState().requestOtp("a@b.com");
+    vi.setSystemTime(Date.now() + 65_000);
+    vi.advanceTimersByTime(1000);
+    expect(useAuthStore.getState().resendIn).toBe(0);
+  });
+
+  it("đăng nhập thành công dừng bộ đếm gửi lại", async () => {
+    vi.useFakeTimers();
+    stubFetch({ requestOtp: jsonResponse({}), verifyOtp: jsonResponse(user) });
+    await useAuthStore.getState().requestOtp("a@b.com");
+    await useAuthStore.getState().verifyOtp("123456");
+    expect(useAuthStore.getState().resendIn).toBe(0);
+    vi.advanceTimersByTime(3000);
+    expect(useAuthStore.getState().resendIn).toBe(0);
+  });
+
   it("thành công → chuyển sang bước 'code', lưu pendingEmail, bắt đầu đếm ngược 60s", async () => {
     vi.useFakeTimers();
     stubFetch({ requestOtp: jsonResponse({ expiresInSeconds: 300 }) });
@@ -145,15 +175,36 @@ describe("verifyOtp", () => {
 });
 
 describe("logout", () => {
-  it("xoá user/pendingEmail, quay về bước 'email' kể cả khi request logout lỗi", async () => {
+  it("lỗi mạng giữ phiên và hiện lỗi đăng xuất riêng", async () => {
     useAuthStore.setState({ user, step: "done", pendingEmail: "a@b.com" });
     vi.stubGlobal("fetch", vi.fn(() => Promise.reject(new Error("network"))));
 
     await useAuthStore.getState().logout();
 
+    expect(useAuthStore.getState().user).toEqual(user);
+    expect(useAuthStore.getState().step).toBe("done");
+    expect(useAuthStore.getState().logoutError).toContain("Không kết nối được");
+    expect(useAuthStore.getState().loggingOut).toBe(false);
+  });
+
+  it("thành công xóa người dùng và dữ liệu phòng của phiên cũ", async () => {
+    useAuthStore.setState({ user, step: "done", pendingEmail: "a@b.com" });
+    stubFetch({ logout: jsonResponse({}) });
+    await useAuthStore.getState().logout();
     expect(useAuthStore.getState().user).toBeNull();
     expect(useAuthStore.getState().step).toBe("email");
     expect(useAuthStore.getState().pendingEmail).toBe("");
+    expect(useGameStore.getState().rooms).toEqual([]);
+    expect(useGameStore.getState().room).toBeNull();
+    expect(useAuthStore.getState().logoutError).toBe("");
+  });
+
+  it("máy chủ trả 500 không giả vờ đã đăng xuất", async () => {
+    useAuthStore.setState({ user, step: "done" });
+    stubFetch({ logout: jsonResponse({}, false, 500) });
+    await useAuthStore.getState().logout();
+    expect(useAuthStore.getState().user).toEqual(user);
+    expect(useAuthStore.getState().logoutError).toContain("Chưa đăng xuất được");
   });
 });
 

@@ -11,11 +11,14 @@ type AuthStep = "email" | "code" | "done";
 
 interface AuthStore {
   user: AuthUser | null;
-  /** null = đang khôi phục phiên từ cookie (chưa biết đã đăng nhập hay chưa) */
+  /** true = đang khôi phục phiên từ cookie */
   checking: boolean;
+  sessionError: string;
   step: AuthStep;
   pendingEmail: string;
   loading: boolean;
+  loggingOut: boolean;
+  logoutError: string;
   error: string;
   /** Đếm ngược (giây) trước khi được gửi lại mã */
   resendIn: number;
@@ -55,27 +58,36 @@ function syncPlayerName(user: AuthUser) {
 
 let resendTimer: ReturnType<typeof setInterval> | null = null;
 
-function startResendCountdown(set: (partial: Partial<AuthStore>) => void, seconds: number) {
+function stopResendCountdown() {
   if (resendTimer) clearInterval(resendTimer);
-  let left = seconds;
-  set({ resendIn: left });
+  resendTimer = null;
+}
+
+function startResendCountdown(set: (partial: Partial<AuthStore>) => void, seconds: number) {
+  stopResendCountdown();
+  const deadline = Date.now() + seconds * 1000;
+  set({ resendIn: seconds });
   resendTimer = setInterval(() => {
-    left -= 1;
-    set({ resendIn: Math.max(0, left) });
-    if (left <= 0 && resendTimer) clearInterval(resendTimer);
+    const left = Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
+    set({ resendIn: left });
+    if (left === 0) stopResendCountdown();
   }, 1000);
 }
 
 export const useAuthStore = create<AuthStore>((set, get) => ({
   user: null,
   checking: true,
+  sessionError: "",
   step: "email",
   pendingEmail: "",
   loading: false,
+  loggingOut: false,
+  logoutError: "",
   error: "",
   resendIn: 0,
 
   restoreSession: async () => {
+    set({ checking: true, sessionError: "" });
     try {
       const res = await api("me");
       if (res.ok) {
@@ -84,10 +96,11 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
         set({ user, step: "done", checking: false });
         return;
       }
+      if (res.status !== 401) throw new Error(`HTTP ${res.status}`);
+      set({ user: null, step: "email", checking: false });
     } catch {
-      /* mạng lỗi → coi như chưa đăng nhập, hiện form */
+      set({ checking: false, sessionError: "Chưa kiểm tra được phiên đăng nhập. Kiểm tra kết nối rồi thử lại." });
     }
-    set({ checking: false });
   },
 
   requestOtp: async (email: string) => {
@@ -121,19 +134,30 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       }
       const user = (await res.json()) as AuthUser;
       syncPlayerName(user);
-      set({ user, step: "done", loading: false, error: "" });
+      stopResendCountdown();
+      set({ user, step: "done", loading: false, error: "", resendIn: 0 });
     } catch {
       set({ error: "Không kết nối được máy chủ. Kiểm tra mạng rồi thử lại.", loading: false });
     }
   },
 
   logout: async () => {
+    if (get().loggingOut) return;
+    set({ loggingOut: true, logoutError: "" });
     try {
-      await api("logout", { method: "POST" });
+      const res = await api("logout", { method: "POST" });
+      if (!res.ok && res.status !== 401) {
+        set({ logoutError: "Chưa đăng xuất được. Vui lòng thử lại." });
+        return;
+      }
+      stopResendCountdown();
+      useGameStore.setState({ room: null, mySide: null, selected: null, roomsById: {}, rooms: [], chatMessages: [], rematchInvite: null, error: "" });
+      set({ user: null, step: "email", pendingEmail: "", error: "", resendIn: 0 });
     } catch {
-      /* cookie phía server sẽ hết hạn; client vẫn thoát phiên */
+      set({ logoutError: "Không kết nối được máy chủ để đăng xuất. Vui lòng thử lại." });
+    } finally {
+      set({ loggingOut: false });
     }
-    set({ user: null, step: "email", pendingEmail: "", error: "" });
   },
 
   backToEmail: () => set({ step: "email", error: "" }),

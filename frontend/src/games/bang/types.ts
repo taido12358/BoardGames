@@ -51,6 +51,8 @@ export interface BangPublicPlayer {
 }
 
 export interface BangYourView {
+  /** Server mới cung cấp; optional để tương thích khi client/server đang cập nhật lệch phiên bản. */
+  canFire?: boolean;
   id: string;
   role: RoleKind;
   roleDisplay: string;

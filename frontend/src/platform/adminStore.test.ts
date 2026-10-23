@@ -43,6 +43,18 @@ describe("checkAdmin", () => {
 });
 
 describe("fetchRooms", () => {
+  it("phản hồi bộ lọc cũ không ghi đè kết quả mới", async () => {
+    let finishOld!: (response: Response) => void;
+    const oldRequest = new Promise<Response>((resolve) => { finishOld = resolve; });
+    vi.stubGlobal("fetch", vi.fn().mockReturnValueOnce(oldRequest).mockResolvedValueOnce(jsonResponse([])));
+    const first = useAdminStore.getState().fetchRooms({ status: "Waiting" });
+    await useAdminStore.getState().fetchRooms({ status: "Playing" });
+    finishOld(jsonResponse({}, false, 500));
+    await first;
+    expect(useAdminStore.getState().error).toBe("");
+    expect(useAdminStore.getState().loading).toBe(false);
+    expect(useAdminStore.getState().rooms).toEqual([]);
+  });
   it("thành công → set rooms, tắt loading", async () => {
     const rooms = [{ id: "r1", gameKey: "vaybat", status: "Waiting", winner: null, seatCount: 2, seats: [null, null], ownerDisplayName: "An", createdAt: "", updatedAt: "" }];
     vi.stubGlobal("fetch", vi.fn(() => Promise.resolve(jsonResponse(rooms))));

@@ -3,6 +3,19 @@ import type { ChatMessageDto, EngineInfo, RematchInviteDto, RoomDto, RoomSummary
 
 /** Giới hạn số tin nhắn giữ trong bộ nhớ — chat không lưu DB, chỉ cần đủ để cuộn lại gần đây. */
 const MAX_CHAT_MESSAGES = 200;
+let roomsRequestId = 0;
+
+async function roomActionError(response: Response, fallback: string): Promise<string> {
+  try {
+    const body: unknown = await response.json();
+    if (body && typeof body === "object" && "error" in body && typeof body.error === "string" && body.error.trim())
+      return body.error;
+  } catch {
+    // Proxy hoặc server có thể trả HTML thay JSON khi lỗi; vẫn cần thông báo dễ hiểu.
+  }
+  if (response.status === 401) return "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.";
+  return fallback;
+}
 
 function loadPlayerName(): string {
   const saved = localStorage.getItem("playerName");
@@ -16,7 +29,7 @@ function sortRooms(byId: Record<string, RoomSummaryDto>): RoomSummaryDto[] {
   return Object.values(byId).sort((a, b) => (a.createdAt < b.createdAt ? 1 : a.createdAt > b.createdAt ? -1 : 0));
 }
 
-export type ConnectionState = "connected" | "reconnecting" | "disconnected";
+export type ConnectionState = "connecting" | "connected" | "reconnecting" | "disconnected";
 
 interface GameStore {
   playerName: string;
@@ -28,6 +41,8 @@ interface GameStore {
   roomsById: Record<string, RoomSummaryDto>;
   /** Mảng dẫn xuất từ roomsById, sắp theo createdAt giảm dần — tiện cho component filter/render như trước. */
   rooms: RoomSummaryDto[];
+  roomsLoading: boolean;
+  roomsError: string;
   room: RoomDto | null;
   // "RED"/"WHITE" (VayBat) hoặc "P0".."P7" (Bang — ghế generic); null = khán giả.
   mySide: string | null;
@@ -68,6 +83,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
   enginesError: "",
   roomsById: {},
   rooms: [],
+  roomsLoading: false,
+  roomsError: "",
   room: null,
   mySide: null,
   selected: null,
@@ -102,16 +119,20 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   fetchRooms: async (gameKey?: string) => {
+    const requestId = ++roomsRequestId;
+    set({ roomsLoading: true, roomsError: "" });
     try {
       const url = gameKey ? `/api/games?gameKey=${gameKey}` : "/api/games";
       const res = await fetch(url);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const list = (await res.json()) as RoomSummaryDto[];
+      if (requestId !== roomsRequestId) return;
       const byId = { ...get().roomsById };
       for (const r of list) byId[r.id] = r;
-      set({ roomsById: byId, rooms: sortRooms(byId) });
+      set({ roomsById: byId, rooms: sortRooms(byId), roomsLoading: false });
     } catch {
-      // Danh sách phòng lần đầu chỉ là "best effort" — cập nhật realtime tiếp theo qua useLobbyHub.
+      if (requestId !== roomsRequestId) return;
+      set({ roomsLoading: false, roomsError: "Không thể tải danh sách phòng. Dữ liệu đang hiển thị có thể chưa cập nhật." });
     }
   },
 
@@ -141,7 +162,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       body: JSON.stringify({ gameKey, options }),
     });
     if (!res.ok) {
-      set({ error: "Không tạo được phòng" });
+      set({ error: await roomActionError(res, "Không tạo được phòng") });
       return null;
     }
     return (await res.json()) as RoomDto;
@@ -150,7 +171,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   cancelRoom: async (roomId) => {
     const res = await fetch(`/api/games/${roomId}/cancel`, { method: "POST" });
     if (!res.ok) {
-      set({ error: "Không huỷ được phòng." });
+      set({ error: await roomActionError(res, "Không huỷ được phòng.") });
       return false;
     }
     return true;
@@ -163,7 +184,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       body: JSON.stringify({ gameKey }),
     });
     if (!res.ok) {
-      set({ error: "Không tìm được trận phù hợp." });
+      set({ error: await roomActionError(res, "Không tìm được trận phù hợp.") });
       return null;
     }
     return (await res.json()) as RoomDto;

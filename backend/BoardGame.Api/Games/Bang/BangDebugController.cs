@@ -12,12 +12,8 @@ namespace BoardGame.Api.Games.Bang;
 
 /// <summary>
 /// Debug panel cho BANG! — theo đúng van-de.md §51 ("For development only... Never expose it
-/// in production"). CHỈ bật khi Development THẬT (<see cref="IHostEnvironment.IsDevelopment"/>)
-/// HOẶC cờ cấu hình rõ ràng <c>Debug:BangPanelEnabled</c> — không chỉ dựa vào IsDevelopment() vì
-/// stack Docker Compose local của dự án này chạy ASPNETCORE_ENVIRONMENT=Production (xem
-/// docker-compose.yml), cùng lý do <see cref="Services.SmtpOtpSender"/> phải dùng thêm cờ
-/// <c>Auth:DevLogOtp</c> thay vì chỉ IsDevelopment(). Mặc định cờ này TẮT (an toàn) — chỉ
-/// docker-compose.yml của dự án mới bật sẵn cho máy dev.
+/// in production"). Chỉ bật tường minh bằng <c>Debug:BangPanelEnabled</c> khi kiểm thử.
+/// Mặc định tắt cả ở Development để các nút ép máu/bài không xuất hiện trong luồng chơi.
 ///
 /// Cố tình BỎ QUA validate lượt/lá bài bình thường (mục đích của debug panel là ép trạng thái
 /// tuỳ ý để test) — tái dùng logic thiệt hại/loại/thắng-thua thật qua BangRules.DebugXxx thay vì
@@ -31,7 +27,6 @@ namespace BoardGame.Api.Games.Bang;
 public class BangDebugController : ControllerBase
 {
     private readonly AppDbContext _db;
-    private readonly IHostEnvironment _env;
     private readonly IConfiguration _config;
     private readonly IHubContext<GameHub> _hub;
     private readonly OpenSearchService _search;
@@ -39,12 +34,11 @@ public class BangDebugController : ControllerBase
     private readonly GameEngineRegistry _engines;
     private readonly ILogger<BangDebugController> _log;
 
-    public BangDebugController(AppDbContext db, IHostEnvironment env, IConfiguration config,
+    public BangDebugController(AppDbContext db, IConfiguration config,
         IHubContext<GameHub> hub, OpenSearchService search, MinioStorageService storage,
         GameEngineRegistry engines, ILogger<BangDebugController> log)
     {
         _db = db;
-        _env = env;
         _config = config;
         _hub = hub;
         _search = search;
@@ -53,7 +47,7 @@ public class BangDebugController : ControllerBase
         _log = log;
     }
 
-    private bool IsEnabled => _env.IsDevelopment() || _config.GetValue<bool>("Debug:BangPanelEnabled");
+    private bool IsEnabled => _config.GetValue<bool>("Debug:BangPanelEnabled");
 
     /// <summary>Frontend gọi lúc mount để quyết định có hiện nút "Debug" hay không — không tiết lộ gì nhạy cảm, chỉ true/false.</summary>
     [HttpGet("enabled")]

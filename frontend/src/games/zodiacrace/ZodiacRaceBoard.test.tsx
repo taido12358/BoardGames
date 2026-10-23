@@ -53,6 +53,16 @@ describe("ZodiacRaceBoard — phòng chờ", () => {
 });
 
 describe("ZodiacRaceBoard — đang đua", () => {
+  it("mất kết nối không thể đổ xúc xắc", async () => {
+    setRoom(makeState({ turn: 0 }), "P0");
+    useGameStore.setState({ connectionState: "disconnected" });
+    const makeMove = vi.fn();
+    render(<ZodiacRaceBoard makeMove={makeMove} onLeave={vi.fn()} onRematch={vi.fn()} rematching={false} />);
+    const roll = screen.getByRole("button", { name: /ĐỔ XÚC XẮC/ });
+    expect(roll).toBeDisabled();
+    await userEvent.click(roll);
+    expect(makeMove).not.toHaveBeenCalled();
+  });
   it("tới lượt mình thì bấm ĐỔ XÚC XẮC gửi đúng move ROLL", async () => {
     const user = userEvent.setup();
     setRoom(makeState({ turn: 0 }), "P0");
