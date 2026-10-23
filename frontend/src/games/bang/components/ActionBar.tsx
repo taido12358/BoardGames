@@ -11,6 +11,7 @@ interface Props {
   onRespondPass: () => void;
   onCancelTarget: () => void;
   hasBarrel?: boolean;
+  hasDefenseCard?: boolean;
   responseKind?: PendingResponseKind;
   isCalamity?: boolean;
   waitingFor?: string;
@@ -27,6 +28,7 @@ const btnBase = "shrink-0 rounded-lg px-3 py-1.5 text-sm font-semibold transitio
 export default function ActionBar({
   myTurn, awaitingResponse, selectingTarget, canEndTurn, onEndTurn, onRespondPass, onCancelTarget,
   hasBarrel = false,
+  hasDefenseCard = true,
   targetCardName, targetCount,
   responseKind, isCalamity = false, waitingFor,
   discarding, discardOverflow = 0, discardSelectedCount = 0, onConfirmDiscard, onCancelDiscard,
@@ -76,7 +78,8 @@ export default function ActionBar({
     return (
       <div role="status" className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-red-950/50 border border-red-700/50 px-3 py-2.5 shadow-md">
         <span className="text-red-300 text-sm font-medium">
-          {`⚠️ Chọn ${defense} để đỡ. ${hasBarrel ? "Thùng rượu có thể giúp né đòn." : "Bỏ qua sẽ tự mất 1 máu."}`}
+          {hasDefenseCard ? `⚠️ Chọn ${defense} để đỡ. ` : `Bạn không có ${defense} để đỡ. `}
+          {hasBarrel ? "Bạn có thể thử Thùng rượu; thất bại sẽ mất 1 máu." : "Chọn Chịu đòn để tiếp tục (mất 1 máu)."}
         </span>
         <button onClick={onRespondPass} className={`${btnBase} ${hasBarrel ? "bg-amber-900/60 hover:bg-amber-800 border-amber-700/60 text-amber-200 hover:text-amber-100" : "bg-[#140e0b]/90 hover:bg-red-900/60 border-red-800/60 text-red-400 hover:text-red-300"}`}>
           {hasBarrel ? "🛢 Thử Thùng rượu (trượt: −1 máu)" : "Chịu đòn (−1 máu)"}
@@ -102,7 +105,7 @@ export default function ActionBar({
   }
 
   return (
-    <div className="rounded-xl bg-gradient-to-r from-amber-950/30 to-slate-900/40 border border-amber-900/30 px-3 py-2.5 flex items-center justify-center gap-2 text-amber-400/60 text-sm">
+    <div className="rounded-xl bg-gradient-to-r from-amber-950/30 to-[#1a1208]/40 border border-amber-900/30 px-3 py-2.5 flex items-center justify-center gap-2 text-[#bba182]/60 text-sm">
       <span className="w-1.5 h-1.5 rounded-full bg-amber-500/60 animate-pulse shrink-0" />
       {waitingFor ? `Đang chờ ${waitingFor}${responseKind ? " phản hồi" : " chơi bài"}…` : "Chờ đối thủ…"}
     </div>
