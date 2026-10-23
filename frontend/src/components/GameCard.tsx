@@ -34,8 +34,10 @@ export default function GameCard({ metadata: m, waitingRooms, onViewDetails, onP
       aria-label={m.title}
       className={`group relative flex flex-col rounded-2xl border border-[#3a2c18]/80 bg-gradient-to-b from-[#1e1810] to-[#141009]
         shadow-lg transition-all duration-300 ease-out overflow-hidden
-        hover:-translate-y-1.5 hover:ring-2 hover:shadow-2xl ${ACCENT_RING[m.accent]}`}
+        hover:-translate-y-2 hover:rotate-1 hover:scale-[1.01] hover:ring-2 hover:shadow-2xl ${ACCENT_RING[m.accent]}`}
     >
+      {/* Weathered edge highlight — ánh sáng đèn dầu hắt vào mép */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-amber-400/30 to-transparent z-10" />
       {/* Artwork — chiếm ~50% chiều cao thẻ */}
       <button
         type="button"

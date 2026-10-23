@@ -92,7 +92,7 @@ export default function GameLibrary() {
     <div className="w-full max-w-5xl mx-auto space-y-5">
       {/* Header */}
       <div className="text-center space-y-2 pt-2">
-        <h1 className="text-2xl sm:text-3xl font-black tracking-wide text-amber-100">🎲 THƯ VIỆN TRÒ CHƠI</h1>
+        <h1 className="text-2xl sm:text-3xl font-black tracking-wide text-amber-100 [text-shadow:0_1px_0_rgba(255,255,255,0.15),0_2px_4px_rgba(0,0,0,0.9)]">🎲 THƯ VIỆN TRÒ CHƠI</h1>
         <p className="text-sm text-slate-400">Chọn một trò chơi và bắt đầu cuộc phiêu lưu.</p>
         <div className="flex items-center justify-center gap-2 opacity-30 text-base">
           <span>─────</span><span>✦</span><span>─────</span>
@@ -107,7 +107,7 @@ export default function GameLibrary() {
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Tìm kiếm trò chơi..."
           aria-label="Tìm kiếm trò chơi"
-          className="w-full rounded-xl bg-slate-800 border border-slate-700 px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-amber-500 placeholder:text-slate-500"
+          className="w-full rounded-md border border-amber-900/40 bg-[#120c08] px-4 py-2.5 text-amber-100 placeholder-amber-900/40 shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)] outline-none transition-colors focus:border-amber-500/70 focus:shadow-[inset_0_2px_4px_rgba(0,0,0,0.6),0_0_10px_rgba(217,119,6,0.15)] text-sm placeholder:text-amber-900/40"
         />
         <div className="flex flex-wrap gap-2">
           {filterChips.map((chip) => (

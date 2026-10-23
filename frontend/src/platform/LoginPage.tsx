@@ -58,7 +58,7 @@ export default function LoginPage() {
                 autoComplete="email"
                 required
                 autoFocus
-                className="w-full mt-1.5 rounded-xl bg-slate-700 border border-slate-600 px-3 py-2.5 outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-sm transition-colors"
+                className="w-full mt-1.5 rounded-md border border-amber-900/60 bg-[#120c08] px-4 py-2.5 text-amber-100 placeholder-amber-900/50 shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)] outline-none transition-colors focus:border-amber-500/80 focus:bg-[#170f0a] focus:shadow-[inset_0_2px_4px_rgba(0,0,0,0.8),0_0_12px_rgba(217,119,6,0.2)] text-sm"
                 placeholder="ban@gmail.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -86,7 +86,7 @@ export default function LoginPage() {
                 maxLength={6}
                 required
                 autoFocus
-                className="w-full mt-1.5 rounded-xl bg-slate-700 border border-slate-600 px-3 py-2.5 outline-none focus:ring-2 focus:ring-amber-500 text-center text-2xl tracking-[0.5em] font-mono transition-colors"
+                className="w-full mt-1.5 rounded-md border border-amber-900/60 bg-[#120c08] px-4 py-2.5 text-amber-100 placeholder-amber-900/40 shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)] outline-none transition-colors focus:border-amber-500/80 focus:bg-[#170f0a] focus:shadow-[inset_0_2px_4px_rgba(0,0,0,0.8),0_0_12px_rgba(217,119,6,0.2)] text-center text-2xl tracking-[0.5em] font-mono"
                 placeholder="······"
                 value={code}
                 onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
