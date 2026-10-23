@@ -56,8 +56,8 @@ export default function GameCard({ metadata: m, waitingRooms, onViewDetails, onP
         </span>
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/20" />
         {waitingRooms !== undefined && waitingRooms > 0 && (
-          <span className="absolute top-2 right-2 rounded-full bg-emerald-900/80 border border-emerald-600/50 px-2.5 py-1 text-[11px] font-semibold text-emerald-300">
-            🟢 {waitingRooms} phòng đang chờ
+          <span className="absolute top-2 right-2 rounded-full bg-amber-900/80 border border-amber-600/50 px-2.5 py-1 text-[11px] font-semibold text-amber-200 shadow-[0_0_8px_rgba(245,158,11,0.3)]">
+            🕯 {waitingRooms} phòng đang chờ
           </span>
         )}
       </button>
@@ -100,7 +100,7 @@ export default function GameCard({ metadata: m, waitingRooms, onViewDetails, onP
             onClick={onViewDetails}
             className="w-full rounded-xl border border-amber-950/80 bg-[#140e0b]/90 hover:border-amber-700/60 hover:bg-[#1a120d] px-3 py-2.5 text-xs font-semibold text-amber-400/70 hover:text-amber-300 transition-colors shadow-[inset_0_1px_3px_rgba(0,0,0,0.6)]"
           >
-            XEM HƯỚNG DẪN
+            📖 XEM HƯỚNG DẪN
           </button>
           <button
             type="button"

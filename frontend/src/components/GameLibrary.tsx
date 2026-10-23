@@ -130,14 +130,19 @@ export default function GameLibrary() {
 
       {/* Tìm kiếm & bộ lọc */}
       <div className="space-y-3">
-        <input
-          type="search"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Tìm kiếm trò chơi..."
-          aria-label="Tìm kiếm trò chơi"
-          className="w-full rounded-md border border-amber-900/40 bg-[#120c08] px-4 py-2.5 text-amber-100 placeholder-amber-900/40 shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)] outline-none transition-colors focus:border-amber-500/70 focus:shadow-[inset_0_2px_4px_rgba(0,0,0,0.6),0_0_10px_rgba(217,119,6,0.15)] text-sm placeholder:text-amber-900/40"
-        />
+        <div className="relative">
+          <svg className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-amber-700/50" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input
+            type="search"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Tìm kiếm trò chơi..."
+            aria-label="Tìm kiếm trò chơi"
+            className="w-full rounded-md border border-amber-900/40 bg-[#120c08] pl-10 pr-4 py-2.5 text-amber-100 placeholder-amber-900/40 shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)] outline-none transition-colors focus:border-amber-500/70 focus:shadow-[inset_0_2px_4px_rgba(0,0,0,0.6),0_0_10px_rgba(217,119,6,0.15)] text-sm placeholder:text-amber-900/40"
+          />
+        </div>
         {search && <button type="button" onClick={() => setSearch("")} className="rounded-lg border border-amber-950/80 bg-[#140e0b]/90 px-3 py-2 text-xs text-amber-700/70 hover:border-amber-700/60 hover:bg-[#1a120d] hover:text-amber-400">Xóa từ khóa</button>}
         <div className="flex flex-wrap gap-2">
           {filterChips.map((chip) => (
