@@ -158,8 +158,9 @@ export default function VayBatBoard({ makeMove, onLeave, onRematch, rematching }
         )}
         {/* Nói rõ vì sao chưa đi được quân — im lặng khiến người chơi tưởng game lỗi */}
         {!myTurn && room.status === "Playing" && !state.winner && mySide && (
-          <div className="mt-2 text-center text-slate-400 font-medium text-sm">
-            ⏳ Chờ đối thủ đi…
+          <div className="mt-2 text-center text-amber-400/50 font-medium text-sm flex items-center justify-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-600/40 animate-pulse shrink-0" />
+            Chờ đối thủ đi…
           </div>
         )}
         <div className="mt-1 text-center text-slate-500 text-xs">
@@ -247,14 +248,13 @@ export default function VayBatBoard({ makeMove, onLeave, onRematch, rematching }
 
       {/* Thông báo */}
       {state.winner && (
-        <div className={`rounded-2xl p-4 text-center font-bold text-base ${
-          state.winner === "RED"
-            ? "bg-red-900/50 text-red-200 border border-red-700"
-            : "bg-slate-700 text-white border border-slate-500"
-        }`}>
-          {state.winner === "RED"
-            ? "🔴 PHE ĐỎ THẮNG — đã vây bắt!"
-            : "⚪ PHE TRẮNG THẮNG — trốn thoát!"}
+        <div className={`rounded-2xl p-1 ${state.winner === "RED" ? "border border-red-700/40 bg-red-950/20 shadow-[0_0_20px_rgba(220,38,38,0.15)]" : "border border-slate-600/40 bg-slate-800/20"}`}>
+          <div className={`rounded-xl p-4 text-center ${state.winner === "RED" ? "bg-gradient-to-b from-red-950/60 to-[#1c0808] border border-red-800/30" : "bg-slate-800/60 border border-slate-600/30"}`}>
+            <div className="text-3xl mb-1">{state.winner === "RED" ? "🔴" : "⚪"}</div>
+            <div className={`font-bold text-base [text-shadow:0_1px_0_rgba(255,255,255,0.1),0_2px_4px_rgba(0,0,0,0.8)] ${state.winner === "RED" ? "text-red-200" : "text-white"}`}>
+              {state.winner === "RED" ? "PHE ĐỎ THẮNG — đã vây bắt!" : "PHE TRẮNG THẮNG — trốn thoát!"}
+            </div>
+          </div>
         </div>
       )}
       <RoomStatusBanner room={room} mySide={mySide} />
