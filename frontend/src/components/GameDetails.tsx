@@ -236,7 +236,7 @@ export default function GameDetails() {
           <button
             onClick={handleCreate}
             disabled={creating}
-            className="w-full rounded-xl bg-emerald-700 hover:bg-emerald-600 disabled:opacity-50 px-4 py-3 font-bold text-white transition-colors"
+            className="w-full rounded-xl border border-amber-900/40 bg-[#1a1208] hover:bg-[#241a0e] disabled:opacity-50 px-4 py-3 text-sm font-bold uppercase tracking-wide text-amber-300/80 hover:text-amber-200 transition-colors shadow-[inset_0_1px_3px_rgba(0,0,0,0.6)]"
           >
             {creating ? "ĐANG TẠO…" : "➕ TẠO PHÒNG"}
           </button>
