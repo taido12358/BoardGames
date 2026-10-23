@@ -65,7 +65,7 @@ export default function OAnQuanBoard({ makeMove, onLeave, onRematch, rematching 
   return (
     <div className="flex flex-col gap-3 w-full max-w-2xl mx-auto">
       {/* Status bar */}
-      <div className="bg-[#151b0d] rounded-2xl px-4 py-3 shadow-lg border border-lime-900/50">
+      <div className="bg-gradient-to-r from-[#151b0d] to-[#111508] rounded-2xl px-4 py-3 shadow-lg border border-lime-900/40">
         <div className="grid grid-cols-3 gap-1 text-center">
           <div>
             <div className="text-lime-400/70 text-xs mb-0.5">Bạn</div>
