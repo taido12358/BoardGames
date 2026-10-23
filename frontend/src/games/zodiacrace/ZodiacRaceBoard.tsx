@@ -99,14 +99,18 @@ export default function ZodiacRaceBoard({ makeMove, onLeave, onRematch, rematchi
         {state.positions.map((pos, i) => (
           <div
             key={i}
-            className={`rounded-xl p-2 border text-sm ${
-              state.turn === i && !state.winner ? "border-emerald-500 bg-emerald-900/20" : "border-slate-700 bg-slate-800/60"
+            className={`rounded-xl p-2.5 border-2 text-sm transition-all ${
+              state.turn === i && !state.winner
+                ? "border-purple-400 bg-purple-900/30 shadow-[0_0_12px_rgba(168,85,247,0.3)]"
+                : "border-purple-900/40 bg-gradient-to-b from-[#1a1030] to-[#110b20]"
             }`}
           >
-            <div className="font-semibold text-slate-200">
-              {iconForSeat(i)} {room.seats[i]?.displayName ?? `Người chơi ${i + 1}`}
+            <div className="font-semibold text-purple-100 flex items-center gap-1">
+              <span className="text-base">{iconForSeat(i)}</span>
+              <span className="truncate text-xs">{room.seats[i]?.displayName ?? `Người chơi ${i + 1}`}</span>
+              {state.turn === i && !state.winner && <span className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse ml-auto shrink-0" />}
             </div>
-            <div className="text-slate-400 text-xs">
+            <div className="text-purple-300/60 text-[10px] mt-0.5">
               Ô {pos}/{map.trackLength} · 📦 {state.cratesCollected[i]}
             </div>
           </div>
@@ -142,7 +146,7 @@ export default function ZodiacRaceBoard({ makeMove, onLeave, onRematch, rematchi
       )}
 
       {myTurn && !state.winner && (
-        <button onClick={send} className="w-full rounded-xl bg-amber-700 hover:bg-amber-600 px-4 py-3 font-bold text-base transition-colors">
+        <button onClick={send} className="relative w-full rounded-lg bg-gradient-to-b from-amber-600 via-amber-700 to-amber-800 px-4 py-3 font-bold text-base text-amber-50 border-t border-amber-400/50 shadow-[0_4px_0_0_#451a03,0_8px_16px_rgba(0,0,0,0.5)] transition-all hover:brightness-110 active:top-[2px] active:shadow-[0_2px_0_0_#451a03]">
           🎲 ĐỔ XÚC XẮC
         </button>
       )}
