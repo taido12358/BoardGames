@@ -30,8 +30,8 @@ export default function App() {
             trên desktop (xem GameLibrary/GameDetails). Nội dung hẹp hơn (bàn cờ, form
             đăng nhập) tự căn giữa bên trong, không bị ảnh hưởng. */}
         <div className="relative z-10 w-full max-w-6xl mx-auto flex flex-col min-h-screen">
-          <header className="relative px-4 pt-4 pb-3 mb-1 shrink-0 flex flex-wrap gap-3 items-center justify-between border-b border-amber-900/30">
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[1px] bg-gradient-to-r from-transparent via-amber-500/20 to-transparent" />
+          <header className="sticky top-0 z-50 relative px-4 pt-4 pb-3 mb-1 shrink-0 flex flex-wrap gap-3 items-center justify-between border-b border-amber-950/80 bg-gradient-to-b from-[#1a110a] via-[#140d08] to-[#0e0805] shadow-[0_10px_25px_-5px_rgba(0,0,0,0.9)]">
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-amber-500/35 to-transparent" />
             <Link to="/games" className="text-2xl font-western tracking-wide text-amber-100 hover:text-amber-300 transition-colors [text-shadow:0_1px_0_rgba(255,255,255,0.12),0_2px_4px_rgba(0,0,0,0.8)]">🎲 BoardGame</Link>
             {user && (
               <div className="flex flex-wrap items-center gap-2 min-w-0">

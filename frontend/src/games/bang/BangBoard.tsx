@@ -112,19 +112,23 @@ export default function BangBoard({ makeMove, onLeave, onRematch, rematching }: 
               {" "}người chơi
             </p>
 
-            <ul className="text-sm space-y-1.5 text-left mb-2">
+            <div className="grid grid-cols-2 gap-2 mb-2">
               {room.seats.map((seat, i) => (
-                <li key={i} className={`relative overflow-hidden flex items-center gap-2 rounded-lg px-2.5 py-1.5 ${
-                  seat.displayName
-                    ? "bg-amber-900/30 text-amber-200 border border-amber-800/30"
-                    : "text-amber-900/40 border border-amber-950/60 bg-[#140e0b]/50 shadow-[inset_0_1px_2px_rgba(0,0,0,0.5)]"
-                }`}>
-                  {seat.displayName && <div className="pointer-events-none absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-amber-400/20 to-transparent" />}
-                  <span>{seat.displayName ? "🤠" : "…"}</span>
-                  <span>{seat.displayName ?? "(trống)"}</span>
-                </li>
+                seat.displayName ? (
+                  <div key={i} className="relative overflow-hidden flex flex-col items-center rounded-xl border border-amber-600/50 bg-gradient-to-b from-[#251810] to-[#140d08] p-2.5 shadow-[0_4px_12px_rgba(0,0,0,0.7),inset_0_1px_0_rgba(245,158,11,0.25)]">
+                    <div className="pointer-events-none absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-amber-400/40 to-transparent" />
+                    <div className="h-10 w-10 rounded-full border-2 border-amber-500/80 bg-amber-950/60 flex items-center justify-center text-lg shadow-[0_0_10px_rgba(245,158,11,0.3)]">🤠</div>
+                    <span className="mt-1.5 text-[11px] font-bold text-amber-200 truncate max-w-full [text-shadow:0_1px_2px_rgba(0,0,0,0.8)]">{seat.displayName}</span>
+                    <span className="text-[9px] uppercase tracking-wider text-amber-600/80">Sẵn sàng</span>
+                  </div>
+                ) : (
+                  <div key={i} className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-amber-950/70 bg-[#0d0805]/70 p-2.5 shadow-[inset_0_3px_8px_rgba(0,0,0,0.9)] transition-colors hover:border-amber-800/50">
+                    <div className="h-10 w-10 rounded-full border border-dashed border-amber-900/50 bg-black/40 flex items-center justify-center text-amber-900/60 text-xl font-light">+</div>
+                    <span className="mt-1.5 text-[11px] italic text-amber-900/70">Ghế trống</span>
+                  </div>
+                )
               ))}
-            </ul>
+            </div>
           </div>
         </div>
         <DisconnectBadge seats={room.seats} />
