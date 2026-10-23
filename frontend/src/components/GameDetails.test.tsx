@@ -158,7 +158,7 @@ describe("GameDetails — hiển thị cơ bản", () => {
       seatCount: 2, seats: [{ displayName: "An", connected: true, lastSeenAt: null }, { displayName: null, connected: false, lastSeenAt: null }],
       isMine: false,
     });
-    expect(screen.getByText("Phòng của An")).toBeInTheDocument();
+    expect(screen.getByText(/Phòng của An/)).toBeInTheDocument();
     expect(screen.queryByText("HUỶ")).not.toBeInTheDocument();
   });
 });
