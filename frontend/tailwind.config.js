@@ -2,7 +2,12 @@
 export default {
   content: ["./index.html", "./src/**/*.{ts,tsx}"],
   theme: {
-    extend: {},
+    extend: {
+      fontFamily: {
+        western: ["Rye", "Georgia", "serif"],
+        typewriter: ["Special Elite", "Courier New", "monospace"],
+      },
+    },
   },
   plugins: [],
 };

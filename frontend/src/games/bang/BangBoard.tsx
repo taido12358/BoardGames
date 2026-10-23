@@ -78,7 +78,7 @@ export default function BangBoard({ makeMove, onLeave, onRematch, rematching }: 
         <ConnectionBanner connectionState={connectionState} />
         <div className="bg-gradient-to-b from-[#2b2013] to-[#1a1208] rounded-2xl border border-amber-800/30 p-6 text-center shadow-xl">
           <div className="text-4xl mb-2">🤠</div>
-          <h2 className="font-black text-xl text-amber-300 tracking-wide mb-1">BANG!</h2>
+          <h2 className="font-western text-2xl text-amber-300 tracking-wide mb-1">BANG!</h2>
           <p className="text-amber-500/60 text-xs uppercase tracking-widest mb-4">Phòng chờ · {room.id.slice(0, 8)}</p>
 
           <div className="flex items-center justify-center gap-2 mb-4">
@@ -213,7 +213,7 @@ export default function BangBoard({ makeMove, onLeave, onRematch, rematching }: 
       {/* Top bar */}
       <div className="bg-gradient-to-r from-[#1a1008] via-[#241a10] to-[#1a1008] rounded-2xl px-4 py-3 shadow-lg border border-amber-900/30 flex items-center justify-between">
         <div>
-          <div className="font-bold text-amber-300 text-base tracking-wide">🤠 BANG!</div>
+          <div className="font-western text-amber-300 text-base tracking-wide">🤠 BANG!</div>
           <div className="text-[10px] text-amber-400/50 font-mono">#{room.id.slice(0, 8)}</div>
         </div>
         <div className="text-center">

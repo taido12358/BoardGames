@@ -56,7 +56,7 @@ export default function VictoryScreen({ state, onLeave, onRematch, rematching }:
         )}
 
         {/* Winner title */}
-        <h2 className={`text-lg font-black tracking-wide leading-tight ${cfg.color}`}>
+        <h2 className={`font-western text-lg tracking-wide leading-tight ${cfg.color}`}>
           {cfg.title}
         </h2>
 
