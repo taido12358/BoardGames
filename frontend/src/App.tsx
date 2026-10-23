@@ -53,7 +53,7 @@ export default function App() {
                 <button
                   onClick={logout}
                   disabled={loggingOut}
-                  className="shrink-0 text-xs px-2.5 py-1.5 rounded-lg border border-amber-950/80 bg-[#140e0b]/90 text-amber-700/70 shadow-[inset_0_1px_3px_rgba(0,0,0,0.6)] hover:border-amber-700/60 hover:bg-[#1a120d] hover:text-amber-400 transition-all uppercase tracking-wider disabled:opacity-40"
+                  className="shrink-0 text-xs px-2.5 py-1.5 rounded-lg border border-amber-950/80 bg-[#140e0b]/90 text-amber-700/70 shadow-[inset_0_1px_3px_rgba(0,0,0,0.6)] hover:border-red-800/60 hover:bg-red-950/40 hover:text-red-400 transition-all uppercase tracking-wider disabled:opacity-40"
                 >
                   {loggingOut ? "Đang đăng xuất…" : "Đăng xuất"}
                 </button>

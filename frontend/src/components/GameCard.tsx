@@ -41,6 +41,11 @@ export default function GameCard({ metadata: m, waitingRooms, onViewDetails, onP
       {/* Card glare — ánh đèn chùm hắt vào góc trên-trái */}
       <div className="pointer-events-none absolute -left-12 -top-12 h-32 w-32 rounded-full bg-gradient-to-br from-amber-400/20 via-amber-500/5 to-transparent blur-xl z-10" />
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-tr from-transparent via-amber-200/[0.03] to-amber-300/[0.07] z-10" />
+      {/* Brass rivets — đinh tán đồng thau 4 góc */}
+      <span className="pointer-events-none absolute top-2 left-2 w-1.5 h-1.5 rounded-full bg-gradient-to-br from-[#e0b070] to-[#603b15] shadow-[0_1px_2px_rgba(0,0,0,0.8)] z-20" />
+      <span className="pointer-events-none absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-gradient-to-br from-[#e0b070] to-[#603b15] shadow-[0_1px_2px_rgba(0,0,0,0.8)] z-20" />
+      <span className="pointer-events-none absolute bottom-2 left-2 w-1.5 h-1.5 rounded-full bg-gradient-to-br from-[#e0b070] to-[#603b15] shadow-[0_1px_2px_rgba(0,0,0,0.8)] z-20" />
+      <span className="pointer-events-none absolute bottom-2 right-2 w-1.5 h-1.5 rounded-full bg-gradient-to-br from-[#e0b070] to-[#603b15] shadow-[0_1px_2px_rgba(0,0,0,0.8)] z-20" />
       {/* Artwork — chiếm ~50% chiều cao thẻ */}
       <button
         type="button"
@@ -65,28 +70,28 @@ export default function GameCard({ metadata: m, waitingRooms, onViewDetails, onP
       {/* Nội dung */}
       <div className="flex flex-col gap-2 p-4 flex-1">
         <div>
-          <h3 className="text-lg font-black tracking-wide text-amber-100">{m.title}</h3>
-          <p className="text-xs text-amber-200/60">{m.subtitle}</p>
+          <h3 className="text-lg font-black tracking-widest text-[#f5d09d] uppercase drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">{m.title}</h3>
+          <p className="text-xs text-[#d4b996]/60">{m.subtitle}</p>
         </div>
 
-        <p className="text-sm text-amber-200/70 leading-snug line-clamp-2">{m.description}</p>
+        <p className="text-sm text-[#d4b996]/75 leading-snug line-clamp-2">{m.description}</p>
 
         <div className="mt-1 flex flex-wrap items-center gap-1.5">
-          <span className="rounded-full border border-amber-900/50 bg-amber-950/40 px-2 py-0.5 text-[10px] text-amber-400/80">
+          <span className="rounded-sm border border-[#8b5a2b]/50 bg-[#3a2012]/80 px-2 py-0.5 text-[10px] text-[#e8c07e] shadow-inner">
             👥 {m.minPlayers === m.maxPlayers ? `${m.minPlayers} người` : `${m.minPlayers}–${m.maxPlayers} người`}
           </span>
-          <span className="rounded-full border border-amber-900/50 bg-amber-950/40 px-2 py-0.5 text-[10px] text-amber-400/80">
+          <span className="rounded-sm border border-[#8b5a2b]/50 bg-[#3a2012]/80 px-2 py-0.5 text-[10px] text-[#e8c07e] shadow-inner">
             ⏱ {m.duration}
           </span>
-          <span className="rounded-full border border-amber-900/50 bg-amber-950/40 px-2 py-0.5 text-[10px] text-amber-400/80">
-            <StarRating count={m.difficultyStars} /> <span className="text-amber-700/60">{m.difficulty}</span>
+          <span className="rounded-sm border border-[#8b5a2b]/50 bg-[#3a2012]/80 px-2 py-0.5 text-[10px] text-[#e8c07e] shadow-inner">
+            <StarRating count={m.difficultyStars} /> <span className="text-[#b47a3c]/80">{m.difficulty}</span>
           </span>
         </div>
 
         {m.category.length > 0 && (
           <div className="flex flex-wrap gap-1 mt-0.5">
             {m.category.map((c) => (
-              <span key={c} className="rounded-sm border border-amber-900/30 bg-[#1a1208] px-1.5 py-0.5 text-[9px] uppercase tracking-wide text-amber-700/60">
+              <span key={c} className="rounded-sm border border-[#8b5a2b]/40 bg-[#2a1608]/70 px-1.5 py-0.5 text-[9px] uppercase tracking-widest text-[#b47a3c]/80">
                 {c}
               </span>
             ))}
