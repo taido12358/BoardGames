@@ -77,10 +77,10 @@ export default function GameReplayPage() {
         </Link>
       </div>
 
-      {state === "loading" && <p role="status" className="text-slate-400 text-sm text-center py-10">Đang tải…</p>}
+      {state === "loading" && <p role="status" className="text-amber-700/60 text-sm text-center py-10 italic">Đang tải…</p>}
 
       {state === "not-found" && (
-        <p className="text-slate-500 text-sm text-center py-10">Chưa có bản ghi lại cho ván này (ván chưa kết thúc hoặc không tồn tại).</p>
+        <p className="text-amber-700/50 text-sm text-center py-10 italic">Chưa có bản ghi lại cho ván này (ván chưa kết thúc hoặc không tồn tại).</p>
       )}
 
       {state === "unavailable" && (
@@ -96,34 +96,37 @@ export default function GameReplayPage() {
 
       {state === "ok" && replay && (
         <>
-          <div className="rounded-2xl border border-slate-800 bg-slate-800/40 p-4 space-y-1 text-sm">
+          <div className="relative overflow-hidden rounded-2xl border border-amber-500/20 bg-stone-900/80 p-1">
+            <div className="pointer-events-none absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-amber-400/40 to-transparent" />
+            <div className="rounded-xl border border-amber-500/30 bg-gradient-to-b from-[#2b2013] to-[#1a1208] p-4 space-y-1 text-sm">
             <p>
-              <span className="text-slate-500">Game:</span> <span className="text-slate-200 font-medium">{replay.gameKey}</span>
+              <span className="text-amber-700/60">Game:</span> <span className="text-amber-200 font-medium">{replay.gameKey}</span>
             </p>
             <p>
-              <span className="text-slate-500">Người chơi:</span>{" "}
-              <span className="text-slate-300">{replay.seats.filter(Boolean).join(", ") || "—"}</span>
+              <span className="text-amber-700/60">Người chơi:</span>{" "}
+              <span className="text-amber-300/70">{replay.seats.filter(Boolean).join(", ") || "—"}</span>
             </p>
             <p>
-              <span className="text-slate-500">Thắng:</span> <span className="text-slate-300">{replay.winner ?? "—"}</span>
+              <span className="text-amber-700/60">Thắng:</span> <span className="text-amber-300/70">{replay.winner ?? "—"}</span>
             </p>
             <p>
-              <span className="text-slate-500">Số nước đi:</span> <span className="text-slate-300">{replay.moves.length}</span>
+              <span className="text-amber-700/60">Số nước đi:</span> <span className="text-amber-300/70 font-mono">{replay.moves.length}</span>
             </p>
+            </div>
           </div>
 
-          <div className="rounded-2xl border border-slate-800 overflow-hidden">
-            <div className="bg-slate-800/80 text-slate-400 text-xs uppercase px-3 py-2">Diễn biến</div>
+          <div className="rounded-2xl border border-amber-900/30 overflow-hidden">
+            <div className="bg-gradient-to-r from-[#2b2013] to-[#1c150c] text-amber-400/70 text-xs uppercase px-3 py-2.5 tracking-widest border-b border-amber-900/30">Diễn biến</div>
             {replay.moves.length === 0 ? (
-              <p className="text-slate-500 text-sm text-center py-8">Ván này chưa có nước đi nào được ghi lại.</p>
+              <p className="text-amber-700/50 text-sm text-center py-8 italic">Ván này chưa có nước đi nào được ghi lại.</p>
             ) : (
-              <ul className="divide-y divide-slate-800 max-h-[28rem] overflow-y-auto">
+              <ul className="divide-y divide-amber-900/20 max-h-[28rem] overflow-y-auto">
                 {replay.moves.map((m) => (
-                  <li key={m.moveNumber} className="px-3 py-2 text-sm flex gap-3">
-                    <span className="text-slate-500 w-8 shrink-0 text-right">{m.moveNumber + 1}.</span>
+                  <li key={m.moveNumber} className="px-3 py-2 text-sm flex gap-3 hover:bg-amber-950/20 transition-colors">
+                    <span className="text-amber-800/50 w-8 shrink-0 text-right font-mono">{m.moveNumber + 1}.</span>
                     <div className="min-w-0 flex-1 space-y-1">
-                      <p className="text-slate-200"><span className="text-amber-300">{/^P\d+$/.test(m.side) ? replay.seats[Number(m.side.slice(1))] ?? m.side : m.side}</span> · {moveSummary(m.move)}</p>
-                      <details className="text-xs text-slate-400"><summary className="cursor-pointer py-1 hover:text-slate-200">Chi tiết nước đi</summary><code className="block break-all pt-1">{JSON.stringify(m.move)}</code></details>
+                      <p className="text-amber-200/80"><span className="text-amber-300 font-semibold">{/^P\d+$/.test(m.side) ? replay.seats[Number(m.side.slice(1))] ?? m.side : m.side}</span> · {moveSummary(m.move)}</p>
+                      <details className="text-xs text-amber-700/60"><summary className="cursor-pointer py-1 hover:text-amber-400">Chi tiết nước đi</summary><code className="block break-all pt-1 text-amber-600/60">{JSON.stringify(m.move)}</code></details>
                     </div>
                   </li>
                 ))}
