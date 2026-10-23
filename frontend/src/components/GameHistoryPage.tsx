@@ -79,21 +79,21 @@ export default function GameHistoryPage() {
       )}
 
       {!loading && records.length > 0 && (
-        <div className="overflow-x-auto rounded-2xl border border-slate-800">
+        <div className="overflow-x-auto rounded-2xl border border-amber-900/30">
           <table className="w-full text-sm">
-            <thead className="bg-slate-800/80 text-slate-400 text-xs uppercase">
+            <thead className="bg-gradient-to-r from-[#2b2013] to-[#1c150c] text-amber-400/70 text-xs uppercase border-b border-amber-900/30">
               <tr>
-                <th className="text-left px-3 py-2">Game</th>
-                <th className="text-left px-3 py-2">Người chơi</th>
-                <th className="text-left px-3 py-2">Thắng</th>
-                <th className="text-left px-3 py-2">Số nước đi</th>
-                <th className="text-left px-3 py-2">Kết thúc lúc</th>
-                <th className="text-left px-3 py-2"></th>
+                <th className="text-left px-3 py-2.5">Game</th>
+                <th className="text-left px-3 py-2.5">Người chơi</th>
+                <th className="text-left px-3 py-2.5">Thắng</th>
+                <th className="text-left px-3 py-2.5">Số nước đi</th>
+                <th className="text-left px-3 py-2.5">Kết thúc lúc</th>
+                <th className="text-left px-3 py-2.5"></th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800">
+            <tbody className="divide-y divide-amber-900/20">
               {records.map((r) => (
-                <tr key={r.id} className="hover:bg-slate-800/40">
+                <tr key={r.id} className="hover:bg-amber-950/20">
                   <td className="px-3 py-2 font-medium text-slate-200">{r.gameKey}</td>
                   <td className="px-3 py-2 text-slate-300">{r.players || "—"}</td>
                   <td className="px-3 py-2 text-slate-400">{r.winner ?? "—"}</td>
