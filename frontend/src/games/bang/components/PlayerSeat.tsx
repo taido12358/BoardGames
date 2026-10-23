@@ -106,7 +106,7 @@ export default function PlayerSeat({ player, isCurrentTurn, isMe, targetable, ta
           {player.equipment.map((eq) => (
             <span
               key={eq}
-              className="inline-flex items-center gap-0.5 text-[9px] rounded-full bg-purple-900/40 border border-purple-700/30 px-1.5 py-0.5 text-purple-300/80"
+              className="inline-flex items-center gap-0.5 text-[9px] rounded-full border border-amber-800/40 bg-amber-950/40 px-1.5 py-0.5 text-amber-400/80 shadow-[inset_0_1px_2px_rgba(0,0,0,0.6)]"
             >
               {eq === "Thùng rượu" ? "🛢" : eq === "Ngựa" ? "🐎" : "🛡"} {eq}
             </span>
@@ -118,8 +118,8 @@ export default function PlayerSeat({ player, isCurrentTurn, isMe, targetable, ta
       {!isMe && player.distance !== null && (
         <div className={`mt-1.5 rounded px-1.5 py-0.5 text-[10px] font-semibold text-center ${
           player.inRange
-            ? "bg-emerald-900/70 text-emerald-300 border border-emerald-700/40"
-            : "bg-slate-800/60 text-slate-500 border border-slate-700/30"
+            ? "bg-amber-900/40 text-amber-300 border border-amber-700/40 shadow-[0_0_8px_rgba(245,158,11,0.2)]"
+            : "border border-amber-950/60 bg-[#0d0805]/60 text-amber-900/50 shadow-[inset_0_1px_2px_rgba(0,0,0,0.5)]"
         }`}>
           {player.inRange ? "✦ TRONG TẦM" : `✕ ${player.distance} ô`}
         </div>

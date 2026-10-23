@@ -257,7 +257,7 @@ export default function BangBoard({ makeMove, onLeave, onRematch, rematching }: 
         </div>
         <button
           onClick={onLeave}
-          className="text-xs px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-300 hover:text-white transition-colors"
+          className="text-xs px-3 py-1.5 rounded-lg border border-amber-950/80 bg-[#140e0b]/90 text-amber-700/70 shadow-[inset_0_1px_3px_rgba(0,0,0,0.6)] hover:border-amber-700/60 hover:bg-[#1a120d] hover:text-amber-400 transition-all uppercase tracking-wider"
         >
           Thoát
         </button>
@@ -268,7 +268,7 @@ export default function BangBoard({ makeMove, onLeave, onRematch, rematching }: 
       <RoomErrorBanner error={error} />
 
       {me && !me.alive && state.phase !== "finished" && (
-        <div role="status" className="rounded-xl border border-slate-600 bg-slate-900/70 p-3 text-sm text-slate-200">
+        <div role="status" className="rounded-xl border border-amber-900/40 bg-[#1a1208] p-3 text-sm text-amber-700/70">
           Bạn đã bị loại. Bạn có thể tiếp tục theo dõi ván đấu và chờ kết quả.
         </div>
       )}
