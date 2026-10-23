@@ -84,25 +84,28 @@ export default function ZodiacRaceBoard({ makeMove, onLeave, onRematch, rematchi
 
   return (
     <div className="flex flex-col gap-3 w-full max-w-2xl mx-auto">
-      <div className="bg-gradient-to-r from-[#1a1030] to-[#241a3d] rounded-2xl px-4 py-2.5 shadow-lg flex items-center justify-between">
-        <div>
-          <div className="font-bold text-purple-200 text-sm">🎲 ĐUA XE HOÀNG ĐẠO</div>
-          <div className="text-[11px] text-purple-300/60 font-mono">Phòng {room.id.slice(0, 8)}</div>
+      <div className="relative overflow-hidden rounded-2xl border border-amber-500/20 bg-stone-900/80 p-1 shadow-lg">
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-amber-400/40 to-transparent" />
+        <div className="rounded-xl border border-amber-500/30 bg-gradient-to-b from-[#2b2013] to-[#1a1208] px-4 py-2.5 flex items-center justify-between">
+          <div>
+            <div className="font-western text-amber-300 text-sm tracking-wide [text-shadow:0_1px_0_rgba(255,255,255,0.12),0_2px_4px_rgba(0,0,0,0.8)]">🎲 ĐUA XE HOÀNG ĐẠO</div>
+            <div className="text-[11px] text-amber-500/60 font-mono">Phòng {room.id.slice(0, 8)}</div>
+          </div>
+          <div className="text-center">
+            <div className="text-[11px] text-amber-400/70 uppercase tracking-widest">Lượt</div>
+            <div className="font-semibold text-amber-200 text-sm">{myTurn ? "ĐẾN LƯỢT BẠN" : `${currentName} đang đi`}</div>
+          </div>
+          <button onClick={onLeave} className="text-xs px-2.5 py-1.5 rounded-lg border border-amber-950/80 bg-[#140e0b]/90 text-amber-700/70 shadow-[inset_0_1px_3px_rgba(0,0,0,0.6)] hover:border-amber-700/60 hover:bg-[#1a120d] hover:text-amber-400 transition-all uppercase tracking-wider">
+            Thoát
+          </button>
         </div>
-        <div className="text-center">
-          <div className="text-[11px] text-purple-300/70 uppercase">Lượt</div>
-          <div className="font-semibold text-purple-100 text-sm">{myTurn ? "ĐẾN LƯỢT BẠN" : `${currentName} đang đi`}</div>
-        </div>
-        <button onClick={onLeave} className="text-xs px-2.5 py-1.5 rounded-lg bg-slate-700/80 hover:bg-slate-600 text-slate-200">
-          Thoát
-        </button>
       </div>
 
       <ConnectionBanner connectionState={connectionState} />
       <DisconnectBadge seats={room.seats} />
 
       {isSpectator && !state.winner && (
-        <div className="rounded-xl p-2 text-center bg-purple-900/30 text-purple-300 text-sm">👁 Bạn đang xem — không thể chơi.</div>
+        <div className="rounded-xl p-2 text-center border border-amber-900/40 bg-[#1a1208] text-amber-700/60 text-sm">👁 Bạn đang xem — không thể chơi.</div>
       )}
 
       {/* Bảng người chơi */}
@@ -112,16 +115,16 @@ export default function ZodiacRaceBoard({ makeMove, onLeave, onRematch, rematchi
             key={i}
             className={`rounded-xl p-2.5 border-2 text-sm transition-all ${
               state.turn === i && !state.winner
-                ? "border-purple-400 bg-purple-900/30 shadow-[0_0_12px_rgba(168,85,247,0.3)]"
-                : "border-purple-900/40 bg-gradient-to-b from-[#1a1030] to-[#110b20]"
+                ? "border-amber-400 bg-amber-950/40 shadow-[0_0_12px_rgba(245,158,11,0.25)]"
+                : "border-amber-900/40 bg-gradient-to-b from-[#2b2013] to-[#1a1208]"
             }`}
           >
-            <div className="font-semibold text-purple-100 flex items-center gap-1">
+            <div className="font-semibold text-amber-100 flex items-center gap-1">
               <span className="text-base">{iconForSeat(i)}</span>
               <span className="truncate text-xs">{room.seats[i]?.displayName ?? `Người chơi ${i + 1}`}</span>
-              {state.turn === i && !state.winner && <span className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse ml-auto shrink-0" />}
+              {state.turn === i && !state.winner && <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse ml-auto shrink-0" />}
             </div>
-            <div className="text-purple-300/60 text-[10px] mt-0.5">
+            <div className="text-amber-400/60 text-[10px] mt-0.5">
               Ô {pos}/{map.trackLength} · 📦 {state.cratesCollected[i]}
             </div>
           </div>
@@ -129,7 +132,7 @@ export default function ZodiacRaceBoard({ makeMove, onLeave, onRematch, rematchi
       </div>
 
       {/* Đường đua */}
-      <div className="bg-[#120c1f] rounded-2xl p-3 border border-purple-900/40 overflow-x-auto">
+      <div className="bg-[#0e0905] rounded-2xl p-3 border border-amber-950/60 overflow-x-auto shadow-[inset_0_2px_8px_rgba(0,0,0,0.8)]">
         <div className="flex gap-1 min-w-max">
           {tiles.map((t) => {
             const isCrate = map.crateTiles.includes(t);
@@ -139,10 +142,10 @@ export default function ZodiacRaceBoard({ makeMove, onLeave, onRematch, rematchi
               <div
                 key={t}
                 className={`w-10 h-14 shrink-0 rounded-lg border flex flex-col items-center justify-center text-[10px] shadow-inner ${
-                  isFinish ? "border-amber-400 bg-amber-900/30 shadow-[inset_0_0_8px_rgba(245,158,11,0.2)]" : isCrate ? "border-lime-700 bg-lime-900/20" : "border-purple-900/40 bg-[#110b20]"
+                  isFinish ? "border-amber-400 bg-amber-900/30 shadow-[inset_0_0_8px_rgba(245,158,11,0.2)]" : isCrate ? "border-lime-700/60 bg-lime-900/20" : "border-amber-950/50 bg-[#130d07]"
                 }`}
               >
-                <span className={isFinish || isCrate ? "text-base" : "text-purple-900/70 font-mono text-[9px]"}>{isFinish ? "🏁" : isCrate ? "📦" : t}</span>
+                <span className={isFinish || isCrate ? "text-base" : "text-amber-900/50 font-mono text-[9px]"}>{isFinish ? "🏁" : isCrate ? "📦" : t}</span>
                 <span className="text-sm">{cartsHere.map((i) => iconForSeat(i)).join("")}</span>
               </div>
             );
@@ -151,7 +154,7 @@ export default function ZodiacRaceBoard({ makeMove, onLeave, onRematch, rematchi
       </div>
 
       {state.lastRoll !== null && !state.winner && (
-        <div className="text-center text-slate-300 text-sm">
+        <div className="text-center text-amber-200/70 text-sm">
           🎲 Xúc xắc vừa đổ: <span className="font-bold text-amber-300">{state.lastRoll}</span>
         </div>
       )}
