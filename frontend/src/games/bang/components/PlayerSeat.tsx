@@ -11,22 +11,26 @@ interface Props {
   onClick?: () => void;
 }
 
-/** Hiển thị HP theo bullet-hole style: vàng=còn, đỏ tối=mất. */
+/** Hiển thị HP theo kiểu viên đạn brass (còn nguyên = đồng thau dập nổi, đã bắn = vỏ rỗng). */
 function HpBullets({ hp, maxHp }: { hp: number; maxHp: number }) {
   return (
-    <div className="flex items-center gap-0.5 flex-wrap" aria-label={`HP ${hp}/${maxHp}`}>
+    <div className="flex items-center gap-1 flex-wrap" aria-label={`HP ${hp}/${maxHp}`}>
       {Array.from({ length: maxHp }, (_, i) => (
-        <span
-          key={i}
-          className={`inline-block rounded-full border ${
-            i < hp
-              ? "w-3 h-3 bg-amber-400 border-amber-600 shadow-[0_0_4px_rgba(251,191,36,0.6)]"
-              : "w-3 h-3 bg-red-950/80 border-red-800"
-          }`}
-          aria-hidden="true"
-        />
+        i < hp ? (
+          <div
+            key={i}
+            aria-hidden="true"
+            className="h-4 w-[6px] rounded-t-sm border-t border-amber-300/60 bg-gradient-to-b from-amber-500 to-amber-700 shadow-[0_0_6px_rgba(245,158,11,0.4)]"
+          />
+        ) : (
+          <div
+            key={i}
+            aria-hidden="true"
+            className="h-4 w-[6px] rounded-t-sm border border-dashed border-amber-900/40 bg-stone-900/60 opacity-30"
+          />
+        )
       ))}
-      <span className="ml-1 text-[10px] font-mono text-amber-300/70">{hp}/{maxHp}</span>
+      <span className="ml-0.5 text-[10px] font-mono text-amber-300/60">{hp}/{maxHp}</span>
     </div>
   );
 }

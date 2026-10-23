@@ -7,22 +7,27 @@ interface Props {
   you: BangYourView;
 }
 
+/** HP dạng viên đạn brass — còn nguyên = đồng dập nổi, đã bắn = vỏ rỗng. */
 function HpBullets({ hp, maxHp }: { hp: number; maxHp: number }) {
   return (
-    <div className="flex items-center gap-1 flex-wrap" aria-label={`HP ${hp}/${maxHp}`}>
+    <div className="inline-flex items-center gap-1.5 rounded-full border border-amber-900/40 bg-black/40 px-3 py-1.5 backdrop-blur-sm" aria-label={`HP ${hp}/${maxHp}`}>
       {Array.from({ length: maxHp }, (_, i) => (
-        <span
-          key={i}
-          className={`inline-block rounded-full border-2 ${
-            i < hp
-              ? "w-4 h-4 bg-amber-400 border-amber-500 shadow-[0_0_6px_rgba(251,191,36,0.7)]"
-              : "w-4 h-4 bg-red-950/80 border-red-700"
-          }`}
-          aria-hidden="true"
-        />
+        i < hp ? (
+          <div
+            key={i}
+            aria-hidden="true"
+            className="h-5 w-2 rounded-t-sm border-t border-amber-300/60 bg-gradient-to-b from-amber-500 to-amber-700 shadow-[0_0_8px_rgba(245,158,11,0.4)]"
+          />
+        ) : (
+          <div
+            key={i}
+            aria-hidden="true"
+            className="h-5 w-2 rounded-t-sm border border-dashed border-amber-900/40 bg-stone-900/60 opacity-30"
+          />
+        )
       ))}
       <span className="ml-1 text-sm font-bold text-amber-200">
-        {hp}<span className="text-amber-400/60 font-normal">/{maxHp}</span>
+        {hp}<span className="text-amber-400/50 font-normal">/{maxHp}</span>
       </span>
     </div>
   );
