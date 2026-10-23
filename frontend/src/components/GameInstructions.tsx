@@ -146,7 +146,7 @@ export default function GameInstructions({ sections }: Props) {
 
   return (
     <div>
-      <div role="tablist" aria-label="Mục hướng dẫn" className="flex flex-wrap gap-1.5 border-b border-slate-800 pb-3 mb-4">
+      <div role="tablist" aria-label="Mục hướng dẫn" className="flex flex-wrap gap-1.5 border-b border-amber-900/30 pb-3 mb-4">
         {sections.map((s) => (
           <button
             key={s.id}
@@ -155,7 +155,9 @@ export default function GameInstructions({ sections }: Props) {
             aria-selected={s.id === section.id}
             onClick={() => setActive(s.id)}
             className={`rounded-lg px-3 py-1.5 text-xs font-semibold uppercase tracking-wide transition-colors ${
-              s.id === section.id ? "bg-amber-700 text-white" : "bg-slate-800/70 text-slate-400 hover:bg-slate-700 hover:text-slate-200"
+              s.id === section.id
+                ? "bg-gradient-to-b from-amber-600 to-amber-800 text-amber-50 shadow-[0_2px_0_0_#451a03] border-t border-amber-400/40"
+                : "bg-slate-800/70 text-slate-400 hover:bg-slate-700 hover:text-slate-200"
             }`}
           >
             {s.label}
