@@ -28,7 +28,7 @@ export default function App() {
             đăng nhập) tự căn giữa bên trong, không bị ảnh hưởng. */}
         <div className="w-full max-w-6xl mx-auto flex flex-col min-h-screen">
           <header className="px-4 pt-4 pb-3 mb-1 shrink-0 flex items-center justify-between border-b border-slate-800/60">
-            <Link to="/games" className="text-2xl font-bold tracking-tight hover:text-amber-200 transition-colors">🎲 BoardGame</Link>
+            <Link to="/games" className="text-2xl font-western tracking-wide text-amber-100 hover:text-amber-300 transition-colors drop-shadow-sm">🎲 BoardGame</Link>
             {user && (
               <div className="flex items-center gap-2 min-w-0">
                 <DisplayNameEditor displayName={user.displayName} email={user.email} />

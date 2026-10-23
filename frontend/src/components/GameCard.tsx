@@ -97,7 +97,7 @@ export default function GameCard({ metadata: m, waitingRooms, onViewDetails, onP
           <button
             type="button"
             onClick={onPlayNow}
-            className="w-full rounded-xl bg-amber-700 hover:bg-amber-600 active:bg-amber-800 px-3 py-2.5 text-sm font-bold text-white transition-colors shadow-md"
+            className="w-full rounded-xl bg-amber-700 hover:bg-amber-600 active:bg-amber-800 px-3 py-2.5 text-sm font-bold text-white transition-all shadow-md hover:shadow-[0_0_18px_rgba(217,119,6,0.45)]"
           >
             CHƠI NGAY
           </button>

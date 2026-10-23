@@ -21,16 +21,16 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[70vh] gap-6">
+    <div className="flex flex-col items-center justify-center min-h-[70vh] gap-6" style={{ backgroundImage: "radial-gradient(circle, rgba(180,120,30,0.06) 1px, transparent 1px)", backgroundSize: "28px 28px" }}>
       {/* Brand header */}
       <div className="text-center space-y-2">
-        <div className="text-5xl">🎲</div>
-        <h1 className="text-3xl font-black tracking-tight text-slate-100">BoardGame</h1>
+        <div className="text-5xl animate-bounce" style={{ animationDuration: "2.5s", animationTimingFunction: "ease-in-out" }}>🎲</div>
+        <h1 className="text-3xl font-western tracking-wide text-amber-100">BoardGame</h1>
         <p className="text-slate-400 text-sm">Chơi board game cùng bạn bè — mọi lúc, mọi nơi.</p>
       </div>
 
       {/* Login card */}
-      <div className="w-full max-w-sm bg-slate-800/80 rounded-2xl border border-slate-700 p-6 shadow-xl space-y-4">
+      <div className="w-full max-w-sm bg-slate-800/80 rounded-2xl border border-slate-700/60 p-6 shadow-[0_0_40px_rgba(180,100,20,0.12)] space-y-4">
         <div className="text-center space-y-1">
           <h2 className="text-base font-bold text-slate-100">
             {step === "email" ? "🔐 Đăng nhập" : "📬 Nhập mã xác nhận"}
@@ -122,8 +122,13 @@ export default function LoginPage() {
       </div>
 
       {/* Games preview */}
-      <div className="flex items-center gap-3 text-2xl opacity-40">
-        <span>🤠</span><span>♟️</span><span>🎲</span><span>🏹</span><span>🎯</span>
+      <div className="flex items-center gap-4 text-3xl">
+        {["🤠","♟️","🎲","🏹","🎯"].map((icon, i) => (
+          <span
+            key={i}
+            className="opacity-30 hover:opacity-70 transition-all duration-300 hover:scale-125 cursor-default"
+          >{icon}</span>
+        ))}
       </div>
     </div>
   );

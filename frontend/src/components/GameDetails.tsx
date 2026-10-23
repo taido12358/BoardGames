@@ -146,7 +146,7 @@ export default function GameDetails() {
 
           <button
             onClick={scrollToRoomPanel}
-            className="hidden sm:block w-full rounded-xl bg-amber-700 hover:bg-amber-600 px-4 py-3 font-bold text-white transition-colors"
+            className="hidden sm:block w-full rounded-xl bg-amber-700 hover:bg-amber-600 px-4 py-3 font-bold text-white transition-all shadow-md hover:shadow-[0_0_18px_rgba(217,119,6,0.45)]"
           >
             CHƠI NGAY
           </button>

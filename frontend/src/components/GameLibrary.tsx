@@ -91,9 +91,12 @@ export default function GameLibrary() {
   return (
     <div className="w-full max-w-5xl mx-auto space-y-5">
       {/* Header */}
-      <div className="text-center space-y-1 pt-1">
+      <div className="text-center space-y-2 pt-2">
         <h1 className="text-2xl sm:text-3xl font-black tracking-wide text-amber-100">🎲 THƯ VIỆN TRÒ CHƠI</h1>
         <p className="text-sm text-slate-400">Chọn một trò chơi và bắt đầu cuộc phiêu lưu.</p>
+        <div className="flex items-center justify-center gap-2 opacity-30 text-base">
+          <span>─────</span><span>✦</span><span>─────</span>
+        </div>
       </div>
 
       {/* Tìm kiếm & bộ lọc */}
