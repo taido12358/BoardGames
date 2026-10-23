@@ -77,7 +77,7 @@ export default function LocalPlayerPanel({ me, you }: Props) {
           {me.equipment.map((eq) => (
             <span
               key={eq}
-              className="inline-flex items-center gap-1 text-[11px] font-medium rounded-full bg-purple-900/50 border border-purple-700/40 px-2 py-0.5 text-purple-200"
+              className="inline-flex items-center gap-1 text-[11px] font-medium rounded-full border border-amber-800/40 bg-amber-950/40 px-2 py-0.5 text-amber-400/80 shadow-[inset_0_1px_2px_rgba(0,0,0,0.6)]"
             >
               {eq === "Thùng rượu" ? "🛢" : eq === "Ngựa" ? "🐎" : "🛡"} {eq}
             </span>
