@@ -25,10 +25,10 @@ export default function GameLogPanel({ log }: Props) {
   }, [log.length, open]);
 
   return (
-    <div className="rounded-xl bg-[#16120a] border border-amber-900/25 overflow-hidden shadow-inner">
+    <div className="rounded-xl bg-[#16120a] border border-amber-900/40 overflow-hidden shadow-inner">
       <button
         onClick={() => setOpen((o) => !o)}
-        className="w-full flex items-center justify-between px-3 py-2 text-[11px] uppercase tracking-widest text-amber-500/60 hover:bg-amber-900/10 font-medium"
+        className="w-full flex items-center justify-between px-3 py-2 text-[11px] uppercase tracking-widest text-amber-500/70 hover:bg-amber-900/15 font-medium"
       >
         <span>📜 Nhật ký {log.length > 0 && <span className="text-amber-600/80 normal-case">({log.length})</span>}</span>
         <span className="text-amber-700/60">{open ? "▾" : "▸"}</span>

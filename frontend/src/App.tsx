@@ -29,28 +29,28 @@ export default function App() {
             trên desktop (xem GameLibrary/GameDetails). Nội dung hẹp hơn (bàn cờ, form
             đăng nhập) tự căn giữa bên trong, không bị ảnh hưởng. */}
         <div className="relative z-10 w-full max-w-6xl mx-auto flex flex-col min-h-screen">
-          <header className="px-4 pt-4 pb-3 mb-1 shrink-0 flex items-center justify-between border-b border-slate-800/60">
+          <header className="px-4 pt-4 pb-3 mb-1 shrink-0 flex items-center justify-between border-b border-amber-900/30">
             <Link to="/games" className="text-2xl font-western tracking-wide text-amber-100 hover:text-amber-300 transition-colors drop-shadow-sm">🎲 BoardGame</Link>
             {user && (
               <div className="flex items-center gap-2 min-w-0">
                 <DisplayNameEditor displayName={user.displayName} email={user.email} />
                 <Link
                   to="/history"
-                  className="shrink-0 text-xs px-2.5 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-300"
+                  className="shrink-0 text-xs px-2.5 py-1.5 rounded-lg bg-amber-950/50 hover:bg-amber-900/60 border border-amber-900/40 text-amber-300/80 hover:text-amber-200 transition-colors"
                 >
                   📜 Lịch sử
                 </Link>
                 {isAdmin && (
                   <Link
                     to="/admin"
-                    className="shrink-0 text-xs px-2.5 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-300"
+                    className="shrink-0 text-xs px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300"
                   >
                     🛠 Quản trị
                   </Link>
                 )}
                 <button
                   onClick={logout}
-                  className="shrink-0 text-xs px-2.5 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-300"
+                  className="shrink-0 text-xs px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-400 hover:text-slate-200 transition-colors"
                 >
                   Đăng xuất
                 </button>
