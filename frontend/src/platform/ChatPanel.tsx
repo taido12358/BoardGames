@@ -85,13 +85,13 @@ export default function ChatPanel({ roomId }: { roomId: string }) {
               if (following.current) setHasNewMessages(false);
             }} className="max-h-56 overflow-y-auto px-4 py-2 space-y-1.5 focus-visible:outline focus-visible:outline-amber-400">
             {chatMessages.length === 0 && (
-              <p className="text-slate-500 text-xs text-center py-3">Chưa có tin nhắn nào.</p>
+              <p className="text-amber-900/40 text-xs text-center py-3 italic">Chưa có tin nhắn nào.</p>
             )}
             {chatMessages.map((m, i) => (
               <div key={i} className="text-sm">
                 <span className="text-amber-300 font-medium">{m.displayName}</span>{" "}
-                <span className="text-slate-500 text-xs">{formatTime(m.sentAt)}</span>
-                <div className="text-slate-200 break-words">{m.text}</div>
+                <span className="text-amber-700/50 text-xs">{formatTime(m.sentAt)}</span>
+                <div className="text-amber-100/80 break-words">{m.text}</div>
               </div>
             ))}
           </div>
