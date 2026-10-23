@@ -129,13 +129,13 @@ export default function OAnQuanBoard({ makeMove, onLeave, onRematch, rematching 
           <span className="text-amber-300 text-sm font-medium">🎯 Rải quân sang:</span>
           <button
             onClick={() => send(selectedPit, directionFor(side, "left"))}
-            className="rounded-lg bg-amber-700 hover:bg-amber-600 px-4 py-2 text-sm font-semibold"
+            className="relative rounded-lg bg-gradient-to-b from-amber-600 via-amber-700 to-amber-800 px-4 py-2 text-sm font-semibold text-amber-50 border-t border-amber-400/50 shadow-[0_3px_0_0_#451a03] transition-all hover:brightness-110 active:top-[1px] active:shadow-[0_1px_0_0_#451a03]"
           >
             ← Trái
           </button>
           <button
             onClick={() => send(selectedPit, directionFor(side, "right"))}
-            className="rounded-lg bg-amber-700 hover:bg-amber-600 px-4 py-2 text-sm font-semibold"
+            className="relative rounded-lg bg-gradient-to-b from-amber-600 via-amber-700 to-amber-800 px-4 py-2 text-sm font-semibold text-amber-50 border-t border-amber-400/50 shadow-[0_3px_0_0_#451a03] transition-all hover:brightness-110 active:top-[1px] active:shadow-[0_1px_0_0_#451a03]"
           >
             Phải →
           </button>
