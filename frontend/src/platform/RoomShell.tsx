@@ -86,7 +86,7 @@ export function RematchButton({ onRematch, loading }: { onRematch: () => void; l
     <button
       onClick={onRematch}
       disabled={loading}
-      className="w-full rounded-xl bg-emerald-700 hover:bg-emerald-600 active:bg-emerald-500 disabled:opacity-50 disabled:cursor-wait px-4 py-3 font-medium text-base transition-colors"
+      className="relative w-full rounded-lg bg-gradient-to-b from-amber-600 via-amber-700 to-amber-800 px-4 py-3 font-bold text-base text-amber-50 border-t border-amber-400/50 shadow-[0_4px_0_0_#451a03,0_8px_16px_rgba(0,0,0,0.5)] transition-all hover:brightness-110 active:top-[2px] active:shadow-[0_2px_0_0_#451a03] disabled:opacity-50 disabled:cursor-wait"
     >
       {loading ? "Đang tạo phòng…" : "🔄 CHƠI LẠI"}
     </button>

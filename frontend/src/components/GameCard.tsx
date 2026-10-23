@@ -32,7 +32,7 @@ export default function GameCard({ metadata: m, waitingRooms, onViewDetails, onP
     <div
       role="group"
       aria-label={m.title}
-      className={`group relative flex flex-col rounded-2xl border border-[#3a2c18]/60 bg-[#1a140c]
+      className={`group relative flex flex-col rounded-2xl border border-[#3a2c18]/80 bg-gradient-to-b from-[#1e1810] to-[#141009]
         shadow-lg transition-all duration-300 ease-out overflow-hidden
         hover:-translate-y-1.5 hover:ring-2 hover:shadow-2xl ${ACCENT_RING[m.accent]}`}
     >

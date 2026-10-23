@@ -39,11 +39,14 @@ export default function VictoryScreen({ state, onLeave, onRematch, rematching }:
   return (
     <div className="fixed inset-0 z-50 bg-black/88 flex items-center justify-center p-4">
       <div className={[
-        "w-full max-w-md rounded-2xl border-2 border-amber-700/60",
-        "bg-gradient-to-b from-[#2b2013] via-[#1c150c] to-[#120d08]",
-        "p-6 text-center space-y-4 shadow-2xl",
+        "w-full max-w-md rounded-2xl border border-amber-600/30 bg-amber-950/20 p-1 shadow-2xl",
         cfg.glow,
         OUTCOME_ENTER_CLASS[outcome],
+      ].join(" ")}>
+      <div className={[
+        "rounded-xl border border-amber-700/50",
+        "bg-gradient-to-b from-[#2b2013] via-[#1c150c] to-[#120d08]",
+        "p-6 text-center space-y-4",
       ].join(" ")}>
 
         {/* Icon + badge */}
@@ -102,6 +105,7 @@ export default function VictoryScreen({ state, onLeave, onRematch, rematching }:
             VỀ PHÒNG CHỜ
           </button>
         </div>
+      </div>
       </div>
     </div>
   );
