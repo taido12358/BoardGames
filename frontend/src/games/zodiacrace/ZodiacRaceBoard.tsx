@@ -127,11 +127,11 @@ export default function ZodiacRaceBoard({ makeMove, onLeave, onRematch, rematchi
             return (
               <div
                 key={t}
-                className={`w-10 h-14 shrink-0 rounded-lg border flex flex-col items-center justify-center text-[10px] ${
-                  isFinish ? "border-amber-400 bg-amber-900/30" : isCrate ? "border-lime-700 bg-lime-900/20" : "border-slate-700 bg-slate-800/40"
+                className={`w-10 h-14 shrink-0 rounded-lg border flex flex-col items-center justify-center text-[10px] shadow-inner ${
+                  isFinish ? "border-amber-400 bg-amber-900/30 shadow-[inset_0_0_8px_rgba(245,158,11,0.2)]" : isCrate ? "border-lime-700 bg-lime-900/20" : "border-purple-900/40 bg-[#110b20]"
                 }`}
               >
-                <span className="text-slate-500">{isFinish ? "🏁" : isCrate ? "📦" : t}</span>
+                <span className={isFinish || isCrate ? "text-base" : "text-purple-900/70 font-mono text-[9px]"}>{isFinish ? "🏁" : isCrate ? "📦" : t}</span>
                 <span className="text-sm">{cartsHere.map((i) => iconForSeat(i)).join("")}</span>
               </div>
             );
