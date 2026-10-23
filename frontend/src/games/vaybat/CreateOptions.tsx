@@ -5,14 +5,14 @@ export default function VayBatCreateOptions({ value, onChange }: CreateOptionsFo
   const maxRedTurns = typeof value.maxRedTurns === "number" ? value.maxRedTurns : 15;
   return (
     <div>
-      <label htmlFor="vaybat-max-red-turns" className="text-slate-400 text-xs uppercase tracking-wide">Giới hạn lượt Đỏ</label>
+      <label htmlFor="vaybat-max-red-turns" className="text-amber-700/60 text-[10px] font-bold uppercase tracking-widest">Giới Hạn Lượt Đỏ</label>
       <input
         id="vaybat-max-red-turns"
         type="number"
         min={1}
         value={maxRedTurns}
         onChange={(e) => onChange({ ...value, maxRedTurns: Math.max(1, parseInt(e.target.value) || 1) })}
-        className="w-full mt-1 rounded-xl bg-slate-800 border border-slate-700 px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-amber-500"
+        className="w-full mt-1.5 rounded-md border border-amber-900/50 bg-[#120c08] px-3 py-2.5 text-sm text-amber-100 shadow-[inset_0_2px_4px_rgba(0,0,0,0.7)] outline-none focus:border-amber-500/60 focus:shadow-[inset_0_2px_4px_rgba(0,0,0,0.7),0_0_8px_rgba(217,119,6,0.2)] placeholder:text-amber-900/40"
       />
     </div>
   );
