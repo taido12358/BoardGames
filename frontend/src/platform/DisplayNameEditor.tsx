@@ -58,9 +58,9 @@ export default function DisplayNameEditor({ displayName, email }: { displayName:
         type="button"
         onClick={startEdit}
         title="Bấm để đổi tên hiển thị"
-        className="text-sm text-slate-400 hover:text-slate-200 truncate max-w-[8rem] sm:max-w-none"
+        className="text-sm text-amber-200/70 hover:text-amber-100 truncate max-w-[8rem] sm:max-w-none transition-colors"
       >
-        {displayName} <span className="text-slate-600">✏️</span>
+        {displayName} <span className="text-amber-800/60 text-xs">✏</span>
       </button>
     );
   }
@@ -81,7 +81,7 @@ export default function DisplayNameEditor({ displayName, email }: { displayName:
         autoFocus
         aria-label="Tên hiển thị mới"
         title={email}
-        className="w-28 rounded-lg bg-slate-800 border border-slate-600 px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-amber-500"
+        className="w-28 rounded-lg bg-[#120c08] border border-amber-900/50 px-2 py-1 text-sm text-amber-100 shadow-[inset_0_2px_3px_rgba(0,0,0,0.7)] outline-none focus:border-amber-500/60 focus:shadow-[inset_0_2px_3px_rgba(0,0,0,0.7),0_0_8px_rgba(217,119,6,0.2)]"
       />
       <button
         type="button"
