@@ -288,10 +288,18 @@ export default function BangBoard({ makeMove, onLeave, onRematch, rematching }: 
         {state.pendingResponse && (
           <>
             <div className="w-px h-16 bg-amber-900/30" />
-            <div className="text-center text-xs text-red-300 bg-red-950/60 rounded-lg px-3 py-2 border border-red-800/40 max-w-[140px]">
-              <div className="font-bold mb-0.5">⏳ Đang chờ</div>
+            <div className="text-center text-xs text-red-300 bg-red-950/60 rounded-lg px-3 py-2 border border-red-800/40 max-w-[150px]">
+              <div className="font-bold mb-0.5">
+                {state.pendingResponse.kind === "bang" || state.pendingResponse.kind === "gatling" ? "🔫" :
+                 state.pendingResponse.kind === "duel" ? "⚔️" :
+                 state.pendingResponse.kind === "indians" ? "🏹" : "⏳"}{" "}
+                {state.pendingResponse.kind === "bang" ? "Bang!" :
+                 state.pendingResponse.kind === "gatling" ? "Gatling!" :
+                 state.pendingResponse.kind === "duel" ? "Đấu súng" :
+                 state.pendingResponse.kind === "indians" ? "Người da đỏ!" : "Đang chờ"}
+              </div>
               <div className="text-red-400/80 text-[10px]">
-                {state.pendingResponse.targetIds
+                → {state.pendingResponse.targetIds
                   .map((id) => state.players.find((p) => p.id === id)?.name ?? id)
                   .join(", ")}
               </div>
