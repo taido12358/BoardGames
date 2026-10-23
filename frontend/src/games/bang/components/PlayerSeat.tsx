@@ -69,13 +69,13 @@ export default function PlayerSeat({ player, isCurrentTurn, isMe, targetable, ta
       {/* Name row */}
       <div className="flex items-center justify-between gap-1">
         <div className="min-w-0 flex-1">
-          <div className="font-bold text-sm text-amber-100 truncate flex items-center gap-1">
+          <div className="font-bold text-sm text-[#f5d09d] truncate flex items-center gap-1">
             {isMe ? "BẠN" : player.name}
             {isCurrentTurn && (
               <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
             )}
           </div>
-          <div className="text-[10px] text-amber-200/60 truncate">
+          <div className="text-[10px] text-[#bba182]/60 truncate">
             {ROLE_ICON[player.publicRole] ?? "❓"} {player.publicRole}
           </div>
         </div>
@@ -92,7 +92,7 @@ export default function PlayerSeat({ player, isCurrentTurn, isMe, targetable, ta
       </div>
 
       {/* Weapon + card count */}
-      <div className="mt-1.5 flex items-center justify-between text-[10px] text-amber-200/70">
+      <div className="mt-1.5 flex items-center justify-between text-[10px] text-[#d4b996]/70">
         <span className={`rounded-sm px-0.5 -mx-0.5 ${weaponEquipped ? "animate-weapon-equip" : ""}`}>
           🔫 <span className="font-semibold">{player.weapon}</span>
           <span className="text-amber-300/50"> ·{player.weaponRange}</span>
@@ -106,7 +106,7 @@ export default function PlayerSeat({ player, isCurrentTurn, isMe, targetable, ta
           {player.equipment.map((eq) => (
             <span
               key={eq}
-              className="inline-flex items-center gap-0.5 text-[9px] rounded-full border border-amber-800/40 bg-amber-950/40 px-1.5 py-0.5 text-amber-400/80 shadow-[inset_0_1px_2px_rgba(0,0,0,0.6)]"
+              className="inline-flex items-center gap-0.5 text-[9px] rounded-sm border border-[#8b5a2b]/50 bg-[#3a2012]/80 px-1.5 py-0.5 text-[#e8c07e] shadow-inner"
             >
               {eq === "Thùng rượu" ? "🛢" : eq === "Ngựa" ? "🐎" : "🛡"} {eq}
             </span>
