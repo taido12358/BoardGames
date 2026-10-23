@@ -149,7 +149,7 @@ export default function GameLibrary() {
               className={`rounded-full px-3.5 py-1.5 text-xs font-medium border transition-colors ${
                 filter === chip.id
                   ? "bg-gradient-to-b from-amber-600 to-amber-800 border-amber-500/60 text-amber-50 shadow-[0_2px_0_0_#451a03]"
-                  : "bg-[#1a1208]/80 border-amber-900/40 text-amber-400/60 hover:bg-amber-950/60 hover:text-amber-300/80 hover:border-amber-700/50"
+                  : "rounded-md border border-amber-950/80 bg-[#140e0b]/90 text-amber-700/80 shadow-[inset_0_1px_3px_rgba(0,0,0,0.6)] hover:border-amber-700/60 hover:bg-[#1a120d] hover:text-amber-400 hover:shadow-[0_2px_8px_rgba(0,0,0,0.5)] active:scale-95 uppercase tracking-wider"
               }`}
             >
               {chip.label}
@@ -198,9 +198,15 @@ export default function GameLibrary() {
 
       {/* Lưới thẻ game */}
       {!enginesLoading && !enginesError && filtered.length > 0 && (
-        <p role="status" className="text-xs text-amber-600/50 uppercase tracking-widest text-center">
-          ─── {filtered.length} trò chơi ───
-        </p>
+        <div role="status" className="flex items-center gap-3 py-1 text-xs uppercase tracking-widest text-amber-600/70">
+          <span className="h-px flex-1 bg-gradient-to-r from-transparent via-amber-900/40 to-amber-900/20" />
+          <div className="flex items-center gap-1.5">
+            <span>Tìm thấy{" "}</span>
+            <span className="rounded border border-amber-800/40 bg-amber-950/60 px-1.5 py-0.5 font-mono text-xs font-bold text-amber-300 shadow-[inset_0_1px_2px_rgba(0,0,0,0.7)]">{filtered.length}</span>
+            {" "}<span>trò chơi</span>
+          </div>
+          <span className="h-px flex-1 bg-gradient-to-l from-transparent via-amber-900/40 to-amber-900/20" />
+        </div>
       )}
       {!enginesLoading && !enginesError && filtered.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
