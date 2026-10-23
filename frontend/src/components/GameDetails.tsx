@@ -162,7 +162,7 @@ export default function GameDetails() {
       {myActiveRoom && (
         <button
           onClick={() => handleJoin(myActiveRoom.id)}
-          className="w-full rounded-xl bg-indigo-700 hover:bg-indigo-600 px-4 py-3 font-bold text-white transition-colors"
+          className="relative w-full rounded-lg bg-gradient-to-b from-amber-600 via-amber-700 to-amber-800 px-4 py-3 font-bold text-amber-50 border-t border-amber-400/50 shadow-[0_4px_0_0_#451a03,0_8px_16px_rgba(0,0,0,0.5)] transition-all hover:brightness-110 active:top-[2px] active:shadow-[0_2px_0_0_#451a03]"
         >
           ↩ VÀO LẠI VÁN ĐANG CHƠI
         </button>
@@ -227,7 +227,7 @@ export default function GameDetails() {
                     )}
                     <button
                       onClick={() => handleJoin(r.id)}
-                      className="rounded-lg bg-indigo-600 hover:bg-indigo-500 px-3.5 py-2 text-sm font-semibold text-white"
+                      className="rounded-lg bg-emerald-700 hover:bg-emerald-600 border border-emerald-600/40 px-3.5 py-2 text-sm font-semibold text-emerald-50 transition-colors"
                     >
                       VÀO PHÒNG
                     </button>
