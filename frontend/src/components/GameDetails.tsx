@@ -244,19 +244,19 @@ export default function GameDetails() {
 
       {/* Tạo phòng / Vào phòng */}
       <div ref={roomPanelRef} role="region" aria-label="Tạo và vào phòng" tabIndex={-1} className="space-y-3 scroll-mt-4">
-        <h2 className="text-lg font-bold text-amber-100 [text-shadow:0_1px_0_rgba(255,255,255,0.1),0_2px_4px_rgba(0,0,0,0.8)]">🚪 CHƠI {metadata.title}</h2>
+        <h2 className="text-lg font-bold text-[#f5d09d] uppercase tracking-widest [text-shadow:0_1px_0_rgba(255,255,255,0.1),0_2px_4px_rgba(0,0,0,0.8)]">🚪 CHƠI {metadata.title}</h2>
         {error && <div role="alert" className="rounded-xl bg-red-900/40 p-3 text-sm text-red-300">{error}</div>}
 
         <fieldset disabled={busy} aria-busy={busy} className="min-w-0 rounded-2xl border border-amber-700/40 bg-[#1c150c] p-4 space-y-3">
-          <h3 className="text-sm font-semibold text-amber-200">TẠO PHÒNG MỚI</h3>
-          <p className="text-xs text-amber-700/60">Bạn sẽ vào phòng với tên: <span className="text-amber-200 font-medium">{playerName}</span></p>
+          <h3 className="text-sm font-bold text-[#f5d09d] uppercase tracking-widest">TẠO PHÒNG MỚI</h3>
+          <p className="text-xs text-[#bba182]">Bạn sẽ vào phòng với tên: <span className="text-[#f5d09d] font-semibold">{playerName}</span></p>
 
           {CreateOptionsForm && <CreateOptionsForm value={options} onChange={setOptions} />}
 
           <button
             onClick={handleCreate}
             disabled={creating}
-            className="w-full rounded-xl border border-amber-900/40 bg-[#1a1208] hover:bg-[#241a0e] disabled:opacity-50 px-4 py-3 text-sm font-bold uppercase tracking-wide text-amber-300/80 hover:text-amber-200 transition-colors shadow-[inset_0_1px_3px_rgba(0,0,0,0.6)]"
+            className="w-full rounded-sm border border-[#6b4725]/60 bg-[#22140c]/90 hover:bg-[#2c1a10] disabled:opacity-50 px-4 py-3 text-sm font-bold uppercase tracking-widest text-[#bba182] hover:text-[#f3d4a2] hover:border-[#b47a3c]/80 transition-colors shadow-[inset_0_1px_2px_rgba(0,0,0,0.6)]"
           >
             {creating ? "ĐANG TẠO…" : "➕ TẠO PHÒNG"}
           </button>
@@ -271,8 +271,8 @@ export default function GameDetails() {
         </fieldset>
 
         <div className="rounded-2xl border border-amber-900/30 bg-[#160f08]/60 p-4">
-          <h3 className="text-sm font-semibold text-amber-300/70 mb-2 uppercase tracking-widest">
-            Phòng Đang Chờ {waitingRooms.length > 0 && <span className="text-amber-700/60">({waitingRooms.length})</span>}
+          <h3 className="text-sm font-bold text-[#bba182] mb-2 uppercase tracking-widest">
+            Phòng Đang Chờ {waitingRooms.length > 0 && <span className="text-[#e8c07e]/60">({waitingRooms.length})</span>}
           </h3>
           <LobbyLoadStatus loading={roomsLoading} error={roomsError} onRetry={() => fetchRooms(gameKey)} />
           {!roomsLoading && !roomsError && waitingRooms.length === 0 && (
