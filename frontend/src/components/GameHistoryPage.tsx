@@ -54,9 +54,12 @@ export default function GameHistoryPage() {
 
   return (
     <div className="w-full max-w-5xl mx-auto space-y-5">
-      <div className="text-center space-y-1 pt-1">
+      <div className="text-center space-y-2 pt-2">
         <h1 className="text-2xl sm:text-3xl font-black tracking-wide text-amber-100">📜 LỊCH SỬ VÁN ĐẤU</h1>
         <p className="text-sm text-slate-400">Tìm theo tên người chơi, người thắng, hoặc trạng thái ván.</p>
+        <div className="flex items-center justify-center gap-2 opacity-30 text-base">
+          <span>─────</span><span>✦</span><span>─────</span>
+        </div>
       </div>
 
       <input

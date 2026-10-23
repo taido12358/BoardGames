@@ -53,7 +53,7 @@ export default function GameReplayPage() {
     <div className="w-full max-w-3xl mx-auto space-y-5">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl sm:text-3xl font-black tracking-wide text-amber-100">🎬 XEM LẠI VÁN ĐẤU</h1>
-        <Link to="/history" className="text-sm text-slate-400 hover:text-slate-200">
+        <Link to="/history" className="text-sm text-amber-400/70 hover:text-amber-300 transition-colors">
           ← Lịch sử
         </Link>
       </div>
