@@ -7,7 +7,7 @@ export default function BangCreateOptions({ value, onChange }: CreateOptionsForm
     <div>
       {/* Nhóm nút chọn 1-trong-N, không phải input đơn lẻ — dùng role="group" + aria-labelledby
           thay vì <label> (label không có "for" chỏ tới input thì screen reader bỏ qua). */}
-      <span id="bang-seat-count-label" className="text-amber-700/60 text-[10px] font-bold uppercase tracking-widest">Số Người Tối Đa</span>
+      <span id="bang-seat-count-label" className="text-amber-700/60 text-[10px] font-bold uppercase tracking-widest">Số người tối đa</span>
       <div role="group" aria-labelledby="bang-seat-count-label" className="mt-1.5 grid grid-cols-5 gap-1.5">
         {[4, 5, 6, 7, 8].map((n) => (
           <button

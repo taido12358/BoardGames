@@ -7,7 +7,7 @@ export default function ZodiacRaceCreateOptions({ value, onChange }: CreateOptio
     <div>
       {/* Nhóm nút chọn 1-trong-N, không phải input đơn lẻ — dùng role="group" + aria-labelledby
           thay vì <label> (label không có "for" chỏ tới input thì screen reader bỏ qua). */}
-      <span id="zodiacrace-seat-count-label" className="text-amber-700/60 text-[10px] font-bold uppercase tracking-widest">Số Người Chơi</span>
+      <span id="zodiacrace-seat-count-label" className="text-amber-700/60 text-[10px] font-bold uppercase tracking-widest">Số người chơi</span>
       <div role="group" aria-labelledby="zodiacrace-seat-count-label" className="mt-1.5 grid grid-cols-5 gap-1.5">
         {[2, 3, 4, 5, 6].map((n) => (
           <button
