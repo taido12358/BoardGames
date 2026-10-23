@@ -27,7 +27,7 @@ export default function HandFan({ hand, selectedId, selectedIds, playable, onSel
       className={[
         "flex overflow-x-auto pb-3 pt-1 px-3 -mx-1 rounded-xl",
         "bg-gradient-to-b from-[#1a1208] to-[#130e06]",
-        "border border-amber-900/20 shadow-inner",
+        "border border-amber-900/40 shadow-inner shadow-black/50",
         justDrew ? "animate-card-draw" : "",
       ].join(" ")}
     >

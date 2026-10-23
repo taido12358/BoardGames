@@ -73,7 +73,7 @@ export function LeaveRoomButton({ onLeave, label = "← Rời phòng" }: { onLea
   return (
     <button
       onClick={onLeave}
-      className="w-full rounded-xl bg-slate-700 hover:bg-slate-600 active:bg-slate-500 px-4 py-3 font-medium text-base transition-colors"
+      className="w-full rounded-xl bg-slate-800 hover:bg-slate-700 active:bg-slate-600 border border-slate-700/60 px-4 py-3 font-medium text-base text-slate-300 hover:text-slate-100 transition-colors"
     >
       {label}
     </button>
