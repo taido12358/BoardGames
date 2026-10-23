@@ -92,22 +92,27 @@ export default function GameHistoryPage() {
       {!loading && !error && records.length > 0 && (
         <div className="overflow-x-auto rounded-2xl border border-amber-900/30">
           <table className="w-full text-sm">
-            <thead className="bg-gradient-to-r from-[#2b2013] to-[#1c150c] text-amber-400/70 text-xs uppercase border-b border-amber-900/30">
+            <thead className="border-b border-amber-900/60 bg-[#120b07] text-[11px] font-western uppercase tracking-widest text-amber-700/80 [text-shadow:0_1px_0_rgba(255,255,255,0.04)]">
               <tr>
-                <th className="text-left px-3 py-2.5">Game</th>
-                <th className="text-left px-3 py-2.5">Người chơi</th>
-                <th className="text-left px-3 py-2.5">Thắng</th>
-                <th className="text-left px-3 py-2.5">Số nước đi</th>
-                <th className="text-left px-3 py-2.5">Kết thúc lúc</th>
-                <th className="text-left px-3 py-2.5"></th>
+                <th className="text-left px-3 py-3">Game</th>
+                <th className="text-left px-3 py-3">Người chơi</th>
+                <th className="text-left px-3 py-3">Thắng</th>
+                <th className="text-left px-3 py-3">Số nước đi</th>
+                <th className="text-left px-3 py-3">Kết thúc lúc</th>
+                <th className="text-left px-3 py-3"></th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-amber-900/20">
+            <tbody className="divide-y divide-amber-950/40">
               {records.map((r) => (
-                <tr key={r.id} className="hover:bg-amber-950/20">
+                <tr key={r.id} className="group odd:bg-[#140e0a] even:bg-[#18110c] transition-colors duration-150 hover:bg-gradient-to-r hover:from-amber-950/30 hover:via-amber-900/20 hover:to-transparent">
                   <td className="px-3 py-2 font-medium text-amber-200">{r.gameKey}</td>
                   <td className="px-3 py-2 text-amber-300/70">{r.players || "—"}</td>
-                  <td className="px-3 py-2 text-amber-400/60">{r.winner ?? "—"}</td>
+                  <td className="px-3 py-2">
+                    {r.winner
+                      ? <span className="text-amber-300 font-semibold drop-shadow-[0_0_6px_rgba(245,158,11,0.3)]">{r.winner}</span>
+                      : <span className="text-red-600/70">—</span>
+                    }
+                  </td>
                   <td className="px-3 py-2 text-amber-400/60 font-mono">{r.moveCount}</td>
                   <td className="px-3 py-2 text-amber-700/50 text-xs font-mono">{formatTime(r.finishedAt)}</td>
                   <td className="px-3 py-2">
