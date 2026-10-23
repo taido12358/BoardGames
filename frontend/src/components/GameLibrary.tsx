@@ -151,10 +151,10 @@ export default function GameLibrary() {
               type="button"
               onClick={() => setFilter(chip.id)}
               aria-pressed={filter === chip.id}
-              className={`px-3.5 py-1.5 text-xs font-semibold border transition-all duration-150 uppercase tracking-widest ${
+              className={`px-3.5 py-1.5 text-xs font-bold border transition-all duration-150 uppercase tracking-wider rounded-sm ${
                 filter === chip.id
-                  ? "rounded-sm bg-gradient-to-b from-[#f3c87f] via-[#c6893f] to-[#8d5218] border-t border-[#ffe3aa] border-b-2 border-[#542d09] text-[#1a0c04] shadow-[0_3px_8px_rgba(0,0,0,0.6)] active:translate-y-px"
-                  : "rounded-sm border-[#8b5a2b]/40 bg-[#2a1608]/80 text-[#b47a3c] shadow-[inset_0_1px_3px_rgba(0,0,0,0.6)] hover:border-[#b47a3c]/60 hover:bg-[#3a2010]/80 hover:text-[#e8c07e] active:scale-95"
+                  ? "font-extrabold text-[#241106] bg-gradient-to-b from-[#f3c87f] via-[#d49445] to-[#99581a] border-t border-[#ffebbe] border-b-2 border-[#542a07] shadow-[0_2px_10px_rgba(217,119,6,0.35),0_1px_2px_rgba(0,0,0,0.8)] active:translate-y-px"
+                  : "text-[#bba182] bg-[#22140c]/90 border-[#6b4725]/60 shadow-[inset_0_1px_2px_rgba(0,0,0,0.6)] hover:border-[#b47a3c]/80 hover:text-[#f3d4a2] hover:bg-[#2c1a10] active:scale-95"
               }`}
             >
               {chip.label}
