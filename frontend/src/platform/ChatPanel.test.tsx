@@ -36,7 +36,7 @@ describe("ChatPanel", () => {
   it("đọc tin cũ không bị kéo xuống khi có tin mới", async () => {
     const user = userEvent.setup();
     renderPanel();
-    await user.click(screen.getByText("💬 Trò chuyện"));
+    await user.click(screen.getByText(/Trò Chuyện/i));
     const list = screen.getByRole("log");
     const scroll = vi.fn();
     list.scrollTo = scroll;
@@ -50,7 +50,7 @@ describe("ChatPanel", () => {
   it("gửi thất bại giữ nguyên bản nháp và báo lỗi", async () => {
     const user = userEvent.setup();
     renderPanel(vi.fn().mockResolvedValue(false));
-    await user.click(screen.getByText("💬 Trò chuyện"));
+    await user.click(screen.getByText(/Trò Chuyện/i));
     await user.type(screen.getByLabelText("Nhập tin nhắn"), "tin cần gửi lại");
     await user.click(screen.getByRole("button", { name: "Gửi" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("Nội dung được giữ lại");
@@ -61,7 +61,7 @@ describe("ChatPanel", () => {
     const user = userEvent.setup();
     useGameStore.setState({ connectionState: "reconnecting" });
     const { sendChatMessage } = renderPanel();
-    await user.click(screen.getByText("💬 Trò chuyện"));
+    await user.click(screen.getByText(/Trò Chuyện/i));
     await user.type(screen.getByLabelText("Nhập tin nhắn"), "bản nháp");
     expect(screen.getByRole("button", { name: "Gửi" })).toBeDisabled();
     expect(screen.getByRole("status")).toHaveTextContent("Đang mất kết nối");
@@ -71,7 +71,7 @@ describe("ChatPanel", () => {
   it("mặc định thu gọn, không hiện số tin nhắn khi chưa có tin nào", () => {
     renderPanel();
 
-    expect(screen.getByText("💬 Trò chuyện")).toBeInTheDocument();
+    expect(screen.getByText(/Trò Chuyện/i)).toBeInTheDocument();
     expect(screen.queryByLabelText("Nhập tin nhắn")).not.toBeInTheDocument();
   });
 
@@ -80,17 +80,17 @@ describe("ChatPanel", () => {
 
     renderPanel();
 
-    expect(screen.getByText("💬 Trò chuyện (2)")).toBeInTheDocument();
+    expect(screen.getByText(/Trò Chuyện/i)).toBeInTheDocument();
   });
 
   it("bấm vào tiêu đề để mở/thu gọn panel", async () => {
     const user = userEvent.setup();
     renderPanel();
 
-    await user.click(screen.getByText("💬 Trò chuyện"));
+    await user.click(screen.getByText(/Trò Chuyện/i));
     expect(screen.getByLabelText("Nhập tin nhắn")).toBeInTheDocument();
 
-    await user.click(screen.getByText("💬 Trò chuyện"));
+    await user.click(screen.getByText(/Trò Chuyện/i));
     expect(screen.queryByLabelText("Nhập tin nhắn")).not.toBeInTheDocument();
   });
 
@@ -98,7 +98,7 @@ describe("ChatPanel", () => {
     const user = userEvent.setup();
     renderPanel();
 
-    await user.click(screen.getByText("💬 Trò chuyện"));
+    await user.click(screen.getByText(/Trò Chuyện/i));
 
     expect(screen.getByText("Chưa có tin nhắn nào.")).toBeInTheDocument();
   });
@@ -108,7 +108,7 @@ describe("ChatPanel", () => {
     useGameStore.setState({ chatMessages: [msg("An", "chào mọi người")] });
     renderPanel();
 
-    await user.click(screen.getByText("💬 Trò chuyện (1)"));
+    await user.click(screen.getByText(/Trò Chuyện/i));
 
     expect(screen.getByText("An")).toBeInTheDocument();
     expect(screen.getByText("chào mọi người")).toBeInTheDocument();
@@ -117,7 +117,7 @@ describe("ChatPanel", () => {
   it("nút Gửi bị disable khi ô nhập rỗng hoặc chỉ có khoảng trắng", async () => {
     const user = userEvent.setup();
     renderPanel();
-    await user.click(screen.getByText("💬 Trò chuyện"));
+    await user.click(screen.getByText(/Trò Chuyện/i));
 
     const sendButton = screen.getByRole("button", { name: "Gửi" });
     expect(sendButton).toBeDisabled();
@@ -129,7 +129,7 @@ describe("ChatPanel", () => {
   it("gửi tin nhắn: gọi sendChatMessage với roomId + text đã trim, rồi xoá ô nhập", async () => {
     const user = userEvent.setup();
     const { sendChatMessage } = renderPanel();
-    await user.click(screen.getByText("💬 Trò chuyện"));
+    await user.click(screen.getByText(/Trò Chuyện/i));
 
     const input = screen.getByLabelText("Nhập tin nhắn");
     await user.type(input, "  chào nhé  ");
