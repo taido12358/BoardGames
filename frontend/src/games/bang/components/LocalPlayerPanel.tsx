@@ -22,7 +22,7 @@ function HpBullets({ hp, maxHp }: { hp: number; maxHp: number }) {
           <div
             key={i}
             aria-hidden="true"
-            className="h-5 w-2 rounded-t-sm border border-dashed border-amber-900/40 bg-stone-900/60 opacity-30"
+            className="h-5 w-2 rounded-t-sm border border-dashed border-amber-900/40 bg-[#1a1208]/60 opacity-30"
           />
         )
       ))}
@@ -48,12 +48,12 @@ export default function LocalPlayerPanel({ me, you }: Props) {
       <div className="flex items-start justify-between gap-2">
         <div>
           <div className="text-[10px] text-amber-400/70 uppercase tracking-widest font-medium">Người chơi</div>
-          <div className="font-bold text-base text-amber-100 leading-tight">{me.name}</div>
-          <div className="text-xs text-amber-300/60">{me.character}</div>
+          <div className="font-bold text-base text-[#f5d09d] leading-tight">{me.name}</div>
+          <div className="text-xs text-[#d4b996]/60">{me.character}</div>
         </div>
         <div className="text-right bg-amber-900/30 rounded-lg px-2.5 py-1.5 border border-amber-700/30">
-          <div className="text-[10px] text-amber-400/70 uppercase tracking-wide">Vai trò</div>
-          <div className="font-bold text-sm text-amber-200">{you.roleDisplay}</div>
+          <div className="text-[10px] text-[#bba182] uppercase tracking-wide">Vai trò</div>
+          <div className="font-bold text-sm text-[#e8c07e]">{you.roleDisplay}</div>
         </div>
       </div>
 
@@ -61,12 +61,12 @@ export default function LocalPlayerPanel({ me, you }: Props) {
       <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-1.5">
         <HpBullets hp={me.hp} maxHp={me.maxHp} />
 
-        <div className={`flex items-center gap-1 text-sm text-amber-200 rounded -mx-0.5 px-0.5 ${weaponEquipped ? "animate-weapon-equip" : ""}`}>
+        <div className={`flex items-center gap-1 text-sm text-[#d4b996] rounded -mx-0.5 px-0.5 ${weaponEquipped ? "animate-weapon-equip" : ""}`}>
           🔫 <span className="font-semibold">{you.weapon}</span>
           <span className="text-amber-400/50 text-xs">· tầm {you.weaponRange}</span>
         </div>
 
-        <div className="flex items-center gap-1 text-sm text-amber-200">
+        <div className="flex items-center gap-1 text-sm text-[#d4b996]">
           🃏 <span className="font-semibold">{you.hand.length}</span>
           <span className="text-amber-400/50 text-xs">lá bài</span>
         </div>
@@ -77,7 +77,7 @@ export default function LocalPlayerPanel({ me, you }: Props) {
           {me.equipment.map((eq) => (
             <span
               key={eq}
-              className="inline-flex items-center gap-1 text-[11px] font-medium rounded-full border border-amber-800/40 bg-amber-950/40 px-2 py-0.5 text-amber-400/80 shadow-[inset_0_1px_2px_rgba(0,0,0,0.6)]"
+              className="inline-flex items-center gap-1 text-[11px] font-medium rounded-sm border border-[#8b5a2b]/50 bg-[#3a2012]/80 px-2 py-0.5 text-[#e8c07e] shadow-inner"
             >
               {eq === "Thùng rượu" ? "🛢" : eq === "Ngựa" ? "🐎" : "🛡"} {eq}
             </span>
