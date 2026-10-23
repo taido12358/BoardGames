@@ -55,7 +55,7 @@ export default function ChatPanel({ roomId }: { roomId: string }) {
   }
 
   return (
-    <div className="w-full max-w-2xl mx-auto rounded-2xl border border-slate-800 bg-slate-900/60 overflow-hidden">
+    <div className="w-full max-w-2xl mx-auto rounded-2xl border border-amber-900/30 bg-[#16120a] overflow-hidden shadow-inner">
       <button
         type="button"
         aria-expanded={open}
@@ -65,14 +65,14 @@ export default function ChatPanel({ roomId }: { roomId: string }) {
           setHasNewMessages(false);
           setOpen((v) => !v);
         }}
-        className="w-full flex items-center justify-between px-4 py-2.5 text-sm font-medium text-slate-300 hover:bg-slate-800/60"
+        className="w-full flex items-center justify-between px-4 py-2.5 text-[11px] uppercase tracking-widest text-amber-500/70 hover:bg-amber-900/15 font-medium"
       >
-        <span>💬 Trò chuyện{chatMessages.length > 0 ? ` (${chatMessages.length})` : ""}</span>
-        <span className="text-slate-500">{open ? "▲" : "▼"}</span>
+        <span>💬 Trò Chuyện{chatMessages.length > 0 ? <span className="text-amber-600/80 normal-case ml-1">({chatMessages.length})</span> : ""}</span>
+        <span className="text-amber-700/60">{open ? "▾" : "▸"}</span>
       </button>
 
       {open && (
-        <div id={panelId} className="border-t border-slate-800">
+        <div id={panelId} className="border-t border-amber-900/30">
           {hasNewMessages && <button type="button" onClick={() => {
             following.current = true;
             setHasNewMessages(false);
@@ -97,7 +97,7 @@ export default function ChatPanel({ roomId }: { roomId: string }) {
           </div>
           {connectionState !== "connected" && <p role="status" className="px-3 py-2 text-xs text-amber-300">Đang mất kết nối. Bạn có thể soạn tin và gửi khi kết nối trở lại.</p>}
           {sendError && <p role="alert" className="px-3 py-2 text-xs text-red-300">{sendError}</p>}
-          <form onSubmit={handleSend} aria-busy={sending} className="flex gap-2 px-3 py-2.5 border-t border-slate-800">
+          <form onSubmit={handleSend} aria-busy={sending} className="flex gap-2 px-3 py-2.5 border-t border-amber-900/30">
             <input
               type="text"
               disabled={sending}
@@ -106,12 +106,12 @@ export default function ChatPanel({ roomId }: { roomId: string }) {
               maxLength={500}
               placeholder="Nhắn gì đó…"
               aria-label="Nhập tin nhắn"
-              className="min-w-0 flex-1 rounded-lg bg-slate-800 border border-slate-700 px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-amber-500 placeholder:text-slate-500"
+              className="min-w-0 flex-1 rounded-lg bg-[#120c08] border border-amber-900/50 px-3 py-1.5 text-sm text-amber-100 shadow-[inset_0_2px_3px_rgba(0,0,0,0.7)] outline-none focus:border-amber-500/60 focus:shadow-[inset_0_2px_3px_rgba(0,0,0,0.7),0_0_6px_rgba(217,119,6,0.2)] placeholder:text-amber-900/40"
             />
             <button
               type="submit"
               disabled={!text.trim() || sending || connectionState !== "connected"}
-              className="shrink-0 rounded-lg bg-amber-700 hover:bg-amber-600 disabled:opacity-40 disabled:cursor-not-allowed px-3 py-1.5 text-sm font-medium"
+              className="relative shrink-0 rounded-lg bg-gradient-to-b from-amber-600 via-amber-700 to-amber-800 border-t border-amber-400/40 shadow-[0_2px_0_0_#451a03] hover:brightness-110 active:top-[1px] active:shadow-none disabled:opacity-40 disabled:cursor-not-allowed px-3 py-1.5 text-sm font-medium text-amber-50"
             >
               {sending ? "Đang gửi…" : "Gửi"}
             </button>
