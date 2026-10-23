@@ -41,7 +41,8 @@ function RolesSection({ roles }: { roles: Extract<InstructionSection, { kind: "r
       </p>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {roles.map((r) => (
-          <div key={r.name} className="rounded-xl border border-slate-700 bg-slate-800/60 p-3.5">
+          <div key={r.name} className="relative overflow-hidden rounded-xl border border-amber-900/40 bg-[#1a1208] p-3.5">
+              <div className="pointer-events-none absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-amber-500/20 to-transparent" />
             <div className="flex items-center justify-between">
               <div className="font-bold text-amber-100 flex items-center gap-1.5">
                 <span>{r.icon}</span> {r.name}
@@ -97,7 +98,8 @@ function CharactersSection({ characters }: { characters: Extract<InstructionSect
       <p className="text-xs text-slate-500">Thông tin nhân vật LUÔN công khai — vai trò ẩn là chuyện khác, xem tab VAI TRÒ.</p>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {characters.map((c) => (
-          <div key={c.name} className="rounded-xl border border-slate-700 bg-slate-800/60 p-3.5 flex gap-3">
+          <div key={c.name} className="relative overflow-hidden rounded-xl border border-amber-900/40 bg-[#1a1208] p-3.5 flex gap-3">
+            <div className="pointer-events-none absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-amber-500/20 to-transparent" />
             <div className="shrink-0 w-12 h-12 rounded-full bg-gradient-to-b from-amber-800 to-amber-950 border border-amber-600/50 flex items-center justify-center text-lg font-black text-amber-200">
               {c.name[0]}
             </div>
@@ -148,7 +150,7 @@ export default function GameInstructions({ sections }: Props) {
 
   return (
     <div>
-      <div role="tablist" aria-label="Mục hướng dẫn" className="flex flex-wrap gap-1.5 border-b border-amber-900/30 pb-3 mb-4">
+      <div role="tablist" aria-label="Mục hướng dẫn" className="flex flex-wrap gap-1 rounded-lg border border-amber-950/80 bg-[#100a07] p-1.5 mb-4 shadow-[inset_0_2px_5px_rgba(0,0,0,0.8)]">
         {sections.map((s) => (
           <button
             key={s.id}
@@ -174,8 +176,8 @@ export default function GameInstructions({ sections }: Props) {
             }}
             className={`rounded-lg px-3 py-2.5 text-xs font-semibold uppercase tracking-wide transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-300 ${
               s.id === section.id
-                ? "bg-gradient-to-b from-amber-600 to-amber-800 text-amber-50 shadow-[0_2px_0_0_#451a03] border-t border-amber-400/40"
-                : "bg-slate-800/70 text-slate-400 hover:bg-slate-700 hover:text-slate-200"
+                ? "relative border-t border-amber-400/40 bg-gradient-to-b from-amber-700/80 via-amber-800 to-amber-950 text-amber-100 shadow-[0_2px_6px_rgba(0,0,0,0.6),0_0_12px_rgba(217,119,6,0.25)]"
+                : "text-amber-700/70 hover:bg-amber-950/40 hover:text-amber-400 active:scale-95"
             }`}
           >
             {s.label}

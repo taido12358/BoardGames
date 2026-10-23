@@ -171,31 +171,29 @@ export default function GameDetails() {
           </div>
 
           <div className="grid grid-cols-2 gap-2 text-sm">
-            <div className="rounded-xl bg-slate-800/60 border border-slate-700 px-3 py-2">
-              <div className="text-[10px] text-slate-500 uppercase">👥 Người chơi</div>
-              <div className="font-semibold text-slate-200">
-                {metadata.minPlayers === metadata.maxPlayers ? `${metadata.minPlayers} người` : `${metadata.minPlayers}–${metadata.maxPlayers} người`}
+            {[
+              { icon: "👥", label: "Người chơi", value: metadata.minPlayers === metadata.maxPlayers ? `${metadata.minPlayers} người` : `${metadata.minPlayers}–${metadata.maxPlayers} người` },
+              { icon: "⏱", label: "Thời gian", value: metadata.duration },
+              { icon: "🎯", label: "Độ khó", value: metadata.difficulty },
+              { icon: "🏆", label: "Thể loại", value: metadata.category.join(" / ") || "—" },
+            ].map(({ icon, label, value }) => (
+              <div key={label} className="relative overflow-hidden rounded-lg border border-amber-800/40 bg-gradient-to-b from-[#1c130d] to-[#120b07] p-3 shadow-[inset_0_1px_0_rgba(245,158,11,0.15),0_4px_12px_rgba(0,0,0,0.6)]">
+                <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-amber-500/30 to-transparent" />
+                <div className="text-[10px] font-bold uppercase tracking-widest text-amber-700/90 [text-shadow:0_1px_0_rgba(255,255,255,0.05)]">{icon} {label}</div>
+                <div className="mt-0.5 font-semibold text-amber-200 truncate [text-shadow:0_1px_2px_rgba(0,0,0,0.9),0_0_8px_rgba(245,158,11,0.2)]">{value}</div>
               </div>
-            </div>
-            <div className="rounded-xl bg-slate-800/60 border border-slate-700 px-3 py-2">
-              <div className="text-[10px] text-slate-500 uppercase">⏱ Thời gian</div>
-              <div className="font-semibold text-slate-200">{metadata.duration}</div>
-            </div>
-            <div className="rounded-xl bg-slate-800/60 border border-slate-700 px-3 py-2">
-              <div className="text-[10px] text-slate-500 uppercase">🎯 Độ khó</div>
-              <div className="font-semibold text-slate-200">{metadata.difficulty}</div>
-            </div>
-            <div className="rounded-xl bg-slate-800/60 border border-slate-700 px-3 py-2">
-              <div className="text-[10px] text-slate-500 uppercase">🏆 Thể loại</div>
-              <div className="font-semibold text-slate-200 truncate">{metadata.category.join(" / ") || "—"}</div>
-            </div>
+            ))}
           </div>
 
           <button
             onClick={scrollToRoomPanel}
-            className="relative hidden sm:block w-full rounded-lg bg-gradient-to-b from-amber-600 via-amber-700 to-amber-800 px-4 py-3 font-bold text-amber-50 border-t border-amber-400/50 shadow-[0_4px_0_0_#451a03,0_8px_16px_rgba(0,0,0,0.5)] transition-all hover:brightness-110 active:top-[2px] active:shadow-[0_2px_0_0_#451a03]"
+            className="group relative hidden sm:block w-full overflow-hidden rounded-lg border-t border-amber-300/60 bg-gradient-to-b from-amber-500 via-amber-600 to-amber-800 py-3 px-6 text-sm font-black uppercase tracking-widest text-[#2a1305] shadow-[0_5px_0_0_#451a03,0_10px_20px_rgba(0,0,0,0.8)] transition-all duration-100 hover:brightness-110 active:translate-y-1 active:shadow-[0_1px_0_0_#451a03,0_4px_8px_rgba(0,0,0,0.6)]"
           >
-            CHƠI NGAY
+            <div className="pointer-events-none absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/15 to-transparent" />
+            <span className="relative flex items-center justify-center gap-2 [text-shadow:0_1px_0_rgba(255,255,255,0.3)]">
+              <span>CHƠI NGAY</span>
+              <span className="transition-transform duration-200 group-hover:translate-x-1">➔</span>
+            </span>
           </button>
         </div>
       </div>
@@ -218,7 +216,7 @@ export default function GameDetails() {
       {myActiveRoom && (
         <button
           onClick={() => handleJoin(myActiveRoom.id)}
-          className="relative w-full rounded-lg bg-gradient-to-b from-amber-600 via-amber-700 to-amber-800 px-4 py-3 font-bold text-amber-50 border-t border-amber-400/50 shadow-[0_4px_0_0_#451a03,0_8px_16px_rgba(0,0,0,0.5)] transition-all hover:brightness-110 active:top-[2px] active:shadow-[0_2px_0_0_#451a03]"
+          className="relative w-full rounded-lg bg-gradient-to-b from-amber-600 via-amber-700 to-amber-800 px-4 py-3 font-bold text-amber-50 border-t border-amber-400/50 shadow-[0_4px_0_0_#451a03,0_8px_16px_rgba(0,0,0,0.5)] transition-all hover:brightness-110 active:top-[2px] active:shadow-[0_2px_0_0_#451a03] text-sm tracking-wide uppercase"
         >
           ↩ VÀO LẠI VÁN ĐANG CHƠI
         </button>
@@ -303,7 +301,7 @@ export default function GameDetails() {
       <div className="sm:hidden fixed bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-slate-950 via-slate-950/95 to-transparent z-40">
         <button
           onClick={scrollToRoomPanel}
-          className="w-full max-w-md mx-auto block rounded-xl bg-amber-700 hover:bg-amber-600 px-4 py-3.5 font-bold text-white shadow-lg"
+          className="group relative w-full max-w-md mx-auto block overflow-hidden rounded-lg border-t border-amber-300/60 bg-gradient-to-b from-amber-500 via-amber-600 to-amber-800 py-3.5 px-6 text-sm font-black uppercase tracking-widest text-[#2a1305] shadow-[0_5px_0_0_#451a03,0_10px_20px_rgba(0,0,0,0.8)] transition-all duration-100 hover:brightness-110 active:translate-y-1 active:shadow-[0_1px_0_0_#451a03,0_4px_8px_rgba(0,0,0,0.6)]"
         >
           CHƠI NGAY
         </button>
