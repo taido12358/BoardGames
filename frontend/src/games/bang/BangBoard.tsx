@@ -277,7 +277,7 @@ export default function BangBoard({ makeMove, onLeave, onRematch, rematching }: 
           {state.discardPile.length > 0 ? (
             <CardView card={state.discardPile[state.discardPile.length - 1]} small />
           ) : (
-            <div className="w-16 h-24 rounded-lg border-2 border-dashed border-amber-900/30 flex items-center justify-center">
+            <div className="w-16 h-24 rounded-lg border-2 border-dashed border-amber-900/60 bg-amber-950/20 flex items-center justify-center shadow-inner">
               <span className="text-amber-900/40 text-2xl">∅</span>
             </div>
           )}
