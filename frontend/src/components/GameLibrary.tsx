@@ -119,7 +119,7 @@ export default function GameLibrary() {
             Thư Viện Trò Chơi
           </h1>
         </div>
-        <p className="text-xs sm:text-sm font-serif italic text-[#c8a882] tracking-wider mt-1">Chọn một trò chơi và bắt đầu cuộc phiêu lưu nơi hoang mạc</p>
+        <p className="text-xs sm:text-sm italic text-[#c8a882] tracking-wider mt-1">Chọn một trò chơi và bắt đầu cuộc phiêu lưu nơi hoang mạc</p>
         <div className="flex items-center justify-center gap-2 mt-3 opacity-75">
           <div className="w-16 h-[1px] bg-gradient-to-r from-transparent to-[#b67d3e]" />
           <div className="w-2 h-2 rotate-45 border border-[#e2b06f] bg-[#532e12]" />
@@ -147,7 +147,7 @@ export default function GameLibrary() {
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Tìm kiếm trò chơi trên bàn rượu..."
             aria-label="Tìm kiếm trò chơi"
-            className="w-full rounded-sm border border-[#6b4421] bg-[#1a100a]/90 pl-10 pr-4 py-2.5 text-xs font-serif tracking-wider text-[#fae4c8] shadow-[inset_0_2px_4px_rgba(0,0,0,0.8),0_1px_0_rgba(255,200,120,0.08)] outline-none transition-all focus:border-[#d99748] focus:ring-1 focus:ring-[#d99748]/50 placeholder:text-[#957657]"
+            className="w-full rounded-sm border border-[#6b4421] bg-[#1a100a]/90 pl-10 pr-4 py-2.5 text-sm tracking-wide text-[#fae4c8] shadow-[inset_0_2px_4px_rgba(0,0,0,0.8),0_1px_0_rgba(255,200,120,0.08)] outline-none transition-all focus:border-[#d99748] focus:ring-1 focus:ring-[#d99748]/50 placeholder:text-[#957657]"
           />
         </div>
         {search && <button type="button" onClick={() => setSearch("")} className="rounded-lg border border-amber-950/80 bg-[#140e0b]/90 px-3 py-2 text-xs text-amber-700/70 hover:border-amber-700/60 hover:bg-[#1a120d] hover:text-amber-400">Xóa từ khóa</button>}
