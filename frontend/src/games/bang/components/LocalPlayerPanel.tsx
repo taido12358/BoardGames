@@ -40,10 +40,12 @@ export default function LocalPlayerPanel({ me, you }: Props) {
 
   return (
     <div className={[
-      "rounded-sm border-2 border-amber-600/50 bg-gradient-to-b from-[#2e2415] to-[#1c150c] p-3",
-      "shadow-[inset_0_1px_0_rgba(251,191,36,0.08)]",
+      "relative overflow-hidden rounded-sm border-2 border-amber-600/50 bg-gradient-to-b from-[#2e2415] to-[#1c150c] p-3",
+      "shadow-[inset_0_1px_0_rgba(251,191,36,0.10),0_0_20px_rgba(0,0,0,0.6)]",
       shaking ? "animate-shake" : "",
     ].join(" ")}>
+      {/* Worn leather vignette */}
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_50%,rgba(0,0,0,0.28)_100%)] rounded-sm" />
       {/* Header */}
       <div className="flex items-start justify-between gap-2">
         <div>

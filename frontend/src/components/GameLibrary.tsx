@@ -165,12 +165,12 @@ export default function GameLibrary() {
       {/* Trạng thái lỗi */}
       <LobbyLoadStatus loading={roomsLoading} error={roomsError} onRetry={() => fetchRooms()} />
       {enginesError && !enginesLoading && (
-        <div className="rounded-sm border border-red-800/50 bg-red-950/30 p-6 text-center space-y-3">
-          <p className="text-red-300 text-sm">{enginesError}</p>
+        <div className="rounded-sm border border-[#9a3030]/50 bg-[#7a201b]/30 p-6 text-center space-y-3">
+          <p className="text-[#c88080] text-sm">{enginesError}</p>
           <button
             type="button"
             onClick={() => fetchEngines()}
-            className="rounded-sm bg-red-800 hover:bg-red-700 px-4 py-2 text-sm font-semibold text-white"
+            className="rounded-sm font-bold text-[#271206] text-sm bg-gradient-to-b from-[#fce295] via-[#df9031] to-[#87460e] px-4 py-2 border-t border-[#fff4d1] border-b-2 border-[#4d2506] shadow-[0_2px_6px_rgba(0,0,0,0.6)] hover:brightness-110 active:translate-y-0.5 active:border-b-0 transition-all"
           >
             THỬ LẠI
           </button>
