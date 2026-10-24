@@ -178,17 +178,23 @@ export default function GameDetails() {
 
       {/* Header: artwork trái, thông tin phải (desktop 2 cột, mobile xếp chồng) */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className={`relative rounded-2xl h-52 md:h-full min-h-[13rem] flex items-center justify-center overflow-hidden border border-[#573517] shadow-[inset_0_2px_8px_rgba(0,0,0,0.85)] ${ARTWORK_BG[metadata.accent]}`}>
-          {/* Corner bracket nẹp kim loại */}
-          <span className="pointer-events-none absolute top-2 left-2 w-4 h-4 border-t-2 border-l-2 border-[#c8924b]/50 z-20" />
-          <span className="pointer-events-none absolute top-2 right-2 w-4 h-4 border-t-2 border-r-2 border-[#c8924b]/50 z-20" />
-          <span className="pointer-events-none absolute bottom-2 left-2 w-4 h-4 border-b-2 border-l-2 border-[#c8924b]/50 z-20" />
-          <span className="pointer-events-none absolute bottom-2 right-2 w-4 h-4 border-b-2 border-r-2 border-[#c8924b]/50 z-20" />
-          <span className="text-8xl drop-shadow-[0_4px_16px_rgba(0,0,0,0.6)] relative z-0" role="img" aria-label={`Hình minh hoạ ${metadata.title}`}>
-            {metadata.emblem}
-          </span>
-          {/* Vignette đèn dầu */}
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_40%,rgba(0,0,0,0.6)_100%)] z-10" />
+        {/* Double border khung tranh gỗ quán rượu */}
+        <div className="rounded-sm h-52 md:h-full min-h-[13rem] border-2 border-[#5e3a19] p-1.5 shadow-[inset_0_2px_10px_rgba(0,0,0,0.9),0_15px_30px_rgba(0,0,0,0.9)] bg-[#1a0d06]">
+          <div className={`relative h-full rounded-xs flex items-center justify-center overflow-hidden border border-[#8f5a28]/40 ${ARTWORK_BG[metadata.accent]}`}>
+            {/* Corner bracket nẹp kim loại */}
+            <span className="pointer-events-none absolute top-1.5 left-1.5 w-3 h-3 border-t-2 border-l-2 border-[#c8924b]/60 z-20" />
+            <span className="pointer-events-none absolute top-1.5 right-1.5 w-3 h-3 border-t-2 border-r-2 border-[#c8924b]/60 z-20" />
+            <span className="pointer-events-none absolute bottom-1.5 left-1.5 w-3 h-3 border-b-2 border-l-2 border-[#c8924b]/60 z-20" />
+            <span className="pointer-events-none absolute bottom-1.5 right-1.5 w-3 h-3 border-b-2 border-r-2 border-[#c8924b]/60 z-20" />
+            {/* Rivet giữa top/bottom */}
+            <span className="pointer-events-none absolute top-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-gradient-to-br from-[#f0c379] to-[#59330e] shadow-sm z-20" />
+            <span className="pointer-events-none absolute bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-gradient-to-br from-[#f0c379] to-[#59330e] shadow-sm z-20" />
+            <span className="text-8xl drop-shadow-[0_12px_16px_rgba(0,0,0,0.95)] relative z-0 select-none" role="img" aria-label={`Hình minh hoạ ${metadata.title}`}>
+              {metadata.emblem}
+            </span>
+            {/* Vignette đèn dầu */}
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_30%,rgba(0,0,0,0.85)_100%)] z-10" />
+          </div>
         </div>
 
         <div className="flex flex-col justify-center space-y-3">
@@ -213,13 +219,10 @@ export default function GameDetails() {
 
           <button
             onClick={scrollToRoomPanel}
-            className="group relative hidden sm:block w-full overflow-hidden rounded-lg border-t border-amber-300/60 bg-gradient-to-b from-amber-500 via-amber-600 to-amber-800 py-3 px-6 text-sm font-black uppercase tracking-widest text-[#2a1305] shadow-[0_5px_0_0_#451a03,0_10px_20px_rgba(0,0,0,0.8)] transition-all duration-100 hover:brightness-110 active:translate-y-1 active:shadow-[0_1px_0_0_#451a03,0_4px_8px_rgba(0,0,0,0.6)]"
+            className="group hidden sm:flex items-center justify-center gap-2 w-full py-3 px-6 font-black uppercase tracking-[0.2em] text-sm text-[#271206] bg-gradient-to-b from-[#fce295] via-[#df9031] to-[#87460e] border-t border-[#fff4d1] border-b-4 border-[#4d2506] rounded-sm shadow-[0_6px_16px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.4)] hover:brightness-110 hover:shadow-[0_8px_20px_rgba(223,144,49,0.35)] active:translate-y-1 active:border-b-0 active:shadow-[0_2px_4px_rgba(0,0,0,0.9)] transition-all duration-150"
           >
-            <div className="pointer-events-none absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/15 to-transparent" />
-            <span className="relative flex items-center justify-center gap-2 [text-shadow:0_1px_0_rgba(255,255,255,0.3)]">
-              <span>CHƠI NGAY</span>
-              <span className="transition-transform duration-200 group-hover:translate-x-1">➔</span>
-            </span>
+            <span>CHƠI NGAY</span>
+            <span className="transition-transform duration-200 group-hover:translate-x-1">→</span>
           </button>
         </div>
       </div>
