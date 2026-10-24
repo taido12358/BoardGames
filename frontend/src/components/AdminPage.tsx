@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAdminStore } from "../platform/adminStore";
+import { formatTimestamp as formatTime } from "../platform/formatTimestamp";
 
 const STATUS_LABEL: Record<string, { label: string; color: string }> = {
   Waiting: { label: "Đang chờ", color: "text-amber-300 bg-amber-900/30" },
@@ -9,21 +10,13 @@ const STATUS_LABEL: Record<string, { label: string; color: string }> = {
   Abandoned: { label: "Bỏ hoang", color: "text-red-300 bg-red-900/30" },
 };
 
-function formatTime(iso: string): string {
-  try {
-    return new Date(iso).toLocaleString("vi-VN");
-  } catch {
-    return iso;
-  }
-}
-
 /**
  * Trang quản trị READ-ONLY — tổng quan phòng/ván trên toàn hệ thống. Chỉ hiện với tài khoản
  * nằm trong ADMIN_EMAILS (server tự chặn 403 nếu không phải — trang này chỉ ẩn/hiện UI cho
  * gọn, KHÔNG phải lớp bảo mật). Không có nút huỷ/xoá phòng — xem lý do trong AdminController.cs.
  */
 export default function AdminPage() {
-  const { isAdmin, rooms, stats, loading, error, checkAdmin, fetchRooms, fetchStats } = useAdminStore();
+  const { isAdmin, accessError, rooms, stats, statsLoading, statsError, loading, error, checkAdmin, fetchRooms, fetchStats } = useAdminStore();
   const [statusFilter, setStatusFilter] = useState("");
 
   useEffect(() => {
@@ -33,10 +26,17 @@ export default function AdminPage() {
   useEffect(() => {
     if (isAdmin) {
       fetchRooms({ status: statusFilter || undefined });
-      fetchStats();
     }
-  }, [isAdmin, statusFilter, fetchRooms, fetchStats]);
+  }, [isAdmin, statusFilter, fetchRooms]);
 
+  useEffect(() => { if (isAdmin) fetchStats(); }, [isAdmin, fetchStats]);
+
+  if (accessError) {
+    return <div className="mx-auto max-w-md space-y-3 py-10 text-center">
+      <p role="alert" className="text-sm text-red-300">{accessError}</p>
+      <button type="button" onClick={checkAdmin} className="rounded-xl bg-amber-800 px-4 py-3 text-sm font-semibold text-white hover:bg-amber-700">Kiểm tra lại quyền</button>
+    </div>;
+  }
   if (isAdmin === null) {
     return <p className="text-amber-700/60 text-sm text-center py-10 italic">Đang kiểm tra quyền truy cập…</p>;
   }
@@ -53,23 +53,28 @@ export default function AdminPage() {
   return (
     <div className="w-full max-w-5xl mx-auto space-y-5">
       <div className="text-center space-y-2 pt-2">
-        <h1 className="text-2xl sm:text-3xl font-black tracking-wide text-amber-100">🛠 QUẢN TRỊ</h1>
+        <h1 className="text-2xl sm:text-3xl font-black tracking-widest uppercase bg-gradient-to-b from-[#fff3db] via-[#f7cb85] to-[#c7883a] bg-clip-text text-transparent drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]">🛠 QUẢN TRỊ</h1>
         <p className="text-sm text-amber-600/70">Tổng quan phòng/ván trên toàn hệ thống (chỉ đọc).</p>
         <div className="flex items-center justify-center gap-2 opacity-30 text-base">
           <span>─────</span><span>✦</span><span>─────</span>
         </div>
       </div>
 
+      {statsLoading && <p role="status" className="text-center text-sm text-amber-200/80">Đang cập nhật thống kê…</p>}
+      {statsError && !statsLoading && <div className="rounded-xl border border-amber-800/50 bg-amber-950/30 p-3 text-sm text-amber-200">
+        <p role="alert">{statsError}</p>
+        <button type="button" onClick={fetchStats} className="mt-2 rounded-lg bg-amber-800 px-3 py-2 text-white hover:bg-amber-700">Tải lại thống kê</button>
+      </div>}
       {stats && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <div className="rounded-xl bg-gradient-to-b from-[#2b2013] to-[#1c150c] border border-amber-900/40 p-3 text-center">
-            <div className="text-xl font-bold text-amber-200">{stats.totalUsers}</div>
+            <div className="text-xl font-bold text-[#fcebd6]">{stats.totalUsers}</div>
             <div className="text-xs text-amber-700/70">Tài khoản</div>
           </div>
           {stats.byStatus.map((s) => (
             <div key={s.status} className="relative overflow-hidden rounded-xl border border-amber-900/40 bg-gradient-to-b from-[#1c130d] to-[#120b07] p-3 text-center shadow-[inset_0_1px_0_rgba(245,158,11,0.15)]">
               <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-amber-500/30 to-transparent" />
-              <div className="text-xl font-bold text-amber-200">{s.count}</div>
+              <div className="text-xl font-bold text-[#fcebd6]">{s.count}</div>
               <div className="text-xs text-amber-700/70">{STATUS_LABEL[s.status]?.label ?? s.status}</div>
             </div>
           ))}
@@ -81,8 +86,8 @@ export default function AdminPage() {
           type="button"
           onClick={() => setStatusFilter("")}
           aria-pressed={statusFilter === ""}
-          className={`rounded-full px-3.5 py-1.5 text-xs font-medium border transition-colors ${
-            statusFilter === "" ? "bg-gradient-to-b from-amber-600 to-amber-800 border-amber-500/60 text-amber-50 shadow-[0_2px_0_0_#451a03]" : "border-amber-950/80 bg-[#140e0b]/90 text-amber-700/70 shadow-[inset_0_1px_3px_rgba(0,0,0,0.6)] hover:border-amber-700/60 hover:bg-[#1a120d] hover:text-amber-400"
+          className={`rounded-sm px-3.5 py-1.5 text-xs font-bold uppercase tracking-wider border transition-all duration-150 ${
+            statusFilter === "" ? "text-[#241106] bg-gradient-to-b from-[#f3c87f] via-[#d49445] to-[#99581a] border-t border-[#ffebbe] border-b-2 border-[#542a07] shadow-[0_2px_10px_rgba(217,119,6,0.35),0_1px_2px_rgba(0,0,0,0.8)]" : "text-[#bba182] bg-[#22140c]/90 border-[#6b4725]/60 shadow-[inset_0_1px_2px_rgba(0,0,0,0.6)] hover:border-[#b47a3c]/80 hover:text-[#f3d4a2] hover:bg-[#2c1a10] active:scale-95"
           }`}
         >
           Tất cả
@@ -93,8 +98,8 @@ export default function AdminPage() {
             type="button"
             onClick={() => setStatusFilter(key)}
             aria-pressed={statusFilter === key}
-            className={`rounded-full px-3.5 py-1.5 text-xs font-medium border transition-colors ${
-              statusFilter === key ? "bg-gradient-to-b from-amber-600 to-amber-800 border-amber-500/60 text-amber-50 shadow-[0_2px_0_0_#451a03]" : "border-amber-950/80 bg-[#140e0b]/90 text-amber-700/70 shadow-[inset_0_1px_3px_rgba(0,0,0,0.6)] hover:border-amber-700/60 hover:bg-[#1a120d] hover:text-amber-400"
+            className={`rounded-sm px-3.5 py-1.5 text-xs font-bold uppercase tracking-wider border transition-all duration-150 ${
+              statusFilter === key ? "text-[#241106] bg-gradient-to-b from-[#f3c87f] via-[#d49445] to-[#99581a] border-t border-[#ffebbe] border-b-2 border-[#542a07] shadow-[0_2px_10px_rgba(217,119,6,0.35),0_1px_2px_rgba(0,0,0,0.8)]" : "text-[#bba182] bg-[#22140c]/90 border-[#6b4725]/60 shadow-[inset_0_1px_2px_rgba(0,0,0,0.6)] hover:border-[#b47a3c]/80 hover:text-[#f3d4a2] hover:bg-[#2c1a10] active:scale-95"
             }`}
           >
             {label}
