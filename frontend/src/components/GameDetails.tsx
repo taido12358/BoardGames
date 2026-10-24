@@ -178,10 +178,17 @@ export default function GameDetails() {
 
       {/* Header: artwork trái, thông tin phải (desktop 2 cột, mobile xếp chồng) */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className={`rounded-2xl h-52 md:h-full min-h-[13rem] flex items-center justify-center ${ARTWORK_BG[metadata.accent]}`}>
-          <span className="text-8xl drop-shadow-[0_4px_16px_rgba(0,0,0,0.6)]" role="img" aria-label={`Hình minh hoạ ${metadata.title}`}>
+        <div className={`relative rounded-2xl h-52 md:h-full min-h-[13rem] flex items-center justify-center overflow-hidden border border-[#573517] shadow-[inset_0_2px_8px_rgba(0,0,0,0.85)] ${ARTWORK_BG[metadata.accent]}`}>
+          {/* Corner bracket nẹp kim loại */}
+          <span className="pointer-events-none absolute top-2 left-2 w-4 h-4 border-t-2 border-l-2 border-[#c8924b]/50 z-20" />
+          <span className="pointer-events-none absolute top-2 right-2 w-4 h-4 border-t-2 border-r-2 border-[#c8924b]/50 z-20" />
+          <span className="pointer-events-none absolute bottom-2 left-2 w-4 h-4 border-b-2 border-l-2 border-[#c8924b]/50 z-20" />
+          <span className="pointer-events-none absolute bottom-2 right-2 w-4 h-4 border-b-2 border-r-2 border-[#c8924b]/50 z-20" />
+          <span className="text-8xl drop-shadow-[0_4px_16px_rgba(0,0,0,0.6)] relative z-0" role="img" aria-label={`Hình minh hoạ ${metadata.title}`}>
             {metadata.emblem}
           </span>
+          {/* Vignette đèn dầu */}
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_40%,rgba(0,0,0,0.6)_100%)] z-10" />
         </div>
 
         <div className="flex flex-col justify-center space-y-3">
