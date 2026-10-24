@@ -253,11 +253,13 @@ export default function GameDetails() {
 
       {/* Tạo phòng / Vào phòng */}
       <div ref={roomPanelRef} role="region" aria-label="Tạo và vào phòng" tabIndex={-1} className="space-y-3 scroll-mt-4">
-        <h2 className="text-lg font-bold text-[#f5d09d] uppercase tracking-widest [text-shadow:0_1px_0_rgba(255,255,255,0.1),0_2px_4px_rgba(0,0,0,0.8)]">🚪 CHƠI {metadata.title}</h2>
+        <h2 className="font-serif text-xl font-black text-[#f5d09d] uppercase tracking-[0.2em] [text-shadow:0_1px_0_rgba(255,255,255,0.1),0_2px_6px_rgba(0,0,0,0.9)] flex items-center gap-2">
+          <span className="text-[#c99a5e] text-base">✦</span> CHƠI {metadata.title} <span className="text-[#c99a5e] text-base">✦</span>
+        </h2>
         {error && <div role="alert" className="rounded-sm bg-red-900/40 p-3 text-sm text-red-300">{error}</div>}
 
         <fieldset disabled={busy} aria-busy={busy} className="min-w-0 rounded-sm border border-amber-700/40 bg-[#1c150c] p-4 space-y-3">
-          <h3 className="text-sm font-bold text-[#f5d09d] uppercase tracking-widest">TẠO PHÒNG MỚI</h3>
+          <h3 className="font-serif text-sm font-bold text-[#c99a5e] uppercase tracking-widest">TẠO PHÒNG MỚI</h3>
           <p className="text-xs text-[#bba182]">Bạn sẽ vào phòng với tên: <span className="text-[#f5d09d] font-semibold">{playerName}</span></p>
 
           {CreateOptionsForm && <CreateOptionsForm value={options} onChange={setOptions} />}
@@ -265,7 +267,7 @@ export default function GameDetails() {
           <button
             onClick={handleCreate}
             disabled={creating}
-            className="w-full rounded-sm border border-[#6b4725]/60 bg-[#22140c]/90 hover:bg-[#2c1a10] disabled:opacity-50 px-4 py-3 text-sm font-bold uppercase tracking-widest text-[#bba182] hover:text-[#f3d4a2] hover:border-[#b47a3c]/80 transition-colors shadow-[inset_0_1px_2px_rgba(0,0,0,0.6)]"
+            className="w-full rounded-sm font-bold text-[#271206] text-sm bg-gradient-to-b from-[#d4a853] via-[#a0672a] to-[#6b3e10] px-4 py-3 border-t border-[#f5d09d]/50 border-b-4 border-[#3a1f06] shadow-[0_4px_12px_rgba(0,0,0,0.7),inset_0_1px_1px_rgba(255,255,255,0.2)] hover:brightness-110 active:translate-y-1 active:border-b-0 active:shadow-[0_1px_4px_rgba(0,0,0,0.8)] transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {creating ? "ĐANG TẠO…" : "➕ TẠO PHÒNG"}
           </button>
@@ -280,8 +282,8 @@ export default function GameDetails() {
         </fieldset>
 
         <div className="rounded-sm border border-amber-900/30 bg-[#160f08]/60 p-4">
-          <h3 className="text-sm font-bold text-[#bba182] mb-2 uppercase tracking-widest">
-            Phòng Đang Chờ {waitingRooms.length > 0 && <span className="text-[#e8c07e]/60">({waitingRooms.length})</span>}
+          <h3 className="font-serif text-sm font-bold text-[#c99a5e] mb-2 uppercase tracking-widest">
+            Phòng Đang Chờ {waitingRooms.length > 0 && <span className="text-[#e8c07e]/70">({waitingRooms.length})</span>}
           </h3>
           <LobbyLoadStatus loading={roomsLoading} error={roomsError} onRetry={() => fetchRooms(gameKey)} />
           {!roomsLoading && !roomsError && waitingRooms.length === 0 && (

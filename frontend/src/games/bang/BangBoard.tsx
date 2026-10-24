@@ -249,14 +249,15 @@ export default function BangBoard({ makeMove, onLeave, onRematch, rematching }: 
       )}
 
       {/* Top bar */}
-      <div className="bg-gradient-to-r from-[#1a1008] via-[#241a10] to-[#1a1008] rounded-sm px-4 py-3 shadow-lg border border-amber-900/30 flex items-center justify-between">
+      <div className="relative overflow-hidden bg-gradient-to-r from-[#1a1008] via-[#2a1c0e] to-[#1a1008] rounded-sm px-4 py-3 shadow-lg border border-amber-900/40 flex items-center justify-between">
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-amber-400/40 to-transparent" />
         <div>
           <div className="font-western text-amber-300 text-base tracking-wide [text-shadow:0_1px_0_rgba(255,255,255,0.15),0_2px_4px_rgba(0,0,0,0.9)]">🤠 BANG!</div>
-          <div className="text-[10px] text-amber-400/50 font-mono">#{room.id.slice(0, 8)}</div>
+          <div className="text-[10px] text-amber-700/60 font-mono">#{room.id.slice(0, 8)}</div>
         </div>
         <div className="text-center">
-          <div className="text-[10px] text-amber-400/60 uppercase tracking-widest">Lượt {state.turnNumber}</div>
-          <div className={`font-bold text-sm ${state.currentPlayerId === me?.id ? "text-amber-300" : "text-amber-100"}`}>
+          <div className="text-[10px] text-amber-600/60 uppercase tracking-widest font-medium">Lượt {state.turnNumber}</div>
+          <div className={`font-bold text-sm ${state.currentPlayerId === me?.id ? "text-amber-300 [text-shadow:0_0_12px_rgba(251,191,36,0.5)]" : "text-[#d4b996]"}`}>
             {state.currentPlayerId === me?.id
               ? "⚡ ĐẾN LƯỢT BẠN"
               : `${state.players.find((p) => p.id === state.currentPlayerId)?.name ?? "…"} đang đi`}
@@ -264,7 +265,7 @@ export default function BangBoard({ makeMove, onLeave, onRematch, rematching }: 
         </div>
         <button
           onClick={onLeave}
-          className="text-xs px-3 py-1.5 rounded-sm border border-amber-950/80 bg-[#140e0b]/90 text-amber-700/70 shadow-[inset_0_1px_3px_rgba(0,0,0,0.6)] hover:border-amber-700/60 hover:bg-[#1a120d] hover:text-amber-400 transition-all uppercase tracking-wider"
+          className="text-xs px-3 py-1.5 rounded-sm border border-[#6b4725]/60 bg-[#22140c]/90 text-[#bba182] shadow-[inset_0_1px_2px_rgba(0,0,0,0.6)] hover:border-red-700/50 hover:bg-red-950/40 hover:text-red-400 transition-all uppercase tracking-wider"
         >
           Thoát
         </button>
