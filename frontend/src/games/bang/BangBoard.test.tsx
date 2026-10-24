@@ -130,6 +130,7 @@ describe("BangBoard — phản hồi và hồi máu", () => {
     setRoom(state);
     render(<BangBoard makeMove={vi.fn()} onLeave={vi.fn()} onRematch={vi.fn()} rematching={false} />);
     expect(screen.getByRole("button", { name: "Bang!" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Bang!" })).toHaveAttribute("title", "Bang! — Bạn đã dùng lượt bắn này.");
     expect(screen.getByRole("button", { name: "Bia" })).toBeEnabled();
     expect(screen.getByText(/Bạn đã dùng lượt bắn/)).toBeInTheDocument();
   });
@@ -175,12 +176,92 @@ describe("BangBoard — phản hồi và hồi máu", () => {
     expect(makeMove).toHaveBeenCalledWith("room-1", { type: "RESPOND" });
   });
 
+  it("khi đang chờ đối thủ phản hồi không báo nhầm là lượt mình dù currentPlayerId vẫn là mình", () => {
+    const state = myTurnState({
+      phase: "awaitingResponse",
+      pendingResponse: { kind: "bang", fromPlayerId: "p0", targetIds: ["p1"], itsYourTurn: false },
+    });
+    setRoom(state);
+    render(<BangBoard makeMove={vi.fn()} onLeave={vi.fn()} onRematch={vi.fn()} rematching={false} />);
+
+    expect(screen.getByText("⏳ Đang chờ Bình phản hồi")).toBeInTheDocument();
+    expect(screen.queryByText("⚡ ĐẾN LƯỢT BẠN")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Bia" })).toBeDisabled();
+  });
+
+  it("khi chính mình là người phải phản hồi thì tiêu đề báo đúng hành động", () => {
+    const state = myTurnState({
+      phase: "awaitingResponse",
+      pendingResponse: { kind: "bang", fromPlayerId: "p1", targetIds: ["p0"], itsYourTurn: true },
+    });
+    setRoom(state);
+    render(<BangBoard makeMove={vi.fn()} onLeave={vi.fn()} onRematch={vi.fn()} rematching={false} />);
+
+    expect(screen.getByText("⚠️ ĐẾN LƯỢT BẠN PHẢN HỒI")).toBeInTheDocument();
+    expect(screen.queryByText("⚡ ĐẾN LƯỢT BẠN")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Trượt!" })).toBeEnabled();
+  });
+
+  it("payload enum PascalCase cũ vẫn mở bài đúng lượt và đúng loại phản hồi", () => {
+    const actionState = myTurnState({
+      you: { id: "p0", role: "Outlaw", roleDisplay: "x", hand: [card("beer-1", "beer")], weapon: "Colt .45", weaponRange: 1 },
+    });
+    actionState.phase = "Action" as unknown as BangViewerState["phase"];
+    setRoom(actionState);
+    const { unmount } = render(<BangBoard makeMove={vi.fn()} onLeave={vi.fn()} onRematch={vi.fn()} rematching={false} />);
+    expect(screen.getByRole("button", { name: "Bia" })).toBeEnabled();
+    unmount();
+
+    const responseState = myTurnState({
+      phase: "awaitingResponse",
+      pendingResponse: { kind: "bang", fromPlayerId: "p1", targetIds: ["p0"], itsYourTurn: true },
+    });
+    responseState.phase = "AwaitingResponse" as unknown as BangViewerState["phase"];
+    responseState.pendingResponse!.kind = "Bang" as unknown as NonNullable<BangViewerState["pendingResponse"]>["kind"];
+    setRoom(responseState);
+    render(<BangBoard makeMove={vi.fn()} onLeave={vi.fn()} onRematch={vi.fn()} rematching={false} />);
+    expect(screen.getByRole("button", { name: "Trượt!" })).toBeEnabled();
+    expect(screen.getByText("⚠️ ĐẾN LƯỢT BẠN PHẢN HỒI")).toBeInTheDocument();
+  });
+
   it("máu đầy không cho dùng Bia", () => {
     const state = myTurnState();
     state.players[0].hp = state.players[0].maxHp;
     setRoom(state);
     render(<BangBoard makeMove={vi.fn()} onLeave={vi.fn()} onRematch={vi.fn()} rematching={false} />);
     expect(screen.getByRole("button", { name: "Bia" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Bia" })).toHaveAttribute("title", "Bia — Máu của bạn đang đầy.");
+  });
+
+  it("đến lượt và có bài hợp lệ thì bấm bài gửi nước đi ngay", async () => {
+    const state = myTurnState({
+      you: { id: "p0", role: "Outlaw", roleDisplay: "x", hand: [card("beer-1", "beer")], weapon: "Colt .45", weaponRange: 1 },
+    });
+    setRoom(state);
+    const makeMove = vi.fn();
+    render(<BangBoard makeMove={makeMove} onLeave={vi.fn()} onRematch={vi.fn()} rematching={false} />);
+
+    const beer = screen.getByRole("button", { name: "Bia" });
+    expect(beer).toBeEnabled();
+    await userEvent.click(beer);
+    expect(makeMove).toHaveBeenCalledWith("room-1", { type: "PLAY_CARD", cardId: "beer-1" });
+  });
+
+  it("liệt kê lý do khi không có lá nào dùng được trong lượt", () => {
+    const state = myTurnState({
+      players: [makePlayer({ id: "p0", hp: 4 }), makePlayer({ id: "p1", name: "Bình", seatIndex: 1, inRange: false })],
+      you: {
+        id: "p0", role: "Outlaw", roleDisplay: "x", weapon: "Colt .45", weaponRange: 1,
+        hand: [card("bang-1", "bang"), card("beer-1", "beer"), card("missed-1", "missed")],
+      },
+    });
+    setRoom(state);
+    render(<BangBoard makeMove={vi.fn()} onLeave={vi.fn()} onRematch={vi.fn()} rematching={false} />);
+
+    expect(screen.getByText("Chưa có lá nào dùng được:")).toBeInTheDocument();
+    expect(screen.getByText("Bang!: Không có mục tiêu hợp lệ.")).toBeInTheDocument();
+    expect(screen.getByText("Bia: Máu của bạn đang đầy.")).toBeInTheDocument();
+    expect(screen.getByText("Trượt!: Trượt! chỉ dùng khi phản hồi, trừ nhân vật Calamity.")).toBeInTheDocument();
   });
 });
 
@@ -197,7 +278,8 @@ describe("BangBoard — chế độ bỏ bài khi vượt giới hạn tay bài"
 
     await user.click(screen.getByRole("button", { name: "KẾT THÚC LƯỢT" }));
 
-    expect(screen.getByText(/Vượt giới hạn tay bài — chọn 2 lá để bỏ \(0\/2\)/)).toBeInTheDocument();
+    expect(screen.getByText(/Tay bài 4 lá, 2 HP — cần bỏ 2 lá \(0\/2\)/)).toBeInTheDocument();
+    expect(screen.getByText("Chỉ tính lá trên tay; vũ khí và trang bị không tính.")).toBeInTheDocument();
     expect(makeMove).not.toHaveBeenCalled();
   });
 
@@ -239,7 +321,8 @@ describe("BangBoard — chế độ bỏ bài khi vượt giới hạn tay bài"
     await user.click(screen.getByRole("button", { name: "KẾT THÚC LƯỢT" }));
     await user.click(screen.getByTitle("Bang!"));
     await user.click(screen.getByTitle("Trượt!"));
-    await user.click(screen.getByTitle("Bia")); // lá thứ 3 — vượt overflow=2, phải bị bỏ qua
+    expect(screen.getByRole("button", { name: "Bia" })).toBeDisabled(); // lá thứ 3 — vượt overflow=2
+    expect(screen.getByRole("button", { name: "Bia" })).toHaveAttribute("title", "Bia — Đã chọn đủ số lá cần bỏ.");
 
     expect(screen.getByText(/\(2\/2\)/)).toBeInTheDocument();
   });
@@ -254,7 +337,7 @@ describe("BangBoard — chế độ bỏ bài khi vượt giới hạn tay bài"
     await user.click(screen.getByTitle("Bang!"));
     await user.click(screen.getByRole("button", { name: "Hủy" }));
 
-    expect(screen.queryByText(/Vượt giới hạn tay bài/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Tay bài .* cần bỏ/)).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "KẾT THÚC LƯỢT" })).toBeInTheDocument();
     expect(makeMove).not.toHaveBeenCalled();
   });

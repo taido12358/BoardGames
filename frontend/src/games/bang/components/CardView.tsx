@@ -1,12 +1,21 @@
+import type { DragEvent } from "react";
 import { CARD_DISPLAY, type Card, type CardKind } from "../types";
 
 interface Props {
   card: Card;
   selected?: boolean;
+  pending?: boolean;
+  rejected?: boolean;
+  rejectedSequence?: number;
   selectionMode?: boolean;
   disabled?: boolean;
   disabledReason?: string;
+  responseReady?: boolean;
+  responseReadyDelayMs?: number;
   small?: boolean;
+  hideIdentity?: boolean;
+  onDragStart?: (event: DragEvent<HTMLButtonElement>) => void;
+  onDragEnd?: (event: DragEvent<HTMLButtonElement>) => void;
   onClick?: () => void;
 }
 
@@ -51,7 +60,7 @@ const CATEGORY_STYLE: Record<CardCategory, { bg: string; border: string; text: s
 };
 
 /** Một lá bài trong bộ BANG! — color-coded theo loại (đỏ=tấn công, xanh=phòng thủ, v.v.). */
-export default function CardView({ card, selected, selectionMode, disabled, disabledReason, small, onClick }: Props) {
+export default function CardView({ card, selected, pending, rejected, rejectedSequence = 0, selectionMode, disabled, disabledReason, responseReady, responseReadyDelayMs = 0, small, hideIdentity, onDragStart, onDragEnd, onClick }: Props) {
   const display = CARD_DISPLAY[card.kind];
   const cat = cardCategory(card.kind);
   const cs = CATEGORY_STYLE[cat];
@@ -59,14 +68,23 @@ export default function CardView({ card, selected, selectionMode, disabled, disa
   return (
     <button
       type="button"
+      data-card-id={card.id}
       disabled={disabled || !onClick}
       onClick={onClick}
-      title={disabled && disabledReason ? `${display.name} — ${disabledReason}` : display.name}
+      title={disabled && disabledReason
+        ? `${display.name} — ${disabledReason}`
+        : `${display.name}${onDragStart ? " · Kéo để chơi hoặc chọn mục tiêu" : ""}`}
       aria-label={display.name}
-      aria-description={`${card.rank}${card.suit}. ${CARD_EFFECT[card.kind]}${disabled && disabledReason ? ` Không thể dùng: ${disabledReason}` : ""}`}
+      aria-description={`${card.rank}${card.suit}. ${CARD_EFFECT[card.kind]}${!disabled && onDragStart ? " Có thể kéo thả để thao tác." : ""}${disabled && disabledReason ? ` Không thể dùng: ${disabledReason}` : ""}`}
       aria-pressed={selectionMode ? !!selected : undefined}
+      draggable={!!onDragStart && !disabled}
+      onDragStart={onDragStart}
+      onDragEnd={onDragEnd}
       className={[
-        "relative shrink-0 rounded-sm border-2 text-left transition-all duration-150 select-none overflow-hidden",
+        "relative shrink-0 rounded-sm border-2 text-left transition-all duration-200 ease-[cubic-bezier(0.2,0.75,0.25,1)] select-none overflow-hidden active:scale-[0.97]",
+        selected ? "bang-card-selected" : "",
+        pending ? "bang-card-pending" : "",
+        rejected ? `bang-card-rejected-${rejectedSequence % 2 === 0 ? "a" : "b"}` : "",
         `bg-gradient-to-b ${cs.bg}`,
         small ? "w-16 h-24 p-1.5" : "w-24 h-36 p-2",
         selected
@@ -75,11 +93,12 @@ export default function CardView({ card, selected, selectionMode, disabled, disa
         disabled
           ? "opacity-40 grayscale cursor-not-allowed"
           : onClick
-            ? "hover:-translate-y-2 hover:shadow-xl cursor-pointer"
+            ? "hover:-translate-y-2 hover:shadow-xl focus-visible:-translate-y-2 focus-visible:scale-[1.025] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-300 cursor-pointer"
             : "cursor-default",
       ].join(" ")}
       style={{ borderColor: selected ? "#fbbf24" : cs.border }}
     >
+      {responseReady && !disabled && !pending && <span aria-hidden="true" className="bang-card-response-ready" style={{ "--response-ready-delay": `${responseReadyDelayMs}ms` } as import("react").CSSProperties} />}
       {/* Stripe overlay — type hint */}
       <div className={`absolute inset-0 ${cs.stripe} pointer-events-none`} />
       {/* Parchment vignette — giả lập giấy da ố góc */}
@@ -87,10 +106,12 @@ export default function CardView({ card, selected, selectionMode, disabled, disa
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_55%,rgba(0,0,0,0.22)_100%)] pointer-events-none" />
 
       {/* Top: rank + suit */}
-      <div className={`relative flex items-center justify-between font-bold leading-none ${suitColor(card.suit)} ${small ? "text-[10px]" : "text-xs"}`}>
-        <span>{card.rank}</span>
-        <span>{card.suit}</span>
-      </div>
+      {!hideIdentity && (
+        <div className={`relative flex items-center justify-between font-bold leading-none ${suitColor(card.suit)} ${small ? "text-[10px]" : "text-xs"}`}>
+          <span>{card.rank}</span>
+          <span>{card.suit}</span>
+        </div>
+      )}
 
       {/* Center: big icon */}
       <div className={`relative flex items-center justify-center ${small ? "text-xl my-0.5" : "text-3xl my-1"}`}>
@@ -104,7 +125,7 @@ export default function CardView({ card, selected, selectionMode, disabled, disa
       {!small && <p className={`relative mt-1 text-[9px] leading-tight ${cs.text}`}>{CARD_EFFECT[card.kind]}</p>}
 
       {/* Bottom-right corner (mirrored rank+suit) — full size only */}
-      {!small && (
+      {!small && !hideIdentity && (
         <div
           className={`absolute bottom-1.5 right-1.5 flex flex-col items-center font-bold ${suitColor(card.suit)} text-[9px] leading-none rotate-180`}
           aria-hidden="true"

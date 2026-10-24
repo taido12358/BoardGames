@@ -81,6 +81,22 @@ export interface BangViewerState {
   you: BangYourView | null;
 }
 
+/** Chuẩn hóa projection từ các server cũ từng đưa enum vào field string bằng Enum.ToString(). */
+export function normalizeBangViewerState(state: BangViewerState): BangViewerState {
+  const phaseByLowercase: Record<string, GamePhase> = {
+    waitingforplayers: "waitingForPlayers",
+    action: "action",
+    awaitingresponse: "awaitingResponse",
+    finished: "finished",
+  };
+  const phase = phaseByLowercase[state.phase.toLowerCase()] ?? state.phase;
+  const pendingResponse = state.pendingResponse
+    ? { ...state.pendingResponse, kind: state.pendingResponse.kind.toLowerCase() as PendingResponseKind }
+    : null;
+  if (phase === state.phase && pendingResponse?.kind === state.pendingResponse?.kind) return state;
+  return { ...state, phase, pendingResponse };
+}
+
 export interface BangMap {
   weaponRanges: Record<string, number>;
   roleDistribution: Record<string, number[]>;

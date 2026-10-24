@@ -37,7 +37,7 @@ export default function VictoryScreen({ state, onLeave, onRematch, rematching }:
   const badge = OUTCOME_BADGE[outcome];
 
   return (
-    <div className="fixed inset-0 z-50 bg-[#0d0a07]/88 backdrop-blur-sm backdrop-sepia-[0.4] flex items-center justify-center p-4">
+    <div className="bang-victory-backdrop fixed inset-0 z-50 bg-[#0d0a07]/88 backdrop-blur-sm backdrop-sepia-[0.4] flex items-center justify-center p-4">
       <div className={[
         "w-full max-w-md rounded-sm border-double border-8 border-amber-950 bg-amber-950/20 p-1 shadow-2xl",
         "shadow-[inset_0_0_40px_15px_rgba(0,0,0,0.8)]",
@@ -51,7 +51,7 @@ export default function VictoryScreen({ state, onLeave, onRematch, rematching }:
       ].join(" ")}>
 
         {/* Icon + badge */}
-        <div className="text-5xl">{cfg.emoji}</div>
+        <div className="game-result-emblem text-5xl">{cfg.emoji}</div>
 
         {badge && (
           <div className={`inline-block text-sm font-bold uppercase tracking-widest px-4 py-1.5 rounded-sm border ${badge.cls}`}>
@@ -60,7 +60,7 @@ export default function VictoryScreen({ state, onLeave, onRematch, rematching }:
         )}
 
         {/* Winner title */}
-        <h2 className={`font-serif font-black text-xl tracking-[0.15em] uppercase leading-tight -rotate-1 scale-105 [text-shadow:3px_3px_0px_#000,-1px_-1px_0px_rgba(255,191,0,0.25),0_3px_8px_rgba(0,0,0,0.9)] ${cfg.color}`}>
+        <h2 className={`game-result-title font-serif font-black text-xl tracking-[0.15em] uppercase leading-tight -rotate-1 scale-105 [text-shadow:3px_3px_0px_#000,-1px_-1px_0px_rgba(255,191,0,0.25),0_3px_8px_rgba(0,0,0,0.9)] ${cfg.color}`}>
           {cfg.title}
         </h2>
         <div className="flex items-center justify-center gap-2">
@@ -75,8 +75,8 @@ export default function VictoryScreen({ state, onLeave, onRematch, rematching }:
             <div className="text-amber-400 text-xs font-bold mb-1.5 uppercase tracking-wide">✅ Còn sống</div>
             {alive.length === 0
               ? <div className="text-amber-900/40 text-xs">—</div>
-              : alive.map((p) => (
-                <div key={p.id} className="text-amber-200 text-xs py-0.5">
+              : alive.map((p, index) => (
+                <div key={p.id} style={{ animationDelay: `${250 + index * 65}ms` }} className="game-result-player text-amber-200 text-xs py-0.5">
                   {p.name}
                   <span className="text-amber-700/60 ml-1">({p.publicRole})</span>
                 </div>
@@ -87,8 +87,8 @@ export default function VictoryScreen({ state, onLeave, onRematch, rematching }:
             <div className="text-red-400 text-xs font-bold mb-1.5 uppercase tracking-wide">💀 Bị loại</div>
             {dead.length === 0
               ? <div className="text-amber-900/40 text-xs">—</div>
-              : dead.map((p) => (
-                <div key={p.id} className="text-amber-700/50 text-xs py-0.5">
+              : dead.map((p, index) => (
+                <div key={p.id} style={{ animationDelay: `${250 + index * 65}ms` }} className="game-result-player text-amber-700/50 text-xs py-0.5">
                   {p.name}
                   <span className="text-amber-900/60 ml-1">({p.publicRole})</span>
                 </div>
@@ -106,7 +106,7 @@ export default function VictoryScreen({ state, onLeave, onRematch, rematching }:
           {onRematch && <RematchButton onRematch={onRematch} loading={rematching} />}
           <button
             onClick={onLeave}
-            className="w-full rounded-sm border border-[#6b4725]/60 bg-[#22140c]/90 px-4 py-2.5 text-sm font-semibold uppercase tracking-wide text-[#bba182] shadow-[inset_0_1px_2px_rgba(0,0,0,0.6)] hover:border-[#b47a3c]/80 hover:bg-[#2c1a10] hover:text-[#f3d4a2] transition-all"
+            className="room-action-button w-full rounded-sm border border-[#6b4725]/60 bg-[#22140c]/90 px-4 py-2.5 text-sm font-semibold uppercase tracking-wide text-[#bba182] shadow-[inset_0_1px_2px_rgba(0,0,0,0.6)] hover:border-[#b47a3c]/80 hover:bg-[#2c1a10] hover:text-[#f3d4a2] transition-all"
           >
             VỀ PHÒNG CHỜ
           </button>

@@ -1,6 +1,4 @@
-import { useEffect, useRef, useState } from "react";
-
-const EQUIP_FLASH_DURATION_MS = 500;
+import { useChangeFlash, type ChangeFlashState } from "../useChangeFlash";
 
 /**
  * Trả `true` trong {@link EQUIP_FLASH_DURATION_MS}ms ngay sau khi `weaponName` ĐỔI so với lần
@@ -9,19 +7,11 @@ const EQUIP_FLASH_DURATION_MS = 500;
  * chuỗi thay vì tăng/giảm số. Không kích hoạt ở lần render đầu tiên (mount không phải là "vừa
  * trang bị" — đó chỉ là vũ khí mặc định Cattleman lúc vào ván).
  */
-export function useWeaponEquipFlash(weaponName: string): boolean {
-  const prevWeapon = useRef(weaponName);
-  const [flashing, setFlashing] = useState(false);
+export function useWeaponEquipFlashState(weaponName: string, roomId?: string): ChangeFlashState {
+  return useChangeFlash(weaponName, 500, roomId);
+}
 
-  useEffect(() => {
-    if (weaponName !== prevWeapon.current) {
-      setFlashing(true);
-      const timer = setTimeout(() => setFlashing(false), EQUIP_FLASH_DURATION_MS);
-      prevWeapon.current = weaponName;
-      return () => clearTimeout(timer);
-    }
-    prevWeapon.current = weaponName;
-  }, [weaponName]);
-
-  return flashing;
+/** Boolean compatibility API for callers that only need an active flag. */
+export function useWeaponEquipFlash(weaponName: string, roomId?: string): boolean {
+  return useWeaponEquipFlashState(weaponName, roomId).active;
 }

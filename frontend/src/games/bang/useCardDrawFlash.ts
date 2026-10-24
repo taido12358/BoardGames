@@ -1,4 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import type { ChangeFlashState } from "../useChangeFlash";
+import { useReducedMotionPreference } from "../../hooks/useReducedMotionPreference";
 
 const DRAW_FLASH_DURATION_MS = 500;
 
@@ -10,19 +12,53 @@ const DRAW_FLASH_DURATION_MS = 500;
  * GIẢM (đánh/bỏ bài — không cần hiệu ứng bay vào, chỉ biến mất khỏi tay).
  * Không kích hoạt ở lần render đầu tiên (mount không phải là "vừa rút bài").
  */
-export function useCardDrawFlash(handLength: number): boolean {
+export function useCardDrawFlashState(handLength: number, roomId?: string): ChangeFlashState {
+  const reducedMotion = useReducedMotionPreference();
   const prevLength = useRef(handLength);
-  const [flashing, setFlashing] = useState(false);
+  const previousRoomId = useRef(roomId);
+  const sequence = useRef(0);
+  const timer = useRef<number | undefined>(undefined);
+  const [flashing, setFlashing] = useState<ChangeFlashState>({ active: false, sequence: 0 });
 
-  useEffect(() => {
-    if (handLength > prevLength.current) {
-      setFlashing(true);
-      const timer = setTimeout(() => setFlashing(false), DRAW_FLASH_DURATION_MS);
+  useLayoutEffect(() => {
+    if (roomId !== previousRoomId.current) {
+      previousRoomId.current = roomId;
       prevLength.current = handLength;
-      return () => clearTimeout(timer);
+      setFlashing({ active: false, sequence: sequence.current });
+      window.clearTimeout(timer.current);
+      return;
+    }
+    if (handLength > prevLength.current) {
+      sequence.current += 1;
+      const activeSequence = sequence.current;
+      setFlashing({ active: true, sequence: activeSequence });
+      window.clearTimeout(timer.current);
+      timer.current = window.setTimeout(() => {
+        if (sequence.current !== activeSequence) return;
+        setFlashing((current) => current.sequence === activeSequence ? { ...current, active: false } : current);
+      }, reducedMotion ? 180 : DRAW_FLASH_DURATION_MS);
+      prevLength.current = handLength;
+      return;
     }
     prevLength.current = handLength;
-  }, [handLength]);
+  }, [handLength, roomId, reducedMotion]);
+
+  useEffect(() => {
+    if (!reducedMotion || !flashing.active) return;
+    const activeSequence = flashing.sequence;
+    window.clearTimeout(timer.current);
+    timer.current = window.setTimeout(() => {
+      if (sequence.current !== activeSequence) return;
+      setFlashing((current) => current.sequence === activeSequence ? { ...current, active: false } : current);
+    }, 180);
+  }, [reducedMotion, flashing.active, flashing.sequence]);
+
+  useEffect(() => () => window.clearTimeout(timer.current), []);
 
   return flashing;
+}
+
+/** Boolean compatibility API for callers that only need an active flag. */
+export function useCardDrawFlash(handLength: number, roomId?: string): boolean {
+  return useCardDrawFlashState(handLength, roomId).active;
 }

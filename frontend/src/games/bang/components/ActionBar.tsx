@@ -1,4 +1,6 @@
 import type { PendingResponseKind } from "../types";
+import WaitingDots from "../../../components/WaitingDots";
+import AnimatedNumber from "../../../components/AnimatedNumber";
 
 interface Props {
   myTurn: boolean;
@@ -7,8 +9,11 @@ interface Props {
   targetCardName?: string;
   targetCount?: number;
   canEndTurn: boolean;
+  endingTurn?: boolean;
   onEndTurn: () => void;
   onRespondPass: () => void;
+  responding?: boolean;
+  rejectedAction?: { action: "end-turn" | "respond"; sequence: number } | null;
   onCancelTarget: () => void;
   hasBarrel?: boolean;
   hasDefenseCard?: boolean;
@@ -18,28 +23,44 @@ interface Props {
   discarding?: boolean;
   discardOverflow?: number;
   discardSelectedCount?: number;
+  handCount?: number;
+  currentHp?: number;
   onConfirmDiscard?: () => void;
   onCancelDiscard?: () => void;
 }
 
-const btnBase = "shrink-0 rounded-sm px-3 py-1.5 text-sm font-semibold transition-all border";
+const btnBase = "shrink-0 rounded-sm px-3 py-1.5 text-sm font-semibold transition-all border hover:-translate-y-px active:translate-y-0.5 active:scale-[0.98] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-200";
 
 /** Thanh hành động — chỉ hiện nút hợp lệ theo giai đoạn hiện tại. */
 export default function ActionBar({
-  myTurn, awaitingResponse, selectingTarget, canEndTurn, onEndTurn, onRespondPass, onCancelTarget,
+  myTurn, awaitingResponse, selectingTarget, canEndTurn, endingTurn = false, responding = false, rejectedAction, onEndTurn, onRespondPass, onCancelTarget,
   hasBarrel = false,
   hasDefenseCard = true,
   targetCardName, targetCount,
   responseKind, isCalamity = false, waitingFor,
-  discarding, discardOverflow = 0, discardSelectedCount = 0, onConfirmDiscard, onCancelDiscard,
+  discarding, discardOverflow = 0, discardSelectedCount = 0, handCount, currentHp, onConfirmDiscard, onCancelDiscard,
 }: Props) {
   if (discarding) {
     const done = discardSelectedCount === discardOverflow;
     return (
-      <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm bg-red-950/50 border border-red-700/50 px-3 py-2.5 shadow-md">
-        <span role="status" className="text-red-300 text-sm font-medium">
-          🗑 Vượt giới hạn tay bài — chọn {discardOverflow} lá để bỏ ({discardSelectedCount}/{discardOverflow})
-        </span>
+      <div key="discarding" className="bang-action-enter flex flex-wrap items-center justify-between gap-2 rounded-sm bg-red-950/50 border border-red-700/50 px-3 py-2.5 shadow-md">
+        <div role="status" className="text-red-300 text-sm font-medium">
+          <p>🗑 Tay bài {handCount ?? "?"} lá, {currentHp ?? "?"} HP — cần bỏ {discardOverflow} lá ({discardSelectedCount}/{discardOverflow}).</p>
+          <p className="mt-0.5 text-xs text-red-200/70">Chỉ tính lá trên tay; vũ khí và trang bị không tính.</p>
+          <div
+            role="progressbar"
+            aria-label="Tiến độ chọn bài bỏ"
+            aria-valuemin={0}
+            aria-valuemax={discardOverflow}
+            aria-valuenow={Math.min(discardSelectedCount, discardOverflow)}
+            className={`bang-discard-progress mt-2 h-1.5 w-full max-w-56 overflow-hidden rounded-full bg-red-950/80 ${done ? "is-complete" : ""}`}
+          >
+            <div
+              className="h-full origin-left rounded-full bg-gradient-to-r from-red-500 via-amber-400 to-amber-200 shadow-[0_0_8px_rgba(251,191,36,0.55)] transition-transform duration-300 ease-out"
+              style={{ transform: `scaleX(${discardOverflow > 0 ? Math.min(1, discardSelectedCount / discardOverflow) : 0})` }}
+            />
+          </div>
+        </div>
         <div className="flex gap-2 shrink-0">
           <button onClick={onCancelDiscard} className={`${btnBase} border-amber-950/80 bg-[#140e0b]/90 text-amber-700/70 shadow-[inset_0_1px_3px_rgba(0,0,0,0.6)] hover:border-amber-700/60 hover:bg-[#1a120d] hover:text-amber-400`}>
             Hủy <span aria-hidden="true" className="ml-1 opacity-60">Esc</span>
@@ -47,8 +68,9 @@ export default function ActionBar({
           <button
             onClick={onConfirmDiscard}
             disabled={!done}
-            className="rounded-sm font-semibold text-[#271206] text-sm bg-gradient-to-b from-[#fce295] via-[#df9031] to-[#87460e] px-3 py-1.5 border-t border-[#fff4d1] border-b-2 border-[#4d2506] shadow-[0_2px_6px_rgba(0,0,0,0.6),inset_0_1px_1px_rgba(255,255,255,0.3)] hover:brightness-110 active:translate-y-0.5 active:border-b-0 transition-all duration-150 disabled:opacity-40 disabled:cursor-not-allowed"
+            className="rounded-sm font-semibold text-[#271206] text-sm bg-gradient-to-b from-[#fce295] via-[#df9031] to-[#87460e] px-3 py-1.5 border-t border-[#fff4d1] border-b-2 border-[#4d2506] shadow-[0_2px_6px_rgba(0,0,0,0.6),inset_0_1px_1px_rgba(255,255,255,0.3)] hover:-translate-y-px hover:brightness-110 active:translate-y-0.5 active:scale-[0.98] active:border-b-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-200 transition-all duration-150 disabled:opacity-40 disabled:cursor-not-allowed"
           >
+            {done && <span key="discard-ready" aria-hidden="true" className="bang-discard-ready-mark">✓ </span>}
             Xác nhận bỏ bài
           </button>
         </div>
@@ -58,10 +80,10 @@ export default function ActionBar({
 
   if (selectingTarget) {
     return (
-      <div role="status" className="flex flex-wrap items-center justify-between gap-2 rounded-sm bg-amber-950/60 border border-amber-600/50 px-3 py-2.5 shadow-md">
+      <div key="selecting-target" role="status" className="bang-action-enter flex flex-wrap items-center justify-between gap-2 rounded-sm bg-amber-950/60 border border-amber-600/50 px-3 py-2.5 shadow-md">
         <div className="text-sm text-amber-300">
           <p className="font-semibold">🎯 {targetCardName ? `Đang dùng ${targetCardName}` : "CHỌN MỤC TIÊU"}</p>
-          <p className="mt-1 text-xs text-amber-200/80">{targetCount === 0 ? "Không còn mục tiêu hợp lệ. Hãy hủy và chọn lá khác." : `Nhấn vào người chơi được tô sáng${targetCount !== undefined ? ` (${targetCount} mục tiêu hợp lệ)` : ""}.`}</p>
+          <p className="mt-1 text-xs text-amber-200/80">{targetCount === 0 ? "Không còn mục tiêu hợp lệ. Hãy hủy và chọn lá khác." : <>Nhấn vào người chơi được tô sáng{targetCount !== undefined && <> (<AnimatedNumber value={targetCount} durationMs={220} /> mục tiêu hợp lệ)</>}.</>}</p>
         </div>
         <button onClick={onCancelTarget} className={`${btnBase} border-amber-950/80 bg-[#140e0b]/90 text-amber-700/70 shadow-[inset_0_1px_3px_rgba(0,0,0,0.6)] hover:border-amber-700/60 hover:bg-[#1a120d] hover:text-amber-400`}>
           Hủy <span aria-hidden="true" className="ml-1 opacity-60">Esc</span>
@@ -76,13 +98,15 @@ export default function ActionBar({
       ? (isCalamity && responseKind === "duel" ? "Bang! hoặc Trượt!" : "Bang!")
       : (isCalamity ? "Trượt! hoặc Bang!" : "Trượt!");
     return (
-      <div role="status" className="flex flex-wrap items-center justify-between gap-2 rounded-sm bg-red-950/50 border border-red-700/50 px-3 py-2.5 shadow-md">
+      <div key={`response-${responseKind ?? "unknown"}`} role="status" className="bang-action-enter flex flex-wrap items-center justify-between gap-2 rounded-sm bg-red-950/50 border border-red-700/50 px-3 py-2.5 shadow-md">
         <span className="text-red-300 text-sm font-medium">
           {hasDefenseCard ? `⚠️ Chọn ${defense} để đỡ. ` : `Bạn không có ${defense} để đỡ. `}
           {hasBarrel ? "Bạn có thể thử Thùng rượu; thất bại sẽ mất 1 máu." : "Chọn Chịu đòn để tiếp tục (mất 1 máu)."}
         </span>
-        <button onClick={onRespondPass} className={`${btnBase} ${hasBarrel ? "bg-amber-900/60 hover:bg-amber-800 border-amber-700/60 text-amber-200 hover:text-amber-100" : "bg-[#140e0b]/90 hover:bg-red-900/60 border-red-800/60 text-red-400 hover:text-red-300"}`}>
-          {hasBarrel ? "🛢 Thử Thùng rượu (trượt: −1 máu)" : "Chịu đòn (−1 máu)"}
+        <button onClick={onRespondPass} disabled={responding} aria-busy={responding} className={`${btnBase} ${hasBarrel ? "bg-amber-900/60 hover:bg-amber-800 border-amber-700/60 text-amber-200 hover:text-amber-100" : "bg-[#140e0b]/90 hover:bg-red-900/60 border-red-800/60 text-red-400 hover:text-red-300"} ${rejectedAction?.action === "respond" ? `bang-action-rejected-${rejectedAction.sequence % 2 === 0 ? "b" : "a"}` : ""} disabled:opacity-60 disabled:cursor-wait`}>
+          {responding
+            ? <><span aria-hidden="true" className="rematch-spinner inline-block">↻</span> ĐANG GỬI…</>
+            : hasBarrel ? "🛢 Thử Thùng rượu (trượt: −1 máu)" : "Chịu đòn (−1 máu)"}
         </button>
       </div>
     );
@@ -90,23 +114,24 @@ export default function ActionBar({
 
   if (myTurn) {
     return (
-      <div className="relative overflow-hidden flex flex-wrap items-center justify-between gap-2 rounded-sm border border-amber-700/40 bg-amber-950/30 px-3 py-2.5 shadow-md">
+      <div key="action-turn" className="bang-action-enter relative overflow-hidden flex flex-wrap items-center justify-between gap-2 rounded-sm border border-amber-700/40 bg-amber-950/30 px-3 py-2.5 shadow-md">
         <div className="pointer-events-none absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-amber-500/30 to-transparent" />
-        <span className="text-amber-300 text-sm font-semibold flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse shrink-0" />Đến lượt bạn — chọn bài để đánh</span>
+        <span className="text-amber-300 text-sm font-semibold flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-amber-400 game-turn-beacon shrink-0" />Đến lượt bạn — chọn bài để đánh</span>
         <button
           onClick={onEndTurn}
-          disabled={!canEndTurn}
-          className="shrink-0 rounded-sm font-semibold text-[#271206] text-sm bg-gradient-to-b from-[#fce295] via-[#df9031] to-[#87460e] px-3 py-1.5 border-t border-[#fff4d1] border-b-2 border-[#4d2506] shadow-[0_2px_6px_rgba(0,0,0,0.6),inset_0_1px_1px_rgba(255,255,255,0.3)] hover:brightness-110 active:translate-y-0.5 active:border-b-0 transition-all duration-150 disabled:opacity-40 disabled:cursor-not-allowed"
+          disabled={!canEndTurn || endingTurn}
+          aria-busy={endingTurn}
+          className={`shrink-0 rounded-sm font-semibold text-[#271206] text-sm bg-gradient-to-b from-[#fce295] via-[#df9031] to-[#87460e] px-3 py-1.5 border-t border-[#fff4d1] border-b-2 border-[#4d2506] shadow-[0_2px_6px_rgba(0,0,0,0.6),inset_0_1px_1px_rgba(255,255,255,0.3)] hover:-translate-y-px hover:brightness-110 active:translate-y-0.5 active:scale-[0.98] active:border-b-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-200 transition-all duration-150 disabled:opacity-60 disabled:cursor-wait ${rejectedAction?.action === "end-turn" ? `bang-action-rejected-${rejectedAction.sequence % 2 === 0 ? "b" : "a"}` : ""}`}
         >
-          KẾT THÚC LƯỢT
+          {endingTurn ? <><span aria-hidden="true" className="rematch-spinner inline-block">↻</span> ĐANG KẾT THÚC…</> : "KẾT THÚC LƯỢT"}
         </button>
       </div>
     );
   }
 
   return (
-    <div className="rounded-sm bg-gradient-to-r from-amber-950/30 to-[#1a1208]/40 border border-amber-900/30 px-3 py-2.5 flex items-center justify-center gap-2 text-[#bba182]/60 text-sm">
-      <span className="w-1.5 h-1.5 rounded-full bg-amber-500/60 animate-pulse shrink-0" />
+    <div key={`waiting-${waitingFor ?? "opponent"}-${responseKind ?? "action"}`} className="bang-action-enter rounded-sm bg-gradient-to-r from-amber-950/30 to-[#1a1208]/40 border border-amber-900/30 px-3 py-2.5 flex items-center justify-center gap-2 text-[#bba182]/60 text-sm">
+      <WaitingDots />
       {waitingFor ? `Đang chờ ${waitingFor}${responseKind ? " phản hồi" : " chơi bài"}…` : "Chờ đối thủ…"}
     </div>
   );
