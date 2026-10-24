@@ -1,10 +1,11 @@
-﻿import { useEffect, useMemo } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useGameStore } from "../platform/gameStore";
 import { useLobbyHub } from "../platform/useLobbyHub";
 import { getGameMetadata } from "../platform/gameRegistry";
 import type { GameMetadata } from "../platform/gameLibraryTypes";
 import GameCard from "./GameCard";
+import AnimatedNumber from "./AnimatedNumber";
 import LobbyLoadStatus from "../platform/LobbyLoadStatus";
 
 interface FilterChip {
@@ -19,6 +20,8 @@ function normalizeSearch(value: string): string {
 function playerCountLabel(m: GameMetadata): string {
   return m.minPlayers === m.maxPlayers ? `${m.minPlayers} người` : `${m.minPlayers}–${m.maxPlayers} người`;
 }
+
+interface ExitingGame { metadata: GameMetadata; waitingRooms?: number; }
 
 function SkeletonCard() {
   return (
@@ -101,6 +104,61 @@ export default function GameLibrary() {
       return true;
     });
   }, [allMetadata, search, filter, waitingCountByGame]);
+  const visibleGameKey = filtered.map((game) => game.gameKey).join("|");
+
+  const previousFiltered = useRef(filtered);
+  const exitTimers = useRef(new Map<string, number>());
+  const [exitingGames, setExitingGames] = useState<ExitingGame[]>([]);
+  useLayoutEffect(() => {
+    const currentIds = new Set(filtered.map((game) => game.gameKey));
+    const removed = previousFiltered.current.filter((game) => !currentIds.has(game.gameKey));
+    previousFiltered.current = filtered;
+
+    for (const gameKey of currentIds) {
+      const timer = exitTimers.current.get(gameKey);
+      if (timer !== undefined) {
+        window.clearTimeout(timer);
+        exitTimers.current.delete(gameKey);
+      }
+    }
+    if (currentIds.size > 0) setExitingGames((current) => current.filter(({ metadata }) => !currentIds.has(metadata.gameKey)));
+
+    if (removed.length === 0) return;
+    const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
+    setExitingGames((current) => [
+      ...current.filter(({ metadata }) => !removed.some((game) => game.gameKey === metadata.gameKey)),
+      ...removed.map((metadata) => ({ metadata, waitingRooms: waitingCountByGame[metadata.gameKey] })),
+    ]);
+    for (const game of removed) {
+      window.clearTimeout(exitTimers.current.get(game.gameKey));
+      exitTimers.current.set(game.gameKey, window.setTimeout(() => {
+        exitTimers.current.delete(game.gameKey);
+        setExitingGames((current) => current.filter(({ metadata }) => metadata.gameKey !== game.gameKey));
+      }, reducedMotion ? 1 : 220));
+    }
+  }, [filtered, waitingCountByGame]);
+
+  useEffect(() => () => {
+    for (const timer of exitTimers.current.values()) window.clearTimeout(timer);
+    exitTimers.current.clear();
+  }, []);
+
+  useEffect(() => {
+    const query = window.matchMedia?.("(prefers-reduced-motion: reduce)");
+    if (!query) return;
+    const finishExits = () => {
+      if (!query.matches || exitTimers.current.size === 0) return;
+      for (const timer of exitTimers.current.values()) window.clearTimeout(timer);
+      exitTimers.current.clear();
+      setExitingGames([]);
+    };
+    if (query.addEventListener) query.addEventListener("change", finishExits);
+    else query.addListener(finishExits);
+    return () => {
+      if (query.removeEventListener) query.removeEventListener("change", finishExits);
+      else query.removeListener(finishExits);
+    };
+  }, []);
 
   const clearFilters = () => setSearchParams((previous) => {
     const next = new URLSearchParams(previous);
@@ -110,7 +168,7 @@ export default function GameLibrary() {
   }, { replace: true });
 
   return (
-    <div className="w-full max-w-5xl mx-auto space-y-5">
+    <div className="game-library-page w-full max-w-5xl mx-auto space-y-5">
       {/* Header */}
       <div className="text-center space-y-2 pt-2">
         <div className="inline-flex items-center justify-center gap-3">
@@ -150,7 +208,7 @@ export default function GameLibrary() {
               type="button"
               onClick={() => setFilter(chip.id)}
               aria-pressed={filter === chip.id}
-              className={`px-3.5 py-1.5 text-xs font-bold border transition-all duration-150 uppercase tracking-wider rounded-sm ${
+              className={`game-library-filter-chip px-3.5 py-1.5 text-xs font-bold border transition-all duration-150 uppercase tracking-wider rounded-sm ${
                 filter === chip.id
                   ? "font-extrabold text-[#241106] bg-gradient-to-b from-[#f3c87f] via-[#d49445] to-[#99581a] border-t border-[#ffebbe] border-b-2 border-[#542a07] shadow-[0_2px_10px_rgba(217,119,6,0.35),0_1px_2px_rgba(0,0,0,0.8)] active:translate-y-px"
                   : "text-[#bba182] bg-[#22140c]/90 border-[#6b4725]/60 shadow-[inset_0_1px_2px_rgba(0,0,0,0.6)] hover:border-[#b47a3c]/80 hover:text-[#f3d4a2] hover:bg-[#2c1a10] active:scale-95"
@@ -165,7 +223,7 @@ export default function GameLibrary() {
       {/* Trạng thái lỗi */}
       <LobbyLoadStatus loading={roomsLoading} error={roomsError} onRetry={() => fetchRooms()} />
       {enginesError && !enginesLoading && (
-        <div className="rounded-sm border border-[#9a3030]/50 bg-[#7a201b]/30 p-6 text-center space-y-3">
+        <div className="animate-game-action-enter rounded-sm border border-[#9a3030]/50 bg-[#7a201b]/30 p-6 text-center space-y-3">
           <p className="text-[#c88080] text-sm">{enginesError}</p>
           <button
             type="button"
@@ -185,8 +243,8 @@ export default function GameLibrary() {
       )}
 
       {/* Trống sau lọc */}
-      {!enginesLoading && !enginesError && filtered.length === 0 && (filter !== "waiting" || (!roomsLoading && !roomsError)) && (
-        <div className="rounded-sm border border-amber-900/30 bg-[#1a1208]/40 p-10 text-center space-y-3">
+      {!enginesLoading && !enginesError && filtered.length === 0 && exitingGames.length === 0 && (filter !== "waiting" || (!roomsLoading && !roomsError)) && (
+        <div className="animate-game-action-enter rounded-sm border border-amber-900/30 bg-[#1a1208]/40 p-10 text-center space-y-3">
           <div className="text-3xl">🔍</div>
           <p className="text-amber-300/70 font-medium">Không tìm thấy trò chơi</p>
           <p className="text-amber-700/50 text-sm italic">Thử thay đổi từ khóa hoặc bộ lọc.</p>
@@ -201,12 +259,12 @@ export default function GameLibrary() {
       )}
 
       {/* Lưới thẻ game */}
-      {!enginesLoading && !enginesError && filtered.length > 0 && (
-        <div role="status" className="flex items-center gap-3 py-1 text-xs uppercase tracking-widest text-amber-600/70">
+      {!enginesLoading && !enginesError && (filtered.length > 0 || exitingGames.length > 0) && (
+        <div role="status" className="animate-game-action-enter flex items-center gap-3 py-1 text-xs uppercase tracking-widest text-amber-600/70">
           <span className="h-px flex-1 bg-gradient-to-r from-transparent via-amber-900/40 to-amber-900/20" />
           <div className="flex items-center gap-1.5">
             <span>Tìm thấy{" "}</span>
-            <span className="rounded border border-amber-800/40 bg-amber-950/60 px-1.5 py-0.5 font-mono text-xs font-bold text-amber-300 shadow-[inset_0_1px_2px_rgba(0,0,0,0.7)]">{filtered.length}</span>
+            <span className="rounded border border-amber-800/40 bg-amber-950/60 px-1.5 py-0.5 font-mono text-xs font-bold text-amber-300 shadow-[inset_0_1px_2px_rgba(0,0,0,0.7)]"><AnimatedNumber value={filtered.length} durationMs={260} className="inline-block tabular-nums" /></span>
             {" "}<span>trò chơi</span>
           </div>
           <span className="h-px flex-1 bg-gradient-to-l from-transparent via-amber-900/40 to-amber-900/20" />
@@ -214,14 +272,21 @@ export default function GameLibrary() {
       )}
       {!enginesLoading && !enginesError && filtered.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filtered.map((m) => (
-            <GameCard
-              key={m.gameKey}
-              metadata={m}
-              waitingRooms={waitingCountByGame[m.gameKey]}
-              onViewDetails={() => navigate(`/games/${m.gameKey}`)}
-              onPlayNow={() => navigate(`/games/${m.gameKey}?play=1`)}
-            />
+          {filtered.map((m, index) => (
+            <div key={`${visibleGameKey}:${m.gameKey}`} className="game-library-card-enter" style={{ animationDelay: `${Math.min(index * 55, 275)}ms` }}>
+              <GameCard
+                metadata={m}
+                waitingRooms={waitingCountByGame[m.gameKey]}
+                disabled={false}
+                onViewDetails={() => navigate(`/games/${m.gameKey}`, { viewTransition: true })}
+                onPlayNow={() => navigate(`/games/${m.gameKey}?play=1`, { viewTransition: true })}
+              />
+            </div>
+          ))}
+          {exitingGames.filter(({ metadata }) => !filtered.some((game) => game.gameKey === metadata.gameKey)).map(({ metadata, waitingRooms }) => (
+            <div key={`exiting:${metadata.gameKey}`} aria-hidden="true" className="game-library-card-exit pointer-events-none">
+              <GameCard metadata={metadata} waitingRooms={waitingRooms} disabled onViewDetails={() => {}} onPlayNow={() => {}} />
+            </div>
           ))}
         </div>
       )}

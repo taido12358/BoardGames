@@ -63,22 +63,26 @@ function RolesSection({ roles }: { roles: Extract<InstructionSection, { kind: "r
 
 function CardEntry({ card }: { card: CardGuideEntry }) {
   const [open, setOpen] = useState(false);
+  const panelId = useId();
   return (
     <button
       type="button"
       onClick={() => setOpen((o) => !o)}
       aria-expanded={open}
-      className="text-left rounded-sm border border-[#7a5c2e]/60 bg-gradient-to-b from-[#2b2013] to-[#1c150c] p-3 hover:border-amber-500/60 hover:shadow-[0_0_8px_rgba(245,158,11,0.15)] transition-all"
+      aria-controls={panelId}
+      className="text-left rounded-sm border border-[#7a5c2e]/60 bg-gradient-to-b from-[#2b2013] to-[#1c150c] p-3 hover:border-amber-500/60 hover:shadow-[0_0_8px_rgba(245,158,11,0.15)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-300 transition-all"
     >
       <div className="text-2xl text-center">{card.icon}</div>
       <div className="text-sm font-bold text-[#f5d09d] text-center mt-1">{card.name}</div>
       <div className="text-[10px] text-amber-300/60 text-center uppercase tracking-wide">{card.type}</div>
-      {open && (
+      <div id={panelId} aria-hidden={!open} className={`game-guide-collapse ${open ? "is-open" : ""}`}>
+        <div className="min-h-0 overflow-hidden">
         <div className="mt-2 pt-2 border-t border-amber-900/40 space-y-1">
           <p className="text-xs text-[#d4b996]/75">{card.effect}</p>
           {card.example && <p className="text-[11px] text-[#e8c07e]/70 italic">{card.example}</p>}
         </div>
-      )}
+        </div>
+      </div>
       {!open && <div className="text-[10px] text-amber-800/50 text-center mt-1">nhấn để xem chi tiết</div>}
     </button>
   );
@@ -185,7 +189,7 @@ export default function GameInstructions({ sections }: Props) {
         ))}
       </div>
 
-      <div role="tabpanel" id={`${baseId}-panel`} aria-labelledby={`${baseId}-tab-${section.id}`} tabIndex={0} className="rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-amber-300">
+      <div key={section.id} role="tabpanel" id={`${baseId}-panel`} aria-labelledby={`${baseId}-tab-${section.id}`} tabIndex={0} className="animate-game-action-enter rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-amber-300">
         {section.kind === "text" && <TextSection paragraphs={section.paragraphs} bullets={section.bullets} />}
         {section.kind === "flow" && <FlowSection steps={section.steps} />}
         {section.kind === "roles" && <RolesSection roles={section.roles} />}

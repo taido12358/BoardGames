@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useGameStore } from "../platform/gameStore";
 import { useGameRoomHubActions } from "../platform/GameRoomHubContext";
@@ -6,10 +6,11 @@ import ChatPanel from "../platform/ChatPanel";
 import RoomInvite from "../platform/RoomInvite";
 import { RematchInviteBanner } from "../platform/RoomShell";
 import type { RoomDto } from "../platform/types";
-import VayBatBoard from "../games/vaybat/VayBatBoard";
-import BangBoard from "../games/bang/BangBoard";
-import OAnQuanBoard from "../games/oanquan/OAnQuanBoard";
-import ZodiacRaceBoard from "../games/zodiacrace/ZodiacRaceBoard";
+
+const VayBatBoard = lazy(() => import("../games/vaybat/VayBatBoard"));
+const BangBoard = lazy(() => import("../games/bang/BangBoard"));
+const OAnQuanBoard = lazy(() => import("../games/oanquan/OAnQuanBoard"));
+const ZodiacRaceBoard = lazy(() => import("../games/zodiacrace/ZodiacRaceBoard"));
 
 /**
  * Route thật cho "đang ở trong một phòng" (`/games/:gameKey/room/:roomId`) — trước đây
@@ -42,7 +43,9 @@ export default function RoomRoute() {
           navigate(`/games/${cached.gameKey}/room/${roomId}`, { replace: true });
           return;
         }
+        // Cache hit — phòng đã có, chỉ cần re-join hub để nhận state updates.
         setLoading(false);
+        await joinRoom(roomId, controller.signal);
         return;
       }
       clearChat(); // phòng mới -> chat của phòng cũ không còn liên quan (chỉ tồn tại trong bộ nhớ)
@@ -94,7 +97,7 @@ export default function RoomRoute() {
     setError("");
     clearChat();
     setRematchInvite(null);
-    navigate(`/games/${gameKey}`);
+    navigate(`/games/${gameKey}`, { viewTransition: true });
   };
 
   /** Tạo phòng mới cùng game/cùng số ghế rồi tự vào luôn — báo cho người khác còn ở phòng cũ qua SignalR. */
@@ -113,7 +116,7 @@ export default function RoomRoute() {
       setRoom(null);
       clearChat();
       setRematchInvite(null);
-      navigate(`/games/${newRoom.gameKey}/room/${newRoom.id}`);
+      navigate(`/games/${newRoom.gameKey}/room/${newRoom.id}`, { viewTransition: true });
     } catch {
       setError("Không kết nối được máy chủ.");
     } finally {
@@ -127,16 +130,16 @@ export default function RoomRoute() {
     setRoom(null);
     clearChat();
     setRematchInvite(null);
-    navigate(`/games/${gameKey}/room/${newRoomId}`);
+    navigate(`/games/${gameKey}/room/${newRoomId}`, { viewTransition: true });
   };
 
   if (notFound) {
     return (
-      <div className="w-full max-w-md mx-auto text-center space-y-4 py-10">
+      <div className="animate-game-action-enter w-full max-w-md mx-auto text-center space-y-4 py-10">
         <div className="text-3xl">❓</div>
         <p className="text-amber-300/70">Không tìm thấy phòng này — có thể đã bị đóng.</p>
         <button
-          onClick={() => navigate(`/games/${gameKey}`)}
+          onClick={() => navigate(`/games/${gameKey}`, { viewTransition: true })}
           className="rounded-xl border border-amber-950/80 bg-[#140e0b]/90 hover:border-amber-700/60 hover:bg-[#1a120d] px-4 py-2 text-sm font-medium text-amber-700/70 hover:text-amber-400 transition-colors"
         >
           ← QUAY LẠI
@@ -147,11 +150,11 @@ export default function RoomRoute() {
 
   if (loadError) {
     return (
-      <div className="mx-auto w-full max-w-md space-y-4 py-10 text-center">
+      <div className="animate-game-action-enter mx-auto w-full max-w-md space-y-4 py-10 text-center">
         <p role="alert" className="text-sm text-red-300">{loadError}</p>
         <div className="flex flex-wrap justify-center gap-3">
           <button onClick={() => setLoadAttempt((attempt) => attempt + 1)} className="rounded-xl bg-amber-700 px-4 py-3 font-semibold text-white hover:bg-amber-600">Thử vào lại</button>
-          <button onClick={() => navigate(`/games/${gameKey}`)} className="rounded-xl border border-amber-950/80 bg-[#140e0b]/90 hover:border-amber-700/60 hover:bg-[#1a120d] px-4 py-3 text-sm text-amber-700/70 hover:text-amber-400 transition-colors">Về sảnh trò chơi</button>
+          <button onClick={() => navigate(`/games/${gameKey}`, { viewTransition: true })} className="rounded-xl border border-amber-950/80 bg-[#140e0b]/90 hover:border-amber-700/60 hover:bg-[#1a120d] px-4 py-3 text-sm text-amber-700/70 hover:text-amber-400 transition-colors">Về sảnh trò chơi</button>
         </div>
       </div>
     );
@@ -159,7 +162,7 @@ export default function RoomRoute() {
 
   if (loading || !room || room.id !== roomId) {
     return (
-      <div role="status" className="w-full max-w-md mx-auto text-center py-10 text-amber-700/60 text-sm animate-pulse italic">
+      <div role="status" className="animate-game-action-enter w-full max-w-md mx-auto text-center py-10 text-amber-700/60 text-sm animate-pulse italic">
         Đang vào phòng…
       </div>
     );
@@ -167,13 +170,13 @@ export default function RoomRoute() {
 
   if (room.status === "Cancelled" || room.status === "Abandoned") {
     return (
-      <div className="w-full max-w-md mx-auto text-center space-y-4 py-10">
+      <div className="animate-game-action-enter w-full max-w-md mx-auto text-center space-y-4 py-10">
         <div className="text-3xl">🚪</div>
         <p className="text-amber-300/70">
           {room.status === "Cancelled" ? "Phòng đã bị huỷ." : "Phòng đã đóng do mất kết nối kéo dài."}
         </p>
         <button
-          onClick={() => navigate(`/games/${gameKey}`)}
+          onClick={() => navigate(`/games/${gameKey}`, { viewTransition: true })}
           className="rounded-xl border border-amber-950/80 bg-[#140e0b]/90 hover:border-amber-700/60 hover:bg-[#1a120d] px-4 py-2 text-sm font-medium text-amber-700/70 hover:text-amber-400 transition-colors"
         >
           ← QUAY LẠI
@@ -194,7 +197,7 @@ export default function RoomRoute() {
         return <ZodiacRaceBoard makeMove={makeMove} onLeave={handleLeave} onRematch={handleRematch} rematching={rematching} />;
       default:
         return (
-          <div className="rounded-2xl border border-amber-900/30 bg-[#1a1208]/40 p-6 text-center space-y-4">
+          <div className="animate-game-action-enter rounded-2xl border border-amber-900/30 bg-[#1a1208]/40 p-6 text-center space-y-4">
             <p className="text-amber-300/70">Game "{room.gameKey}" chưa có giao diện.</p>
             <button
               onClick={handleLeave}
@@ -211,7 +214,14 @@ export default function RoomRoute() {
     <div className="flex flex-col gap-3">
       <RematchInviteBanner invite={rematchInvite} onJoin={handleJoinRematch} />
       {room.status === "Waiting" && <RoomInvite key={roomId} />}
-      {board}
+      <Suspense fallback={(
+        <div role="status" className="animate-game-action-enter flex min-h-48 flex-col items-center justify-center gap-3 rounded-sm border border-amber-900/30 bg-[#1a1208]/40 text-center text-sm text-amber-200/75">
+          <span aria-hidden="true" className="room-game-loading-mark">✦</span>
+          Đang chuẩn bị bàn chơi…
+        </div>
+      )}>
+        {board}
+      </Suspense>
       <ChatPanel key={roomId} roomId={roomId} />
     </div>
   );

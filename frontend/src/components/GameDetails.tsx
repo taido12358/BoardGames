@@ -1,11 +1,139 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useGameStore } from "../platform/gameStore";
 import { useLobbyHub } from "../platform/useLobbyHub";
 import { getGameInstructions, getGameMetadata, getCreateOptionsForm } from "../platform/gameRegistry";
+import type { RoomSummaryDto } from "../platform/types";
 import { ARTWORK_BG } from "../platform/artworkTheme";
+import AnimatedNumber from "./AnimatedNumber";
 import GameInstructions from "./GameInstructions";
 import LobbyLoadStatus from "../platform/LobbyLoadStatus";
+
+function roomPanelScrollBehavior(): ScrollBehavior {
+  return window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
+}
+
+interface WaitingRoomsListProps {
+  rooms: RoomSummaryDto[];
+  showEmpty: boolean;
+  busy: boolean;
+  cancelingId: string | null;
+  onCancel: (roomId: string) => void;
+  onJoin: (roomId: string) => void;
+}
+
+function WaitingRoomsList({ rooms, showEmpty, busy, cancelingId, onCancel, onJoin }: WaitingRoomsListProps) {
+  const [exitingRooms, setExitingRooms] = useState<RoomSummaryDto[]>([]);
+  const previousRooms = useRef(rooms);
+  const exitTimers = useRef(new Map<string, number>());
+
+  useLayoutEffect(() => {
+    const currentIds = new Set(rooms.map((room) => room.id));
+    const removedRooms = previousRooms.current.filter((room) => !currentIds.has(room.id));
+    previousRooms.current = rooms;
+
+    const returnIds = new Set(rooms.map((room) => room.id));
+    for (const roomId of returnIds) {
+      const timer = exitTimers.current.get(roomId);
+      if (timer !== undefined) {
+        window.clearTimeout(timer);
+        exitTimers.current.delete(roomId);
+      }
+    }
+    if (returnIds.size > 0) setExitingRooms((current) => current.filter((room) => !returnIds.has(room.id)));
+
+    if (removedRooms.length === 0) return;
+    const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
+    const exitDuration = reducedMotion ? 1 : 240;
+    setExitingRooms((current) => [
+      ...current.filter((room) => !removedRooms.some((removed) => removed.id === room.id)),
+      ...removedRooms,
+    ]);
+    for (const room of removedRooms) {
+      window.clearTimeout(exitTimers.current.get(room.id));
+      exitTimers.current.set(room.id, window.setTimeout(() => {
+        exitTimers.current.delete(room.id);
+        setExitingRooms((current) => current.filter((entry) => entry.id !== room.id));
+      }, exitDuration));
+    }
+  }, [rooms]);
+
+  useEffect(() => () => {
+    for (const timer of exitTimers.current.values()) window.clearTimeout(timer);
+    exitTimers.current.clear();
+  }, []);
+
+  useEffect(() => {
+    const query = window.matchMedia?.("(prefers-reduced-motion: reduce)");
+    if (!query) return;
+    const finishExits = () => {
+      if (!query.matches || exitTimers.current.size === 0) return;
+      for (const timer of exitTimers.current.values()) window.clearTimeout(timer);
+      exitTimers.current.clear();
+      setExitingRooms([]);
+    };
+    if (query.addEventListener) query.addEventListener("change", finishExits);
+    else query.addListener(finishExits);
+    return () => {
+      if (query.removeEventListener) query.removeEventListener("change", finishExits);
+      else query.removeListener(finishExits);
+    };
+  }, []);
+
+  const currentIds = new Set(rooms.map((room) => room.id));
+  const visibleRooms = [...rooms, ...exitingRooms.filter((room) => !currentIds.has(room.id))];
+
+  return (
+    <>
+      <ul className="space-y-2">
+        {visibleRooms.map((room, index) => {
+        const isExiting = !currentIds.has(room.id);
+        const occupied = room.seats.filter((seat) => seat.displayName !== null).length;
+        const owner = room.seats.find((seat) => seat.displayName !== null)?.displayName ?? null;
+        return (
+          <li
+            key={room.id}
+            aria-hidden={isExiting || undefined}
+            style={!isExiting ? { animationDelay: `${Math.min(index * 48, 240)}ms` } : undefined}
+            className={`${isExiting ? "lobby-room-exit" : "lobby-room-enter"} relative overflow-hidden rounded-sm border border-amber-900/30 bg-gradient-to-r from-[#1c1408] to-[#150f06] p-3 flex items-center justify-between gap-2`}
+          >
+            <div className="pointer-events-none absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-amber-500/20 to-transparent" />
+            <div className="min-w-0">
+              <div className="text-sm text-[#f5d09d] truncate font-medium">🚪 Phòng của {owner ?? "Ẩn danh"}</div>
+              <div className="text-xs text-amber-700/70 mt-0.5">👥 <AnimatedNumber value={occupied} durationMs={300} />/{room.seatCount} người · {isExiting ? "Đang rời sảnh…" : "Đang chờ"}</div>
+            </div>
+            {!isExiting && (
+              <div className="shrink-0 flex items-center gap-1.5">
+                {room.isMine && (
+                  <button
+                    onClick={() => onCancel(room.id)}
+                    disabled={busy}
+                    aria-busy={cancelingId === room.id}
+                    className="rounded-sm bg-[#22140c]/90 hover:bg-red-900/60 border border-[#6b4725]/60 hover:border-red-700/50 disabled:opacity-50 px-3 py-1.5 text-xs font-medium text-[#bba182] hover:text-red-300 transition-colors"
+                    title="Huỷ phòng"
+                  >
+                    {cancelingId === room.id && <span aria-hidden="true" className="activity-spinner is-spinning mr-1.5 align-[-2px]" />}{cancelingId === room.id ? "ĐANG HỦY…" : "HUỶ"}
+                  </button>
+                )}
+                <button
+                  onClick={() => onJoin(room.id)}
+                  disabled={busy}
+                  className="rounded-sm font-semibold text-[#271206] text-xs bg-gradient-to-b from-[#fce295] via-[#df9031] to-[#87460e] px-3.5 py-1.5 border-t border-[#fff4d1] border-b-2 border-[#4d2506] shadow-[0_2px_6px_rgba(0,0,0,0.6),inset_0_1px_1px_rgba(255,255,255,0.3)] hover:brightness-110 active:translate-y-0.5 active:border-b-0 transition-all duration-150 disabled:opacity-50"
+                >
+                  VÀO PHÒNG
+                </button>
+              </div>
+            )}
+          </li>
+        );
+        })}
+      </ul>
+      {showEmpty && visibleRooms.length === 0 && (
+        <p className="animate-game-action-enter text-amber-900/60 text-sm text-center py-4">Chưa có phòng nào đang chờ — hãy tạo phòng mới!</p>
+      )}
+    </>
+  );
+}
 
 export default function GameDetails() {
   const { gameKey = "" } = useParams();
@@ -54,7 +182,7 @@ export default function GameDetails() {
     if (gameReady && jumpedTo.current !== playTarget && roomPanelRef.current) {
       jumpedTo.current = playTarget;
       roomPanelRef.current.focus({ preventScroll: true });
-      roomPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      roomPanelRef.current?.scrollIntoView({ behavior: roomPanelScrollBehavior(), block: "start" });
     }
   }, [gameReady, playTarget]);
 
@@ -68,7 +196,7 @@ export default function GameDetails() {
 
   const scrollToRoomPanel = () => {
     roomPanelRef.current?.focus({ preventScroll: true });
-    roomPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    roomPanelRef.current?.scrollIntoView({ behavior: roomPanelScrollBehavior(), block: "start" });
   };
 
   async function handleCreate() {
@@ -79,7 +207,7 @@ export default function GameDetails() {
     setCreating(true);
     try {
       const room = await createRoom(gameKey, options);
-      if (room && version === pageVersion.current) navigate(`/games/${gameKey}/room/${room.id}`);
+      if (room && version === pageVersion.current) navigate(`/games/${gameKey}/room/${room.id}`, { viewTransition: true });
     } catch {
       if (version === pageVersion.current) setError("Không kết nối được máy chủ để tạo phòng. Vui lòng thử lại.");
     } finally {
@@ -98,7 +226,7 @@ export default function GameDetails() {
     setMatching(true);
     try {
       const room = await quickMatch(gameKey);
-      if (room && version === pageVersion.current) navigate(`/games/${gameKey}/room/${room.id}`);
+      if (room && version === pageVersion.current) navigate(`/games/${gameKey}/room/${room.id}`, { viewTransition: true });
     } catch {
       if (version === pageVersion.current) setError("Không kết nối được máy chủ để tìm trận. Vui lòng thử lại.");
     } finally {
@@ -130,12 +258,12 @@ export default function GameDetails() {
 
   function handleJoin(roomId: string) {
     if (actionLock.current) return;
-    navigate(`/games/${gameKey}/room/${roomId}`);
+    navigate(`/games/${gameKey}/room/${roomId}`, { viewTransition: true });
   }
 
   if (!engine && enginesError && !enginesLoading) {
     return (
-      <div className="mx-auto max-w-md space-y-4 py-10 text-center">
+      <div className="animate-game-action-enter mx-auto max-w-md space-y-4 py-10 text-center">
         <p role="alert" className="text-red-300">{enginesError}</p>
         <p className="text-sm text-amber-700/60">Kiểm tra kết nối rồi tải lại danh sách trò chơi.</p>
         <button onClick={() => fetchEngines()} className="rounded-sm bg-amber-700 px-4 py-3 font-semibold text-white hover:bg-amber-600">Thử lại</button>
@@ -145,7 +273,7 @@ export default function GameDetails() {
 
   if (enginesLoading || (!engine && engines.length === 0)) {
     return (
-      <div role="status" aria-label="Đang tải trò chơi" className="w-full max-w-4xl mx-auto animate-pulse space-y-4">
+      <div role="status" aria-label="Đang tải trò chơi" className="animate-game-action-enter w-full max-w-4xl mx-auto animate-pulse space-y-4">
         <div className="h-8 w-40 bg-amber-950/40 rounded-sm" />
         <div className="h-64 bg-amber-950/30 rounded-sm" />
       </div>
@@ -154,11 +282,11 @@ export default function GameDetails() {
 
   if (!engine || !metadata) {
     return (
-      <div className="w-full max-w-md mx-auto text-center space-y-4 py-10">
+      <div className="animate-game-action-enter w-full max-w-md mx-auto text-center space-y-4 py-10">
         <div className="text-3xl">❓</div>
         <p className="text-amber-300/70">Không tìm thấy trò chơi này.</p>
         <button
-          onClick={() => navigate("/games")}
+          onClick={() => navigate("/games", { viewTransition: true })}
           className="rounded-sm border border-[#6b4725]/60 bg-[#22140c]/90 hover:border-[#b47a3c]/80 hover:bg-[#2c1a10] px-4 py-2 text-sm font-medium text-[#bba182] hover:text-[#f3d4a2] transition-colors"
         >
           ← QUAY LẠI THƯ VIỆN
@@ -168,9 +296,9 @@ export default function GameDetails() {
   }
 
   return (
-    <div className="w-full max-w-4xl mx-auto space-y-6 pb-24 sm:pb-6">
+    <div className="game-details-page w-full max-w-4xl mx-auto space-y-6 pb-24 sm:pb-6">
       <button
-        onClick={() => navigate("/games")}
+        onClick={() => navigate("/games", { viewTransition: true })}
         className="text-sm text-amber-700/60 hover:text-amber-300 flex items-center gap-1 transition-colors"
       >
         ← QUAY LẠI
@@ -245,7 +373,7 @@ export default function GameDetails() {
       {myActiveRoom && (
         <button
           onClick={() => handleJoin(myActiveRoom.id)}
-          className="w-full rounded-sm font-bold text-sm text-[#271206] bg-gradient-to-b from-[#fce295] via-[#df9031] to-[#87460e] px-4 py-3 border-t border-[#fff4d1] border-b-4 border-[#4d2506] shadow-[0_4px_12px_rgba(0,0,0,0.7),inset_0_1px_1px_rgba(255,255,255,0.3)] hover:brightness-110 active:translate-y-1 active:border-b-0 active:shadow-[0_1px_4px_rgba(0,0,0,0.8)] transition-all duration-150 tracking-wide uppercase"
+          className="animate-game-action-enter w-full rounded-sm font-bold text-sm text-[#271206] bg-gradient-to-b from-[#fce295] via-[#df9031] to-[#87460e] px-4 py-3 border-t border-[#fff4d1] border-b-4 border-[#4d2506] shadow-[0_4px_12px_rgba(0,0,0,0.7),inset_0_1px_1px_rgba(255,255,255,0.3)] hover:brightness-110 active:translate-y-1 active:border-b-0 active:shadow-[0_1px_4px_rgba(0,0,0,0.8)] transition-all duration-150 tracking-wide uppercase"
         >
           ↩ VÀO LẠI VÁN ĐANG CHƠI
         </button>
@@ -256,7 +384,7 @@ export default function GameDetails() {
         <h2 className="font-serif text-xl font-black text-[#f5d09d] uppercase tracking-[0.2em] [text-shadow:0_1px_0_rgba(255,255,255,0.1),0_2px_6px_rgba(0,0,0,0.9)] flex items-center gap-2">
           <span className="text-[#c99a5e] text-base">✦</span> CHƠI {metadata.title} <span className="text-[#c99a5e] text-base">✦</span>
         </h2>
-        {error && <div role="alert" className="rounded-sm bg-red-900/40 p-3 text-sm text-red-300">{error}</div>}
+        {error && <div role="alert" className="animate-game-action-enter rounded-sm bg-red-900/40 p-3 text-sm text-red-300">{error}</div>}
 
         <fieldset disabled={busy} aria-busy={busy} className="min-w-0 rounded-sm border border-amber-700/40 bg-[#1c150c] p-4 space-y-3">
           <h3 className="font-serif text-sm font-bold text-[#c99a5e] uppercase tracking-widest">TẠO PHÒNG MỚI</h3>
@@ -267,64 +395,36 @@ export default function GameDetails() {
           <button
             onClick={handleCreate}
             disabled={creating}
+            aria-busy={creating}
             className="w-full rounded-sm font-bold text-[#271206] text-sm bg-gradient-to-b from-[#d4a853] via-[#a0672a] to-[#6b3e10] px-4 py-3 border-t border-[#f5d09d]/50 border-b-4 border-[#3a1f06] shadow-[0_4px_12px_rgba(0,0,0,0.7),inset_0_1px_1px_rgba(255,255,255,0.2)] hover:brightness-110 active:translate-y-1 active:border-b-0 active:shadow-[0_1px_4px_rgba(0,0,0,0.8)] transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {creating ? "ĐANG TẠO…" : "➕ TẠO PHÒNG"}
+            {creating && <span aria-hidden="true" className="activity-spinner is-spinning mr-2 align-[-2px]" />}{creating ? "ĐANG TẠO…" : "➕ TẠO PHÒNG"}
           </button>
 
           <button
             onClick={handleQuickMatch}
             disabled={matching}
+            aria-busy={matching}
             className="w-full rounded-sm font-bold text-[#271206] bg-gradient-to-b from-[#fce295] via-[#df9031] to-[#87460e] px-4 py-3 border-t border-[#fff4d1] border-b-4 border-[#4d2506] shadow-[0_4px_12px_rgba(0,0,0,0.7),inset_0_1px_1px_rgba(255,255,255,0.3)] hover:brightness-110 active:translate-y-1 active:border-b-0 active:shadow-[0_1px_4px_rgba(0,0,0,0.8)] transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {matching ? "ĐANG TÌM TRẬN…" : "⚡ TÌM TRẬN NHANH"}
+            {matching && <span aria-hidden="true" className="activity-spinner is-spinning mr-2 align-[-2px]" />}{matching ? "ĐANG TÌM TRẬN…" : "⚡ TÌM TRẬN NHANH"}
           </button>
         </fieldset>
 
         <div className="rounded-sm border border-amber-900/30 bg-[#160f08]/60 p-4">
           <h3 className="font-serif text-sm font-bold text-[#c99a5e] mb-2 uppercase tracking-widest">
-            Phòng Đang Chờ {waitingRooms.length > 0 && <span className="text-[#e8c07e]/70">({waitingRooms.length})</span>}
+            Phòng Đang Chờ <span className="text-[#e8c07e]/70">(<AnimatedNumber value={waitingRooms.length} durationMs={300} className="inline-block tabular-nums" />)</span>
           </h3>
           <LobbyLoadStatus loading={roomsLoading} error={roomsError} onRetry={() => fetchRooms(gameKey)} />
-          {!roomsLoading && !roomsError && waitingRooms.length === 0 && (
-            <p className="text-amber-900/60 text-sm text-center py-4">Chưa có phòng nào đang chờ — hãy tạo phòng mới!</p>
-          )}
-          <ul className="space-y-2">
-            {waitingRooms.map((r) => {
-              const occupied = r.seats.filter((s) => s.displayName !== null).length;
-              const owner = r.seats.find((s) => s.displayName !== null)?.displayName ?? null;
-              return (
-                <li key={r.id} className="relative overflow-hidden rounded-sm border border-amber-900/30 bg-gradient-to-r from-[#1c1408] to-[#150f06] p-3 flex items-center justify-between gap-2">
-                  <div className="pointer-events-none absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-amber-500/20 to-transparent" />
-                  <div className="min-w-0">
-                    <div className="text-sm text-[#f5d09d] truncate font-medium">
-                      🚪 Phòng của {owner ?? "Ẩn danh"}
-                    </div>
-                    <div className="text-xs text-amber-700/70 mt-0.5">👥 {occupied}/{r.seatCount} người · Đang chờ</div>
-                  </div>
-                  <div className="shrink-0 flex items-center gap-1.5">
-                    {r.isMine && (
-                      <button
-                        onClick={() => handleCancel(r.id)}
-                        disabled={busy}
-                        className="rounded-sm bg-[#22140c]/90 hover:bg-red-900/60 border border-[#6b4725]/60 hover:border-red-700/50 disabled:opacity-50 px-3 py-1.5 text-xs font-medium text-[#bba182] hover:text-red-300 transition-colors"
-                        title="Huỷ phòng"
-                      >
-                        {cancelingId === r.id ? "…" : "HUỶ"}
-                      </button>
-                    )}
-                    <button
-                      onClick={() => handleJoin(r.id)}
-                      disabled={busy}
-                      className="rounded-sm font-semibold text-[#271206] text-xs bg-gradient-to-b from-[#fce295] via-[#df9031] to-[#87460e] px-3.5 py-1.5 border-t border-[#fff4d1] border-b-2 border-[#4d2506] shadow-[0_2px_6px_rgba(0,0,0,0.6),inset_0_1px_1px_rgba(255,255,255,0.3)] hover:brightness-110 active:translate-y-0.5 active:border-b-0 transition-all duration-150 disabled:opacity-50"
-                    >
-                      VÀO PHÒNG
-                    </button>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
+          <WaitingRoomsList
+            key={gameKey}
+            rooms={waitingRooms}
+            showEmpty={!roomsLoading && !roomsError}
+            busy={busy}
+            cancelingId={cancelingId}
+            onCancel={handleCancel}
+            onJoin={handleJoin}
+          />
         </div>
       </div>
 

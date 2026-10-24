@@ -58,7 +58,7 @@ export default function DisplayNameEditor({ displayName, email }: { displayName:
         type="button"
         onClick={startEdit}
         title="Bấm để đổi tên hiển thị"
-        className="text-sm text-[#f5d09d]/80 hover:text-[#f5d09d] truncate max-w-[8rem] sm:max-w-none transition-colors"
+        className="animate-game-action-enter text-sm text-[#f5d09d]/80 hover:text-[#f5d09d] truncate max-w-[8rem] sm:max-w-none transition-colors"
       >
         {displayName} <span className="text-amber-800/60 text-xs">✏</span>
       </button>
@@ -66,7 +66,7 @@ export default function DisplayNameEditor({ displayName, email }: { displayName:
   }
 
   return (
-    <div aria-busy={saving} className="flex flex-wrap items-center gap-1">
+    <div aria-busy={saving} className="animate-game-action-enter flex flex-wrap items-center gap-1">
       <input
         type="text"
         disabled={saving}
@@ -87,14 +87,15 @@ export default function DisplayNameEditor({ displayName, email }: { displayName:
         type="button"
         onClick={save}
         disabled={saving}
-        className="text-xs px-2.5 py-1 rounded-sm font-bold text-[#271206] bg-gradient-to-b from-[#fce295] via-[#df9031] to-[#87460e] border-t border-[#fff4d1] border-b-2 border-[#4d2506] shadow-[0_2px_6px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.2)] hover:brightness-110 active:translate-y-0.5 active:border-b-0 transition-all disabled:opacity-50"
+        aria-busy={saving}
+        className="display-name-save text-xs px-2.5 py-1 rounded-sm font-bold text-[#271206] bg-gradient-to-b from-[#fce295] via-[#df9031] to-[#87460e] border-t border-[#fff4d1] border-b-2 border-[#4d2506] shadow-[0_2px_6px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.2)] hover:brightness-110 active:translate-y-0.5 active:border-b-0 transition-all disabled:opacity-50"
       >
-        {saving ? "Đang lưu…" : "Lưu"}
+        {saving ? <><span aria-hidden="true" className="activity-spinner is-spinning mr-1 align-[-2px]" />Đang lưu…</> : "Lưu"}
       </button>
       <button type="button" disabled={saving} onClick={cancel} className="text-xs px-1.5 py-1 rounded-sm border border-[#6b4725]/60 bg-[#22140c]/90 text-[#bba182] shadow-[inset_0_1px_2px_rgba(0,0,0,0.6)] hover:border-[#b47a3c]/80 hover:text-[#f3d4a2] transition-all disabled:opacity-50">
         Huỷ
       </button>
-      {error && <span role="alert" className="w-full text-xs text-red-400">{error}</span>}
+      {error && <span role="alert" className="animate-game-action-enter w-full text-xs text-red-400">{error}</span>}
     </div>
   );
 }

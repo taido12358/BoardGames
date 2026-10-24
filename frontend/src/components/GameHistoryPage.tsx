@@ -1,5 +1,6 @@
 ﻿import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
+import type { CSSProperties } from "react";
 import { getGameTitle } from "../platform/gameRegistry";
 import { formatTimestamp as formatTime } from "../platform/formatTimestamp";
 
@@ -76,14 +77,14 @@ export default function GameHistoryPage() {
         className="w-full rounded-sm border border-amber-900/40 bg-[#120c08] px-4 py-2.5 text-amber-100 placeholder-amber-900/40 shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)] outline-none transition-colors focus:border-amber-500/70 focus:shadow-[inset_0_2px_4px_rgba(0,0,0,0.6),0_0_10px_rgba(217,119,6,0.15)] text-sm placeholder:text-amber-900/40"
       />
 
-      {error && <div className="rounded-sm p-3 text-center bg-[#7a201b]/40 border border-[#9a3030]/40 text-[#c88080] text-sm space-y-3">
+      {error && <div className="animate-game-action-enter rounded-sm p-3 text-center bg-[#7a201b]/40 border border-[#9a3030]/40 text-[#c88080] text-sm space-y-3">
         <p role="alert">{error}</p>
         <button onClick={() => setAttempt((value) => value + 1)} className="rounded-sm bg-[#7a201b] px-4 py-2 font-semibold text-[#f5d0d0] hover:bg-[#9a2b24] transition-colors">Thử lại</button>
       </div>}
-      {loading && <p role="status" className="text-amber-700/60 text-sm text-center py-4 italic">Đang tải…</p>}
+      {loading && <p role="status" className="animate-game-action-enter text-amber-700/60 text-sm text-center py-4 italic">Đang tải…</p>}
 
       {!loading && !error && records.length === 0 && (
-        <div className="text-amber-700/50 text-sm text-center py-10 space-y-3 italic">
+        <div className="animate-game-action-enter text-amber-700/50 text-sm text-center py-10 space-y-3 italic">
           <p>Không tìm thấy ván đấu nào khớp.</p>
           {query.trim() && <button onClick={() => setQuery("")} className="rounded-sm border border-amber-950/80 bg-[#140e0b]/90 px-4 py-2 text-amber-700/70 hover:border-amber-700/60 hover:text-amber-400 transition-all not-italic">Xóa tìm kiếm</button>}
         </div>
@@ -103,8 +104,8 @@ export default function GameHistoryPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-amber-950/40">
-              {records.map((r) => (
-                <tr key={r.id} className="group odd:bg-[#140e0a] even:bg-[#18110c] transition-colors duration-150 hover:bg-gradient-to-r hover:from-amber-950/30 hover:via-amber-900/20 hover:to-transparent">
+              {records.map((r, index) => (
+                <tr key={r.id} style={{ "--history-row-delay": `${Math.min(index * 42, 294)}ms` } as CSSProperties} className="game-history-row-enter group odd:bg-[#140e0a] even:bg-[#18110c] transition-colors duration-150 hover:bg-gradient-to-r hover:from-amber-950/30 hover:via-amber-900/20 hover:to-transparent">
                   <td className="px-3 py-2 font-medium text-amber-200">{getGameTitle(r.gameKey)}</td>
                   <td className="px-3 py-2 text-amber-300/70">{r.players || "—"}</td>
                   <td className="px-3 py-2">
@@ -117,7 +118,7 @@ export default function GameHistoryPage() {
                   <td className="px-3 py-2 text-amber-700/50 text-xs font-mono">{formatTime(r.finishedAt)}</td>
                   <td className="px-3 py-2">
                     {r.status === "Finished" && (
-                      <Link to={`/replay/${r.id}`} state={{ historySearch: searchParams.toString() }} className="text-xs text-amber-400 hover:text-amber-300 whitespace-nowrap">
+                      <Link to={`/replay/${r.id}`} viewTransition state={{ historySearch: searchParams.toString() }} className="game-history-replay-link text-xs text-amber-400 hover:text-amber-300 whitespace-nowrap">
                         🎬 Xem lại
                       </Link>
                     )}
