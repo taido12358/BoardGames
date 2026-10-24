@@ -81,6 +81,7 @@
 ## CSS / Tailwind
 
 - Style bằng **Tailwind utility class** trực tiếp trong JSX. CSS file riêng chỉ cho: keyframe animation phức tạp, style SVG không làm được bằng utility, global reset.
+- Quy ước hiệu ứng trong lúc chơi (nguồn sự kiện, timer, cập nhật liên tiếp, cleanup và reduced-motion) nằm tại [`../architecture/gameplay-animation.md`](../architecture/gameplay-animation.md); dùng checklist đó khi thêm hoặc sửa animation trên board.
 - ❌ Không inline `style={{...}}` trừ giá trị động thật sự (toạ độ ghost piece theo con trỏ).
 - ❌ Không dùng `!important` / prefix `!` trừ khi override thư viện bên thứ ba, kèm comment lý do.
 - Class riêng (khi phải viết CSS): kebab-case, tinh thần BEM giản lược (`.board-cell`, `.board-cell--selected`), đặt theo **vai trò** không theo hình thức.

@@ -56,6 +56,10 @@ Trước rebuild, `GameLibrary.tsx` (4s) và `GameDetails.tsx` (3s) mỗi nơi t
 
 `useGameRoomHub.ts` đăng ký `onreconnecting`/`onreconnected`/`onclose` (trước rebuild KHÔNG đăng ký gì — `withAutomaticReconnect()` gọi trơ, sau khi SignalR tự nối lại, client KHÔNG gọi lại `JoinRoom` nên server không nhận diện được connection mới, client im lặng ngừng nhận `GameStateUpdated` dù "trông có vẻ" đã kết nối lại). Giờ `onreconnected` đọc `room`/vị trí hiện tại MỚI NHẤT từ store (không dùng closure cũ) rồi gọi lại `JoinRoom`/`SubscribeLobby` tương ứng. `gameStore.connectionState` (`connected`/`reconnecting`/`disconnected`) điều khiển `ConnectionBanner`.
 
+## Animation trong lúc chơi
+
+Quy ước sự kiện, state transient, timer cleanup, cập nhật liên tiếp và `prefers-reduced-motion` được ghi tại [`gameplay-animation.md`](./gameplay-animation.md). Các board game và giao diện phòng dùng chung cần theo checklist trong tài liệu đó; state server vẫn là nguồn xác nhận kết quả nước đi.
+
 ## Tương tác trên board (SVG) — Pointer Events, không HTML5 DnD
 
 Quyết định kiến trúc: dùng **Pointer Events API** thay vì HTML5 Drag & Drop, vì HTML5 DnD không hoạt động đúng với phần tử SVG.
@@ -276,3 +280,15 @@ Mobile-first: `max-w-md mx-auto`, flex-col. Thứ tự: Status bar → Board →
 - HTTP 401/403 và kết quả `{ isAdmin: false }` mới biểu thị người dùng không có quyền. Nút thử lại gọi lại cùng `checkAdmin`.
 - `getGameTitle(gameKey)` lấy title metadata nếu game đã đăng ký, nếu chưa thì định dạng key thành nhãn dự phòng cho history/replay.
 
+## Lá bài BANG! bị vô hiệu hóa
+- Cuối lượt, số bỏ là hand.length - currentHp; chỉ lá đang cầm mới tính. HUD giới hạn bài hiển thị số lá, HP hiện tại và nhắc trang bị/vũ khí không tính.
+- `BangBoard.cardBlockedReason` là nguồn chung cho trạng thái `canPlayCard` và lời giải thích. `HandFan` truyền lý do tới `CardView`, hiển thị qua title và `aria-description`.
+- Giữ trạng thái disable do luật để ngăn nước đi không hợp lệ; cung cấp nguyên nhân cụ thể (kết nối, lượt, phản hồi, lượt bắn, máu, mục tiêu hoặc quota bỏ) ngay trên lá.
+- `useGameRoomHub.makeMove` chỉ gọi `MakeMove` khi connection đang Connected. Nếu tham chiếu null hoặc reconnecting, báo lỗi trong `gameStore` để người chơi không tưởng nước đi đã được gửi.
+- Không suy ra nhãn lượt chỉ từ `currentPlayerId`: trong `awaitingResponse`, id này vẫn là người khởi động hiệu ứng trong khi target có lượt phản hồi. Dùng `phase` và `pendingResponse.itsYourTurn` để nhãn khớp với các lá được phép thao tác.
+- Projection BANG! phải gửi phase và pending kind camelCase (`action`, `awaitingResponse`, `bang`). Backend giữ các field đó dạng string, nên enum converter của JSON không tự chuyển case; chuẩn hóa ngay khi dựng viewer payload và chốt bằng test JSON sau redact.
+- `normalizeBangViewerState` ở đầu BangBoard chuẩn hóa casing legacy trước mọi kiểm tra lượt/response; giữ tương thích khi frontend/backend cập nhật lệch thời điểm hoặc store còn state cũ. Backend vẫn là hợp đồng chuẩn camelCase.
+
+
+### Lobby loading and retry feedback
+`LobbyLoadStatus` pairs room-list loading copy with a visible activity indicator and exposes it through a polite `role="status"` with `aria-busy`. Retry controls retain a visible `focus-visible` outline for keyboard navigation.

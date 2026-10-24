@@ -32,6 +32,8 @@ code path/cùng mức tin cậy nên không lặp lại thiết lập).
 
 ## Animation Bang! (van-de.md §46) — ĐÃ LÀM hết 4 mục còn thiếu (2026-09-14)
 
+> Cập nhật 2026-10-24: bốn mục ban đầu của BANG! vẫn hoàn tất theo phạm vi §46. Công việc sau đó mở rộng sang animation gameplay của cả bốn game và platform dùng chung, gồm xử lý sự kiện liên tiếp, phản hồi nước đi chưa được xác nhận và `prefers-reduced-motion`. Trạng thái hiện hành, quy ước kỹ thuật và checklist bảo trì nằm trong [`../architecture/gameplay-animation.md`](../architecture/gameplay-animation.md); các hạng mục đã triển khai theo ngày nằm trong [`../logs/2026-10-24.md`](../logs/2026-10-24.md). Mục “Chưa làm” bên dưới chỉ nói về các giới hạn cụ thể của hiệu ứng BANG! ban đầu, không phải danh sách đầy đủ animation còn thiếu toàn dự án.
+
 Audit spec gốc (`van-de.md` §46) liệt kê nhiều animation mong muốn: muzzle-flash lúc bắn BANG!,
 rung/giảm tim khi mất máu, bài rút từ deck bay ra, hiệu ứng trang bị vũ khí, animation màn
 thắng/thua — trước 2026-09-11 dự án gần như KHÔNG CÓ animation nào ngoài 1 hiệu ứng hover CSS
@@ -48,17 +50,13 @@ bật/tắt sau N ms, đo bằng diff so với lần render trước, không có
   (`frontend/src/games/bang/useMuzzleFlash.ts`, 6 test) — khác `useDamageShake` ở chỗ trigger dựa
   trên NỘI DUNG các dòng gameLog MỚI thêm vào (regex khớp "sử dụng Bang!/Súng Gatling"/"đáp trả
   bằng Bang!", cố tình KHÔNG khớp "bỏ Bang! để né Người da đỏ" — đó là phòng thủ, không phải bắn),
-  vì không có field state riêng nào đánh dấu "vừa bắn". Overlay 💥 phủ toàn bàn
-  (`BangBoard.tsx`, `pointer-events-none`, `data-testid="muzzle-flash"`) — không gắn vào đúng ghế
-  người bắn vì suy luận người bắn từ tên trong chuỗi log không đáng tin cậy (trùng tên) và không
-  cần thiết cho một hiệu ứng chỉ mang tính trang trí (van-de.md: "Do not overdo animations. Gameplay
-  clarity is more important").
-- **Bài bay từ nọc vào tay lúc rút bài**: `useCardDrawFlash(handLength)`
-  (`frontend/src/games/bang/useCardDrawFlash.ts`, 5 test, đảo chiều so với `useDamageShake` — kích
-  hoạt khi số lá TĂNG, không phải giảm) — áp glow/viền sáng vào chính `HandFan.tsx` khi vừa rút,
-  không tự dựng animation "bay" thật giữa 2 toạ độ (nọc bài ở khu vực giữa bàn, tay bài ở dưới
-  cùng, khoảng cách/layout đổi theo số người chơi và kích thước màn hình) — đơn giản hoá có chủ
-  đích, xem "Chưa làm" bên dưới.
+  vì không có field state riêng nào đánh dấu "vừa bắn". Overlay 💥 trước đây phủ toàn bàn; từ
+  2026-10-24 nó dùng gốc tọa độ của shot flight để lóe tại ghế người bắn khi đường đạn được xác
+  định, và fallback về giữa bàn nếu không có flight metadata. Actor vẫn được khớp từ log gameplay.
+- **Bài bay từ nọc vào tay lúc rút bài**: ban đầu chỉ có `useCardDrawFlash(handLength)`
+  (`frontend/src/games/bang/useCardDrawFlash.ts`, kích hoạt khi số lá TĂNG); giới hạn đó đã được
+  gỡ ở đợt sau. Xem phần "Đã bổ sung sau đó": HandFan hiện đo nguồn/đích và bay lá mới bằng WAAPI,
+  đồng thời FLIP các lá còn lại; reduced-motion dùng cue tĩnh.
 - **Hiệu ứng trang bị vũ khí**: `useWeaponEquipFlash(weaponName)`
   (`frontend/src/games/bang/useWeaponEquipFlash.ts`, 4 test, so sánh THAY ĐỔI chuỗi thay vì
   tăng/giảm số) — áp vào cả `LocalPlayerPanel.tsx` (chính mình) lẫn `PlayerSeat.tsx` (người khác,
@@ -84,25 +82,19 @@ chính tả viết hoa khớp dây thật; `localOutcome` vẫn tự vệ bằng
 `VictoryScreen.tsx` gốc đã làm cho `winner`) để không phụ thuộc đúng/sai quy ước hoa-thường ở tầng
 trên trong tương lai.
 
+**Đã bổ sung sau đó:**
+- Bài rút vào tay bay từ nọc tới đúng vị trí trong tay bằng Web Animations API; lá mới được stagger, các lá còn lại dịch vị trí bằng FLIP. Rút bài dùng nguồn nọc; Panic lấy nguồn từ ghế người bị lấy bài.
+
 **Chưa làm (có chủ đích, để đợt sau nếu cần)**:
-- Animation "bài bay" thật sự di chuyển giữa 2 toạ độ cụ thể (nọc bài → tay) — hiện chỉ có
-  glow/viền sáng trên `HandFan.tsx` khi vừa rút, không phải 1 lá bài thật di chuyển qua quãng
-  đường. Cần tính toạ độ tuyệt đối của nọc bài + từng lá trong tay (đổi liên tục theo layout
-  responsive/số người chơi, xem `van-de.md` §45) — phức tạp hơn nhiều so với 1 hook boolean đơn
-  giản, để dành nếu người dùng thấy hiệu ứng hiện tại chưa đủ rõ.
-- Muzzle-flash không gắn vào đúng vị trí người bắn/mục tiêu (chỉ phủ toàn bàn) — xem lý do ở trên.
-- **CHƯA live-test qua trình duyệt thật** — cùng tình trạng đợt 2026-09-11 (`useDamageShake`),
-  không thử lại Chrome extension trong phiên này (ưu tiên làm đủ + test kỹ cả 4 mục hơn là dừng
-  giữa chừng để chờ môi trường live-test). Chỉ verify bằng test logic (30 test mới, toàn bộ
-  248/248 frontend pass) + review code, KHÔNG xác nhận trực quan animation CSS chạy mượt/đúng như
-  mong đợi trên trình duyệt thật.
+- **Phạm vi animation BANG! ban đầu chưa được live-test trực quan qua trình duyệt thật** tại thời điểm hoàn tất 2026-09-14; kết quả test/build khi đó chỉ xác nhận logic và biên dịch, không xác nhận cảm nhận chuyển động. Các đợt mở rộng animation sau đó được ghi riêng theo ngày trong `../logs/2026-10-24.md`; chưa có ghi nhận live-test trình duyệt cho các đợt này. Xem quy ước và trạng thái hiện hành tại `../architecture/gameplay-animation.md`.
 - Layout mobile riêng (§45) vẫn CHƯA làm — không liên quan animation, xem chú thích riêng (nếu
   có) hoặc audit lại khi cần.
 
-## Replay — chỉ xem danh sách nước đi, chưa dựng lại bàn cờ animate (ghi chú từ lúc làm, 2026-09-11)
+## Replay — đã có playback danh sách nước đi; chưa dựng lại bàn cờ (cập nhật 2026-10-24)
 
-`GameReplayPage.tsx` (xem `rules/tasks/current.md` mục 35) chỉ hiện tóm tắt + danh sách nước đi
-dạng JSON thô theo thứ tự — KHÔNG animate lại bàn cờ từng bước như một trình xem replay đầy đủ.
+`GameReplayPage.tsx` (xem `rules/tasks/current.md` mục 35) hiện có playback tuần tự cho danh sách nước đi,
+điều khiển phát/tạm dừng, lùi/tiến, progress và highlight nước đang phát. Bàn cờ vẫn chưa được dựng
+lại từng bước như một trình xem replay đầy đủ.
 Lý do: engine hiện tại không hỗ trợ tái tạo state ban đầu từ 1 map CỐ ĐỊNH (`NewGame()` của cả 4
 game đều tự sinh map MỚI mỗi lần gọi, không nhận map có sẵn làm tham số) — cần thêm 1 phương thức
 kiểu `InitialStateForMap(mapJson)` vào `IGameEngine` cho cả 4 engine trước khi có thể replay từng
