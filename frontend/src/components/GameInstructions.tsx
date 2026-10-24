@@ -150,7 +150,7 @@ export default function GameInstructions({ sections }: Props) {
 
   return (
     <div>
-      <div role="tablist" aria-label="Mục hướng dẫn" className="flex flex-wrap gap-1 p-1.5 bg-[#1b110a] border border-[#5a3818]/70 rounded-md shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)] mb-4 overflow-x-auto">
+      <div role="tablist" aria-label="Mục hướng dẫn" className="flex gap-1 p-1.5 bg-[#170e08] border border-[#5c3818]/60 rounded-sm shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)] mb-4 overflow-x-auto [&::-webkit-scrollbar]:hidden">
         {sections.map((s) => (
           <button
             key={s.id}
@@ -176,8 +176,8 @@ export default function GameInstructions({ sections }: Props) {
             }}
             className={`rounded-sm px-4 py-2 text-xs uppercase tracking-wider transition-all whitespace-nowrap focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-300 ${
               s.id === section.id
-                ? "font-extrabold text-[#241105] bg-gradient-to-b from-[#f5ca80] via-[#cf8c3c] to-[#995919] shadow-[0_2px_6px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.3)] border-b border-[#522906]"
-                : "font-bold text-[#a89078] hover:text-[#f3d4a2] hover:bg-[#2b1b11] active:scale-95"
+                ? "font-black text-[#221006] bg-gradient-to-b from-[#f5ca80] via-[#d08f3e] to-[#96571a] border-t border-[#ffe4b0] border-b-2 border-[#542d09] shadow-[0_2px_6px_rgba(0,0,0,0.7),inset_0_1px_0_rgba(255,255,255,0.3)] active:translate-y-0.5"
+                : "font-bold text-[#aa9176] hover:text-[#fae2c0] hover:bg-[#25160d]"
             }`}
           >
             {s.label}

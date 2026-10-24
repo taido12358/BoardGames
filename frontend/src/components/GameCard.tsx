@@ -51,15 +51,22 @@ export default function GameCard({ metadata: m, waitingRooms, onViewDetails, onP
         type="button"
         onClick={onViewDetails}
         aria-label={`Xem hướng dẫn ${m.title}`}
-        className={`relative h-40 sm:h-48 w-full flex items-center justify-center overflow-hidden border-b border-[#5a3617] ${ARTWORK_BG[m.accent]}`}
+        className={`relative h-40 sm:h-48 w-full flex items-center justify-center overflow-hidden border-b border-[#573517] ${ARTWORK_BG[m.accent]} shadow-[inset_0_2px_8px_rgba(0,0,0,0.85)]`}
       >
+        {/* Corner bracket nẹp kim loại giả lập đóng khung */}
+        <span className="pointer-events-none absolute top-1.5 left-1.5 w-3 h-3 border-t border-l border-[#c8924b]/40 z-20" />
+        <span className="pointer-events-none absolute top-1.5 right-1.5 w-3 h-3 border-t border-r border-[#c8924b]/40 z-20" />
+        <span className="pointer-events-none absolute bottom-1.5 left-1.5 w-3 h-3 border-b border-l border-[#c8924b]/40 z-20" />
+        <span className="pointer-events-none absolute bottom-1.5 right-1.5 w-3 h-3 border-b border-r border-[#c8924b]/40 z-20" />
         <span
-          className="text-7xl sm:text-8xl transition-transform duration-300 ease-out group-hover:scale-110 drop-shadow-[0_4px_12px_rgba(0,0,0,0.6)]"
+          className="text-7xl sm:text-8xl transition-transform duration-300 ease-out group-hover:scale-110 drop-shadow-[0_4px_12px_rgba(0,0,0,0.6)] relative z-0"
           aria-hidden="true"
         >
           {m.emblem}
         </span>
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/20" />
+        {/* Vignette đèn dầu + gradient dưới */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_40%,rgba(0,0,0,0.65)_100%)] pointer-events-none z-10" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/20 z-10" />
         {waitingRooms !== undefined && waitingRooms > 0 && (
           <span className="absolute top-2 right-2 rounded-full bg-amber-900/80 border border-amber-600/50 px-2.5 py-1 text-[11px] font-semibold text-amber-200 shadow-[0_0_8px_rgba(245,158,11,0.3)]">
             🕯 {waitingRooms} phòng đang chờ
