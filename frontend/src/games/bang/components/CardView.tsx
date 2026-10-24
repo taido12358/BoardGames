@@ -5,11 +5,12 @@ interface Props {
   selected?: boolean;
   selectionMode?: boolean;
   disabled?: boolean;
+  disabledReason?: string;
   small?: boolean;
   onClick?: () => void;
 }
 
-const suitColor = (suit: string) => (suit === "♥" || suit === "♦" ? "text-red-600" : "text-amber-900/60");
+const suitColor = (suit: string) => (suit === "♥" || suit === "♦" ? "text-[#b03030]" : "text-[#2c1a0c]");
 
 const CARD_EFFECT: Record<CardKind, string> = {
   bang: "Bắn 1 mục tiêu trong tầm. Trúng: −1 máu.",
@@ -41,16 +42,16 @@ function cardCategory(kind: CardKind): CardCategory {
 }
 
 const CATEGORY_STYLE: Record<CardCategory, { bg: string; border: string; text: string; stripe: string }> = {
-  attack:    { bg: "from-[#f7ddd5] to-[#e8b49a]", border: "#b03020", text: "text-red-900",    stripe: "bg-red-700/10" },
-  defense:   { bg: "from-[#d0e8f8] to-[#a8cce8]", border: "#1a6fa8", text: "text-blue-900",   stripe: "bg-blue-600/10" },
-  heal:      { bg: "from-[#d4f0d4] to-[#a0d8a0]", border: "#1a7a3c", text: "text-green-900",  stripe: "bg-green-600/10" },
-  weapon:    { bg: "from-[#faecd0] to-[#e8c47a]", border: "#b06010", text: "text-orange-900", stripe: "bg-orange-600/10" },
-  equipment: { bg: "from-[#ead4f0] to-[#c8a0d8]", border: "#7030a0", text: "text-purple-900", stripe: "bg-purple-600/10" },
-  action:    { bg: "from-[#f8f0c0] to-[#e8d870]", border: "#a08010", text: "text-yellow-900", stripe: "bg-yellow-600/10" },
+  attack:    { bg: "from-[#f5e8df] to-[#d4a88c]", border: "#8b2515", text: "text-red-950",    stripe: "bg-red-900/8" },
+  defense:   { bg: "from-[#dde8f0] to-[#a8bfd4]", border: "#2a4f70", text: "text-slate-900",  stripe: "bg-blue-900/8" },
+  heal:      { bg: "from-[#dff0e0] to-[#9ec89e]", border: "#1a5a2c", text: "text-green-950",  stripe: "bg-green-900/8" },
+  weapon:    { bg: "from-[#f5e8cc] to-[#d4a850]", border: "#7a3e08", text: "text-amber-950",  stripe: "bg-amber-900/8" },
+  equipment: { bg: "from-[#e8ddf5] to-[#b898cc]", border: "#4a2070", text: "text-purple-950", stripe: "bg-purple-900/8" },
+  action:    { bg: "from-[#f5f0cc] to-[#d8c850]", border: "#6b5008", text: "text-yellow-950", stripe: "bg-yellow-900/8" },
 };
 
 /** Một lá bài trong bộ BANG! — color-coded theo loại (đỏ=tấn công, xanh=phòng thủ, v.v.). */
-export default function CardView({ card, selected, selectionMode, disabled, small, onClick }: Props) {
+export default function CardView({ card, selected, selectionMode, disabled, disabledReason, small, onClick }: Props) {
   const display = CARD_DISPLAY[card.kind];
   const cat = cardCategory(card.kind);
   const cs = CATEGORY_STYLE[cat];
@@ -60,17 +61,17 @@ export default function CardView({ card, selected, selectionMode, disabled, smal
       type="button"
       disabled={disabled || !onClick}
       onClick={onClick}
-      title={display.name}
+      title={disabled && disabledReason ? `${display.name} — ${disabledReason}` : display.name}
       aria-label={display.name}
-      aria-description={`${card.rank}${card.suit}. ${CARD_EFFECT[card.kind]}`}
+      aria-description={`${card.rank}${card.suit}. ${CARD_EFFECT[card.kind]}${disabled && disabledReason ? ` Không thể dùng: ${disabledReason}` : ""}`}
       aria-pressed={selectionMode ? !!selected : undefined}
       className={[
-        "relative shrink-0 rounded-lg border-2 text-left transition-all duration-150 select-none overflow-hidden",
+        "relative shrink-0 rounded-sm border-2 text-left transition-all duration-150 select-none overflow-hidden",
         `bg-gradient-to-b ${cs.bg}`,
         small ? "w-16 h-24 p-1.5" : "w-24 h-36 p-2",
         selected
-          ? "-translate-y-3 shadow-[0_0_18px_rgba(251,191,36,0.75)]"
-          : "shadow-md",
+          ? "-translate-y-3 shadow-[0_0_18px_rgba(251,191,36,0.75),0_6px_20px_rgba(0,0,0,0.5)] ring-1 ring-amber-400/60"
+          : "shadow-[0_4px_12px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,255,255,0.6)]",
         disabled
           ? "opacity-40 grayscale cursor-not-allowed"
           : onClick
@@ -81,6 +82,9 @@ export default function CardView({ card, selected, selectionMode, disabled, smal
     >
       {/* Stripe overlay — type hint */}
       <div className={`absolute inset-0 ${cs.stripe} pointer-events-none`} />
+      {/* Parchment vignette — giả lập giấy da ố góc */}
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_30%,rgba(255,255,255,0.18)_0%,transparent_65%)] pointer-events-none" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_55%,rgba(0,0,0,0.22)_100%)] pointer-events-none" />
 
       {/* Top: rank + suit */}
       <div className={`relative flex items-center justify-between font-bold leading-none ${suitColor(card.suit)} ${small ? "text-[10px]" : "text-xs"}`}>
