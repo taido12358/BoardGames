@@ -59,9 +59,14 @@ export default function VictoryScreen({ state, onLeave, onRematch, rematching }:
         )}
 
         {/* Winner title */}
-        <h2 className={`font-western text-lg tracking-wide leading-tight [text-shadow:0_1px_0_rgba(255,255,255,0.15),0_2px_6px_rgba(0,0,0,0.9)] ${cfg.color}`}>
+        <h2 className={`font-serif font-black text-xl tracking-[0.15em] uppercase leading-tight [text-shadow:0_1px_0_rgba(255,255,255,0.15),0_3px_8px_rgba(0,0,0,0.9)] ${cfg.color}`}>
           {cfg.title}
         </h2>
+        <div className="flex items-center justify-center gap-2">
+          <div className="h-px flex-1 bg-gradient-to-r from-transparent to-amber-700/40" />
+          <span className="text-amber-700/50 text-xs">✦</span>
+          <div className="h-px flex-1 bg-gradient-to-l from-transparent to-amber-700/40" />
+        </div>
 
         {/* Player lists */}
         <div className="grid grid-cols-2 gap-3 text-left text-sm">

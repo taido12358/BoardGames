@@ -87,7 +87,7 @@ export default function DisplayNameEditor({ displayName, email }: { displayName:
         type="button"
         onClick={save}
         disabled={saving}
-        className="relative text-xs px-2 py-1 rounded-sm bg-gradient-to-b from-amber-600 to-amber-800 border-t border-amber-400/40 shadow-[0_2px_0_0_#451a03] transition-all hover:brightness-110 active:top-[1px] active:shadow-none disabled:opacity-50 text-amber-50 font-semibold"
+        className="text-xs px-2.5 py-1 rounded-sm font-bold text-[#271206] bg-gradient-to-b from-[#fce295] via-[#df9031] to-[#87460e] border-t border-[#fff4d1] border-b-2 border-[#4d2506] shadow-[0_2px_6px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.2)] hover:brightness-110 active:translate-y-0.5 active:border-b-0 transition-all disabled:opacity-50"
       >
         {saving ? "Đang lưu…" : "Lưu"}
       </button>
