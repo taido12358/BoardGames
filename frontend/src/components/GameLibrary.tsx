@@ -113,10 +113,17 @@ export default function GameLibrary() {
     <div className="w-full max-w-5xl mx-auto space-y-5">
       {/* Header */}
       <div className="text-center space-y-2 pt-2">
-        <h1 className="text-2xl sm:text-3xl font-black tracking-widest text-[#f5d09d] uppercase drop-shadow-[0_2px_8px_rgba(0,0,0,0.95)] [text-shadow:0_1px_0_rgba(255,200,120,0.2),0_2px_6px_rgba(0,0,0,0.9)]">🎲 THƯ VIỆN TRÒ CHƠI</h1>
-        <p className="text-sm text-amber-700/60">Chọn một trò chơi và bắt đầu cuộc phiêu lưu.</p>
-        <div className="flex items-center justify-center gap-2 opacity-30 text-base">
-          <span>─────</span><span>✦</span><span>─────</span>
+        <div className="inline-flex items-center justify-center gap-3">
+          <span className="text-2xl drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">🎲</span>
+          <h1 className="font-black text-3xl sm:text-4xl uppercase tracking-[0.18em] bg-gradient-to-b from-[#fff3db] via-[#f7cb85] to-[#c7883a] bg-clip-text text-transparent drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]">
+            Thư Viện Trò Chơi
+          </h1>
+        </div>
+        <p className="text-xs sm:text-sm font-serif italic text-[#c8a882] tracking-wider mt-1">Chọn một trò chơi và bắt đầu cuộc phiêu lưu nơi hoang mạc</p>
+        <div className="flex items-center justify-center gap-2 mt-3 opacity-75">
+          <div className="w-16 h-[1px] bg-gradient-to-r from-transparent to-[#b67d3e]" />
+          <div className="w-2 h-2 rotate-45 border border-[#e2b06f] bg-[#532e12]" />
+          <div className="w-16 h-[1px] bg-gradient-to-l from-transparent to-[#b67d3e]" />
         </div>
       </div>
 
@@ -138,9 +145,9 @@ export default function GameLibrary() {
             type="search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Tìm kiếm trò chơi..."
+            placeholder="Tìm kiếm trò chơi trên bàn rượu..."
             aria-label="Tìm kiếm trò chơi"
-            className="w-full rounded-md border border-amber-900/40 bg-[#120c08] pl-10 pr-4 py-2.5 text-amber-100 placeholder-amber-900/40 shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)] outline-none transition-colors focus:border-amber-500/70 focus:shadow-[inset_0_2px_4px_rgba(0,0,0,0.6),0_0_10px_rgba(217,119,6,0.15)] text-sm placeholder:text-amber-900/40"
+            className="w-full rounded-sm border border-[#6b4421] bg-[#1a100a]/90 pl-10 pr-4 py-2.5 text-xs font-serif tracking-wider text-[#fae4c8] shadow-[inset_0_2px_4px_rgba(0,0,0,0.8),0_1px_0_rgba(255,200,120,0.08)] outline-none transition-all focus:border-[#d99748] focus:ring-1 focus:ring-[#d99748]/50 placeholder:text-[#957657]"
           />
         </div>
         {search && <button type="button" onClick={() => setSearch("")} className="rounded-lg border border-amber-950/80 bg-[#140e0b]/90 px-3 py-2 text-xs text-amber-700/70 hover:border-amber-700/60 hover:bg-[#1a120d] hover:text-amber-400">Xóa từ khóa</button>}

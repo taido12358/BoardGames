@@ -32,9 +32,9 @@ export default function GameCard({ metadata: m, waitingRooms, onViewDetails, onP
     <div
       role="group"
       aria-label={m.title}
-      className={`group relative flex flex-col rounded-2xl border border-[#3a2c18]/80 bg-gradient-to-b from-[#1e1810] to-[#141009]
-        shadow-lg transition-all duration-300 ease-out overflow-hidden
-        hover:-translate-y-2 hover:rotate-1 hover:scale-[1.01] hover:ring-2 hover:shadow-2xl ${ACCENT_RING[m.accent]}`}
+      className={`group relative flex flex-col rounded-2xl border border-[#69421f]/70 bg-gradient-to-b from-[#1e1810] to-[#141009]
+        shadow-[inset_0_1px_0_rgba(255,205,130,0.1),0_12px_24px_rgba(0,0,0,0.85)] transition-all duration-300 ease-out overflow-hidden
+        hover:-translate-y-2 hover:rotate-1 hover:scale-[1.01] hover:border-[#c88a42] hover:shadow-[0_16px_32px_rgba(0,0,0,0.9),0_0_15px_rgba(200,138,66,0.25)] ${ACCENT_RING[m.accent]}`}
     >
       {/* Weathered edge highlight — ánh sáng đèn dầu hắt vào mép */}
       <div className="pointer-events-none absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-amber-400/30 to-transparent z-10" />
@@ -51,7 +51,7 @@ export default function GameCard({ metadata: m, waitingRooms, onViewDetails, onP
         type="button"
         onClick={onViewDetails}
         aria-label={`Xem hướng dẫn ${m.title}`}
-        className={`relative h-40 sm:h-48 w-full flex items-center justify-center overflow-hidden ${ARTWORK_BG[m.accent]}`}
+        className={`relative h-40 sm:h-48 w-full flex items-center justify-center overflow-hidden border-b border-[#5a3617] ${ARTWORK_BG[m.accent]}`}
       >
         <span
           className="text-7xl sm:text-8xl transition-transform duration-300 ease-out group-hover:scale-110 drop-shadow-[0_4px_12px_rgba(0,0,0,0.6)]"
@@ -70,8 +70,8 @@ export default function GameCard({ metadata: m, waitingRooms, onViewDetails, onP
       {/* Nội dung */}
       <div className="flex flex-col gap-2 p-4 flex-1">
         <div>
-          <h3 className="text-lg font-black tracking-widest text-[#f5d09d] uppercase drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">{m.title}</h3>
-          <p className="text-xs text-[#d4b996]/60">{m.subtitle}</p>
+          <h3 className="text-lg font-black tracking-widest text-[#fae1be] group-hover:text-[#ffd693] uppercase drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] transition-colors">{m.title}</h3>
+          <p className="text-[11px] font-serif font-bold uppercase tracking-wider text-[#b7844d] mt-0.5">{m.subtitle}</p>
         </div>
 
         <p className="text-sm text-[#d4b996]/75 leading-snug line-clamp-2">{m.description}</p>
