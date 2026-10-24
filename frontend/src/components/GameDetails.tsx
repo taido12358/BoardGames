@@ -186,8 +186,8 @@ export default function GameDetails() {
 
         <div className="flex flex-col justify-center space-y-3">
           <div>
-            <h1 className="text-3xl font-black tracking-widest uppercase text-[#f5d09d] drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">{metadata.title}</h1>
-            <p className="text-[#d4b996]/60">{metadata.subtitle}</p>
+            <h1 className="text-3xl font-black tracking-widest uppercase bg-gradient-to-b from-[#fff3db] via-[#f7cb85] to-[#c7883a] bg-clip-text text-transparent drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]">{metadata.title}</h1>
+            <p className="text-[11px] font-bold uppercase tracking-wider text-[#b7844d] mt-0.5">{metadata.subtitle}</p>
           </div>
 
           <div className="grid grid-cols-2 gap-2 text-sm">
@@ -285,7 +285,7 @@ export default function GameDetails() {
                 <li key={r.id} className="relative overflow-hidden rounded-xl border border-amber-900/30 bg-gradient-to-r from-[#1c1408] to-[#150f06] p-3 flex items-center justify-between gap-2">
                   <div className="pointer-events-none absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-amber-500/20 to-transparent" />
                   <div className="min-w-0">
-                    <div className="text-sm text-amber-100 truncate font-medium">
+                    <div className="text-sm text-[#f5d09d] truncate font-medium">
                       🚪 Phòng của {owner ?? "Ẩn danh"}
                     </div>
                     <div className="text-xs text-amber-700/70 mt-0.5">👥 {occupied}/{r.seatCount} người · Đang chờ</div>
