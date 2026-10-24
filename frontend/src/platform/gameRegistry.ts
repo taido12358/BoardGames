@@ -57,6 +57,11 @@ export function getGameInstructions(gameKey: string): InstructionSection[] {
   return REGISTRY[gameKey]?.instructions ?? [];
 }
 
+/** Tên game cho lịch sử và phát lại; key lạ giữ nguyên để dễ debug. */
+export function getGameTitle(gameKey: string): string {
+  return REGISTRY[gameKey]?.metadata.title ?? gameKey;
+}
+
 /** Component UI tuỳ chọn tạo phòng của game này, nếu có đăng ký — GameDetails render có điều kiện. */
 export function getCreateOptionsForm(gameKey: string): ComponentType<CreateOptionsFormProps> | undefined {
   return REGISTRY[gameKey]?.CreateOptionsForm;

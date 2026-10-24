@@ -32,7 +32,7 @@ export default function GameCard({ metadata: m, waitingRooms, onViewDetails, onP
     <div
       role="group"
       aria-label={m.title}
-      className={`group relative flex flex-col rounded-2xl border border-[#69421f]/70 bg-gradient-to-b from-[#1e1810] to-[#141009]
+      className={`group relative flex flex-col rounded-sm border border-[#69421f]/70 bg-gradient-to-b from-[#1e1810] to-[#141009]
         shadow-[inset_0_1px_0_rgba(255,205,130,0.1),0_12px_24px_rgba(0,0,0,0.85)] transition-all duration-300 ease-out overflow-hidden
         hover:-translate-y-2 hover:rotate-1 hover:scale-[1.01] hover:border-[#c88a42] hover:shadow-[0_16px_32px_rgba(0,0,0,0.9),0_0_15px_rgba(200,138,66,0.25)] ${ACCENT_RING[m.accent]}`}
     >
@@ -59,7 +59,7 @@ export default function GameCard({ metadata: m, waitingRooms, onViewDetails, onP
         <span className="pointer-events-none absolute bottom-1.5 left-1.5 w-3 h-3 border-b border-l border-[#c8924b]/40 z-20" />
         <span className="pointer-events-none absolute bottom-1.5 right-1.5 w-3 h-3 border-b border-r border-[#c8924b]/40 z-20" />
         <span
-          className="text-7xl sm:text-8xl transition-transform duration-300 ease-out group-hover:scale-110 drop-shadow-[0_4px_12px_rgba(0,0,0,0.6)] relative z-0"
+          className="text-7xl sm:text-8xl transition-all duration-300 ease-out group-hover:scale-110 drop-shadow-[0_8px_20px_rgba(0,0,0,0.9)] group-hover:drop-shadow-[0_12px_28px_rgba(0,0,0,0.95)] relative z-0"
           aria-hidden="true"
         >
           {m.emblem}
@@ -110,14 +110,14 @@ export default function GameCard({ metadata: m, waitingRooms, onViewDetails, onP
           <button
             type="button"
             onClick={onViewDetails}
-            className="w-full rounded-xl border border-amber-950/80 bg-[#140e0b]/90 hover:border-amber-700/60 hover:bg-[#1a120d] px-3 py-2.5 text-xs font-semibold text-amber-400/70 hover:text-amber-300 transition-colors shadow-[inset_0_1px_3px_rgba(0,0,0,0.6)]"
+            className="w-full rounded-sm border border-[#6b4725]/60 bg-[#22140c]/90 hover:border-[#b47a3c]/80 hover:bg-[#2c1a10] px-3 py-2.5 text-xs font-semibold text-[#bba182] hover:text-[#f3d4a2] transition-colors shadow-[inset_0_1px_2px_rgba(0,0,0,0.6)]"
           >
             📖 XEM HƯỚNG DẪN
           </button>
           <button
             type="button"
             onClick={onPlayNow}
-            className="relative w-full rounded-lg bg-gradient-to-b from-amber-600 via-amber-700 to-amber-800 px-3 py-2.5 text-sm font-bold text-amber-50 border-t border-amber-400/50 shadow-[0_4px_0_0_#451a03,0_8px_16px_rgba(0,0,0,0.5)] transition-all hover:brightness-110 active:top-[2px] active:shadow-[0_2px_0_0_#451a03]"
+            className="w-full rounded-sm font-bold text-sm text-[#271206] bg-gradient-to-b from-[#fce295] via-[#df9031] to-[#87460e] px-3 py-2.5 border-t border-[#fff4d1] border-b-4 border-[#4d2506] shadow-[0_4px_12px_rgba(0,0,0,0.7),inset_0_1px_1px_rgba(255,255,255,0.3)] hover:brightness-110 active:translate-y-1 active:border-b-0 active:shadow-[0_1px_4px_rgba(0,0,0,0.8)] transition-all duration-150"
           >
             CHƠI NGAY
           </button>

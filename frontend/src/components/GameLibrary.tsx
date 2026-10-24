@@ -22,7 +22,7 @@ function playerCountLabel(m: GameMetadata): string {
 
 function SkeletonCard() {
   return (
-    <div className="rounded-2xl border border-amber-900/30 bg-[#1a140c] overflow-hidden animate-pulse">
+    <div className="rounded-sm border border-amber-900/30 bg-[#1a140c] overflow-hidden animate-pulse">
       <div className="h-40 sm:h-48 bg-amber-950/30" />
       <div className="p-4 space-y-2">
         <div className="h-4 w-2/3 bg-amber-950/40 rounded" />
@@ -142,7 +142,7 @@ export default function GameLibrary() {
             className="w-full rounded-sm border border-[#6b4421] bg-[#1a100a]/90 pl-10 pr-4 py-2.5 text-sm tracking-wide text-[#fae4c8] shadow-[inset_0_2px_4px_rgba(0,0,0,0.8),0_1px_0_rgba(255,200,120,0.08)] outline-none transition-all focus:border-[#d99748] focus:ring-1 focus:ring-[#d99748]/50 placeholder:text-[#957657]"
           />
         </div>
-        {search && <button type="button" onClick={() => setSearch("")} className="rounded-lg border border-amber-950/80 bg-[#140e0b]/90 px-3 py-2 text-xs text-amber-700/70 hover:border-amber-700/60 hover:bg-[#1a120d] hover:text-amber-400">Xóa từ khóa</button>}
+        {search && <button type="button" onClick={() => setSearch("")} className="rounded-sm border border-[#6b4725]/60 bg-[#22140c]/90 px-3 py-2 text-xs text-[#bba182] hover:border-[#b47a3c]/80 hover:bg-[#2c1a10] hover:text-[#f3d4a2] transition-colors">Xóa từ khóa</button>}
         <div className="flex flex-wrap gap-2">
           {filterChips.map((chip) => (
             <button
@@ -165,12 +165,12 @@ export default function GameLibrary() {
       {/* Trạng thái lỗi */}
       <LobbyLoadStatus loading={roomsLoading} error={roomsError} onRetry={() => fetchRooms()} />
       {enginesError && !enginesLoading && (
-        <div className="rounded-2xl border border-red-800/50 bg-red-950/30 p-6 text-center space-y-3">
+        <div className="rounded-sm border border-red-800/50 bg-red-950/30 p-6 text-center space-y-3">
           <p className="text-red-300 text-sm">{enginesError}</p>
           <button
             type="button"
             onClick={() => fetchEngines()}
-            className="rounded-xl bg-red-800 hover:bg-red-700 px-4 py-2 text-sm font-semibold text-white"
+            className="rounded-sm bg-red-800 hover:bg-red-700 px-4 py-2 text-sm font-semibold text-white"
           >
             THỬ LẠI
           </button>
@@ -186,14 +186,14 @@ export default function GameLibrary() {
 
       {/* Trống sau lọc */}
       {!enginesLoading && !enginesError && filtered.length === 0 && (filter !== "waiting" || (!roomsLoading && !roomsError)) && (
-        <div className="rounded-2xl border border-amber-900/30 bg-[#1a1208]/40 p-10 text-center space-y-3">
+        <div className="rounded-sm border border-amber-900/30 bg-[#1a1208]/40 p-10 text-center space-y-3">
           <div className="text-3xl">🔍</div>
           <p className="text-amber-300/70 font-medium">Không tìm thấy trò chơi</p>
           <p className="text-amber-700/50 text-sm italic">Thử thay đổi từ khóa hoặc bộ lọc.</p>
           <button
             type="button"
             onClick={clearFilters}
-            className="rounded-xl border border-amber-950/80 bg-[#140e0b]/90 hover:border-amber-700/60 hover:bg-[#1a120d] px-4 py-2 text-sm font-medium text-amber-700/70 hover:text-amber-400 transition-colors"
+            className="rounded-sm border border-[#6b4725]/60 bg-[#22140c]/90 hover:border-[#b47a3c]/80 hover:bg-[#2c1a10] px-4 py-2 text-sm font-medium text-[#bba182] hover:text-[#f3d4a2] transition-colors"
           >
             XÓA BỘ LỌC
           </button>
