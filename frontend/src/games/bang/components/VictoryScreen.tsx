@@ -37,15 +37,16 @@ export default function VictoryScreen({ state, onLeave, onRematch, rematching }:
   const badge = OUTCOME_BADGE[outcome];
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/88 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 bg-[#0d0a07]/88 backdrop-blur-sm backdrop-sepia-[0.4] flex items-center justify-center p-4">
       <div className={[
-        "w-full max-w-md rounded-sm border border-amber-600/30 bg-amber-950/20 p-1 shadow-2xl",
+        "w-full max-w-md rounded-sm border-double border-8 border-amber-950 bg-amber-950/20 p-1 shadow-2xl",
+        "shadow-[inset_0_0_40px_15px_rgba(0,0,0,0.8)]",
         cfg.glow,
         OUTCOME_ENTER_CLASS[outcome],
       ].join(" ")}>
       <div className={[
         "rounded-xs border border-amber-700/50",
-        "bg-gradient-to-b from-[#2b2013] via-[#1c150c] to-[#120d08]",
+        "bg-gradient-to-r from-[#1a130e] via-[#0d0a07] to-[#1a130e]",
         "p-6 text-center space-y-4",
       ].join(" ")}>
 
@@ -59,7 +60,7 @@ export default function VictoryScreen({ state, onLeave, onRematch, rematching }:
         )}
 
         {/* Winner title */}
-        <h2 className={`font-serif font-black text-xl tracking-[0.15em] uppercase leading-tight [text-shadow:0_1px_0_rgba(255,255,255,0.15),0_3px_8px_rgba(0,0,0,0.9)] ${cfg.color}`}>
+        <h2 className={`font-serif font-black text-xl tracking-[0.15em] uppercase leading-tight -rotate-1 scale-105 [text-shadow:3px_3px_0px_#000,-1px_-1px_0px_rgba(255,191,0,0.25),0_3px_8px_rgba(0,0,0,0.9)] ${cfg.color}`}>
           {cfg.title}
         </h2>
         <div className="flex items-center justify-center gap-2">

@@ -57,7 +57,7 @@ export default function GameLogPanel({ log }: Props) {
             const element = event.currentTarget;
             following.current = element.scrollHeight - element.scrollTop - element.clientHeight < 32;
             if (following.current) setHasNew(false);
-          }} className="max-h-36 overflow-y-auto px-3 pb-2 space-y-0.5 focus-visible:outline focus-visible:outline-amber-400">
+          }} className="max-h-36 overflow-y-auto px-3 pb-2 space-y-0.5 focus-visible:outline focus-visible:outline-amber-400 [mask-image:linear-gradient(to_bottom,transparent_0%,black_18%,black_100%)]">
           {log.length === 0 && <p className="text-amber-900/40 text-xs py-1 italic">Chưa có gì xảy ra…</p>}
           {log.map((line, i) => (
             <p key={i} className={`text-[11px] leading-snug ${logColor(line)}`}>{line}</p>
