@@ -39,8 +39,13 @@ export default function LoginPage() {
       {/* Brand header */}
       <div className="text-center space-y-2">
         <div className="text-5xl animate-bounce" style={{ animationDuration: "2.5s", animationTimingFunction: "ease-in-out" }}>🎲</div>
-        <h1 className="text-3xl font-western tracking-wide text-[#f5d09d]">BoardGame</h1>
-        <p className="text-amber-700/60 text-sm">Chơi board game cùng bạn bè — mọi lúc, mọi nơi.</p>
+        <h1 className="text-3xl font-western tracking-wide bg-gradient-to-b from-[#fff3db] via-[#f7cb85] to-[#c7883a] bg-clip-text text-transparent drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]">BoardGame</h1>
+        <p className="text-sm italic text-[#c8a882] tracking-wider">Chơi board game cùng bạn bè — mọi lúc, mọi nơi.</p>
+        <div className="flex items-center justify-center gap-2 mt-2 opacity-60">
+          <div className="w-12 h-[1px] bg-gradient-to-r from-transparent to-[#b67d3e]" />
+          <div className="w-1.5 h-1.5 rotate-45 border border-[#e2b06f] bg-[#532e12]" />
+          <div className="w-12 h-[1px] bg-gradient-to-l from-transparent to-[#b67d3e]" />
+        </div>
       </div>
 
       {/* Login card — double border theo gợi ý Gemini */}
@@ -63,7 +68,7 @@ export default function LoginPage() {
         {step === "email" ? (
           <form onSubmit={submitEmail} aria-busy={loading} className="space-y-3">
             <div>
-              <label htmlFor="login-email" className="text-amber-700/70 text-xs uppercase tracking-widest font-medium">
+              <label htmlFor="login-email" className="text-[#c99a5e] text-xs uppercase tracking-widest font-semibold">
                 Email
               </label>
               <input
@@ -92,7 +97,7 @@ export default function LoginPage() {
         ) : (
           <form onSubmit={submitCode} aria-busy={loading} className="space-y-3">
             <div>
-              <label htmlFor="login-code" className="text-amber-700/70 text-xs uppercase tracking-widest font-medium">
+              <label htmlFor="login-code" className="text-[#c99a5e] text-xs uppercase tracking-widest font-semibold">
                 Mã xác nhận
               </label>
               <input
