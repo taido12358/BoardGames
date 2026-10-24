@@ -1,5 +1,6 @@
 using BoardGame.Api.Games.Bang;
 using BoardGame.Api.Platform;
+using System.Text.Json;
 using Xunit;
 
 namespace BoardGame.Api.Tests.Bang;
@@ -60,5 +61,28 @@ public class BangJsonContractTests
     public void PendingResponseKind_SerializesAsExpectedCamelCase(PendingResponseKind kind, string expectedJson)
     {
         Assert.Equal(expectedJson, GameJson.Serialize(kind));
+    }
+
+    [Fact]
+    public void ViewerProjection_UsesCamelCaseStringsExpectedByFrontend()
+    {
+        var engine = new BangEngine();
+        var state = TestFactory.MakeState(4);
+        var actionJson = engine.RedactStateForViewer(GameJson.Serialize(state), "P0");
+        using (var action = JsonDocument.Parse(actionJson))
+            Assert.Equal("action", action.RootElement.GetProperty("phase").GetString());
+
+        state.Phase = GamePhase.AwaitingResponse;
+        state.PendingResponse = new PendingResponse
+        {
+            Kind = PendingResponseKind.Bang,
+            FromPlayerId = "P1",
+            TargetIds = new List<string> { "P0" },
+        };
+        var responseJson = engine.RedactStateForViewer(GameJson.Serialize(state), "P0");
+        using var response = JsonDocument.Parse(responseJson);
+        Assert.Equal("awaitingResponse", response.RootElement.GetProperty("phase").GetString());
+        Assert.Equal("bang", response.RootElement.GetProperty("pendingResponse").GetProperty("kind").GetString());
+        Assert.True(response.RootElement.GetProperty("pendingResponse").GetProperty("itsYourTurn").GetBoolean());
     }
 }
