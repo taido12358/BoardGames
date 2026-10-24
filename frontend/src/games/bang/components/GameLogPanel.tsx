@@ -7,10 +7,10 @@ interface Props {
 /** Tô màu dòng log theo nội dung để dễ đọc hơn. */
 function logColor(line: string): string {
   if (line.includes("THẮNG") || line.includes("chiến thắng")) return "text-amber-300 font-semibold";
-  if (line.includes("bị loại") || line.includes("chết") || line.includes("💀")) return "text-red-400";
-  if (line.includes("Bang!") || line.includes("🔫") || line.includes("Gatling") || line.includes("Súng")) return "text-orange-300";
-  if (line.includes("Trượt") || line.includes("đỡ được")) return "text-blue-300";
-  if (line.includes("Bia") || line.includes("hồi máu") || line.includes("❤️")) return "text-green-400";
+  if (line.includes("bị loại") || line.includes("chết") || line.includes("💀")) return "text-[#c84040]";
+  if (line.includes("Bang!") || line.includes("🔫") || line.includes("Gatling") || line.includes("Súng")) return "text-[#d4844a]";
+  if (line.includes("Trượt") || line.includes("đỡ được")) return "text-[#7aaccf]";
+  if (line.includes("Bia") || line.includes("hồi máu") || line.includes("❤️")) return "text-[#7aaa60]";
   if (line.includes("DEBUG")) return "text-amber-900/50 italic text-[10px]";
   return "text-amber-200/70";
 }

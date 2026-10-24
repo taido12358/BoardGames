@@ -303,7 +303,7 @@ export default function BangBoard({ makeMove, onLeave, onRematch, rematching }: 
       </div>
 
       {/* Giữa bàn: nọc bài / chồng bài bỏ / hiệu ứng đang treo */}
-      <div className="flex items-center justify-center gap-6 bg-gradient-to-b from-[#1c150c] to-[#160f08] rounded-sm px-5 py-3 border border-amber-900/30 shadow-inner">
+      <div className="flex items-center justify-center gap-6 bg-gradient-to-b from-[#1c150c] to-[#160f08] rounded-sm px-5 py-3 border border-amber-900/30 shadow-[inset_0_2px_8px_rgba(0,0,0,0.8),0_8px_20px_rgba(0,0,0,0.7)]">
         {/* Nọc bài */}
         <div className="flex flex-col items-center gap-1">
           <div

@@ -23,7 +23,7 @@ const OUTCOME_ENTER_CLASS: Record<ReturnType<typeof localOutcome>, string> = {
 
 const OUTCOME_BADGE: Record<ReturnType<typeof localOutcome>, { text: string; cls: string } | null> = {
   win: { text: "🎉 BẠN THẮNG", cls: "bg-amber-900/60 border-amber-500/50 text-amber-200" },
-  lose: { text: "💀 BẠN THUA", cls: "bg-red-950/60 border-red-700/50 text-red-300" },
+  lose: { text: "💀 BẠN THUA", cls: "bg-[#7a201b]/60 border-[#9a3030]/60 text-[#d4a0a0]" },
   neutral: null,
 };
 
