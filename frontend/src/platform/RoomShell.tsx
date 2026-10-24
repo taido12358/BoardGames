@@ -22,21 +22,21 @@ export function RoomStatusBanner({ room, mySide }: { room: RoomDto; mySide: stri
   }
   if (room.status === "Playing" && mySide === null) {
     return (
-      <div className="rounded-xl p-2 text-center bg-amber-900/30 text-amber-300 text-sm">
+      <div className="rounded-sm p-2 text-center bg-amber-900/30 text-amber-300 text-sm">
         👁 Bạn đang xem — không thể chơi.
       </div>
     );
   }
   if (room.status === "Cancelled") {
     return (
-      <div className="rounded-2xl p-3 text-center bg-[#1a1208] text-amber-700/60 text-sm border border-amber-900/30">
+      <div className="rounded-sm p-3 text-center bg-[#1a1208] text-amber-700/60 text-sm border border-amber-900/30">
         Phòng đã bị huỷ.
       </div>
     );
   }
   if (room.status === "Abandoned") {
     return (
-      <div className="rounded-2xl p-3 text-center bg-[#1a1208] text-amber-700/60 text-sm border border-amber-900/30">
+      <div className="rounded-sm p-3 text-center bg-[#1a1208] text-amber-700/60 text-sm border border-amber-900/30">
         Phòng đã đóng do mất kết nối kéo dài.
       </div>
     );
@@ -48,7 +48,7 @@ export function DisconnectBadge({ seats }: { seats: SeatSlotDto[] }) {
   const disconnected = seats.filter((s) => s.displayName !== null && !s.connected);
   if (disconnected.length === 0) return null;
   return (
-    <div role="status" aria-atomic="true" className="rounded-xl p-2 text-center bg-orange-900/30 text-orange-300 text-xs border border-orange-800/50">
+    <div role="status" aria-atomic="true" className="rounded-sm p-2 text-center bg-orange-900/30 text-orange-300 text-xs border border-orange-800/50">
       {disconnected.map((s) => `⚠ ${s.displayName} mất kết nối`).join(" · ")}
     </div>
   );
@@ -56,16 +56,16 @@ export function DisconnectBadge({ seats }: { seats: SeatSlotDto[] }) {
 
 export function ConnectionBanner({ connectionState }: { connectionState: ConnectionState }) {
   if (connectionState === "connected") return null;
-  if (connectionState === "connecting") return <div role="status" className="rounded-xl bg-amber-900/40 p-2 text-center text-xs text-amber-300">Đang kết nối máy chủ trò chơi…</div>;
+  if (connectionState === "connecting") return <div role="status" className="rounded-sm bg-amber-900/40 p-2 text-center text-xs text-amber-300">Đang kết nối máy chủ trò chơi…</div>;
   if (connectionState === "reconnecting") {
     return (
-      <div role="status" aria-atomic="true" className="rounded-xl p-2 text-center bg-amber-900/40 text-amber-300 text-xs">
+      <div role="status" aria-atomic="true" className="rounded-sm p-2 text-center bg-amber-900/40 text-amber-300 text-xs">
         Đang kết nối lại…
       </div>
     );
   }
   return (
-    <div role="alert" className="rounded-xl p-2 text-center bg-red-900/40 text-red-300 text-xs">
+    <div role="alert" className="rounded-sm p-2 text-center bg-red-900/40 text-red-300 text-xs">
       Mất kết nối tới máy chủ — vui lòng tải lại trang.
     </div>
   );
@@ -73,14 +73,14 @@ export function ConnectionBanner({ connectionState }: { connectionState: Connect
 
 export function RoomErrorBanner({ error }: { error: string | null }) {
   if (!error) return null;
-  return <div role="alert" className="rounded-xl p-2.5 text-center bg-red-900/40 text-red-300 text-sm break-words">{error}</div>;
+  return <div role="alert" className="rounded-sm p-2.5 text-center bg-red-900/40 text-red-300 text-sm break-words">{error}</div>;
 }
 
 export function LeaveRoomButton({ onLeave, label = "← Rời phòng" }: { onLeave: () => void; label?: string }) {
   return (
     <button
       onClick={onLeave}
-      className="w-full rounded-xl border border-amber-950/80 bg-[#140e0b]/90 px-4 py-3 text-sm font-medium uppercase tracking-wide text-amber-700/70 shadow-[inset_0_1px_3px_rgba(0,0,0,0.6)] hover:border-amber-700/60 hover:bg-[#1a120d] hover:text-amber-400 transition-all"
+      className="w-full rounded-sm border border-[#6b4725]/60 bg-[#22140c]/90 px-4 py-3 text-sm font-medium uppercase tracking-wide text-[#bba182] shadow-[inset_0_1px_2px_rgba(0,0,0,0.6)] hover:border-[#b47a3c]/80 hover:bg-[#2c1a10] hover:text-[#f3d4a2] transition-all"
     >
       {label}
     </button>
@@ -93,7 +93,7 @@ export function RematchButton({ onRematch, loading }: { onRematch: () => void; l
     <button
       onClick={onRematch}
       disabled={loading}
-      className="relative w-full rounded-lg bg-gradient-to-b from-amber-600 via-amber-700 to-amber-800 px-4 py-3 font-bold text-base text-amber-50 border-t border-amber-400/50 shadow-[0_4px_0_0_#451a03,0_8px_16px_rgba(0,0,0,0.5)] transition-all hover:brightness-110 active:top-[2px] active:shadow-[0_2px_0_0_#451a03] disabled:opacity-50 disabled:cursor-wait"
+      className="w-full rounded-sm font-bold text-base text-[#271206] bg-gradient-to-b from-[#fce295] via-[#df9031] to-[#87460e] px-4 py-3 border-t border-[#fff4d1] border-b-4 border-[#4d2506] shadow-[0_6px_16px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.4)] hover:brightness-110 active:translate-y-1 active:border-b-0 active:shadow-[0_2px_4px_rgba(0,0,0,0.9)] transition-all duration-150 disabled:opacity-50 disabled:cursor-wait"
     >
       {loading ? "Đang tạo phòng…" : "🔄 CHƠI LẠI"}
     </button>
@@ -106,12 +106,12 @@ export function RematchInviteBanner({
 }: { invite: { newRoomId: string; byDisplayName: string } | null; onJoin: (roomId: string) => void }) {
   if (!invite) return null;
   return (
-    <div className="relative overflow-hidden rounded-2xl p-3 bg-amber-950/30 text-amber-200 text-sm border border-amber-700/40 flex items-center justify-between gap-2">
+    <div className="relative overflow-hidden rounded-sm p-3 bg-amber-950/30 text-amber-200 text-sm border border-amber-700/40 flex items-center justify-between gap-2">
       <div className="pointer-events-none absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-amber-500/30 to-transparent" />
       <span>🔄 {invite.byDisplayName} đã tạo phòng chơi lại</span>
       <button
         onClick={() => onJoin(invite.newRoomId)}
-        className="relative shrink-0 rounded-md bg-gradient-to-b from-amber-600 to-amber-800 px-3 py-1.5 text-xs font-semibold text-amber-50 border-t border-amber-400/40 shadow-[0_2px_0_0_#451a03] transition-all hover:brightness-110 active:top-[1px] active:shadow-none"
+        className="relative shrink-0 rounded-sm font-semibold text-[#271206] text-xs bg-gradient-to-b from-[#fce295] via-[#df9031] to-[#87460e] px-3 py-1.5 border-t border-[#fff4d1] border-b-2 border-[#4d2506] shadow-[0_3px_8px_rgba(0,0,0,0.6),inset_0_1px_1px_rgba(255,255,255,0.3)] hover:brightness-110 active:translate-y-0.5 active:border-b-0 transition-all duration-150"
       >
         VÀO PHÒNG
       </button>

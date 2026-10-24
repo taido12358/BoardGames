@@ -39,12 +39,12 @@ export default function VictoryScreen({ state, onLeave, onRematch, rematching }:
   return (
     <div className="fixed inset-0 z-50 bg-black/88 flex items-center justify-center p-4">
       <div className={[
-        "w-full max-w-md rounded-2xl border border-amber-600/30 bg-amber-950/20 p-1 shadow-2xl",
+        "w-full max-w-md rounded-sm border border-amber-600/30 bg-amber-950/20 p-1 shadow-2xl",
         cfg.glow,
         OUTCOME_ENTER_CLASS[outcome],
       ].join(" ")}>
       <div className={[
-        "rounded-xl border border-amber-700/50",
+        "rounded-xs border border-amber-700/50",
         "bg-gradient-to-b from-[#2b2013] via-[#1c150c] to-[#120d08]",
         "p-6 text-center space-y-4",
       ].join(" ")}>
@@ -100,7 +100,7 @@ export default function VictoryScreen({ state, onLeave, onRematch, rematching }:
           {onRematch && <RematchButton onRematch={onRematch} loading={rematching} />}
           <button
             onClick={onLeave}
-            className="w-full rounded-xl border border-amber-950/80 bg-[#140e0b]/90 px-4 py-2.5 text-sm font-semibold uppercase tracking-wide text-amber-700/70 shadow-[inset_0_1px_3px_rgba(0,0,0,0.6)] hover:border-amber-700/60 hover:bg-[#1a120d] hover:text-amber-400 transition-all"
+            className="w-full rounded-sm border border-[#6b4725]/60 bg-[#22140c]/90 px-4 py-2.5 text-sm font-semibold uppercase tracking-wide text-[#bba182] shadow-[inset_0_1px_2px_rgba(0,0,0,0.6)] hover:border-[#b47a3c]/80 hover:bg-[#2c1a10] hover:text-[#f3d4a2] transition-all"
           >
             VỀ PHÒNG CHỜ
           </button>
