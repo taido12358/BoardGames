@@ -1990,3 +1990,6 @@ IN_PROGRESS
 
 - Show O An Quan sowing step/progress and active capture/settlement/refill phase; use a resolving-board message during animation and omit the progress timer for reduced motion.
 
+
+- Show and announce Vay Bat confirmed origin-to-destination movement while the travel cue is active.
+

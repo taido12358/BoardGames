@@ -911,3 +911,7 @@ Zodiac now keeps the confirmed die result visible with a compact per-racer from/
 ### O An Quan: track sowing phase progress
 The active sowing cue now shows the current step and estimated progress, with phase labels for sowing, capture, final settlement, or refill. The waiting message changes while the board animation is resolving. Reduced-motion mode omits the auxiliary progress timer.
 
+
+### Vay Bat: show confirmed move endpoints
+While a confirmed piece travel cue is active, the board displays the piece side and origin-to-destination nodes in a short status chip. The same text is announced politely to assistive technology; it is derived from the confirmed occupancy snapshot and expires with the travel cue.
+

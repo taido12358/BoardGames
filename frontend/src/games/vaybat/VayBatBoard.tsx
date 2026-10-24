@@ -324,6 +324,12 @@ export default function VayBatBoard({ makeMove, onLeave, onRematch, rematching }
     () => new Map((map?.nodes ?? []).map(n => [n.id, n])),
     [map]
   );
+  const movementAnnouncement = [...movingPieces].flatMap(([pieceId, fromNodeId]) => {
+    const toNodeId = state?.pieces[pieceId];
+    if (toNodeId === undefined) return [];
+    const color = pieceId.startsWith("R") ? "\u0110\u1ecf" : "Tr\u1eafng";
+    return [`Qu\u00e2n ${color}: \u00f4 ${fromNodeId} \u2192 ${toNodeId}`];
+  }).join(". ");
 
   useLayoutEffect(() => {
     const svg = svgRef.current;
@@ -635,6 +641,19 @@ export default function VayBatBoard({ makeMove, onLeave, onRematch, rematching }
           {" vs "}<span className={`inline-block ${changedIndexClass(joiningSeats, 1, room.seats[1]?.displayName ? "animate-seat-arrive" : "animate-seat-vacate")}`} style={{ animationDelay: "55ms" }}>⚪ {room.seats[1]?.displayName ?? "—"}</span>
         </div>
       </div>
+
+      {movementAnnouncement && (
+        <div
+          key={movementAnnouncement}
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+          className="animate-game-action-enter rounded-sm border border-amber-700/35 bg-[#17130d]/85 px-3 py-1.5 text-center text-xs font-semibold text-amber-200/90"
+        >
+          <span aria-hidden="true" className="mr-1.5 text-amber-400">&#8594;</span>
+          {movementAnnouncement}
+        </div>
+      )}
 
       <ConnectionBanner connectionState={connectionState} />
       <DisconnectBadge seats={room.seats} />
