@@ -138,7 +138,7 @@ export default function GameDetails() {
       <div className="mx-auto max-w-md space-y-4 py-10 text-center">
         <p role="alert" className="text-red-300">{enginesError}</p>
         <p className="text-sm text-amber-700/60">Kiểm tra kết nối rồi tải lại danh sách trò chơi.</p>
-        <button onClick={() => fetchEngines()} className="rounded-xl bg-amber-700 px-4 py-3 font-semibold text-white hover:bg-amber-600">Thử lại</button>
+        <button onClick={() => fetchEngines()} className="rounded-sm bg-amber-700 px-4 py-3 font-semibold text-white hover:bg-amber-600">Thử lại</button>
       </div>
     );
   }
@@ -146,8 +146,8 @@ export default function GameDetails() {
   if (enginesLoading || (!engine && engines.length === 0)) {
     return (
       <div role="status" aria-label="Đang tải trò chơi" className="w-full max-w-4xl mx-auto animate-pulse space-y-4">
-        <div className="h-8 w-40 bg-amber-950/40 rounded" />
-        <div className="h-64 bg-amber-950/30 rounded-2xl" />
+        <div className="h-8 w-40 bg-amber-950/40 rounded-sm" />
+        <div className="h-64 bg-amber-950/30 rounded-sm" />
       </div>
     );
   }
@@ -159,7 +159,7 @@ export default function GameDetails() {
         <p className="text-amber-300/70">Không tìm thấy trò chơi này.</p>
         <button
           onClick={() => navigate("/games")}
-          className="rounded-xl border border-amber-950/80 bg-[#140e0b]/90 hover:border-amber-700/60 hover:bg-[#1a120d] px-4 py-2 text-sm font-medium text-amber-700/70 hover:text-amber-400 transition-colors"
+          className="rounded-sm border border-[#6b4725]/60 bg-[#22140c]/90 hover:border-[#b47a3c]/80 hover:bg-[#2c1a10] px-4 py-2 text-sm font-medium text-[#bba182] hover:text-[#f3d4a2] transition-colors"
         >
           ← QUAY LẠI THƯ VIỆN
         </button>
@@ -199,7 +199,7 @@ export default function GameDetails() {
 
         <div className="flex flex-col justify-center space-y-3">
           <div>
-            <h1 className="text-3xl font-black tracking-widest uppercase bg-gradient-to-b from-[#fff3db] via-[#f7cb85] to-[#c7883a] bg-clip-text text-transparent drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]">{metadata.title}</h1>
+            <h1 className="font-serif text-3xl font-black tracking-widest uppercase bg-gradient-to-b from-[#fff3db] via-[#f7cb85] to-[#c7883a] bg-clip-text text-transparent drop-shadow-[0_2px_8px_rgba(0,0,0,0.95)] [text-shadow:0_1px_0_rgba(255,255,200,0.15),0_3px_6px_rgba(0,0,0,0.9)]">{metadata.title}</h1>
             <p className="text-[11px] font-serif font-bold uppercase tracking-[0.25em] text-[#c99a5e] mt-0.5">{metadata.subtitle}</p>
           </div>
 

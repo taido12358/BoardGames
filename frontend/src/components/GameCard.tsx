@@ -77,8 +77,8 @@ export default function GameCard({ metadata: m, waitingRooms, onViewDetails, onP
       {/* Nội dung */}
       <div className="flex flex-col gap-2 p-4 flex-1">
         <div>
-          <h3 className="text-lg font-black tracking-widest text-[#fae1be] group-hover:text-[#ffd693] uppercase drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] transition-colors">{m.title}</h3>
-          <p className="text-[11px] font-bold uppercase tracking-wider text-[#b7844d] mt-0.5">{m.subtitle}</p>
+          <h3 className="font-serif text-lg font-black tracking-widest text-[#fae1be] group-hover:text-[#ffd693] uppercase drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] transition-colors">{m.title}</h3>
+          <p className="text-[11px] font-serif font-bold uppercase tracking-[0.22em] text-[#c99a5e] mt-0.5">{m.subtitle}</p>
         </div>
 
         <p className="text-sm text-[#d4b996]/75 leading-snug line-clamp-2">{m.description}</p>

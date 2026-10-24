@@ -116,7 +116,7 @@ export default function PlayerSeat({ player, isCurrentTurn, isMe, targetable, ta
 
       {/* Range indicator */}
       {!isMe && player.distance !== null && (
-        <div className={`mt-1.5 rounded px-1.5 py-0.5 text-[10px] font-semibold text-center ${
+        <div className={`mt-1.5 rounded-sm px-1.5 py-0.5 text-[10px] font-semibold text-center ${
           player.inRange
             ? "bg-amber-900/40 text-amber-300 border border-amber-700/40 shadow-[0_0_8px_rgba(245,158,11,0.2)]"
             : "border border-amber-950/60 bg-[#0d0805]/60 text-amber-900/50 shadow-[inset_0_1px_2px_rgba(0,0,0,0.5)]"
