@@ -54,18 +54,20 @@ export default function PlayerSeat({ player, isCurrentTurn, isMe, targetable, ta
       onClick={targetable ? onClick : undefined}
       disabled={!targetable}
       className={[
-        "w-full text-left rounded-sm border-2 p-2.5 transition-all",
+        "relative overflow-hidden w-full text-left rounded-sm border-2 p-2.5 transition-all",
         player.alive
-          ? "bg-gradient-to-b from-[#2b2013] to-[#1c150c]"
+          ? "bg-gradient-to-b from-[#2e2214] to-[#1a130a] shadow-[inset_0_1px_0_rgba(255,200,100,0.06)]"
           : "bg-[#141010] grayscale opacity-50",
         isCurrentTurn
-          ? "border-amber-400 shadow-[0_0_14px_rgba(251,191,36,0.55)]"
+          ? "border-amber-400 shadow-[0_0_16px_rgba(251,191,36,0.6),inset_0_1px_0_rgba(255,220,100,0.12)]"
           : factionCls,
         targeting && !targetable ? "opacity-30" : "",
         targetable ? "cursor-pointer ring-2 ring-amber-300 hover:ring-amber-200 hover:border-amber-300" : "cursor-default",
         shaking ? "animate-shake" : "",
       ].join(" ")}
     >
+      {/* Worn leather vignette */}
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_50%,rgba(0,0,0,0.3)_100%)] pointer-events-none rounded-sm" />
       {/* Name row */}
       <div className="flex items-center justify-between gap-1">
         <div className="min-w-0 flex-1">
