@@ -73,7 +73,7 @@ export function ConnectionBanner({ connectionState }: { connectionState: Connect
 
 export function RoomErrorBanner({ error }: { error: string | null }) {
   if (!error) return null;
-  return <div role="alert" className="rounded-sm p-2.5 text-center bg-red-900/40 text-red-300 text-sm break-words">{error}</div>;
+  return <div role="alert" className="rounded-sm p-2.5 text-center bg-[#7a201b]/40 text-[#c88080] border border-[#9a3030]/40 text-sm break-words">{error}</div>;
 }
 
 export function LeaveRoomButton({ onLeave, label = "← Rời phòng" }: { onLeave: () => void; label?: string }) {

@@ -89,7 +89,7 @@ export default function ChatPanel({ roomId }: { roomId: string }) {
             ))}
           </div>
           {connectionState !== "connected" && <p role="status" className="px-3 py-2 text-xs text-amber-300">Đang mất kết nối. Bạn có thể soạn tin và gửi khi kết nối trở lại.</p>}
-          {sendError && <p role="alert" className="px-3 py-2 text-xs text-red-300">{sendError}</p>}
+          {sendError && <p role="alert" className="px-3 py-2 text-xs text-[#c84040]">{sendError}</p>}
           <form onSubmit={handleSend} aria-busy={sending} className="flex gap-2 px-3 py-2.5 border-t border-amber-900/30">
             <input
               type="text"
@@ -104,7 +104,7 @@ export default function ChatPanel({ roomId }: { roomId: string }) {
             <button
               type="submit"
               disabled={!text.trim() || sending || connectionState !== "connected"}
-              className="relative shrink-0 rounded-sm bg-gradient-to-b from-amber-600 via-amber-700 to-amber-800 border-t border-amber-400/40 shadow-[0_2px_0_0_#451a03] hover:brightness-110 active:top-[1px] active:shadow-none disabled:opacity-40 disabled:cursor-not-allowed px-3 py-1.5 text-sm font-medium text-amber-50"
+              className="shrink-0 rounded-sm font-bold text-[#271206] text-xs bg-gradient-to-b from-[#fce295] via-[#df9031] to-[#87460e] px-3 py-1.5 border-t border-[#fff4d1] border-b-2 border-[#4d2506] shadow-[0_2px_6px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.2)] hover:brightness-110 active:translate-y-0.5 active:border-b-0 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {sending ? "Đang gửi…" : "Gửi"}
             </button>
