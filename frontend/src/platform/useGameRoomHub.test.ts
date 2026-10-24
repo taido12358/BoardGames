@@ -25,6 +25,7 @@ const mocks = vi.hoisted(() => {
 
 vi.mock("@microsoft/signalr", () => ({
   HubConnectionState: { Connected: "Connected" },
+  HttpTransportType: { WebSockets: 1, ServerSentEvents: 2, LongPolling: 4 },
   HubConnectionBuilder: vi.fn().mockImplementation(() => ({
     withUrl: vi.fn().mockReturnThis(),
     withAutomaticReconnect: vi.fn().mockReturnThis(),
@@ -209,6 +210,28 @@ describe("useGameRoomHub — các action gửi invoke", () => {
     await waitFor(() => expect(useGameStore.getState().error).toContain("network down"));
   });
 
+  it("makeMove khi hook đã dọn kết nối -> báo rõ thay vì bỏ thao tác im lặng", () => {
+    const { result, unmount } = renderHook(() => useGameRoomHub());
+    unmount();
+
+    result.current.makeMove("r1", { type: "ROLL" });
+
+    expect(mocks.conn.invoke).not.toHaveBeenCalled();
+    expect(useGameStore.getState().error).toContain("Kết nối trò chơi chưa sẵn sàng");
+  });
+
+  it("makeMove khi hub đang reconnect -> không gửi thao tác và chỉ rõ trạng thái", () => {
+    mocks.conn.state = "Reconnecting";
+    const { result } = renderHook(() => useGameRoomHub());
+    // useEffect starts hub; simulate the state after it has connected then begun reconnecting.
+    mocks.conn.state = "Reconnecting";
+
+    result.current.makeMove("r1", { type: "ROLL" });
+
+    expect(mocks.conn.invoke).not.toHaveBeenCalled();
+    expect(useGameStore.getState().error).toContain("Kết nối trò chơi chưa sẵn sàng");
+  });
+
   it("sendChatMessage gọi đúng invoke SendChatMessage", async () => {
     const { result } = renderHook(() => useGameRoomHub());
     await result.current.sendChatMessage("r1", "chào");
@@ -221,9 +244,9 @@ describe("useGameRoomHub — các action gửi invoke", () => {
     expect(mocks.conn.invoke).toHaveBeenCalledWith("LeaveRoom", "r1");
   });
 
-  it("unmount gọi conn.stop() để đóng kết nối", () => {
+  it("unmount gọi conn.stop() sau khi start settle để đóng kết nối an toàn", async () => {
     const { unmount } = renderHook(() => useGameRoomHub());
     unmount();
-    expect(mocks.conn.stop).toHaveBeenCalled();
+    await waitFor(() => expect(mocks.conn.stop).toHaveBeenCalled());
   });
 });
