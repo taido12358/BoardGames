@@ -54,7 +54,7 @@ export default function PlayerSeat({ player, isCurrentTurn, isMe, targetable, ta
       onClick={targetable ? onClick : undefined}
       disabled={!targetable}
       className={[
-        "w-full text-left rounded-xl border-2 p-2.5 transition-all",
+        "w-full text-left rounded-sm border-2 p-2.5 transition-all",
         player.alive
           ? "bg-gradient-to-b from-[#2b2013] to-[#1c150c]"
           : "bg-[#141010] grayscale opacity-50",

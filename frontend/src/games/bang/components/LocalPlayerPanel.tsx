@@ -40,7 +40,7 @@ export default function LocalPlayerPanel({ me, you }: Props) {
 
   return (
     <div className={[
-      "rounded-xl border-2 border-amber-600/50 bg-gradient-to-b from-[#2e2415] to-[#1c150c] p-3",
+      "rounded-sm border-2 border-amber-600/50 bg-gradient-to-b from-[#2e2415] to-[#1c150c] p-3",
       "shadow-[inset_0_1px_0_rgba(251,191,36,0.08)]",
       shaking ? "animate-shake" : "",
     ].join(" ")}>

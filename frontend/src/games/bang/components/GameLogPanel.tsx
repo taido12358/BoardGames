@@ -30,7 +30,7 @@ export default function GameLogPanel({ log }: Props) {
   }, [log.length, open]);
 
   return (
-    <div className="rounded-xl bg-[#16120a] border border-amber-900/40 overflow-hidden shadow-inner">
+    <div className="rounded-sm bg-[#16120a] border border-amber-900/40 overflow-hidden shadow-inner">
       <button
         type="button"
         aria-expanded={open}
@@ -51,7 +51,7 @@ export default function GameLogPanel({ log }: Props) {
           following.current = true;
           setHasNew(false);
           listRef.current?.scrollTo({ top: listRef.current.scrollHeight });
-        }} className="mx-3 mb-2 rounded-lg bg-amber-900/60 px-3 py-2 text-xs text-amber-200 hover:bg-amber-800">Có diễn biến mới · Xem mới nhất</button>}
+        }} className="mx-3 mb-2 rounded-sm border border-amber-700/40 bg-amber-900/50 px-3 py-2 text-xs text-amber-200 hover:bg-amber-800/70 transition-colors">Có diễn biến mới · Xem mới nhất</button>}
         <div id={panelId} ref={listRef} aria-label="Nhật ký trận đấu" tabIndex={0}
           onScroll={(event) => {
             const element = event.currentTarget;
