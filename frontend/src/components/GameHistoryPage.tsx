@@ -76,9 +76,9 @@ export default function GameHistoryPage() {
         className="w-full rounded-sm border border-amber-900/40 bg-[#120c08] px-4 py-2.5 text-amber-100 placeholder-amber-900/40 shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)] outline-none transition-colors focus:border-amber-500/70 focus:shadow-[inset_0_2px_4px_rgba(0,0,0,0.6),0_0_10px_rgba(217,119,6,0.15)] text-sm placeholder:text-amber-900/40"
       />
 
-      {error && <div className="rounded-sm p-3 text-center bg-red-900/40 text-red-300 text-sm space-y-3">
+      {error && <div className="rounded-sm p-3 text-center bg-[#7a201b]/40 border border-[#9a3030]/40 text-[#c88080] text-sm space-y-3">
         <p role="alert">{error}</p>
-        <button onClick={() => setAttempt((value) => value + 1)} className="rounded-sm bg-red-800 px-4 py-2 font-semibold text-white hover:bg-red-700">Thử lại</button>
+        <button onClick={() => setAttempt((value) => value + 1)} className="rounded-sm bg-[#7a201b] px-4 py-2 font-semibold text-[#f5d0d0] hover:bg-[#9a2b24] transition-colors">Thử lại</button>
       </div>}
       {loading && <p role="status" className="text-amber-700/60 text-sm text-center py-4 italic">Đang tải…</p>}
 
@@ -110,7 +110,7 @@ export default function GameHistoryPage() {
                   <td className="px-3 py-2">
                     {r.winner
                       ? <span className="text-amber-300 font-semibold drop-shadow-[0_0_6px_rgba(245,158,11,0.3)]">{r.winner}</span>
-                      : <span className="text-red-600/70">—</span>
+                      : <span className="text-[#7a3020]/70">—</span>
                     }
                   </td>
                   <td className="px-3 py-2 text-amber-400/60 font-mono">{r.moveCount}</td>
