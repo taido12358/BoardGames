@@ -118,8 +118,8 @@ export default function PlayerSeat({ player, isCurrentTurn, isMe, targetable, ta
       {!isMe && player.distance !== null && (
         <div className={`mt-1.5 rounded-sm px-1.5 py-0.5 text-[10px] font-semibold text-center ${
           player.inRange
-            ? "bg-amber-900/40 text-amber-300 border border-amber-700/40 shadow-[0_0_8px_rgba(245,158,11,0.2)]"
-            : "border border-amber-950/60 bg-[#0d0805]/60 text-amber-900/50 shadow-[inset_0_1px_2px_rgba(0,0,0,0.5)]"
+            ? "bg-[#3d2008]/70 text-[#f5c872] border border-[#c87d2a]/60 shadow-[0_0_10px_rgba(200,125,42,0.3),inset_0_1px_0_rgba(255,200,100,0.1)]"
+            : "border border-amber-950/40 bg-[#0d0805]/50 text-amber-900/40 shadow-[inset_0_1px_2px_rgba(0,0,0,0.5)]"
         }`}>
           {player.inRange ? "✦ TRONG TẦM" : `✕ ${player.distance} ô`}
         </div>
