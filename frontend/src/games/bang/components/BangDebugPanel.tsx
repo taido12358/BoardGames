@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import type { BangPublicPlayer } from "../types";
 
 interface Props {
@@ -47,7 +47,7 @@ export default function BangDebugPanel({ roomId, players }: Props) {
   };
 
   return (
-    <div className="rounded-xl border border-dashed border-red-500/50 bg-red-950/20 text-xs">
+    <div className="rounded-sm border border-dashed border-red-500/50 bg-red-950/20 text-xs">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}

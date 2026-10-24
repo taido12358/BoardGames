@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { useGameStore } from "../../platform/gameStore";
 import {
   ConnectionBanner, DisconnectBadge, LeaveRoomButton, RematchButton, RoomErrorBanner, RoomStatusBanner,
@@ -28,7 +28,7 @@ function PitCell({
       disabled={!selectable}
       onClick={onClick}
       aria-label={quan ? `Ô Quan, ${count} quân` : `Ô dân số ${index}, ${count} quân`}
-      className={`flex flex-col items-center justify-center rounded-xl border-2 transition-all
+      className={`flex flex-col items-center justify-center rounded-sm border-2 transition-all
         ${quan ? "w-16 h-full min-h-[5.5rem]" : "w-14 h-16 sm:w-16 sm:h-20"}
         ${selected ? "border-amber-400 bg-amber-900/40 -translate-y-1 shadow-[0_0_12px_rgba(251,191,36,0.5)]" : "border-lime-800/60 bg-[#1c2413] shadow-inner"}
         ${selectable ? "cursor-pointer hover:border-lime-500" : "cursor-default opacity-90"}
@@ -71,7 +71,7 @@ export default function OAnQuanBoard({ makeMove, onLeave, onRematch, rematching 
   return (
     <div className="flex flex-col gap-3 w-full max-w-2xl mx-auto">
       {/* Status bar */}
-      <div className="bg-gradient-to-r from-[#151b0d] to-[#111508] rounded-2xl px-4 py-3 shadow-lg border border-lime-900/40">
+      <div className="bg-gradient-to-r from-[#151b0d] to-[#111508] rounded-sm px-4 py-3 shadow-lg border border-lime-900/40">
         <div className="grid grid-cols-3 gap-1 text-center">
           <div>
             <div className="text-lime-400/70 text-xs mb-0.5">Bạn</div>
@@ -106,7 +106,7 @@ export default function OAnQuanBoard({ makeMove, onLeave, onRematch, rematching 
       <DisconnectBadge seats={room.seats} />
 
       {/* Bàn cờ 12 ô: cột 1 = Quan P0, cột 2-6 = dân, cột 7 = Quan P1 */}
-      <div className="bg-[#0f1409] rounded-2xl p-3 border border-lime-900/40 overflow-x-auto">
+      <div className="bg-[#0f1409] rounded-sm p-3 border border-lime-900/40 overflow-x-auto">
         <div className="grid gap-1.5 min-w-[420px]" style={{ gridTemplateColumns: "auto repeat(5, 1fr) auto", gridTemplateRows: "auto auto" }}>
           <div style={{ gridRow: "1 / span 2" }}>
             <PitCell index={QUAN_INDEX.P0} count={state.pits[0]} selectable={false} selected={false} onClick={() => {}} />
@@ -137,23 +137,23 @@ export default function OAnQuanBoard({ makeMove, onLeave, onRematch, rematching 
 
       {/* Chọn chiều rải */}
       {selectedPit !== null && side && canMove && (
-        <div className="flex flex-wrap items-center justify-center gap-3 bg-amber-900/20 border border-amber-700/40 rounded-xl p-3">
+        <div className="flex flex-wrap items-center justify-center gap-3 bg-amber-900/20 border border-amber-700/40 rounded-sm p-3">
           <span className="text-amber-300 text-sm font-medium">🎯 Rải quân sang:</span>
           <button
             onClick={() => send(selectedPit, directionFor(side, "left"))}
-            className="relative rounded-lg bg-gradient-to-b from-amber-600 via-amber-700 to-amber-800 px-4 py-2 text-sm font-semibold text-amber-50 border-t border-amber-400/50 shadow-[0_3px_0_0_#451a03] transition-all hover:brightness-110 active:top-[1px] active:shadow-[0_1px_0_0_#451a03]"
+            className="relative rounded-sm bg-gradient-to-b from-amber-600 via-amber-700 to-amber-800 px-4 py-2 text-sm font-semibold text-amber-50 border-t border-amber-400/50 shadow-[0_3px_0_0_#451a03] transition-all hover:brightness-110 active:top-[1px] active:shadow-[0_1px_0_0_#451a03]"
           >
             ← Trái
           </button>
           <button
             onClick={() => send(selectedPit, directionFor(side, "right"))}
-            className="relative rounded-lg bg-gradient-to-b from-amber-600 via-amber-700 to-amber-800 px-4 py-2 text-sm font-semibold text-amber-50 border-t border-amber-400/50 shadow-[0_3px_0_0_#451a03] transition-all hover:brightness-110 active:top-[1px] active:shadow-[0_1px_0_0_#451a03]"
+            className="relative rounded-sm bg-gradient-to-b from-amber-600 via-amber-700 to-amber-800 px-4 py-2 text-sm font-semibold text-amber-50 border-t border-amber-400/50 shadow-[0_3px_0_0_#451a03] transition-all hover:brightness-110 active:top-[1px] active:shadow-[0_1px_0_0_#451a03]"
           >
             Phải →
           </button>
           <button
             onClick={() => setSelectedPit(null)}
-            className="rounded-lg border border-amber-950/80 bg-[#140e0b]/90 hover:border-amber-700/60 hover:bg-[#1a120d] px-3 py-2 text-sm text-amber-700/70 hover:text-amber-400 transition-colors"
+            className="rounded-sm border border-amber-950/80 bg-[#140e0b]/90 hover:border-amber-700/60 hover:bg-[#1a120d] px-3 py-2 text-sm text-amber-700/70 hover:text-amber-400 transition-colors"
           >
             Huỷ
           </button>
@@ -162,8 +162,8 @@ export default function OAnQuanBoard({ makeMove, onLeave, onRematch, rematching 
 
       {/* Thông báo kết quả */}
       {state.winner && (
-        <div className={`rounded-2xl p-1 ${state.winner === "DRAW" ? "border border-amber-900/30 bg-amber-950/20" : "border border-amber-600/30 bg-amber-950/20 shadow-[0_0_30px_rgba(251,191,36,0.15)]"}`}>
-          <div className={`rounded-xl p-4 text-center ${state.winner === "DRAW" ? "bg-[#1a1208]/60 border border-amber-900/30" : "bg-gradient-to-b from-[#2b2013] to-[#1c150c] border border-amber-700/30"}`}>
+        <div className={`rounded-sm p-1 ${state.winner === "DRAW" ? "border border-amber-900/30 bg-amber-950/20" : "border border-amber-600/30 bg-amber-950/20 shadow-[0_0_30px_rgba(251,191,36,0.15)]"}`}>
+          <div className={`rounded-sm p-4 text-center ${state.winner === "DRAW" ? "bg-[#1a1208]/60 border border-amber-900/30" : "bg-gradient-to-b from-[#2b2013] to-[#1c150c] border border-amber-700/30"}`}>
             <div className="text-3xl mb-1">{state.winner === "DRAW" ? "🤝" : "🏆"}</div>
             <div className={`font-bold text-base [text-shadow:0_1px_0_rgba(255,255,255,0.1),0_2px_4px_rgba(0,0,0,0.8)] ${state.winner === "DRAW" ? "text-amber-200/70" : "text-amber-200"}`}>
               {state.winner === "DRAW"

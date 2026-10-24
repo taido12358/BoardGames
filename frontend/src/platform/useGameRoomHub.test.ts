@@ -53,6 +53,22 @@ afterEach(() => {
 });
 
 describe("useGameRoomHub — wiring sự kiện hub vào gameStore", () => {
+  it("sự kiện muộn sau unmount không nạp dữ liệu phiên cũ", () => {
+    const { unmount } = renderHook(() => useGameRoomHub());
+    unmount();
+    fire("GameStateUpdated", room);
+    fire("Seated", { side: "P0" });
+    fire("Error", "lỗi kết nối cũ");
+    fire("ChatMessageReceived", { text: "tin cũ" });
+    fire("LobbyUpdated", { id: "old-room", createdAt: "2026-01-01" });
+    fire("RematchAvailable", { newRoomId: "old-rematch" });
+    expect(useGameStore.getState().room).toBeNull();
+    expect(useGameStore.getState().mySide).toBeNull();
+    expect(useGameStore.getState().error).toBe("");
+    expect(useGameStore.getState().chatMessages).toEqual([]);
+    expect(useGameStore.getState().rooms).toEqual([]);
+    expect(useGameStore.getState().rematchInvite).toBeNull();
+  });
   it("GameStateUpdated -> setRoom", () => {
     renderHook(() => useGameRoomHub());
     fire("GameStateUpdated", room);

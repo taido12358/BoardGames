@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { Link, MemoryRouter, Route, Routes } from "react-router-dom";
 import GameDetails from "./GameDetails";
 import { useGameStore } from "../platform/gameStore";
 import { GameRoomHubProvider, type GameRoomHubActions } from "../platform/GameRoomHubContext";
@@ -164,6 +164,36 @@ describe("GameDetails — hiển thị cơ bản", () => {
 });
 
 describe("GameDetails — tạo phòng / tìm trận nhanh", () => {
+  it("phòng tạo xong sau khi đổi game không kéo người dùng về game cũ", async () => {
+    const first = renderDetails("bang");
+    first.unmount();
+    let finish!: (room: RoomDto) => void;
+    useGameStore.setState({ createRoom: vi.fn(() => new Promise<RoomDto>((resolve) => { finish = resolve; })) });
+    render(<MemoryRouter initialEntries={["/games/bang"]}><GameRoomHubProvider value={hubActions}>
+      <Link to="/games/zodiacrace">Chuyển trò chơi</Link>
+      <Routes><Route path="/games/:gameKey" element={<GameDetails />} /><Route path="/games/:gameKey/room/:roomId" element={<div>phòng cũ</div>} /></Routes>
+    </GameRoomHubProvider></MemoryRouter>);
+    await userEvent.click(screen.getByRole("button", { name: "➕ TẠO PHÒNG" }));
+    await userEvent.click(screen.getByRole("link", { name: "Chuyển trò chơi" }));
+    expect(screen.getByRole("button", { name: "➕ TẠO PHÒNG" })).toBeEnabled();
+    await act(async () => finish({ id: "late-room" } as RoomDto));
+    expect(screen.queryByText("phòng cũ")).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(zodiacRaceMetadata.title);
+  });
+  it("đổi game không mang số ghế đã chọn sang trò khác", async () => {
+    const first = renderDetails("bang");
+    first.unmount();
+    render(<MemoryRouter initialEntries={["/games/bang"]}>
+      <GameRoomHubProvider value={hubActions}>
+        <Link to="/games/zodiacrace">Chuyển sang Đua Xe</Link>
+        <Routes><Route path="/games/:gameKey" element={<GameDetails />} /><Route path="/games/:gameKey/room/:roomId" element={<div>room</div>} /></Routes>
+      </GameRoomHubProvider>
+    </MemoryRouter>);
+    await userEvent.click(screen.getByRole("button", { name: "8" }));
+    await userEvent.click(screen.getByRole("link", { name: "Chuyển sang Đua Xe" }));
+    await userEvent.click(screen.getByRole("button", { name: "➕ TẠO PHÒNG" }));
+    expect(useGameStore.getState().createRoom).toHaveBeenCalledWith("zodiacrace", {});
+  });
   it("lỗi tải danh mục hiện Thử lại thay vì khung chờ vô hạn", async () => {
     renderDetails("bang");
     act(() => useGameStore.setState({ engines: [], enginesError: "Không thể tải danh sách trò chơi." }));

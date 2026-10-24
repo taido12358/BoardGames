@@ -101,3 +101,8 @@ Rule Engine chạy ở server (`Games/<Game>/<Game>Rules.cs`) — chống gian l
 ## Async
 
 Toàn bộ I/O là `async/await`; không `.Result`/`.Wait()`. Method hub trả `Task`, không `async void`.
+
+## OTP và lỗi gửi mail (2026-10-24)
+- AuthController request-otp lưu mã mới/vô hiệu mã cũ trong transaction. SMTP báo thất bại rollback; thành công commit trước trả200. Lần thất bại không chiếm cooldown/quota theo AuthOtps và không vô hiệu mã cũ trong DB.
+- SendOtpAsync virtual để integration tests thay transport thất bại/thành công có kiểm soát, không gửi thư thật.
+

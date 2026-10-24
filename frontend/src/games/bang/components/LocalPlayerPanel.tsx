@@ -1,4 +1,4 @@
-import type { BangPublicPlayer, BangYourView } from "../types";
+﻿import type { BangPublicPlayer, BangYourView } from "../types";
 import { useDamageShake } from "../useDamageShake";
 import { useWeaponEquipFlash } from "../useWeaponEquipFlash";
 
@@ -51,7 +51,7 @@ export default function LocalPlayerPanel({ me, you }: Props) {
           <div className="font-bold text-base text-[#f5d09d] leading-tight">{me.name}</div>
           <div className="text-xs text-[#d4b996]/60">{me.character}</div>
         </div>
-        <div className="text-right bg-amber-900/30 rounded-lg px-2.5 py-1.5 border border-amber-700/30">
+        <div className="text-right bg-amber-900/30 rounded-sm px-2.5 py-1.5 border border-amber-700/30">
           <div className="text-[10px] text-[#bba182] uppercase tracking-wide">Vai trò</div>
           <div className="font-bold text-sm text-[#e8c07e]">{you.roleDisplay}</div>
         </div>

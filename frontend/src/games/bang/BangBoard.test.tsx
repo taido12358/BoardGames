@@ -75,6 +75,55 @@ function myTurnState(overrides: Partial<BangViewerState> = {}): BangViewerState 
 }
 
 describe("BangBoard — phản hồi và hồi máu", () => {
+  it("không có bài phòng thủ thì giải thích rõ và không tự chịu đòn", () => {
+    const state = myTurnState();
+    state.phase = "awaitingResponse";
+    state.pendingResponse = { kind: "duel", fromPlayerId: "p1", targetIds: ["p0"], itsYourTurn: true };
+    state.you!.hand = [card("beer-only", "beer")];
+    setRoom(state);
+    const makeMove = vi.fn();
+    render(<BangBoard makeMove={makeMove} onLeave={vi.fn()} onRematch={vi.fn()} rematching={false} />);
+    expect(screen.getByRole("status")).toHaveTextContent("Bạn không có Bang! để đỡ");
+    expect(screen.getByRole("button", { name: "Bia" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Chịu đòn (−1 máu)" })).toBeEnabled();
+    expect(makeMove).not.toHaveBeenCalled();
+  });
+  it("đủ số bài bỏ thì khóa lá còn lại, vẫn cho đổi lựa chọn", async () => {
+    setRoom(myTurnState());
+    render(<BangBoard makeMove={vi.fn()} onLeave={vi.fn()} onRematch={vi.fn()} rematching={false} />);
+    await userEvent.click(screen.getByRole("button", { name: "KẾT THÚC LƯỢT" }));
+    const bang = screen.getByRole("button", { name: "Bang!" });
+    const beer = screen.getByRole("button", { name: "Bia" });
+    await userEvent.click(bang);
+    await userEvent.click(beer);
+    expect(bang).toHaveAttribute("aria-pressed", "true");
+    expect(beer).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: "Đấu súng" })).toBeDisabled();
+    await userEvent.click(beer);
+    expect(beer).toHaveAttribute("aria-pressed", "false");
+    expect(screen.getByRole("button", { name: "Đấu súng" })).toBeEnabled();
+  });
+  it("Escape hủy chọn mục tiêu mà không gửi lá bài", async () => {
+    setRoom(myTurnState());
+    const makeMove = vi.fn();
+    render(<BangBoard makeMove={makeMove} onLeave={vi.fn()} onRematch={vi.fn()} rematching={false} />);
+    await userEvent.click(screen.getByRole("button", { name: "Đấu súng" }));
+    expect(screen.getByText("🎯 Đang dùng Đấu súng")).toBeInTheDocument();
+    await userEvent.keyboard("{Escape}");
+    expect(screen.queryByText("🎯 Đang dùng Đấu súng")).not.toBeInTheDocument();
+    expect(makeMove).not.toHaveBeenCalled();
+  });
+  it("chọn lá nhắm mục tiêu nhắc tên lá và số người hợp lệ trước khi gửi", async () => {
+    setRoom(myTurnState());
+    const makeMove = vi.fn();
+    render(<BangBoard makeMove={makeMove} onLeave={vi.fn()} onRematch={vi.fn()} rematching={false} />);
+    await userEvent.click(screen.getByRole("button", { name: "Đấu súng" }));
+    expect(screen.getByRole("status")).toHaveTextContent("Đang dùng Đấu súng");
+    expect(screen.getByRole("status")).toHaveTextContent("1 mục tiêu hợp lệ");
+    expect(makeMove).not.toHaveBeenCalled();
+    await userEvent.click(screen.getByRole("button", { name: "Hủy" }));
+    expect(screen.queryByText("Đang dùng Đấu súng")).not.toBeInTheDocument();
+  });
   it("hết lượt bắn vô hiệu Bang! nhưng vẫn cho dùng lá khác", () => {
     const state = myTurnState();
     state.you!.canFire = false;

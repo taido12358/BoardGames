@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from "react";
+﻿import { useEffect, useId, useRef, useState } from "react";
 import { useGameStore } from "./gameStore";
 import { useGameRoomHubActions } from "./GameRoomHubContext";
 import { formatTimestamp } from "./formatTimestamp";
@@ -48,7 +48,7 @@ export default function ChatPanel({ roomId }: { roomId: string }) {
   }
 
   return (
-    <div className="w-full max-w-2xl mx-auto rounded-2xl border border-amber-900/30 bg-[#16120a] overflow-hidden shadow-inner">
+    <div className="w-full max-w-2xl mx-auto rounded-sm border border-amber-900/30 bg-[#16120a] overflow-hidden shadow-inner">
       <button
         type="button"
         aria-expanded={open}
@@ -70,7 +70,7 @@ export default function ChatPanel({ roomId }: { roomId: string }) {
             following.current = true;
             setHasNewMessages(false);
             listRef.current?.scrollTo({ top: listRef.current.scrollHeight });
-          }} className="m-2 rounded-lg bg-amber-900/60 px-3 py-2 text-xs text-amber-200 hover:bg-amber-800">Có tin nhắn mới · Xem tin mới</button>}
+          }} className="m-2 rounded-sm bg-amber-900/60 px-3 py-2 text-xs text-amber-200 hover:bg-amber-800">Có tin nhắn mới · Xem tin mới</button>}
           <div ref={listRef} role="log" aria-label="Tin nhắn trong phòng" aria-live="polite" tabIndex={0}
             onScroll={(event) => {
               const list = event.currentTarget;
@@ -99,12 +99,12 @@ export default function ChatPanel({ roomId }: { roomId: string }) {
               maxLength={500}
               placeholder="Nhắn gì đó…"
               aria-label="Nhập tin nhắn"
-              className="min-w-0 flex-1 rounded-lg bg-[#120c08] border border-amber-900/50 px-3 py-1.5 text-sm text-amber-100 shadow-[inset_0_2px_3px_rgba(0,0,0,0.7)] outline-none focus:border-amber-500/60 focus:shadow-[inset_0_2px_3px_rgba(0,0,0,0.7),0_0_6px_rgba(217,119,6,0.2)] placeholder:text-amber-900/40"
+              className="min-w-0 flex-1 rounded-sm bg-[#120c08] border border-amber-900/50 px-3 py-1.5 text-sm text-amber-100 shadow-[inset_0_2px_3px_rgba(0,0,0,0.7)] outline-none focus:border-amber-500/60 focus:shadow-[inset_0_2px_3px_rgba(0,0,0,0.7),0_0_6px_rgba(217,119,6,0.2)] placeholder:text-amber-900/40"
             />
             <button
               type="submit"
               disabled={!text.trim() || sending || connectionState !== "connected"}
-              className="relative shrink-0 rounded-lg bg-gradient-to-b from-amber-600 via-amber-700 to-amber-800 border-t border-amber-400/40 shadow-[0_2px_0_0_#451a03] hover:brightness-110 active:top-[1px] active:shadow-none disabled:opacity-40 disabled:cursor-not-allowed px-3 py-1.5 text-sm font-medium text-amber-50"
+              className="relative shrink-0 rounded-sm bg-gradient-to-b from-amber-600 via-amber-700 to-amber-800 border-t border-amber-400/40 shadow-[0_2px_0_0_#451a03] hover:brightness-110 active:top-[1px] active:shadow-none disabled:opacity-40 disabled:cursor-not-allowed px-3 py-1.5 text-sm font-medium text-amber-50"
             >
               {sending ? "Đang gửi…" : "Gửi"}
             </button>

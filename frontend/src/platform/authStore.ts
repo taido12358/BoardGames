@@ -104,6 +104,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   },
 
   requestOtp: async (email: string) => {
+    if (get().loading) return;
     set({ loading: true, error: "" });
     try {
       const res = await api("request-otp", {
@@ -122,6 +123,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   },
 
   verifyOtp: async (code: string) => {
+    if (get().loading) return;
     set({ loading: true, error: "" });
     try {
       const res = await api("verify-otp", {
@@ -151,7 +153,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
         return;
       }
       stopResendCountdown();
-      useGameStore.setState({ room: null, mySide: null, selected: null, roomsById: {}, rooms: [], chatMessages: [], rematchInvite: null, error: "" });
+      useGameStore.getState().resetSession();
       set({ user: null, step: "email", pendingEmail: "", error: "", resendIn: 0 });
     } catch {
       set({ logoutError: "Không kết nối được máy chủ để đăng xuất. Vui lòng thử lại." });

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
 import { getGameTitle } from "../platform/gameRegistry";
 
@@ -89,21 +89,21 @@ export default function GameReplayPage() {
       )}
 
       {state === "unavailable" && (
-        <div role="alert" className="rounded-xl p-2.5 text-center bg-red-900/40 text-red-300 text-sm">
+        <div role="alert" className="rounded-sm p-2.5 text-center bg-red-900/40 text-red-300 text-sm">
           Không tải được replay lúc này. Thử lại sau.
         </div>
       )}
 
       {state === "error" && (
-        <div role="alert" className="rounded-xl p-2.5 text-center bg-red-900/40 text-red-300 text-sm">Không tải được replay.</div>
+        <div role="alert" className="rounded-sm p-2.5 text-center bg-red-900/40 text-red-300 text-sm">Không tải được replay.</div>
       )}
-      {(state === "error" || state === "unavailable") && <button onClick={() => setAttempt((value) => value + 1)} className="rounded-xl bg-amber-700 px-4 py-3 font-semibold text-white hover:bg-amber-600">Tải lại bản ghi</button>}
+      {(state === "error" || state === "unavailable") && <button onClick={() => setAttempt((value) => value + 1)} className="rounded-sm bg-amber-700 px-4 py-3 font-semibold text-white hover:bg-amber-600">Tải lại bản ghi</button>}
 
       {state === "ok" && replay && (
         <>
-          <div className="relative overflow-hidden rounded-2xl border border-amber-500/20 bg-[#1a1208]/80 p-1">
+          <div className="relative overflow-hidden rounded-sm border border-amber-500/20 bg-[#1a1208]/80 p-1">
             <div className="pointer-events-none absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-amber-400/40 to-transparent" />
-            <div className="rounded-xl border border-amber-500/30 bg-gradient-to-b from-[#2b2013] to-[#1a1208] p-4 space-y-1 text-sm">
+            <div className="rounded-sm border border-amber-500/30 bg-gradient-to-b from-[#2b2013] to-[#1a1208] p-4 space-y-1 text-sm">
             <p>
               <span className="text-amber-700/60">Trò chơi:</span> <span className="text-amber-200 font-medium">{getGameTitle(replay.gameKey)}</span>
             </p>
@@ -120,7 +120,7 @@ export default function GameReplayPage() {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-amber-900/30 overflow-hidden">
+          <div className="rounded-sm border border-amber-900/30 overflow-hidden">
             <div className="bg-gradient-to-r from-[#2b2013] to-[#1c150c] text-amber-400/70 text-xs uppercase px-3 py-2.5 tracking-widest border-b border-amber-900/30">Diễn biến</div>
             {replay.moves.length === 0 ? (
               <p className="text-amber-700/50 text-sm text-center py-8 italic">Ván này chưa có nước đi nào được ghi lại.</p>

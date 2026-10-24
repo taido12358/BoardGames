@@ -1,4 +1,4 @@
-import { useGameStore } from "../../platform/gameStore";
+﻿import { useGameStore } from "../../platform/gameStore";
 import { ConnectionBanner, DisconnectBadge, LeaveRoomButton, RematchButton, RoomErrorBanner } from "../../platform/RoomShell";
 import { iconForSeat, isMyTurn, seatIndexOfSide, type GameState, type MapDef } from "./types";
 
@@ -23,9 +23,9 @@ export default function ZodiacRaceBoard({ makeMove, onLeave, onRematch, rematchi
     return (
       <div className="flex flex-col gap-3 w-full max-w-md mx-auto">
         <ConnectionBanner connectionState={connectionState} />
-        <div className="relative overflow-hidden rounded-2xl border border-amber-500/20 bg-stone-900/80 p-1 shadow-2xl">
+        <div className="relative overflow-hidden rounded-sm border border-amber-500/20 bg-stone-900/80 p-1 shadow-2xl">
           <div className="pointer-events-none absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-amber-400/40 to-transparent" />
-          <div className="rounded-xl border border-amber-500/30 bg-gradient-to-b from-[#2b2013] to-[#1a1208] p-6 text-center">
+          <div className="rounded-sm border border-amber-500/30 bg-gradient-to-b from-[#2b2013] to-[#1a1208] p-6 text-center">
             <div className="text-4xl mb-2">🎠</div>
             <h2 className="font-western text-xl text-amber-300 tracking-wide mb-1 [text-shadow:0_1px_0_rgba(255,255,255,0.15),0_2px_6px_rgba(0,0,0,0.9)]">ĐUA XE HOÀNG ĐẠO</h2>
             <p className="text-amber-500/60 text-xs uppercase tracking-widest mb-4">Phòng chờ · {room.id.slice(0, 8)}</p>
@@ -48,14 +48,14 @@ export default function ZodiacRaceBoard({ makeMove, onLeave, onRematch, rematchi
             <div className="grid grid-cols-3 gap-2 mb-2">
               {room.seats.map((seat, i) => (
                 seat.displayName ? (
-                  <div key={i} className="relative overflow-hidden flex flex-col items-center rounded-xl border border-amber-600/50 bg-gradient-to-b from-[#251810] to-[#140d08] p-2.5 shadow-[0_4px_12px_rgba(0,0,0,0.7),inset_0_1px_0_rgba(245,158,11,0.25)]">
+                  <div key={i} className="relative overflow-hidden flex flex-col items-center rounded-sm border border-amber-600/50 bg-gradient-to-b from-[#251810] to-[#140d08] p-2.5 shadow-[0_4px_12px_rgba(0,0,0,0.7),inset_0_1px_0_rgba(245,158,11,0.25)]">
                     <div className="pointer-events-none absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-amber-400/40 to-transparent" />
                     <div className="h-10 w-10 rounded-full border-2 border-amber-500/80 bg-amber-950/60 flex items-center justify-center text-lg shadow-[0_0_10px_rgba(245,158,11,0.3)]">{iconForSeat(i)}</div>
                     <span className="mt-1.5 text-[11px] font-bold text-amber-200 truncate max-w-full [text-shadow:0_1px_2px_rgba(0,0,0,0.8)]">{seat.displayName}</span>
                     <span className="text-[9px] uppercase tracking-wider text-amber-600/80">Sẵn sàng</span>
                   </div>
                 ) : (
-                  <div key={i} className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-amber-950/70 bg-[#0d0805]/70 p-2.5 shadow-[inset_0_3px_8px_rgba(0,0,0,0.9)] transition-colors hover:border-amber-800/50">
+                  <div key={i} className="flex flex-col items-center justify-center rounded-sm border-2 border-dashed border-amber-950/70 bg-[#0d0805]/70 p-2.5 shadow-[inset_0_3px_8px_rgba(0,0,0,0.9)] transition-colors hover:border-amber-800/50">
                     <div className="h-10 w-10 rounded-full border border-dashed border-amber-900/50 bg-black/40 flex items-center justify-center text-amber-900/60 text-xl font-light">+</div>
                     <span className="mt-1.5 text-[11px] italic text-amber-900/70">Ghế trống</span>
                   </div>
@@ -84,9 +84,9 @@ export default function ZodiacRaceBoard({ makeMove, onLeave, onRematch, rematchi
 
   return (
     <div className="flex flex-col gap-3 w-full max-w-2xl mx-auto">
-      <div className="relative overflow-hidden rounded-2xl border border-amber-500/20 bg-stone-900/80 p-1 shadow-lg">
+      <div className="relative overflow-hidden rounded-sm border border-amber-500/20 bg-stone-900/80 p-1 shadow-lg">
         <div className="pointer-events-none absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-amber-400/40 to-transparent" />
-        <div className="rounded-xl border border-amber-500/30 bg-gradient-to-b from-[#2b2013] to-[#1a1208] px-4 py-2.5 flex items-center justify-between">
+        <div className="rounded-sm border border-amber-500/30 bg-gradient-to-b from-[#2b2013] to-[#1a1208] px-4 py-2.5 flex items-center justify-between">
           <div>
             <div className="font-western text-amber-300 text-sm tracking-wide [text-shadow:0_1px_0_rgba(255,255,255,0.12),0_2px_4px_rgba(0,0,0,0.8)]">🎲 ĐUA XE HOÀNG ĐẠO</div>
             <div className="text-[11px] text-amber-500/60 font-mono">Phòng {room.id.slice(0, 8)}</div>
@@ -95,7 +95,7 @@ export default function ZodiacRaceBoard({ makeMove, onLeave, onRematch, rematchi
             <div className="text-[11px] text-amber-400/70 uppercase tracking-widest">Lượt</div>
             <div className="font-semibold text-amber-200 text-sm">{myTurn ? "ĐẾN LƯỢT BẠN" : `${currentName} đang đi`}</div>
           </div>
-          <button onClick={onLeave} className="text-xs px-2.5 py-1.5 rounded-lg border border-amber-950/80 bg-[#140e0b]/90 text-amber-700/70 shadow-[inset_0_1px_3px_rgba(0,0,0,0.6)] hover:border-amber-700/60 hover:bg-[#1a120d] hover:text-amber-400 transition-all uppercase tracking-wider">
+          <button onClick={onLeave} className="text-xs px-2.5 py-1.5 rounded-sm border border-amber-950/80 bg-[#140e0b]/90 text-amber-700/70 shadow-[inset_0_1px_3px_rgba(0,0,0,0.6)] hover:border-amber-700/60 hover:bg-[#1a120d] hover:text-amber-400 transition-all uppercase tracking-wider">
             Thoát
           </button>
         </div>
@@ -105,7 +105,7 @@ export default function ZodiacRaceBoard({ makeMove, onLeave, onRematch, rematchi
       <DisconnectBadge seats={room.seats} />
 
       {isSpectator && !state.winner && (
-        <div className="rounded-xl p-2 text-center border border-amber-900/40 bg-[#1a1208] text-amber-700/60 text-sm">👁 Bạn đang xem — không thể chơi.</div>
+        <div className="rounded-sm p-2 text-center border border-amber-900/40 bg-[#1a1208] text-amber-700/60 text-sm">👁 Bạn đang xem — không thể chơi.</div>
       )}
 
       {/* Bảng người chơi */}
@@ -113,7 +113,7 @@ export default function ZodiacRaceBoard({ makeMove, onLeave, onRematch, rematchi
         {state.positions.map((pos, i) => (
           <div
             key={i}
-            className={`rounded-xl p-2.5 border-2 text-sm transition-all ${
+            className={`rounded-sm p-2.5 border-2 text-sm transition-all ${
               state.turn === i && !state.winner
                 ? "border-amber-400 bg-amber-950/40 shadow-[0_0_12px_rgba(245,158,11,0.25)]"
                 : "border-amber-900/40 bg-gradient-to-b from-[#2b2013] to-[#1a1208]"
@@ -132,7 +132,7 @@ export default function ZodiacRaceBoard({ makeMove, onLeave, onRematch, rematchi
       </div>
 
       {/* Đường đua */}
-      <div className="bg-[#0e0905] rounded-2xl p-3 border border-amber-950/60 overflow-x-auto shadow-[inset_0_2px_8px_rgba(0,0,0,0.8)]">
+      <div className="bg-[#0e0905] rounded-sm p-3 border border-amber-950/60 overflow-x-auto shadow-[inset_0_2px_8px_rgba(0,0,0,0.8)]">
         <div className="flex gap-1 min-w-max">
           {tiles.map((t) => {
             const isCrate = map.crateTiles.includes(t);
@@ -141,7 +141,7 @@ export default function ZodiacRaceBoard({ makeMove, onLeave, onRematch, rematchi
             return (
               <div
                 key={t}
-                className={`w-10 h-14 shrink-0 rounded-lg border flex flex-col items-center justify-center text-[10px] shadow-inner ${
+                className={`w-10 h-14 shrink-0 rounded-sm border flex flex-col items-center justify-center text-[10px] shadow-inner ${
                   isFinish ? "border-amber-400 bg-amber-900/30 shadow-[inset_0_0_8px_rgba(245,158,11,0.2)]" : isCrate ? "border-lime-700/60 bg-lime-900/20" : "border-amber-950/50 bg-[#130d07]"
                 }`}
               >
@@ -160,14 +160,14 @@ export default function ZodiacRaceBoard({ makeMove, onLeave, onRematch, rematchi
       )}
 
       {myTurn && !state.winner && (
-        <button onClick={send} disabled={connectionState !== "connected"} className="relative w-full rounded-lg bg-gradient-to-b from-amber-600 via-amber-700 to-amber-800 px-4 py-3 font-bold text-base text-amber-50 border-t border-amber-400/50 shadow-[0_4px_0_0_#451a03,0_8px_16px_rgba(0,0,0,0.5)] transition-all hover:brightness-110 active:top-[2px] active:shadow-[0_2px_0_0_#451a03]">
+        <button onClick={send} disabled={connectionState !== "connected"} className="relative w-full rounded-sm bg-gradient-to-b from-amber-600 via-amber-700 to-amber-800 px-4 py-3 font-bold text-base text-amber-50 border-t border-amber-400/50 shadow-[0_4px_0_0_#451a03,0_8px_16px_rgba(0,0,0,0.5)] transition-all hover:brightness-110 active:top-[2px] active:shadow-[0_2px_0_0_#451a03]">
           🎲 ĐỔ XÚC XẮC
         </button>
       )}
 
       {state.winner && winnerIdx !== null && (
-        <div className="rounded-2xl border border-amber-600/30 bg-amber-950/20 p-1 shadow-[0_0_30px_rgba(251,191,36,0.2)]">
-          <div className="rounded-xl border border-amber-700/40 bg-gradient-to-b from-[#2b2013] to-[#1c150c] p-4 text-center">
+        <div className="rounded-sm border border-amber-600/30 bg-amber-950/20 p-1 shadow-[0_0_30px_rgba(251,191,36,0.2)]">
+          <div className="rounded-sm border border-amber-700/40 bg-gradient-to-b from-[#2b2013] to-[#1c150c] p-4 text-center">
             <div className="text-3xl mb-1">🏆</div>
             <div className="font-western text-lg text-amber-300 tracking-wide [text-shadow:0_1px_0_rgba(255,255,255,0.15),0_2px_6px_rgba(0,0,0,0.9)]">
               {iconForSeat(winnerIdx)} {room.seats[winnerIdx]?.displayName ?? state.winner}

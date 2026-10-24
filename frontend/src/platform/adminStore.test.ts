@@ -6,7 +6,7 @@ function jsonResponse(body: unknown, ok = true, status = 200): Response {
 }
 
 beforeEach(() => {
-  useAdminStore.setState({ isAdmin: null, rooms: [], stats: null, loading: false, error: "" });
+  useAdminStore.setState({ isAdmin: null, accessError: "", rooms: [], stats: null, statsLoading: false, statsError: "", loading: false, error: "" });
 });
 
 describe("checkAdmin", () => {
@@ -34,11 +34,23 @@ describe("checkAdmin", () => {
     expect(useAdminStore.getState().isAdmin).toBe(false);
   });
 
-  it("lỗi mạng → coi như không phải admin, không throw", async () => {
+  it("lỗi mạng → giữ quyền chưa xác định và báo lỗi có thể thử lại", async () => {
     vi.stubGlobal("fetch", vi.fn(() => Promise.reject(new Error("boom"))));
 
     await expect(useAdminStore.getState().checkAdmin()).resolves.toBeUndefined();
-    expect(useAdminStore.getState().isAdmin).toBe(false);
+    expect(useAdminStore.getState().isAdmin).toBe(null);
+    expect(useAdminStore.getState().accessError).not.toBe("");
+  });
+
+  it("thử lại sau lỗi mạng có thể xác nhận quyền quản trị", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValueOnce(new Error("offline")).mockResolvedValueOnce(jsonResponse({ isAdmin: true })));
+    await useAdminStore.getState().checkAdmin();
+    expect(useAdminStore.getState().isAdmin).toBe(null);
+    expect(useAdminStore.getState().accessError).not.toBe("");
+
+    await useAdminStore.getState().checkAdmin();
+    expect(useAdminStore.getState().isAdmin).toBe(true);
+    expect(useAdminStore.getState().accessError).toBe("");
   });
 });
 
@@ -109,6 +121,18 @@ describe("fetchRooms", () => {
 });
 
 describe("fetchStats", () => {
+  it("thử lại sau lỗi giữ số cũ rồi cập nhật và xóa cảnh báo", async () => {
+    const oldStats = { byStatus: [], byGame: [], totalUsers: 2 };
+    const newStats = { ...oldStats, totalUsers: 3 };
+    useAdminStore.setState({ stats: oldStats });
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValueOnce(new Error("offline")).mockResolvedValueOnce(jsonResponse(newStats)));
+    await useAdminStore.getState().fetchStats();
+    expect(useAdminStore.getState().stats).toEqual(oldStats);
+    expect(useAdminStore.getState().statsError).not.toBe("");
+    await useAdminStore.getState().fetchStats();
+    expect(useAdminStore.getState().stats).toEqual(newStats);
+    expect(useAdminStore.getState().statsError).toBe("");
+  });
   it("thành công → set stats", async () => {
     const stats = { byStatus: [{ status: "Waiting", count: 2 }], byGame: [{ gameKey: "vaybat", count: 2 }], totalUsers: 5 };
     vi.stubGlobal("fetch", vi.fn(() => Promise.resolve(jsonResponse(stats))));
@@ -118,20 +142,23 @@ describe("fetchStats", () => {
     expect(useAdminStore.getState().stats).toEqual(stats);
   });
 
-  it("server lỗi → im lặng bỏ qua, không set error, không đổi stats", async () => {
+  it("server lỗi → báo lỗi thống kê riêng, không chặn danh sách phòng", async () => {
     vi.stubGlobal("fetch", vi.fn(() => Promise.resolve(jsonResponse({}, false, 500))));
 
     await useAdminStore.getState().fetchStats();
 
     expect(useAdminStore.getState().stats).toBeNull();
     expect(useAdminStore.getState().error).toBe("");
+    expect(useAdminStore.getState().statsError).toContain("Chưa cập nhật được");
+    expect(useAdminStore.getState().statsLoading).toBe(false);
   });
 
-  it("lỗi mạng → im lặng bỏ qua, không throw, không set error", async () => {
+  it("lỗi mạng → không throw, báo lỗi thống kê riêng", async () => {
     vi.stubGlobal("fetch", vi.fn(() => Promise.reject(new Error("boom"))));
 
     await expect(useAdminStore.getState().fetchStats()).resolves.toBeUndefined();
     expect(useAdminStore.getState().stats).toBeNull();
     expect(useAdminStore.getState().error).toBe("");
+    expect(useAdminStore.getState().statsError).not.toBe("");
   });
 });

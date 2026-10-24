@@ -700,3 +700,103 @@ IN_PROGRESS
 - Nút Chơi ngay cũng focus vùng Tạo và vào phòng, có nhãn truy cập/scroll margin.
 - 23/23 GameDetails tests pass, build pass, lint 0 errors/2 warnings có sẵn. Goal liên tục ACTIVE.
 
+
+## 2026-10-24 — BANG! quyền bắn theo lượt
+- DONE: server BangYourView.CanFire tính từ lượt/giai đoạn/giới hạn Bang/Volcanic; frontend tắt Bang/Gatling/Calamity Missed khi hết quyền tấn công.
+- Phản hồi xử lý trước gate CanFire, không chặn Bang dùng phòng thủ. Có giải thích hết lượt bắn; field optional phía client để tương thích rollout.
+- 101 backend Bang + 55 frontend Bang tests pass; build/lint pass (2 warnings có sẵn). Backend đã chạy lại. Goal ACTIVE.
+
+
+## 2026-10-24 — BANG! hướng dẫn chọn mục tiêu
+- DONE: ActionBar nhắc tên lá đang dùng và số mục tiêu hợp lệ; trường hợp không còn mục tiêu hướng dẫn hủy/chọn lá khác.
+- handleSeatClick kiểm tra lại canPlayCard trước gửi để không dùng lựa chọn đã hết quyền. Có status cho trình đọc màn hình.
+- 19/19 BangBoard tests pass, production build pass, lint theo kết quả vòng này. Goal ACTIVE.
+
+
+## 2026-10-24 — Tùy chọn tạo phòng theo game
+- DONE: optionDraft gắn gameKey, game khác luôn dùng tùy chọn mặc định thay giá trị cũ; không có khung render gửi nhầm option trước effect reset.
+- Regression chuyển BANG! 8 ghế sang Zodiac và tạo phòng xác nhận payload không mang seatCount=8.
+- 24/24 GameDetails tests pass, build pass, lint 0 errors/2 warnings có sẵn. Goal ACTIVE.
+
+
+## 2026-10-24 — Không điều hướng theo yêu cầu phòng cũ
+- DONE: GameDetails pageVersion gắn gameKey/lifecycle, callback tạo/tìm/hủy cũ không điều hướng hoặc thay đổi khóa thao tác mới.
+- Đổi game reset loading/actionLock để trang mới không bị giữ bởi request trước.
+- 25/25 GameDetails tests pass, build/lint theo kết quả vòng này. Goal ACTIVE.
+
+
+## 2026-10-24 — Escape hủy lựa chọn BANG!
+- DONE: Escape hủy chọn mục tiêu/chế độ bỏ bài, không gửi move; bỏ qua lúc IME composition. Nút Hủy nhắc Esc trực quan.
+- 20/20 BangBoard tests pass; build pass, lint 0 errors/2 warnings có sẵn. Goal ACTIVE.
+
+
+## 2026-10-24 — Chọn bài bỏ rõ trạng thái
+- DONE: CardView có aria-pressed trong chế độ chọn bài bỏ; aria-description cung cấp rank/suit/effect để phân biệt lá cùng tên.
+- Chọn đủ overflow thì khóa lá chưa chọn, vẫn cho bỏ chọn đổi ý. Bộ đếm chọn có status.
+- 58/58 frontend Bang tests pass, build/lint theo kết quả vòng này. Goal ACTIVE.
+
+
+## 2026-10-24 — Nhập số lượt tạo Vây Bắt
+- DONE: draft cho nhập trống tạm thời, không tự chèn 1; chỉ propagate số nguyên >=1. Blur giá trị chưa hợp lệ khôi phục số trước đó.
+- Có hướng dẫn/inputMode/step và aria-describedby. 30/30 options/GameDetails tests pass; build/lint theo kết quả vòng này. Goal ACTIVE.
+
+
+## 2026-10-24 — OTP gửi lỗi không chiếm cooldown
+- DONE: lưu mã và vô hiệu mã cũ trong transaction; SMTP false rollback, không tính cooldown/request quota cho lần chưa gửi được.
+- Sender virtual để thay transport trong integration test, không gửi email thật. Test502→retry200→cooldown429.
+- 10/10 AuthController integration tests với PostgreSQL pass; backend build 0 warnings/errors, đã chạy lại. Goal ACTIVE.
+
+
+## 2026-10-24 — Chặn OTP request trùng
+- DONE: requestOtp/verifyOtp kiểm tra loading trong store trước gửi; ngăn nhấn liên tiếp tạo mail trùng hoặc tốn nhiều verify attempts.
+- Kiểm tra cooldown cho OTP hết hạn: vẫn giữ giới hạn gửi 60s/5 lần giờ theo luật hiện hành.
+- 23 authStore + 15 LoginPage tests pass, build pass, lint 0 errors/2 warnings có sẵn. Goal ACTIVE.
+
+
+## 2026-10-24 — Snapshot sảnh không ghi đè realtime mới
+- DONE: đánh dấu id phòng upsert/remove trong lúc fetchRooms; response chậm không ghi đè state hoặc đưa lại phòng đã remove.
+- isMine vẫn lấy từ REST riêng người dùng; bộ theo dõi chỉ tồn tại trong request, cleanup finally.
+- 52/52 gameStore/GameDetails tests pass, build/lint theo kết quả vòng này. Goal ACTIVE.
+
+
+## 2026-10-24 — Dọn phiên vô hiệu tải phòng cũ
+- DONE: gameStore.resetSession gom xóa room/chat/cache/ghế/trạng thái tải; tăng request id để response cũ không nạp lại dữ liệu sau logout.
+- AuthStore logout dùng resetSession sau server xác nhận. 51/51 game/auth store tests pass, build/lint theo kết quả vòng này. Goal ACTIVE.
+
+
+## 2026-10-24 — Chặn sự kiện realtime phiên cũ
+- DONE: cả 6 data event callbacks kiểm tra active trước ghi store, không phục hồi room/chat/error/ghế/lobby/rematch sau cleanup.
+- Toàn frontend trước bản sửa nhỏ: 34 files/320 tests pass; sau sửa 22/22 hub tests pass, build/lint theo kết quả vòng này. Goal ACTIVE.
+
+
+## 2026-10-24 — Tên game dễ đọc trong bản ghi
+- DONE: history/replay dùng getGameTitle từ registry thay mã gameKey; game chưa đăng ký giữ mã gốc. Nhãn replay Trò chơi thay Game.
+- 17/17 history/replay tests pass sau cập nhật expectation tên hiển thị; build pass, lint 0 errors/2 warnings có sẵn. Goal ACTIVE.
+
+
+## 2026-10-24 — Thời gian bản ghi hợp lệ
+- DONE: formatTimestamp dùng chung history/admin/chat kiểm tra getTime; thiếu/ngày lỗi hiện — thay Invalid Date.
+- Chat giữ định dạng giờ/phút, history/admin giữ ngày giờ vi-VN. 26/26 tests liên quan pass, build/lint theo kết quả vòng này. Goal ACTIVE.
+
+
+## 2026-10-24 — BANG! thiếu bài phòng thủ
+- DONE: ActionBar nhận hasDefenseCard theo allowedResponseKinds; thiếu bài báo rõ loại cần thay yêu cầu chọn lá không tồn tại.
+- Barrel hợp lệ có hướng dẫn thử/rủi ro; không có Barrel hướng dẫn Chịu đòn, không tự gửi quyết định.
+- 22/22 BangBoard tests pass, build/lint theo kết quả vòng này. Goal ACTIVE.
+
+
+## 2026-10-24 — Giữ tìm kiếm khi xem replay
+- DONE: History dùng query q trong URL, replace khi gõ; Link replay truyền historySearch, Link Lịch sử trở lại query đó.
+- Direct replay không có navigation state vẫn về /history. 20/20 history/replay tests pass, build/lint theo kết quả vòng này. Goal ACTIVE.
+
+
+## 2026-10-24 — Trạng thái thống kê quản trị
+- DONE: statsLoading/statsError riêng, không nuốt lỗi; giữ số cũ có cảnh báo và Tải lại thống kê.
+- Chỉ tải stats theo quyền/khởi tạo, đổi filter phòng không tải stats toàn hệ thống lại; guard request stats trùng.
+- 14 adminStore + 6 AdminPage tests pass, build pass, lint 0 errors/2 warnings có sẵn. Goal ACTIVE.
+
+## 2026-10-24 — Kiểm tra quyền quản trị khi mất kết nối
+- Lỗi mạng/server khi gọi admin/check giữ quyền ở trạng thái chưa xác định; chỉ HTTP 401/403 hoặc isAdmin=false mới báo không có quyền. Thêm cảnh báo và nút kiểm tra lại.
+- Khôi phục getGameTitle dùng trong lịch sử/replay (metadata đã đăng ký, key lạ có nhãn dễ đọc), sửa lỗi TypeScript làm build thất bại.
+- 15 adminStore + 7 AdminPage tests pass; build pass; lint 0 errors/2 warnings Fast Refresh có sẵn. Goal ACTIVE.
+

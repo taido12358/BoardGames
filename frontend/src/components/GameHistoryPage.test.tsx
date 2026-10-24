@@ -6,9 +6,9 @@ import GameHistoryPage from "./GameHistoryPage";
 
 // Trang giờ có <Link to="/replay/:id"> ở mỗi dòng (mới 2026-09-11) — cần <MemoryRouter> bao
 // ngoài, không thì react-router-dom throw ngay lúc render.
-function renderPage() {
+function renderPage(search = "") {
   return render(
-    <MemoryRouter>
+    <MemoryRouter initialEntries={[`/history${search}`]}>
       <GameHistoryPage />
     </MemoryRouter>,
   );
@@ -35,6 +35,28 @@ afterEach(() => {
 });
 
 describe("GameHistoryPage", () => {
+  it("mở lại URL lịch sử giữ từ khóa và tìm đúng query", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse([]));
+    vi.stubGlobal("fetch", fetchMock);
+    renderPage("?q=An");
+    expect(screen.getByRole("searchbox")).toHaveValue("An");
+    await vi.advanceTimersByTimeAsync(300);
+    expect(fetchMock).toHaveBeenCalledWith("/api/games/search?q=An", expect.anything());
+  });
+  it("ngày lỗi trong bản ghi hiện dấu gạch thay chuỗi Invalid Date", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(jsonResponse([record({ finishedAt: "invalid-date" })])));
+    renderPage();
+    await vi.advanceTimersByTimeAsync(300);
+    expect(await screen.findByText("—")).toBeInTheDocument();
+    expect(screen.queryByText("Invalid Date")).not.toBeInTheDocument();
+  });
+  it("hiện tên trò chơi và giữ mã gốc cho game chưa đăng ký", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(jsonResponse([record(), record({ id: "r2", gameKey: "new-game" })])));
+    renderPage();
+    await vi.advanceTimersByTimeAsync(300);
+    expect(await screen.findByText("BANG!")).toBeInTheDocument();
+    expect(screen.getByText("new-game")).toBeInTheDocument();
+  });
   it("phản hồi cũ không ghi đè kết quả từ khóa mới", async () => {
     let finishOld!: (response: Response) => void;
     const oldRequest = new Promise<Response>((resolve) => { finishOld = resolve; });

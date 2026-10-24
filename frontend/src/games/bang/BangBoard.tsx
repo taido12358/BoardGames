@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { useGameStore } from "../../platform/gameStore";
 import { ConnectionBanner, DisconnectBadge, LeaveRoomButton, RoomErrorBanner } from "../../platform/RoomShell";
 import PlayerSeat from "./components/PlayerSeat";
@@ -84,9 +84,9 @@ export default function BangBoard({ makeMove, onLeave, onRematch, rematching }: 
     return (
       <div className="flex flex-col gap-3 w-full max-w-md mx-auto">
         <ConnectionBanner connectionState={connectionState} />
-        <div className="relative overflow-hidden rounded-2xl border border-amber-500/20 bg-[#1a1208]/80 p-1 shadow-2xl">
+        <div className="relative overflow-hidden rounded-sm border border-amber-500/20 bg-[#1a1208]/80 p-1 shadow-2xl">
           <div className="pointer-events-none absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-amber-400/40 to-transparent" />
-          <div className="rounded-xl border border-amber-500/30 bg-gradient-to-b from-[#2b2013] to-[#1a1208] p-6 text-center">
+          <div className="rounded-sm border border-amber-500/30 bg-gradient-to-b from-[#2b2013] to-[#1a1208] p-6 text-center">
             <div className="text-4xl mb-2">🤠</div>
             <h2 className="font-western text-2xl text-amber-300 tracking-wide mb-1 [text-shadow:0_1px_0_rgba(255,255,255,0.15),0_2px_6px_rgba(0,0,0,0.9)]">BANG!</h2>
             <p className="text-amber-500/60 text-xs uppercase tracking-widest mb-4">Phòng chờ · {room.id.slice(0, 8)}</p>
@@ -115,14 +115,14 @@ export default function BangBoard({ makeMove, onLeave, onRematch, rematching }: 
             <div className="grid grid-cols-2 gap-2 mb-2">
               {room.seats.map((seat, i) => (
                 seat.displayName ? (
-                  <div key={i} className="relative overflow-hidden flex flex-col items-center rounded-xl border border-amber-600/50 bg-gradient-to-b from-[#251810] to-[#140d08] p-2.5 shadow-[0_4px_12px_rgba(0,0,0,0.7),inset_0_1px_0_rgba(245,158,11,0.25)]">
+                  <div key={i} className="relative overflow-hidden flex flex-col items-center rounded-sm border border-amber-600/50 bg-gradient-to-b from-[#251810] to-[#140d08] p-2.5 shadow-[0_4px_12px_rgba(0,0,0,0.7),inset_0_1px_0_rgba(245,158,11,0.25)]">
                     <div className="pointer-events-none absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-amber-400/40 to-transparent" />
                     <div className="h-10 w-10 rounded-full border-2 border-amber-500/80 bg-amber-950/60 flex items-center justify-center text-lg shadow-[0_0_10px_rgba(245,158,11,0.3)]">🤠</div>
                     <span className="mt-1.5 text-[11px] font-bold text-[#f5d09d] truncate max-w-full [text-shadow:0_1px_2px_rgba(0,0,0,0.8)]">{seat.displayName}</span>
                     <span className="text-[9px] uppercase tracking-wider text-amber-600/80">Sẵn sàng</span>
                   </div>
                 ) : (
-                  <div key={i} className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-amber-950/70 bg-[#0d0805]/70 p-2.5 shadow-[inset_0_3px_8px_rgba(0,0,0,0.9)] transition-colors hover:border-amber-800/50">
+                  <div key={i} className="flex flex-col items-center justify-center rounded-sm border-2 border-dashed border-amber-950/70 bg-[#0d0805]/70 p-2.5 shadow-[inset_0_3px_8px_rgba(0,0,0,0.9)] transition-colors hover:border-amber-800/50">
                     <div className="h-10 w-10 rounded-full border border-dashed border-amber-900/50 bg-black/40 flex items-center justify-center text-amber-900/60 text-xl font-light">+</div>
                     <span className="mt-1.5 text-[11px] italic text-amber-900/70">Ghế trống</span>
                   </div>
@@ -249,7 +249,7 @@ export default function BangBoard({ makeMove, onLeave, onRematch, rematching }: 
       )}
 
       {/* Top bar */}
-      <div className="bg-gradient-to-r from-[#1a1008] via-[#241a10] to-[#1a1008] rounded-2xl px-4 py-3 shadow-lg border border-amber-900/30 flex items-center justify-between">
+      <div className="bg-gradient-to-r from-[#1a1008] via-[#241a10] to-[#1a1008] rounded-sm px-4 py-3 shadow-lg border border-amber-900/30 flex items-center justify-between">
         <div>
           <div className="font-western text-amber-300 text-base tracking-wide [text-shadow:0_1px_0_rgba(255,255,255,0.15),0_2px_4px_rgba(0,0,0,0.9)]">🤠 BANG!</div>
           <div className="text-[10px] text-amber-400/50 font-mono">#{room.id.slice(0, 8)}</div>
@@ -264,7 +264,7 @@ export default function BangBoard({ makeMove, onLeave, onRematch, rematching }: 
         </div>
         <button
           onClick={onLeave}
-          className="text-xs px-3 py-1.5 rounded-lg border border-amber-950/80 bg-[#140e0b]/90 text-amber-700/70 shadow-[inset_0_1px_3px_rgba(0,0,0,0.6)] hover:border-amber-700/60 hover:bg-[#1a120d] hover:text-amber-400 transition-all uppercase tracking-wider"
+          className="text-xs px-3 py-1.5 rounded-sm border border-amber-950/80 bg-[#140e0b]/90 text-amber-700/70 shadow-[inset_0_1px_3px_rgba(0,0,0,0.6)] hover:border-amber-700/60 hover:bg-[#1a120d] hover:text-amber-400 transition-all uppercase tracking-wider"
         >
           Thoát
         </button>
@@ -275,19 +275,19 @@ export default function BangBoard({ makeMove, onLeave, onRematch, rematching }: 
       <RoomErrorBanner error={error} />
 
       {me && !me.alive && state.phase !== "finished" && (
-        <div role="status" className="rounded-xl border border-amber-900/40 bg-[#1a1208] p-3 text-sm text-amber-700/70">
+        <div role="status" className="rounded-sm border border-amber-900/40 bg-[#1a1208] p-3 text-sm text-amber-700/70">
           Bạn đã bị loại. Bạn có thể tiếp tục theo dõi ván đấu và chờ kết quả.
         </div>
       )}
 
       {isSpectator && (
-        <div className="rounded-xl p-2 text-center bg-amber-900/30 text-amber-300 text-sm">
+        <div className="rounded-sm p-2 text-center bg-amber-900/30 text-amber-300 text-sm">
           👁 Bạn đang xem — không thể chơi bài.
         </div>
       )}
 
       {/* Bàn tròn — đối thủ */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 bg-gradient-to-b from-[#1c150c] to-[#160f08] rounded-2xl p-3 border border-amber-900/30 shadow-inner">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 bg-gradient-to-b from-[#1c150c] to-[#160f08] rounded-sm p-3 border border-amber-900/30 shadow-inner">
         {opponents.map((p) => (
           <PlayerSeat
             key={p.id}
@@ -302,11 +302,11 @@ export default function BangBoard({ makeMove, onLeave, onRematch, rematching }: 
       </div>
 
       {/* Giữa bàn: nọc bài / chồng bài bỏ / hiệu ứng đang treo */}
-      <div className="flex items-center justify-center gap-6 bg-gradient-to-b from-[#1c150c] to-[#160f08] rounded-2xl px-5 py-3 border border-amber-900/30 shadow-inner">
+      <div className="flex items-center justify-center gap-6 bg-gradient-to-b from-[#1c150c] to-[#160f08] rounded-sm px-5 py-3 border border-amber-900/30 shadow-inner">
         {/* Nọc bài */}
         <div className="flex flex-col items-center gap-1">
           <div
-            className="w-16 h-24 rounded-lg border-2 border-amber-900/60 bg-gradient-to-b from-[#2b2013] to-[#1c150c] flex items-center justify-center shadow-lg"
+            className="w-16 h-24 rounded-sm border-2 border-amber-900/60 bg-gradient-to-b from-[#2b2013] to-[#1c150c] flex items-center justify-center shadow-lg"
             aria-label="Nọc bài"
           >
             <span className="text-3xl">🂠</span>
@@ -322,7 +322,7 @@ export default function BangBoard({ makeMove, onLeave, onRematch, rematching }: 
           {state.discardPile.length > 0 ? (
             <CardView card={state.discardPile[state.discardPile.length - 1]} small />
           ) : (
-            <div className="w-16 h-24 rounded-lg border-2 border-dashed border-amber-900/60 bg-amber-950/20 flex items-center justify-center shadow-inner">
+            <div className="w-16 h-24 rounded-sm border-2 border-dashed border-amber-900/60 bg-amber-950/20 flex items-center justify-center shadow-inner">
               <span className="text-amber-900/40 text-2xl">∅</span>
             </div>
           )}
@@ -333,7 +333,7 @@ export default function BangBoard({ makeMove, onLeave, onRematch, rematching }: 
         {state.pendingResponse && (
           <>
             <div className="w-px h-16 bg-amber-900/30" />
-            <div className="text-center text-xs text-red-300 bg-red-950/60 rounded-lg px-3 py-2 border border-red-800/40 max-w-[150px]">
+            <div className="text-center text-xs text-red-300 bg-red-950/60 rounded-sm px-3 py-2 border border-red-800/40 max-w-[150px]">
               <div className="font-bold mb-0.5">
                 {state.pendingResponse.kind === "bang" || state.pendingResponse.kind === "gatling" ? "🔫" :
                  state.pendingResponse.kind === "duel" ? "⚔️" :

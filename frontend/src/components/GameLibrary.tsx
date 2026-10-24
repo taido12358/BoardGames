@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+﻿import { useEffect, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useGameStore } from "../platform/gameStore";
 import { useLobbyHub } from "../platform/useLobbyHub";
@@ -28,8 +28,8 @@ function SkeletonCard() {
         <div className="h-4 w-2/3 bg-amber-950/40 rounded" />
         <div className="h-3 w-1/2 bg-amber-950/30 rounded" />
         <div className="h-3 w-full bg-amber-950/20 rounded" />
-        <div className="h-8 w-full bg-amber-950/30 rounded-xl mt-3" />
-        <div className="h-9 w-full bg-amber-950/40 rounded-xl" />
+        <div className="h-8 w-full bg-amber-950/30 rounded-sm mt-3" />
+        <div className="h-9 w-full bg-amber-950/40 rounded-sm" />
       </div>
     </div>
   );

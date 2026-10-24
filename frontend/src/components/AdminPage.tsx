@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { useAdminStore } from "../platform/adminStore";
 import { formatTimestamp as formatTime } from "../platform/formatTimestamp";
 
@@ -34,7 +34,7 @@ export default function AdminPage() {
   if (accessError) {
     return <div className="mx-auto max-w-md space-y-3 py-10 text-center">
       <p role="alert" className="text-sm text-red-300">{accessError}</p>
-      <button type="button" onClick={checkAdmin} className="rounded-xl bg-amber-800 px-4 py-3 text-sm font-semibold text-white hover:bg-amber-700">Kiểm tra lại quyền</button>
+      <button type="button" onClick={checkAdmin} className="rounded-sm bg-amber-800 px-4 py-3 text-sm font-semibold text-white hover:bg-amber-700">Kiểm tra lại quyền</button>
     </div>;
   }
   if (isAdmin === null) {
@@ -43,7 +43,7 @@ export default function AdminPage() {
 
   if (!isAdmin) {
     return (
-      <div className="w-full max-w-md mx-auto rounded-2xl border border-amber-900/30 bg-[#1a1208]/40 p-8 text-center space-y-2">
+      <div className="w-full max-w-md mx-auto rounded-sm border border-amber-900/30 bg-[#1a1208]/40 p-8 text-center space-y-2">
         <div className="text-3xl">🔒</div>
         <p className="text-amber-700/60 font-medium">Bạn không có quyền truy cập trang này.</p>
       </div>
@@ -61,18 +61,18 @@ export default function AdminPage() {
       </div>
 
       {statsLoading && <p role="status" className="text-center text-sm text-amber-200/80">Đang cập nhật thống kê…</p>}
-      {statsError && !statsLoading && <div className="rounded-xl border border-amber-800/50 bg-amber-950/30 p-3 text-sm text-amber-200">
+      {statsError && !statsLoading && <div className="rounded-sm border border-amber-800/50 bg-amber-950/30 p-3 text-sm text-amber-200">
         <p role="alert">{statsError}</p>
-        <button type="button" onClick={fetchStats} className="mt-2 rounded-lg bg-amber-800 px-3 py-2 text-white hover:bg-amber-700">Tải lại thống kê</button>
+        <button type="button" onClick={fetchStats} className="mt-2 rounded-sm bg-amber-800 px-3 py-2 text-white hover:bg-amber-700">Tải lại thống kê</button>
       </div>}
       {stats && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div className="rounded-xl bg-gradient-to-b from-[#2b2013] to-[#1c150c] border border-amber-900/40 p-3 text-center">
+          <div className="rounded-sm bg-gradient-to-b from-[#2b2013] to-[#1c150c] border border-amber-900/40 p-3 text-center">
             <div className="text-xl font-bold text-[#fcebd6]">{stats.totalUsers}</div>
             <div className="text-xs text-amber-700/70">Tài khoản</div>
           </div>
           {stats.byStatus.map((s) => (
-            <div key={s.status} className="relative overflow-hidden rounded-xl border border-amber-900/40 bg-gradient-to-b from-[#1c130d] to-[#120b07] p-3 text-center shadow-[inset_0_1px_0_rgba(245,158,11,0.15)]">
+            <div key={s.status} className="relative overflow-hidden rounded-sm border border-amber-900/40 bg-gradient-to-b from-[#1c130d] to-[#120b07] p-3 text-center shadow-[inset_0_1px_0_rgba(245,158,11,0.15)]">
               <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-amber-500/30 to-transparent" />
               <div className="text-xl font-bold text-[#fcebd6]">{s.count}</div>
               <div className="text-xs text-amber-700/70">{STATUS_LABEL[s.status]?.label ?? s.status}</div>
@@ -107,7 +107,7 @@ export default function AdminPage() {
         ))}
       </div>
 
-      {error && <div className="rounded-xl p-3 text-center bg-red-900/40 text-red-300 text-sm space-y-3"><p role="alert">{error}</p><button onClick={() => fetchRooms({ status: statusFilter || undefined })} className="rounded-lg bg-red-800 px-4 py-2 text-white hover:bg-red-700">Tải lại danh sách</button></div>}
+      {error && <div className="rounded-sm p-3 text-center bg-red-900/40 text-red-300 text-sm space-y-3"><p role="alert">{error}</p><button onClick={() => fetchRooms({ status: statusFilter || undefined })} className="rounded-sm bg-red-800 px-4 py-2 text-white hover:bg-red-700">Tải lại danh sách</button></div>}
       {loading && <p role="status" className="text-amber-700/60 text-sm text-center py-4 italic">Đang tải…</p>}
 
       {!loading && rooms.length === 0 && !error && (
@@ -115,7 +115,7 @@ export default function AdminPage() {
       )}
 
       {!loading && !error && rooms.length > 0 && (
-        <div className="overflow-x-auto rounded-2xl border border-amber-900/30">
+        <div className="overflow-x-auto rounded-sm border border-amber-900/30">
           <table className="w-full text-sm">
             <thead className="border-b border-amber-900/60 bg-[#120b07] text-[11px] font-western uppercase tracking-widest text-amber-700/80">
               <tr>

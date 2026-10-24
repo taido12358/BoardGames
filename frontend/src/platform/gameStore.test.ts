@@ -146,6 +146,38 @@ describe("fetchEngines", () => {
 });
 
 describe("fetchRooms", () => {
+  it("dọn phiên vô hiệu response đang tải, không nạp lại phòng cũ", async () => {
+    let finish!: (response: Response) => void;
+    vi.stubGlobal("fetch", vi.fn().mockReturnValue(new Promise<Response>((resolve) => { finish = resolve; })));
+    const pending = useGameStore.getState().fetchRooms();
+    useGameStore.getState().resetSession();
+    finish(jsonResponse([room({ id: "old-user-room", createdAt: "2026-01-01", isMine: true })]));
+    await pending;
+    expect(useGameStore.getState().rooms).toEqual([]);
+    expect(useGameStore.getState().roomsLoading).toBe(false);
+    expect(useGameStore.getState().roomsError).toBe("");
+    expect(useGameStore.getState().connectionState).toBe("disconnected");
+  });
+  it("snapshot tải chậm không ghi đè state realtime mới, vẫn nhận isMine từ REST", async () => {
+    let finish!: (response: Response) => void;
+    vi.stubGlobal("fetch", vi.fn().mockReturnValue(new Promise<Response>((resolve) => { finish = resolve; })));
+    const pending = useGameStore.getState().fetchRooms();
+    useGameStore.getState().upsertRoom(room({ id: "r1", createdAt: "2026-01-01", status: "Playing" }));
+    finish(jsonResponse([room({ id: "r1", createdAt: "2026-01-01", status: "Waiting", isMine: true })]));
+    await pending;
+    expect(useGameStore.getState().roomsById.r1.status).toBe("Playing");
+    expect(useGameStore.getState().roomsById.r1.isMine).toBe(true);
+  });
+
+  it("phòng đã remove trong lúc tải không bị snapshot đưa trở lại", async () => {
+    let finish!: (response: Response) => void;
+    vi.stubGlobal("fetch", vi.fn().mockReturnValue(new Promise<Response>((resolve) => { finish = resolve; })));
+    const pending = useGameStore.getState().fetchRooms();
+    useGameStore.getState().removeRoom("r1");
+    finish(jsonResponse([room({ id: "r1", createdAt: "2026-01-01" })]));
+    await pending;
+    expect(useGameStore.getState().roomsById.r1).toBeUndefined();
+  });
   it("phản hồi cũ không ghi lỗi đè lên lần tải mới đã thành công", async () => {
     let rejectOld!: (reason: Error) => void;
     const oldRequest = new Promise<Response>((_, reject) => { rejectOld = reject; });

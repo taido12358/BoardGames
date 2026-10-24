@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+﻿import { useEffect, useMemo, useRef, useState } from "react";
 import { useGameStore } from "../../platform/gameStore";
 import { ConnectionBanner, DisconnectBadge, LeaveRoomButton, RematchButton, RoomErrorBanner, RoomStatusBanner } from "../../platform/RoomShell";
 import { legalMoves, occupancy, side, type GameState, type MapDef } from "./types";
@@ -131,7 +131,7 @@ export default function VayBatBoard({ makeMove, onLeave, onRematch, rematching }
     <div className="flex flex-col gap-3 w-full max-w-md mx-auto">
 
       {/* Status bar */}
-      <div className="bg-gradient-to-r from-[#1a1408] via-[#1c1810] to-[#1a1408] rounded-2xl px-4 py-3 shadow-lg border border-amber-900/30">
+      <div className="bg-gradient-to-r from-[#1a1408] via-[#1c1810] to-[#1a1408] rounded-sm px-4 py-3 shadow-lg border border-amber-900/30">
         <div className="grid grid-cols-3 gap-1 text-center">
           <div>
             <div className="text-amber-700/60 text-xs mb-0.5">Bạn cầm</div>
@@ -173,11 +173,11 @@ export default function VayBatBoard({ makeMove, onLeave, onRematch, rematching }
       <DisconnectBadge seats={room.seats} />
 
       {/* Board */}
-      <div className="bg-gradient-to-b from-[#1a2030] to-[#141820] rounded-2xl p-2 shadow-lg border border-amber-900/30">
+      <div className="bg-gradient-to-b from-[#1a2030] to-[#141820] rounded-sm p-2 shadow-lg border border-amber-900/30">
         <svg
           ref={svgRef}
           viewBox="0 0 400 440"
-          className="w-full h-auto rounded-xl bg-[#0c1018] touch-none select-none"
+          className="w-full h-auto rounded-sm bg-[#0c1018] touch-none select-none"
           onPointerDown={onSvgPointerDown}
           onPointerMove={onSvgPointerMove}
           onPointerUp={onSvgPointerUp}
@@ -248,8 +248,8 @@ export default function VayBatBoard({ makeMove, onLeave, onRematch, rematching }
 
       {/* Thông báo */}
       {state.winner && (
-        <div className={`rounded-2xl p-1 ${state.winner === "RED" ? "border border-red-700/40 bg-red-950/20 shadow-[0_0_20px_rgba(220,38,38,0.15)]" : "border border-amber-900/30 bg-amber-950/20"}`}>
-          <div className={`rounded-xl p-4 text-center ${state.winner === "RED" ? "bg-gradient-to-b from-red-950/60 to-[#1c0808] border border-red-800/30" : "bg-[#1a1208]/60 border border-amber-900/30"}`}>
+        <div className={`rounded-sm p-1 ${state.winner === "RED" ? "border border-red-700/40 bg-red-950/20 shadow-[0_0_20px_rgba(220,38,38,0.15)]" : "border border-amber-900/30 bg-amber-950/20"}`}>
+          <div className={`rounded-sm p-4 text-center ${state.winner === "RED" ? "bg-gradient-to-b from-red-950/60 to-[#1c0808] border border-red-800/30" : "bg-[#1a1208]/60 border border-amber-900/30"}`}>
             <div className="text-3xl mb-1">{state.winner === "RED" ? "🔴" : "⚪"}</div>
             <div className={`font-bold text-base [text-shadow:0_1px_0_rgba(255,255,255,0.1),0_2px_4px_rgba(0,0,0,0.8)] ${state.winner === "RED" ? "text-red-200" : "text-white"}`}>
               {state.winner === "RED" ? "PHE ĐỎ THẮNG — đã vây bắt!" : "PHE TRẮNG THẮNG — trốn thoát!"}

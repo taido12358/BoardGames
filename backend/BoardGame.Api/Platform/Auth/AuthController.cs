@@ -77,12 +77,19 @@ public partial class AuthController : ControllerBase
             ExpiresAt = now.Add(OtpLifetime),
             CreatedAt = now,
         });
+        // Gửi lỗi phải hoàn tác cả mã mới lẫn việc vô hiệu mã cũ, để không khóa
+        // người dùng bằng cooldown cho một email chưa gửi được.
+        await using var transaction = await _db.Database.BeginTransactionAsync();
         await _db.SaveChangesAsync();
 
         // Ghi DB trước, gửi mail sau — mail fail thì báo lỗi rõ, không nuốt im lặng.
         var sent = await _mailer.SendOtpAsync(email, code, OtpLifetime);
         if (!sent)
+        {
+            await transaction.RollbackAsync();
             return StatusCode(502, new { error = "Không gửi được email. Kiểm tra lại địa chỉ hoặc thử lại sau." });
+        }
+        await transaction.CommitAsync();
 
         _logger.LogInformation("Đã gửi OTP đăng nhập cho {Email}.", email);
         return Ok(new { message = "Đã gửi mã đăng nhập. Kiểm tra hộp thư (kể cả mục Spam).", expiresInSeconds = (int)OtpLifetime.TotalSeconds });

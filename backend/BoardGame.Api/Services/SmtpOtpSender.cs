@@ -49,7 +49,7 @@ public class SmtpOtpSender
     /// Gửi mã OTP đến địa chỉ email. Trả về false nếu gửi thất bại.
     /// Chưa cấu hình SMTP + DevLogOtp bật → log mã ra console để test local.
     /// </summary>
-    public async Task<bool> SendOtpAsync(string toEmail, string code, TimeSpan validFor)
+    public virtual async Task<bool> SendOtpAsync(string toEmail, string code, TimeSpan validFor)
     {
         // Kiểm tra null trực tiếp (thay vì qua IsConfigured) để compiler narrow được
         // _user/_pass thành non-null ở phần gửi mail bên dưới.

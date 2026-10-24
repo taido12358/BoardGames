@@ -2,6 +2,12 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using BoardGame.Api.Platform.Auth;
+using BoardGame.Api.Services;
+using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace BoardGame.Api.Tests.Platform.Auth;
@@ -20,6 +26,29 @@ namespace BoardGame.Api.Tests.Platform.Auth;
 [Collection("AuthApi")]
 public class AuthControllerIntegrationTests
 {
+    private sealed class RetryMailer(IConfiguration config, IHostEnvironment env)
+        : SmtpOtpSender(config, NullLogger<SmtpOtpSender>.Instance, env)
+    {
+        private int _calls;
+        public override Task<bool> SendOtpAsync(string email, string code, TimeSpan lifetime)
+            => Task.FromResult(Interlocked.Increment(ref _calls) > 1);
+    }
+
+    [Fact]
+    public async Task RequestOtp_DeliveryFails_CanRetryImmediately()
+    {
+        using var factory = _factory.WithWebHostBuilder(builder => builder.ConfigureTestServices(services =>
+            services.AddSingleton<SmtpOtpSender>(provider => new RetryMailer(
+                provider.GetRequiredService<IConfiguration>(), provider.GetRequiredService<IHostEnvironment>()))));
+        using var client = factory.CreateClient();
+        var email = UniqueEmail();
+        var failed = await client.PostAsJsonAsync("/api/auth/request-otp", new { email });
+        Assert.Equal(HttpStatusCode.BadGateway, failed.StatusCode);
+        var retry = await client.PostAsJsonAsync("/api/auth/request-otp", new { email });
+        Assert.Equal(HttpStatusCode.OK, retry.StatusCode);
+        var repeat = await client.PostAsJsonAsync("/api/auth/request-otp", new { email });
+        Assert.Equal(HttpStatusCode.TooManyRequests, repeat.StatusCode);
+    }
     private static readonly JsonSerializerOptions JsonOpts = new(JsonSerializerDefaults.Web);
 
     private readonly AuthApiFactory _factory;

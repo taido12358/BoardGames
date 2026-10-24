@@ -35,10 +35,31 @@ const room = (overrides: Partial<AdminRoomRow>): AdminRoomRow => ({
 });
 
 beforeEach(() => {
-  useAdminStore.setState({ isAdmin: null, rooms: [], stats: null, loading: false, error: "" });
+  useAdminStore.setState({ isAdmin: null, accessError: "", rooms: [], stats: null, statsLoading: false, statsError: "", loading: false, error: "" });
 });
 
 describe("AdminPage", () => {
+  it("mất kết nối khi kiểm tra quyền hiện hướng dẫn thử lại, không báo nhầm bị từ chối", async () => {
+    const user = userEvent.setup();
+    let attempts = 0;
+    vi.stubGlobal("fetch", vi.fn((url: string) => {
+      if (url.includes("/api/admin/check")) {
+        attempts += 1;
+        return attempts === 1
+          ? Promise.reject(new Error("offline"))
+          : Promise.resolve(jsonResponse({ isAdmin: true }));
+      }
+      if (url.includes("/api/admin/rooms")) return Promise.resolve(jsonResponse([]));
+      return Promise.resolve(jsonResponse({ byStatus: [], byGame: [], totalUsers: 0 }));
+    }));
+    render(<AdminPage />);
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Chưa kiểm tra được quyền truy cập");
+    expect(screen.queryByText("Bạn không có quyền truy cập trang này.")).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Kiểm tra lại quyền" }));
+    await waitFor(() => expect(screen.getByText("Không có phòng nào khớp bộ lọc.")).toBeInTheDocument());
+  });
+
   it("hiện thông báo đang kiểm tra quyền lúc mới vào trang", () => {
     stubFetch({ check: { isAdmin: false } });
     render(<AdminPage />);

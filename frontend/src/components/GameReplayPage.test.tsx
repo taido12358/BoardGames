@@ -30,6 +30,14 @@ const replay = {
 };
 
 describe("GameReplayPage", () => {
+  it("liên kết về lịch sử giữ tìm kiếm của trang đã mở replay", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(jsonResponse(replay)));
+    render(<MemoryRouter initialEntries={[{ pathname: "/replay/r1", state: { historySearch: "q=An" } }]}>
+      <Routes><Route path="/replay/:roomId" element={<GameReplayPage />} /></Routes>
+    </MemoryRouter>);
+    expect(screen.getByRole("link", { name: "← Lịch sử" })).toHaveAttribute("href", "/history?q=An");
+    await screen.findByText("BANG!");
+  });
   it("rời trang sẽ hủy yêu cầu tải đang chạy", () => {
     const fetchMock = vi.fn((_url: string, _init?: RequestInit) => new Promise<Response>(() => {}));
     vi.stubGlobal("fetch", fetchMock);
@@ -53,7 +61,7 @@ describe("GameReplayPage", () => {
 
     renderAt("r1");
 
-    await waitFor(() => expect(screen.getByText("bang")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText("BANG!")).toBeInTheDocument());
     expect(screen.getByText("An, Bình")).toBeInTheDocument();
     expect(screen.getByText("Sheriff")).toBeInTheDocument();
     expect(screen.getByText("2")).toBeInTheDocument();

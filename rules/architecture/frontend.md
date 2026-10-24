@@ -205,3 +205,74 @@ Mobile-first: `max-w-md mx-auto`, flex-col. Thứ tự: Status bar → Board →
 ## Chơi ngay và tải chậm (2026-10-24)
 - GameDetails chỉ xử lý play=1 khi gameReady/panel mount; ref tránh auto-scroll lặp do cập nhật dữ liệu. Panel là region focusable, manual Chơi ngay cũng focus trước scroll.
 
+
+## BANG! quyền tấn công (2026-10-24)
+- BangYourView.canFire do server cung cấp; frontend false vô hiệu Bang/Gatling/Calamity Missed ở Action. RESPOND không dùng gate này.
+- Optional client field phục vụ rollout khác phiên bản; không có field vẫn để server validate như trước.
+
+
+## Ngữ cảnh nhắm mục tiêu BANG! (2026-10-24)
+- ActionBar hiển thị tên lá/số mục tiêu theo state hiện tại; chọn ghế kiểm tra lại canPlayCard và target validity trước gửi. Server vẫn xác thực nước đi.
+
+
+## Tùy chọn phòng và đổi trò chơi (2026-10-24)
+- GameDetails giữ optionDraft kèm gameKey; chỉ dùng options khi gameKey khớp, trò mới dùng mặc định. Tránh chuyển lựa chọn seatCount/maxRedTurns từ trò cũ qua route mới.
+
+
+## Callback thao tác phòng và lifecycle trang (2026-10-24)
+- GameDetails dùng pageVersion theo gameKey/cleanup; handler cũ không navigate/finally mở khóa trang mới sau khi chuyển trò. Backend request đã gửi vẫn có thể hoàn tất; UI bỏ tác động điều hướng cũ.
+
+
+## BANG! phím hủy lựa chọn (2026-10-24)
+- Escape bên trong board hủy selected card/discarding, không gửi nước đi hoặc thay đổi phase server. Bỏ qua IME composition; chat ngoài board không bị bắt phím.
+
+
+## Trạng thái chọn bài bỏ (2026-10-24)
+- HandFan bật selectionMode khi selectedIds được truyền; CardView aria-pressed phản ánh lựa chọn. Hết quota chỉ khóa bài chưa chọn, lá đã chọn vẫn bấm để bỏ chọn.
+
+
+## Input số tùy chọn Vây Bắt (2026-10-24)
+- Giữ draft string khi đang nhập; không ép số thay thế ở mỗi phím. Chỉ publish số nguyên hợp lệ, blur invalid khôi phục cấu hình trước đó; server vẫn validate options.
+
+
+## OTP yêu cầu đồng thời (2026-10-24)
+- requestOtp/verifyOtp guard loading trong authStore, không chỉ dựa disabled ở form. Chặn gửi mail trùng và xác thực trùng tiêu tốn attempts khi click/Enter liên tiếp.
+
+
+## Hợp nhất snapshot và realtime sảnh (2026-10-24)
+- Trong fetchRooms, track id nhận upsert/remove. Snapshot trễ không thay state của các id này; isMine vẫn lấy REST per-user vì broadcast không có quyền đúng người. Bộ changed ids chỉ sống trong request và cleanup finally.
+
+
+## Dọn game state theo phiên (2026-10-24)
+- AuthStore logout thành công gọi gameStore.resetSession; action này vừa xóa cache/room/chat/ghế vừa vô hiệu request fetchRooms cũ bằng request id. Không chỉ setState xóa data khi còn request đang chạy.
+
+
+## Realtime callback dữ liệu sau cleanup (2026-10-24)
+- Mọi data event từ connection instance đều kiểm tra active trước ghi gameStore, tương tự lifecycle callbacks; connection đã unmount không được nạp lại dữ liệu phiên cũ.
+
+
+## Tên trò chơi trong bản ghi (2026-10-24)
+- getGameTitle tại gameRegistry phục vụ history/replay; dùng metadata.title đã đăng ký, fallback gameKey khi chưa có metadata để bản ghi cũ/game mới vẫn hiển thị.
+
+
+## Định dạng thời gian (2026-10-24)
+- formatTimestamp dùng chung history/admin/chat, kiểm tra Date.getTime NaN và fallback —. vi-VN theo thời gian địa phương; options giờ/phút dùng cho chat.
+
+
+## BANG! thiếu lá phản hồi (2026-10-24)
+- ActionBar dùng hasDefenseCard từ hand + allowedResponseKinds để giải thích thiếu bài và lựa chọn hợp lệ. Không tự động RESPOND khi hand thiếu bài, giữ quyền quyết định người chơi.
+
+
+## Điều hướng history/replay giữ query (2026-10-24)
+- History q là URL state; replay Link nhận historySearch trong navigation state và dựng lại /history?query khi quay về. Mở replay trực tiếp fallback /history; luôn giữ pathname nội bộ cố định.
+
+
+## Thống kê quản trị và tải lỗi (2026-10-24)
+- AdminStore statsLoading/statsError riêng với danh sách phòng. Giữ số cũ khi lỗi nhưng hiển thị cảnh báo/retry; fetchStats guard khi đang chạy.
+- Effect fetchStats theo isAdmin, không theo filter phòng; thống kê là toàn hệ thống.
+
+## Quyền admin khi không kết nối được
+- `isAdmin=null` biểu thị chưa có kết quả; `accessError` biểu thị request thất bại. Không đổi lỗi mạng/5xx thành `false`, vì UI sẽ báo nhầm truy cập bị từ chối.
+- HTTP 401/403 và kết quả `{ isAdmin: false }` mới biểu thị người dùng không có quyền. Nút thử lại gọi lại cùng `checkAdmin`.
+- `getGameTitle(gameKey)` lấy title metadata nếu game đã đăng ký, nếu chưa thì định dạng key thành nhãn dự phòng cho history/replay.
+

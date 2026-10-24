@@ -79,6 +79,30 @@ describe("restoreSession", () => {
 });
 
 describe("requestOtp", () => {
+  it("xác nhận liên tiếp không tiêu tốn nhiều lần thử mã", async () => {
+    useAuthStore.setState({ pendingEmail: "a@b.com", step: "code" });
+    let finish!: (response: Response) => void;
+    const fetchMock = vi.fn().mockReturnValue(new Promise<Response>((resolve) => { finish = resolve; }));
+    vi.stubGlobal("fetch", fetchMock);
+    const first = useAuthStore.getState().verifyOtp("123456");
+    await useAuthStore.getState().verifyOtp("123456");
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    finish(jsonResponse({ error: "Mã không đúng." }, false, 400));
+    await first;
+    expect(useAuthStore.getState().loading).toBe(false);
+  });
+  it("nhấn gửi liên tiếp chỉ tạo một request đang chạy", async () => {
+    let finish!: (response: Response) => void;
+    const pending = new Promise<Response>((resolve) => { finish = resolve; });
+    const fetchMock = vi.fn().mockReturnValue(pending);
+    vi.stubGlobal("fetch", fetchMock);
+    const first = useAuthStore.getState().requestOtp("a@b.com");
+    await useAuthStore.getState().requestOtp("a@b.com");
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    finish(jsonResponse({}, false, 502));
+    await first;
+    expect(useAuthStore.getState().loading).toBe(false);
+  });
   it("timer bị trì hoãn vẫn tính thời gian chờ thực tế", async () => {
     vi.useFakeTimers();
     stubFetch({ requestOtp: jsonResponse({}) });

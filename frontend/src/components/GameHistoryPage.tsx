@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { getGameTitle } from "../platform/gameRegistry";
 import { formatTimestamp as formatTime } from "../platform/formatTimestamp";
@@ -73,24 +73,24 @@ export default function GameHistoryPage() {
         onChange={(e) => setQuery(e.target.value)}
         placeholder="Tìm theo tên người chơi, người thắng…"
         aria-label="Tìm kiếm lịch sử ván đấu"
-        className="w-full rounded-md border border-amber-900/40 bg-[#120c08] px-4 py-2.5 text-amber-100 placeholder-amber-900/40 shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)] outline-none transition-colors focus:border-amber-500/70 focus:shadow-[inset_0_2px_4px_rgba(0,0,0,0.6),0_0_10px_rgba(217,119,6,0.15)] text-sm placeholder:text-amber-900/40"
+        className="w-full rounded-sm border border-amber-900/40 bg-[#120c08] px-4 py-2.5 text-amber-100 placeholder-amber-900/40 shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)] outline-none transition-colors focus:border-amber-500/70 focus:shadow-[inset_0_2px_4px_rgba(0,0,0,0.6),0_0_10px_rgba(217,119,6,0.15)] text-sm placeholder:text-amber-900/40"
       />
 
-      {error && <div className="rounded-xl p-3 text-center bg-red-900/40 text-red-300 text-sm space-y-3">
+      {error && <div className="rounded-sm p-3 text-center bg-red-900/40 text-red-300 text-sm space-y-3">
         <p role="alert">{error}</p>
-        <button onClick={() => setAttempt((value) => value + 1)} className="rounded-lg bg-red-800 px-4 py-2 font-semibold text-white hover:bg-red-700">Thử lại</button>
+        <button onClick={() => setAttempt((value) => value + 1)} className="rounded-sm bg-red-800 px-4 py-2 font-semibold text-white hover:bg-red-700">Thử lại</button>
       </div>}
       {loading && <p role="status" className="text-amber-700/60 text-sm text-center py-4 italic">Đang tải…</p>}
 
       {!loading && !error && records.length === 0 && (
         <div className="text-amber-700/50 text-sm text-center py-10 space-y-3 italic">
           <p>Không tìm thấy ván đấu nào khớp.</p>
-          {query.trim() && <button onClick={() => setQuery("")} className="rounded-lg border border-amber-950/80 bg-[#140e0b]/90 px-4 py-2 text-amber-700/70 hover:border-amber-700/60 hover:text-amber-400 transition-all not-italic">Xóa tìm kiếm</button>}
+          {query.trim() && <button onClick={() => setQuery("")} className="rounded-sm border border-amber-950/80 bg-[#140e0b]/90 px-4 py-2 text-amber-700/70 hover:border-amber-700/60 hover:text-amber-400 transition-all not-italic">Xóa tìm kiếm</button>}
         </div>
       )}
 
       {!loading && !error && records.length > 0 && (
-        <div className="overflow-x-auto rounded-2xl border border-amber-900/30">
+        <div className="overflow-x-auto rounded-sm border border-amber-900/30">
           <table className="w-full text-sm">
             <thead className="border-b border-amber-900/60 bg-[#120b07] text-[11px] font-western uppercase tracking-widest text-amber-700/80 [text-shadow:0_1px_0_rgba(255,255,255,0.04)]">
               <tr>

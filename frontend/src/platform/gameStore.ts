@@ -4,6 +4,7 @@ import type { ChatMessageDto, EngineInfo, RematchInviteDto, RoomDto, RoomSummary
 /** Giới hạn số tin nhắn giữ trong bộ nhớ — chat không lưu DB, chỉ cần đủ để cuộn lại gần đây. */
 const MAX_CHAT_MESSAGES = 200;
 let roomsRequestId = 0;
+let roomsInFlightChanges: Set<string> | null = null;
 
 async function roomActionError(response: Response, fallback: string): Promise<string> {
   try {
@@ -62,6 +63,7 @@ interface GameStore {
   setConnectionState: (s: ConnectionState) => void;
   addChatMessage: (msg: ChatMessageDto) => void;
   clearChat: () => void;
+  resetSession: () => void;
   setRematchInvite: (invite: RematchInviteDto | null) => void;
 
   fetchEngines: () => Promise<void>;
@@ -105,6 +107,13 @@ export const useGameStore = create<GameStore>((set, get) => ({
   addChatMessage: (msg) =>
     set((s) => ({ chatMessages: [...s.chatMessages, msg].slice(-MAX_CHAT_MESSAGES) })),
   clearChat: () => set({ chatMessages: [] }),
+  resetSession: () => {
+    roomsRequestId += 1;
+    roomsInFlightChanges = null;
+    set({ room: null, mySide: null, selected: null, roomsById: {}, rooms: [],
+      roomsLoading: false, roomsError: "", chatMessages: [], rematchInvite: null,
+      error: "", connectionState: "disconnected" });
+  },
   setRematchInvite: (rematchInvite) => set({ rematchInvite }),
 
   fetchEngines: async () => {
@@ -120,6 +129,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   fetchRooms: async (gameKey?: string) => {
     const requestId = ++roomsRequestId;
+    const changed = new Set<string>();
+    roomsInFlightChanges = changed;
     set({ roomsLoading: true, roomsError: "" });
     try {
       const url = gameKey ? `/api/games?gameKey=${gameKey}` : "/api/games";
@@ -128,15 +139,24 @@ export const useGameStore = create<GameStore>((set, get) => ({
       const list = (await res.json()) as RoomSummaryDto[];
       if (requestId !== roomsRequestId) return;
       const byId = { ...get().roomsById };
-      for (const r of list) byId[r.id] = r;
+      for (const r of list) {
+        if (changed.has(r.id)) {
+          // Giữ state realtime đến sau khi bắt đầu tải, nhưng quyền isMine lấy
+          // từ REST riêng người dùng (broadcast không xác định được quyền này).
+          if (byId[r.id]) byId[r.id] = { ...byId[r.id], isMine: r.isMine };
+        } else byId[r.id] = r;
+      }
       set({ roomsById: byId, rooms: sortRooms(byId), roomsLoading: false });
     } catch {
       if (requestId !== roomsRequestId) return;
       set({ roomsLoading: false, roomsError: "Không thể tải danh sách phòng. Dữ liệu đang hiển thị có thể chưa cập nhật." });
+    } finally {
+      if (roomsInFlightChanges === changed) roomsInFlightChanges = null;
     }
   },
 
   upsertRoom: (room) => {
+    roomsInFlightChanges?.add(room.id);
     // "LobbyUpdated" là broadcast dùng chung cho cả nhóm "lobby" — server không biết
     // đang gửi cho ai nên luôn trả isMine=false (xem báo cáo backend). Chỉ REST
     // (GET /api/games, tạo/ghép phòng) mới trả isMine đúng theo từng người gọi.
@@ -148,6 +168,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   removeRoom: (roomId) => {
+    roomsInFlightChanges?.add(roomId);
     const byId = { ...get().roomsById };
     delete byId[roomId];
     set({ roomsById: byId, rooms: sortRooms(byId) });

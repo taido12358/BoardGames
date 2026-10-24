@@ -21,12 +21,12 @@ export function useGameRoomHub() {
       .withAutomaticReconnect([0, 2000, 5000, 10000, 10000])
       .build();
 
-    conn.on("GameStateUpdated", (room: RoomDto) => useGameStore.getState().setRoom(room));
-    conn.on("Seated", (info: { side: string | null }) => useGameStore.getState().setMySide(info.side));
-    conn.on("Error", (msg: string) => useGameStore.getState().setError(msg));
-    conn.on("LobbyUpdated", (room: RoomSummaryDto) => useGameStore.getState().upsertRoom(room));
-    conn.on("ChatMessageReceived", (msg: ChatMessageDto) => useGameStore.getState().addChatMessage(msg));
-    conn.on("RematchAvailable", (invite: RematchInviteDto) => useGameStore.getState().setRematchInvite(invite));
+    conn.on("GameStateUpdated", (room: RoomDto) => { if (active) useGameStore.getState().setRoom(room); });
+    conn.on("Seated", (info: { side: string | null }) => { if (active) useGameStore.getState().setMySide(info.side); });
+    conn.on("Error", (msg: string) => { if (active) useGameStore.getState().setError(msg); });
+    conn.on("LobbyUpdated", (room: RoomSummaryDto) => { if (active) useGameStore.getState().upsertRoom(room); });
+    conn.on("ChatMessageReceived", (msg: ChatMessageDto) => { if (active) useGameStore.getState().addChatMessage(msg); });
+    conn.on("RematchAvailable", (invite: RematchInviteDto) => { if (active) useGameStore.getState().setRematchInvite(invite); });
 
     conn.onreconnecting(() => { if (active) useGameStore.getState().setConnectionState("reconnecting"); });
 

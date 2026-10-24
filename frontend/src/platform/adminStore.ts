@@ -58,7 +58,7 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
       const body = (await res.json()) as { isAdmin: boolean };
       set({ isAdmin: body.isAdmin });
     } catch {
-      set({ isAdmin: false, accessError: "Chưa kiểm tra được quyền truy cập. Kiểm tra kết nối rồi thử lại." });
+      set({ accessError: "Chưa kiểm tra được quyền truy cập. Kiểm tra kết nối rồi thử lại." });
     }
   },
 
