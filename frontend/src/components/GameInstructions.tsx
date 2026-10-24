@@ -8,9 +8,9 @@ interface Props {
 function TextSection({ paragraphs, bullets }: { paragraphs: string[]; bullets?: string[] }) {
   return (
     <div className="space-y-3">
-      {paragraphs.map((p, i) => <p key={i} className="text-sm text-[#d4b996]/75 leading-relaxed">{p}</p>)}
+      {paragraphs.map((p, i) => <p key={i} className="text-sm text-[#d6c1a8]/80 leading-relaxed">{p}</p>)}
       {bullets && bullets.length > 0 && (
-        <ul className="list-disc list-inside space-y-1.5 text-sm text-[#d4b996]/75">
+        <ul className="list-disc list-inside space-y-1.5 text-sm text-[#d6c1a8]/80">
           {bullets.map((b, i) => <li key={i}>{b}</li>)}
         </ul>
       )}
@@ -23,7 +23,7 @@ function FlowSection({ steps }: { steps: string[] }) {
     <div className="flex flex-col items-center gap-1.5 py-2">
       {steps.map((step, i) => (
         <div key={i} className="flex flex-col items-center gap-1.5">
-          <div className="rounded-xl border border-amber-700/50 bg-amber-950/30 px-4 py-2 text-sm font-semibold text-[#d4b996] text-center">
+          <div className="rounded-sm border border-amber-700/50 bg-amber-950/30 px-4 py-2 text-sm font-semibold text-[#d4b996] text-center">
             {step}
           </div>
           {i < steps.length - 1 && <span className="text-amber-600/70 text-lg leading-none">↓</span>}
@@ -36,12 +36,12 @@ function FlowSection({ steps }: { steps: string[] }) {
 function RolesSection({ roles }: { roles: Extract<InstructionSection, { kind: "roles" }>["roles"] }) {
   return (
     <div className="space-y-3">
-      <p className="text-xs text-amber-300/70 bg-amber-950/30 border border-amber-800/40 rounded-lg px-3 py-2">
+      <p className="text-xs text-amber-300/70 bg-amber-950/30 border border-amber-800/40 rounded-sm px-3 py-2">
         ⚠ Trong ván thật, chỉ Cảnh sát trưởng công khai — các vai trò khác được GIỮ BÍ MẬT cho tới khi lộ hoặc bị loại.
       </p>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {roles.map((r) => (
-          <div key={r.name} className="relative overflow-hidden rounded-xl border border-amber-900/40 bg-[#1a1208] p-3.5">
+          <div key={r.name} className="relative overflow-hidden rounded-sm border border-amber-900/40 bg-[#1a1208] p-3.5">
               <div className="pointer-events-none absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-amber-500/20 to-transparent" />
             <div className="flex items-center justify-between">
               <div className="font-bold text-[#f5d09d] flex items-center gap-1.5">
@@ -68,7 +68,7 @@ function CardEntry({ card }: { card: CardGuideEntry }) {
       type="button"
       onClick={() => setOpen((o) => !o)}
       aria-expanded={open}
-      className="text-left rounded-xl border border-[#7a5c2e]/60 bg-gradient-to-b from-[#2b2013] to-[#1c150c] p-3 hover:border-amber-500/60 transition-colors"
+      className="text-left rounded-sm border border-[#7a5c2e]/60 bg-gradient-to-b from-[#2b2013] to-[#1c150c] p-3 hover:border-amber-500/60 hover:shadow-[0_0_8px_rgba(245,158,11,0.15)] transition-all"
     >
       <div className="text-2xl text-center">{card.icon}</div>
       <div className="text-sm font-bold text-[#f5d09d] text-center mt-1">{card.name}</div>
@@ -98,7 +98,7 @@ function CharactersSection({ characters }: { characters: Extract<InstructionSect
       <p className="text-xs text-amber-800/50 italic">Thông tin nhân vật LUÔN công khai — vai trò ẩn là chuyện khác, xem tab VAI TRÒ.</p>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {characters.map((c) => (
-          <div key={c.name} className="relative overflow-hidden rounded-xl border border-amber-900/40 bg-[#1a1208] p-3.5 flex gap-3">
+          <div key={c.name} className="relative overflow-hidden rounded-sm border border-amber-900/40 bg-[#1a1208] p-3.5 flex gap-3">
             <div className="pointer-events-none absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-amber-500/20 to-transparent" />
             <div className="shrink-0 w-12 h-12 rounded-full bg-gradient-to-b from-amber-800 to-amber-950 border border-amber-600/50 flex items-center justify-center text-lg font-black text-amber-200">
               {c.name[0]}
@@ -121,13 +121,13 @@ function DistanceDemoSection({ paragraphs }: { paragraphs: string[] }) {
     <div className="space-y-4">
       <TextSection paragraphs={paragraphs} />
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <div className="rounded-xl border border-amber-700/50 bg-amber-950/20 p-4 text-center space-y-2">
+        <div className="rounded-sm border border-amber-700/50 bg-amber-950/20 p-4 text-center space-y-2">
           <div className="text-xs text-amber-700/70">BẠN — Tầm bắn: 1</div>
           <div className="text-2xl">🤠 → 🎯</div>
           <div className="text-xs text-amber-300/70">Khoảng cách: 1</div>
           <div className="text-sm font-bold text-amber-300">✓ CÓ THỂ BẮN</div>
         </div>
-        <div className="rounded-xl border border-amber-900/40 bg-[#1a1208]/40 p-4 text-center space-y-2">
+        <div className="rounded-sm border border-amber-900/40 bg-[#1a1208]/40 p-4 text-center space-y-2">
           <div className="text-xs text-amber-700/60">BẠN — Tầm bắn: 1</div>
           <div className="text-2xl">🤠 → · → 🎯</div>
           <div className="text-xs text-amber-700/50">Khoảng cách: 2</div>
@@ -174,7 +174,7 @@ export default function GameInstructions({ sections }: Props) {
               setActive(sections[next].id);
               tabs.current[sections[next].id]?.focus();
             }}
-            className={`rounded-sm px-4 py-2 text-xs uppercase tracking-wider transition-all whitespace-nowrap focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-300 ${
+            className={`font-serif rounded-sm px-4 py-2 text-xs uppercase tracking-wider transition-all whitespace-nowrap focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-300 ${
               s.id === section.id
                 ? "font-black text-[#221006] bg-gradient-to-b from-[#f5ca80] via-[#d08f3e] to-[#96571a] border-t border-[#ffe4b0] border-b-2 border-[#542d09] shadow-[0_2px_6px_rgba(0,0,0,0.7),inset_0_1px_0_rgba(255,255,255,0.3)] active:translate-y-0.5"
                 : "font-bold text-[#aa9176] hover:text-[#fae2c0] hover:bg-[#25160d]"
@@ -185,7 +185,7 @@ export default function GameInstructions({ sections }: Props) {
         ))}
       </div>
 
-      <div role="tabpanel" id={`${baseId}-panel`} aria-labelledby={`${baseId}-tab-${section.id}`} tabIndex={0} className="rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-amber-300">
+      <div role="tabpanel" id={`${baseId}-panel`} aria-labelledby={`${baseId}-tab-${section.id}`} tabIndex={0} className="rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-amber-300">
         {section.kind === "text" && <TextSection paragraphs={section.paragraphs} bullets={section.bullets} />}
         {section.kind === "flow" && <FlowSection steps={section.steps} />}
         {section.kind === "roles" && <RolesSection roles={section.roles} />}
