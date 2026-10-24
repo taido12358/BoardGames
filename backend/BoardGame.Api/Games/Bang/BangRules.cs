@@ -1,3 +1,5 @@
+using System.Text.Json;
+
 namespace BoardGame.Api.Games.Bang;
 
 /// <summary>
@@ -619,11 +621,11 @@ public static class BangRules
             (!state.BangPlayedThisTurn || viewer.WeaponCard?.Kind == CardKind.Volcanic));
 
         PendingResponseView? prView = state.PendingResponse is null ? null : new PendingResponseView(
-            state.PendingResponse.Kind.ToString(), state.PendingResponse.FromPlayerId,
+            JsonNamingPolicy.CamelCase.ConvertName(state.PendingResponse.Kind.ToString()), state.PendingResponse.FromPlayerId,
             state.PendingResponse.TargetIds, side is not null && state.PendingResponse.TargetIds.Contains(side));
 
         return new BangViewerState(
-            state.Phase.ToString(), players, state.CurrentPlayerId, state.TurnNumber,
+            JsonNamingPolicy.CamelCase.ConvertName(state.Phase.ToString()), players, state.CurrentPlayerId, state.TurnNumber,
             state.Deck.Count, state.DiscardPile, prView,
             state.Winner, state.GameLog, you);
     }

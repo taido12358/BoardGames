@@ -51,4 +51,47 @@ public class BangHealthRegressionTests
         Assert.Contains("hồi 1 HP", state.GameLog.Last());
         Assert.DoesNotContain(beer, player.Hand);
     }
+
+    [Fact]
+    public void EndTurn_TwoHandCardsAtTwoHp_DoNotCountWeaponsOrEquipment()
+    {
+        var state = TestFactory.MakeState(4);
+        var player = state.Players[0];
+        player.Hp = 2;
+        var first = TestFactory.Card(CardKind.Bang);
+        var second = TestFactory.Card(CardKind.Beer);
+        player.Hand.AddRange(new[] { first, second });
+        player.WeaponCard = TestFactory.Card(CardKind.Schofield);
+        player.Equipment.Add(TestFactory.Card(CardKind.Mustang));
+        player.Equipment.Add(TestFactory.Card(CardKind.Barrel));
+
+        var result = BangRules.HandleMove(state, "P0", TestFactory.EndTurn, new Random(2));
+
+        Assert.True(result.Ok);
+        Assert.Equal(new[] { first.Id, second.Id }, player.Hand.Select(c => c.Id));
+        Assert.Equal(CardKind.Schofield, player.WeaponCard!.Kind);
+        Assert.Equal(2, player.Equipment.Count);
+        Assert.DoesNotContain(state.GameLog, line => line.Contains("bỏ") && line.Contains("vượt giới hạn"));
+    }
+
+    [Fact]
+    public void EndTurn_TwoHandCardsAtOneHp_RequiresOneDiscardAndKeepsEquipment()
+    {
+        var state = TestFactory.MakeState(4);
+        var player = state.Players[0];
+        player.Hp = 1;
+        var kept = TestFactory.Card(CardKind.Bang);
+        var discarded = TestFactory.Card(CardKind.Beer);
+        player.Hand.AddRange(new[] { kept, discarded });
+        player.Equipment.Add(TestFactory.Card(CardKind.Mustang));
+        player.Equipment.Add(TestFactory.Card(CardKind.Barrel));
+        var move = new BangMove("END_TURN", null, null, new List<string> { discarded.Id });
+
+        var result = BangRules.HandleMove(state, "P0", move, new Random(2));
+
+        Assert.True(result.Ok);
+        Assert.Equal(new[] { kept.Id }, player.Hand.Select(c => c.Id));
+        Assert.Equal(2, player.Equipment.Count);
+        Assert.Contains(state.GameLog, line => line.Contains("bỏ 1 lá do vượt giới hạn tay bài"));
+    }
 }
