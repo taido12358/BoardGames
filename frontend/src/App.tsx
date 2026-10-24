@@ -63,7 +63,7 @@ export default function App() {
               </div>
             )}
           </header>
-          {user && logoutError && <p role="alert" className="mx-4 mb-3 rounded-xl bg-red-950/50 p-3 text-sm text-red-300">{logoutError}</p>}
+          {user && logoutError && <p role="alert" className="mx-4 mb-3 rounded-sm bg-red-950/50 p-3 text-sm text-red-300">{logoutError}</p>}
 
           {checking ? (
             <main id="main-content" tabIndex={-1} className="flex-1 px-4 pb-6 flex items-center justify-center">
@@ -72,8 +72,8 @@ export default function App() {
           ) : sessionError ? (
             <main id="main-content" tabIndex={-1} className="flex-1 px-4 py-10">
               <div className="mx-auto max-w-md space-y-4 text-center">
-                <p role="alert" className="rounded-xl bg-red-950/50 p-3 text-sm text-red-300">{sessionError}</p>
-                <button onClick={restoreSession} className="rounded-xl bg-amber-700 px-4 py-3 font-semibold text-white hover:bg-amber-600">Kiểm tra lại phiên</button>
+                <p role="alert" className="rounded-sm bg-red-950/50 p-3 text-sm text-red-300">{sessionError}</p>
+                <button onClick={restoreSession} className="rounded-sm bg-amber-700 px-4 py-3 font-semibold text-white hover:bg-amber-600">Kiểm tra lại phiên</button>
               </div>
             </main>
           ) : !user ? (

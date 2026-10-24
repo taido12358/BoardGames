@@ -49,8 +49,8 @@ export default function LoginPage() {
       </div>
 
       {/* Login card — double border theo gợi ý Gemini */}
-      <div className="w-full max-w-sm rounded-xl border border-amber-500/20 bg-[#1a1208]/80 p-1 shadow-2xl backdrop-blur-sm">
-      <div className="rounded-lg border border-amber-500/30 p-6 bg-gradient-to-b from-[#241a14] to-[#1a120c] space-y-4">
+      <div className="w-full max-w-sm rounded-sm border border-amber-500/20 bg-[#1a1208]/80 p-1 shadow-2xl backdrop-blur-sm">
+      <div className="rounded-sm border border-amber-500/30 p-6 bg-gradient-to-b from-[#241a14] to-[#1a120c] space-y-4">
         <div className="text-center space-y-1">
           <h2 className="text-base font-bold text-[#f5d09d]">
             {step === "email" ? "🔐 Đăng nhập" : "📬 Nhập mã xác nhận"}
@@ -80,7 +80,7 @@ export default function LoginPage() {
                 disabled={loading}
                 required
                 autoFocus
-                className="w-full mt-1.5 rounded-md border border-amber-900/60 bg-[#120c08] px-4 py-2.5 text-amber-100 placeholder-amber-900/50 shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)] outline-none transition-colors focus:border-amber-500/80 focus:bg-[#170f0a] focus:shadow-[inset_0_2px_4px_rgba(0,0,0,0.8),0_0_12px_rgba(217,119,6,0.2)] text-sm"
+                className="w-full mt-1.5 rounded-sm border border-amber-900/60 bg-[#120c08] px-4 py-2.5 text-amber-100 placeholder-amber-900/50 shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)] outline-none transition-colors focus:border-amber-500/80 focus:bg-[#170f0a] focus:shadow-[inset_0_2px_4px_rgba(0,0,0,0.8),0_0_12px_rgba(217,119,6,0.2)] text-sm"
                 placeholder="ban@gmail.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -89,7 +89,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading || !email.trim()}
-              className="relative w-full rounded-lg bg-gradient-to-b from-amber-600 via-amber-700 to-amber-800 px-4 py-3 font-bold text-sm text-amber-50 border-t border-amber-400/50 shadow-[0_4px_0_0_#451a03,0_8px_16px_rgba(0,0,0,0.5)] transition-all hover:brightness-110 active:top-[2px] active:shadow-[0_2px_0_0_#451a03] disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full rounded-sm font-bold text-[#271206] text-sm bg-gradient-to-b from-[#fce295] via-[#df9031] to-[#87460e] px-4 py-3 border-t border-[#fff4d1] border-b-4 border-[#4d2506] shadow-[0_4px_12px_rgba(0,0,0,0.7),inset_0_1px_1px_rgba(255,255,255,0.3)] hover:brightness-110 active:translate-y-1 active:border-b-0 active:shadow-[0_1px_4px_rgba(0,0,0,0.8)] transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? "Đang gửi mã…" : "📧 Gửi mã đăng nhập"}
             </button>
@@ -113,7 +113,7 @@ export default function LoginPage() {
                 maxLength={6}
                 required
                 autoFocus
-                className="w-full mt-1.5 rounded-md border border-amber-900/60 bg-[#120c08] px-4 py-2.5 text-amber-100 placeholder-amber-900/40 shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)] outline-none transition-colors focus:border-amber-500/80 focus:bg-[#170f0a] focus:shadow-[inset_0_2px_4px_rgba(0,0,0,0.8),0_0_12px_rgba(217,119,6,0.2)] text-center text-2xl tracking-[0.5em] font-mono"
+                className="w-full mt-1.5 rounded-sm border border-amber-900/60 bg-[#120c08] px-4 py-2.5 text-amber-100 placeholder-amber-900/40 shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)] outline-none transition-colors focus:border-amber-500/80 focus:bg-[#170f0a] focus:shadow-[inset_0_2px_4px_rgba(0,0,0,0.8),0_0_12px_rgba(217,119,6,0.2)] text-center text-2xl tracking-[0.5em] font-mono"
                 placeholder="······"
                 value={code}
                 onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
@@ -131,7 +131,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading || code.length !== 6}
-              className="relative w-full rounded-lg bg-gradient-to-b from-amber-600 via-amber-700 to-amber-800 px-4 py-3 font-bold text-sm text-amber-50 border-t border-amber-400/50 shadow-[0_4px_0_0_#451a03,0_8px_16px_rgba(0,0,0,0.5)] transition-all hover:brightness-110 active:top-[2px] active:shadow-[0_2px_0_0_#451a03] disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full rounded-sm font-bold text-[#271206] text-sm bg-gradient-to-b from-[#fce295] via-[#df9031] to-[#87460e] px-4 py-3 border-t border-[#fff4d1] border-b-4 border-[#4d2506] shadow-[0_4px_12px_rgba(0,0,0,0.7),inset_0_1px_1px_rgba(255,255,255,0.3)] hover:brightness-110 active:translate-y-1 active:border-b-0 active:shadow-[0_1px_4px_rgba(0,0,0,0.8)] transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? "Đang kiểm tra…" : "✅ Đăng nhập"}
             </button>
@@ -152,7 +152,7 @@ export default function LoginPage() {
         )}
 
         {error && (
-          <p role="alert" className="text-sm text-red-300 bg-red-900/40 border border-red-800/40 rounded-xl px-3 py-2">
+          <p role="alert" className="text-sm text-red-300 bg-red-900/40 border border-red-800/40 rounded-sm px-3 py-2">
             ⚠️ {error}
           </p>
         )}
