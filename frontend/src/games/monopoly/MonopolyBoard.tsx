@@ -50,6 +50,48 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
     return () => clearTimeout(t);
   }, [lastCardText]);
 
+  const [cashDeltas, setCashDeltas] = useState<{ id: number; player: number; amount: number }[]>([]);
+  const [flashTiles, setFlashTiles] = useState<Set<number>>(new Set());
+  const prevCashRef = useRef<Record<number, number>>({});
+  const prevOwnerRef = useRef<Record<number, number>>({});
+  const deltaIdRef = useRef(0);
+
+  const cashKey = (gameState?.players ?? []).map(p => p.cash).join(",");
+  const ownerKey = (gameState?.properties ?? []).map(p => p.owner ?? -1).join(",");
+
+  useEffect(() => {
+    const parts = cashKey ? cashKey.split(",").map(Number) : [];
+    if (!parts.length) return;
+    const newDeltas: { id: number; player: number; amount: number }[] = [];
+    parts.forEach((cash, i) => {
+      const prev = prevCashRef.current[i];
+      if (prev !== undefined && prev !== cash) {
+        newDeltas.push({ id: deltaIdRef.current++, player: i, amount: cash - prev });
+      }
+      prevCashRef.current[i] = cash;
+    });
+    if (!newDeltas.length) return;
+    setCashDeltas(d => [...d, ...newDeltas]);
+    const ids = new Set(newDeltas.map(d => d.id));
+    const t = setTimeout(() => setCashDeltas(d => d.filter(x => !ids.has(x.id))), 1700);
+    return () => clearTimeout(t);
+  }, [cashKey]);
+
+  useEffect(() => {
+    const parts = ownerKey ? ownerKey.split(",").map(Number) : [];
+    if (!parts.length) return;
+    const newFlash = new Set<number>();
+    parts.forEach((owner, i) => {
+      const prev = prevOwnerRef.current[i];
+      if (owner !== -1 && prev !== undefined && prev !== owner) newFlash.add(i);
+      prevOwnerRef.current[i] = owner;
+    });
+    if (!newFlash.size) return;
+    setFlashTiles(newFlash);
+    const t = setTimeout(() => setFlashTiles(new Set()), 1300);
+    return () => clearTimeout(t);
+  }, [ownerKey]);
+
   if (!room) return null;
   const map = room.map as MonopolyMap | null;
   const state = room.state as MonopolyState | null;
@@ -92,9 +134,9 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
           {map.tiles.map(t => {
             const p = state.properties[t.index];
             const occupants = state.players.map((who,i) => !who.bankrupt && who.position === t.index ? i : -1).filter(i => i >= 0);
-            return <button type="button" key={t.index} style={boardPosition(t.index)} onClick={() => setSelected(t.index)}
+            return <button type="button" key={t.index} data-monopoly-tile="1" data-group={t.group} style={boardPosition(t.index)} onClick={() => setSelected(t.index)}
               aria-pressed={selected === t.index} aria-label={`Ô ${t.index}: ${t.name}${p.owner !== null ? `, chủ ${state.players[p.owner]?.name}` : ""}`}
-              className={`relative flex min-h-0 flex-col overflow-hidden border text-[9px] leading-tight text-stone-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white ${selected === t.index ? "border-amber-200 bg-amber-900" : "border-emerald-800/70 bg-stone-900/80 hover:bg-emerald-900"}`}>
+              className={`relative flex min-h-0 flex-col overflow-hidden border text-[9px] leading-tight text-stone-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white transition-[box-shadow,transform] duration-150 ${selected === t.index ? "border-amber-200 bg-amber-900" : "border-emerald-800/70 bg-stone-900/80"} ${flashTiles.has(t.index) ? "monopoly-tile-just-purchased" : ""}`}>
               <span aria-hidden="true" className={`h-2 w-full shrink-0 ${GROUP_COLORS[t.group] ?? "bg-stone-700"}`} />
               <span className="p-0.5">{t.name}</span>
               {t.price > 0 && <span>{t.price}</span>}
@@ -183,7 +225,12 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
       </aside>
     </div>
     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{state.players.map((p,i) => <div key={i}
-      className={`rounded-lg border p-3 ${p.bankrupt ? "border-stone-800 opacity-50" : i === currentActor ? "border-amber-400 bg-amber-950/50 monopoly-player-active" : "border-amber-900"}`}>
+      className={`relative rounded-lg border p-3 ${p.bankrupt ? "border-stone-800 opacity-50" : i === currentActor ? "border-amber-400 bg-amber-950/50 monopoly-player-active" : "border-amber-900"}`}>
+      {cashDeltas.filter(d => d.player === i).map(delta => (
+        <span key={delta.id} className={`monopoly-cash-delta ${delta.amount > 0 ? "monopoly-cash-delta-gain" : "monopoly-cash-delta-loss"}`}>
+          {delta.amount > 0 ? `+${delta.amount.toLocaleString("vi-VN")}` : delta.amount.toLocaleString("vi-VN")}
+        </span>
+      ))}
       <h2 className="font-bold">{TOKENS[i]} {p.name}{i === seat ? " (Bạn)" : ""}</h2>
       <p>{p.bankrupt ? "Đã phá sản" : `${p.cash.toLocaleString("vi-VN")} · ${map.tiles[p.position].name}`}</p>
       {p.inJail && <p className="text-sm">Trong tù · Đã thử {p.jailAttempts}/3</p>}
