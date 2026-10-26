@@ -40,7 +40,6 @@ export default function MeoNoBoard({ makeMove, onLeave, onRematch, rematching }:
   const [targetPlayerId, setTargetPlayerId] = useState<string | null>(null);
   const [requestedKind, setRequestedKind] = useState<string>("");
   const [defusePos, setDefusePos] = useState<number>(0);
-  const [choosingInsert, setChoosingInsert] = useState(false);
 
   const send = (move: MeoNoMove) => {
     if (!room) return;
@@ -48,7 +47,6 @@ export default function MeoNoBoard({ makeMove, onLeave, onRematch, rematching }:
     setSelectedCardIds([]);
     setTargetPlayerId(null);
     setRequestedKind("");
-    setChoosingInsert(false);
   };
 
   const myPlayerId = mySide ?? "";
@@ -121,7 +119,7 @@ export default function MeoNoBoard({ makeMove, onLeave, onRematch, rematching }:
   };
 
   // ── Derive top of discard ──────────────────────────────────────────────────
-  const topDiscard = gs?.discardPile.at(-1);
+  const topDiscard = gs?.discardPile.length ? gs.discardPile[gs.discardPile.length - 1] : undefined;
 
   if (!room || !gs) return null;
 

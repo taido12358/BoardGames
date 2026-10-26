@@ -16,6 +16,7 @@ const ACCENT_RING: Record<GameMetadata["accent"], string> = {
   graph: "group-hover:ring-indigo-400/60 group-hover:shadow-indigo-900/40",
   folk: "group-hover:ring-lime-500/60 group-hover:shadow-lime-900/40",
   zodiac: "group-hover:ring-purple-500/60 group-hover:shadow-purple-900/40",
+  kittens: "group-hover:ring-pink-500/60 group-hover:shadow-pink-900/40",
   default: "group-hover:ring-slate-400/50 group-hover:shadow-slate-900/40",
 };
 
