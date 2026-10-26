@@ -58,6 +58,8 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
   const logRef = useRef<HTMLOListElement>(null);
   const prevLogLenRef = useRef<number>(0);
   const [logNewStart, setLogNewStart] = useState<number>(Number.MAX_SAFE_INTEGER);
+  const prevBankruptRef = useRef<Record<number, boolean>>({});
+  const [newBankrupts, setNewBankrupts] = useState<Set<number>>(new Set());
 
   const cashKey = (gameState?.players ?? []).map(p => p.cash).join(",");
   const ownerKey = (gameState?.properties ?? []).map(p => p.owner ?? -1).join(",");
@@ -105,6 +107,21 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
     const t = setTimeout(() => setLogNewStart(Number.MAX_SAFE_INTEGER), 600);
     return () => clearTimeout(t);
   }, [logLen]);
+
+  const bankruptKey = (gameState?.players ?? []).map(p => p.bankrupt ? 1 : 0).join(",");
+  useEffect(() => {
+    const parts = bankruptKey ? bankruptKey.split(",").map(Number) : [];
+    if (!parts.length) return;
+    const newly = new Set<number>();
+    parts.forEach((v, i) => {
+      if (v === 1 && !prevBankruptRef.current[i]) newly.add(i);
+      prevBankruptRef.current[i] = v === 1;
+    });
+    if (!newly.size) return;
+    setNewBankrupts(newly);
+    const t = setTimeout(() => setNewBankrupts(new Set()), 2000);
+    return () => clearTimeout(t);
+  }, [bankruptKey]);
 
   if (!room) return null;
   const map = room.map as MonopolyMap | null;
@@ -239,7 +256,7 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
       </aside>
     </div>
     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{state.players.map((p,i) => <div key={i}
-      className={`relative rounded-lg border p-3 ${p.bankrupt ? "border-stone-800 opacity-50" : i === currentActor ? "border-amber-400 bg-amber-950/50 monopoly-player-active" : "border-amber-900"}`}>
+      className={`relative rounded-lg border p-3 ${p.bankrupt ? "border-stone-800 opacity-50" : i === currentActor ? "border-amber-400 bg-amber-950/50 monopoly-player-active" : "border-amber-900"} ${newBankrupts.has(i) ? "monopoly-bankrupt-enter" : ""}`}>
       {cashDeltas.filter(d => d.player === i).map(delta => (
         <span key={delta.id} className={`monopoly-cash-delta ${delta.amount > 0 ? "monopoly-cash-delta-gain" : "monopoly-cash-delta-loss"}`}>
           {delta.amount > 0 ? `+${delta.amount.toLocaleString("vi-VN")}` : delta.amount.toLocaleString("vi-VN")}
