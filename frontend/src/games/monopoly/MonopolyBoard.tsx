@@ -200,7 +200,7 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
         </div>
       </div>
       <aside className="space-y-4">
-        {state.started && room.status === "Playing" && <div className="space-y-3 rounded-xl border border-amber-800 p-4">
+        {state.started && room.status === "Playing" && <div key={state.phase} className="animate-game-action-enter space-y-3 rounded-xl border border-amber-800 p-4">
           <h2 className="font-semibold">{PHASES[state.phase]}</h2>
           {!deciding && <p className="text-sm text-amber-200/70">Chờ {state.players[currentActor]?.name} quyết định.</p>}
           <div className="flex flex-wrap gap-2">
@@ -239,7 +239,7 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
               onClick={() => send({type:"ACCEPT",redeemReceived:true})}>Chấp nhận và giải chấp ngay</button></>}
           </div>}
         </div>}
-        <div className="rounded-xl border border-amber-900 p-4">
+        <div key={selected} className="animate-game-action-enter rounded-xl border border-amber-900 p-4">
           <h2 className="font-bold">{tile.name}</h2>
           <p className="text-sm text-amber-200/70">Ô {selected} · {tile.group || tile.kind}</p>
           {tile.price > 0 && <p className="mt-2 text-sm">Giá {tile.price}{["Street","Railroad","Utility"].includes(tile.kind) && ` · Thế chấp ${tile.price/2}`}</p>}
