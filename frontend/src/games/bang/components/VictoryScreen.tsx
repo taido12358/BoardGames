@@ -11,8 +11,8 @@ interface Props {
 
 const WINNER_CONFIG: Record<string, { title: string; emoji: string; color: string; glow: string }> = {
   sheriff: { title: "CẢNH SÁT TRƯỞNG CHIẾN THẮNG", emoji: "⭐", color: "text-amber-300", glow: "shadow-[0_0_40px_rgba(251,191,36,0.3)]" },
-  outlaw:  { title: "KẺ NGOÀI VÒNG PHÁP LUẬT CHIẾN THẮNG", emoji: "🏴", color: "text-red-400",   glow: "shadow-[0_0_40px_rgba(220,38,38,0.3)]" },
-  renegade:{ title: "KẺ PHẢN BỘI CHIẾN THẮNG", emoji: "🎭", color: "text-purple-400", glow: "shadow-[0_0_40px_rgba(168,85,247,0.3)]" },
+  outlaw:  { title: "KẺ NGOÀI VÒNG PHÁP LUẬT CHIẾN THẮNG", emoji: "💀", color: "text-red-400",   glow: "shadow-[0_0_40px_rgba(220,38,38,0.3)]" },
+  renegade:{ title: "KẺ PHẢN BỘI CHIẾN THẮNG", emoji: "🃏", color: "text-purple-400", glow: "shadow-[0_0_40px_rgba(168,85,247,0.3)]" },
 };
 
 const OUTCOME_ENTER_CLASS: Record<ReturnType<typeof localOutcome>, string> = {

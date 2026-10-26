@@ -116,7 +116,7 @@ export const CARD_DISPLAY: Record<CardKind, { name: string; icon: string }> = {
   duel: { name: "Đấu súng", icon: "⚔️" },
   panic: { name: "Hoảng loạn!", icon: "😱" },
   catBalou: { name: "Cat Balou", icon: "🎯" },
-  stagecoach: { name: "Xe ngựa", icon: "🚃" },
+  stagecoach: { name: "Xe ngựa", icon: "🏇" },
   wellsFargo: { name: "Wells Fargo", icon: "💰" },
   indians: { name: "Người da đỏ!", icon: "🏹" },
   volcanic: { name: "Volcanic", icon: "🔫" },
@@ -128,9 +128,9 @@ export const CARD_DISPLAY: Record<CardKind, { name: string; icon: string }> = {
 
 export const ROLE_ICON: Record<string, string> = {
   "Cảnh sát trưởng": "⭐",
-  "Phó cảnh sát": "🥈",
-  "Kẻ ngoài vòng pháp luật": "🏴",
-  "Kẻ phản bội": "🎭",
+  "Phó cảnh sát": "🎖️",
+  "Kẻ ngoài vòng pháp luật": "💀",
+  "Kẻ phản bội": "🃏",
   "Vai trò ẩn": "❓",
 };
 
