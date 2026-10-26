@@ -108,7 +108,7 @@ export default function PlayerSeat({ player, isCurrentTurn, isMe, targetable, ta
     >
       {healing.active && <span key={`heal-${healing.sequence}`} aria-hidden="true" className="bang-seat-heal-glow" />}
       {turnStarted.active && <span key={`turn-${turnStarted.sequence}`} aria-hidden="true" className="bang-seat-turn-glow" />}
-      {defenseKey != null && <span key={defenseKey} aria-hidden="true" className="bang-defense-flash">🛡</span>}
+      {defenseKey != null && <span key={defenseKey} aria-hidden="true" className="bang-defense-flash">💨</span>}
       {duelLossKey != null && <span key={duelLossKey} aria-hidden="true" className="bang-duel-loss-flash">⚡</span>}
       {hpDelta !== null && (
         <span key={hpDeltaState?.sequence} aria-hidden="true" className={`bang-hp-delta bang-hp-delta-seat ${hpDelta > 0 ? "is-heal" : "is-damage"}`}>
@@ -169,7 +169,7 @@ export default function PlayerSeat({ player, isCurrentTurn, isMe, targetable, ta
               data-bang-equipment-name={eq}
               className={`inline-flex items-center gap-0.5 text-[9px] rounded-sm border border-[#8b5a2b]/50 bg-[#3a2012]/80 px-1.5 py-0.5 text-[#e8c07e] shadow-inner ${newEquipment.has(eq) ? changeFlashClass(newEquipment.get(eq)!, "animate-equipment-enter") : ""}`}
             >
-              {eq === "Thùng rượu" ? "🛢" : eq === "Ngựa" ? "🐎" : "🛡"} {eq}
+              {eq === "Thùng rượu" ? "🛢" : eq === "Ngựa" ? "🐎" : "🔫"} {eq}
             </span>
           ))}
           {[...leavingEquipment].map(([eq, sequence]) => (
@@ -178,7 +178,7 @@ export default function PlayerSeat({ player, isCurrentTurn, isMe, targetable, ta
               aria-hidden="true"
               className="bang-equipment-exit inline-flex items-center gap-0.5 text-[9px] rounded-sm border border-red-800/50 bg-red-950/70 px-1.5 py-0.5 text-red-200/80"
             >
-              {eq === "Thùng rượu" ? "🛢" : eq === "Ngựa" ? "🐎" : "🛡"} {eq}
+              {eq === "Thùng rượu" ? "🛢" : eq === "Ngựa" ? "🐎" : "🔫"} {eq}
             </span>
           ))}
         </div>

@@ -109,21 +109,21 @@ export type BangMove =
   | { type: "END_TURN"; discardCardIds?: string[] };
 
 export const CARD_DISPLAY: Record<CardKind, { name: string; icon: string }> = {
-  bang: { name: "Bang!", icon: "🔫" },
-  missed: { name: "Trượt!", icon: "🛡" },
-  beer: { name: "Bia", icon: "🍺" },
-  gatling: { name: "Súng Gatling", icon: "💥" },
-  duel: { name: "Đấu súng", icon: "⚔️" },
-  panic: { name: "Hoảng loạn!", icon: "😱" },
-  catBalou: { name: "Cat Balou", icon: "🎯" },
-  stagecoach: { name: "Xe ngựa", icon: "🏇" },
-  wellsFargo: { name: "Wells Fargo", icon: "💰" },
-  indians: { name: "Người da đỏ!", icon: "🏹" },
-  volcanic: { name: "Volcanic", icon: "🔫" },
-  schofield: { name: "Schofield", icon: "🔫" },
-  remington: { name: "Remington", icon: "🔫" },
-  mustang: { name: "Mustang", icon: "🐎" },
-  barrel: { name: "Thùng rượu", icon: "🛢" },
+  bang:        { name: "Bang!",        icon: "🔫" },
+  missed:      { name: "Trượt!",       icon: "💨" },
+  beer:        { name: "Bia",          icon: "🍺" },
+  gatling:     { name: "Súng Gatling", icon: "💥" },
+  duel:        { name: "Đấu súng",     icon: "⚔️" },
+  panic:       { name: "Hoảng loạn!", icon: "🤚" },
+  catBalou:    { name: "Cat Balou",    icon: "🎯" },
+  stagecoach:  { name: "Xe ngựa",     icon: "🏇" },
+  wellsFargo:  { name: "Wells Fargo", icon: "🏦" },
+  indians:     { name: "Người da đỏ!", icon: "🏹" },
+  volcanic:    { name: "Volcanic",     icon: "🌋" },
+  schofield:   { name: "Schofield",   icon: "🔫" },
+  remington:   { name: "Remington",   icon: "🔫" },
+  mustang:     { name: "Mustang",      icon: "🐎" },
+  barrel:      { name: "Thùng rượu",  icon: "🛢" },
 };
 
 export const ROLE_ICON: Record<string, string> = {

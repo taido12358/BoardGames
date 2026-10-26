@@ -76,7 +76,7 @@ export default function LocalPlayerPanel({ me, you, isCurrentTurn = false, roomI
     ].join(" ")}>
       {healing.active && <span key={`heal-${healing.sequence}`} aria-hidden="true" className="bang-seat-heal-glow" />}
       {turnStarted.active && <span key={`turn-${turnStarted.sequence}`} aria-hidden="true" className="bang-seat-turn-glow" />}
-      {defenseKey != null && <span key={defenseKey} aria-hidden="true" className="bang-defense-flash">🛡</span>}
+      {defenseKey != null && <span key={defenseKey} aria-hidden="true" className="bang-defense-flash">💨</span>}
       {duelLossKey != null && <span key={duelLossKey} aria-hidden="true" className="bang-duel-loss-flash">⚡</span>}
       {hpDelta !== null && (
         <span key={hpDeltaState?.sequence} aria-hidden="true" className={`bang-hp-delta bang-hp-delta-local ${hpDelta > 0 ? "is-heal" : "is-damage"}`}>
@@ -127,7 +127,7 @@ export default function LocalPlayerPanel({ me, you, isCurrentTurn = false, roomI
               data-bang-equipment-name={eq}
               className={`inline-flex items-center gap-1 text-[11px] font-medium rounded-sm border border-[#8b5a2b]/50 bg-[#3a2012]/80 px-2 py-0.5 text-[#e8c07e] shadow-inner ${newEquipment.has(eq) ? changeFlashClass(newEquipment.get(eq)!, "animate-equipment-enter") : ""}`}
             >
-              {eq === "Thùng rượu" ? "🛢" : eq === "Ngựa" ? "🐎" : "🛡"} {eq}
+              {eq === "Thùng rượu" ? "🛢" : eq === "Ngựa" ? "🐎" : "🔫"} {eq}
             </span>
           ))}
           {[...leavingEquipment].map(([eq, sequence]) => (
@@ -136,7 +136,7 @@ export default function LocalPlayerPanel({ me, you, isCurrentTurn = false, roomI
               aria-hidden="true"
               className="bang-equipment-exit inline-flex items-center gap-1 text-[11px] font-medium rounded-sm border border-red-800/50 bg-red-950/70 px-2 py-0.5 text-red-200/80"
             >
-              {eq === "Thùng rượu" ? "🛢" : eq === "Ngựa" ? "🐎" : "🛡"} {eq}
+              {eq === "Thùng rượu" ? "🛢" : eq === "Ngựa" ? "🐎" : "🔫"} {eq}
             </span>
           ))}
         </div>

@@ -38,16 +38,16 @@ const characters: CharacterGuideEntry[] = [
 
 const cards: CardGuideEntry[] = [
   { name: "Bang!", icon: "🔫", type: "Tấn công", effect: "Tấn công một người chơi trong tầm bắn, gây 1 sát thương nếu không bị đỡ.", example: "Chỉ đánh được 1 lá Bang! mỗi lượt, trừ khi trang bị Volcanic." },
-  { name: "Trượt!", icon: "🛡", type: "Phòng thủ", effect: "Chặn một phát Bang! (hoặc Súng Gatling/Người da đỏ! tuỳ trường hợp) nhắm vào bạn." },
+  { name: "Trượt!", icon: "💨", type: "Phòng thủ", effect: "Chặn một phát Bang! (hoặc Súng Gatling/Người da đỏ! tuỳ trường hợp) nhắm vào bạn." },
   { name: "Bia", icon: "🍺", type: "Hồi máu", effect: "Hồi 1 HP (không vượt quá HP tối đa)." },
   { name: "Súng Gatling", icon: "💥", type: "Tấn công diện rộng", effect: "Tấn công TẤT CẢ người chơi khác cùng lúc, không tính khoảng cách." },
   { name: "Đấu súng", icon: "⚔️", type: "Tấn công", effect: "Thách một người chơi bất kỳ đấu súng — hai bên luân phiên đánh Bang!, ai không đánh được sẽ mất 1 HP.", example: "Không tính khoảng cách/tầm bắn." },
-  { name: "Hoảng loạn!", icon: "😱", type: "Hành động", effect: "Lấy ngẫu nhiên 1 lá từ người chơi cách bạn tối đa 1 khoảng cách." },
+  { name: "Hoảng loạn!", icon: "🤚", type: "Hành động", effect: "Lấy ngẫu nhiên 1 lá từ người chơi cách bạn tối đa 1 khoảng cách." },
   { name: "Cat Balou", icon: "🎯", type: "Hành động", effect: "Buộc một người chơi bất kỳ bỏ ngẫu nhiên 1 lá — không giới hạn khoảng cách." },
   { name: "Xe ngựa", icon: "🏇", type: "Hành động", effect: "Rút thêm 2 lá bài." },
-  { name: "Wells Fargo", icon: "💰", type: "Hành động", effect: "Rút thêm 3 lá bài." },
+  { name: "Wells Fargo", icon: "🏦", type: "Hành động", effect: "Rút thêm 3 lá bài." },
   { name: "Người da đỏ!", icon: "🏹", type: "Tấn công diện rộng", effect: "Mọi người chơi khác phải bỏ 1 lá Bang! hoặc mất 1 HP." },
-  { name: "Volcanic / Schofield / Remington", icon: "🔫", type: "Vũ khí", effect: "Trang bị vũ khí mới, thay thế Cattleman mặc định. Tầm bắn lần lượt 1 / 2 / 3.", example: "Volcanic còn cho phép đánh nhiều Bang! trong một lượt." },
+  { name: "Volcanic / Schofield / Remington", icon: "🌋", type: "Vũ khí", effect: "Trang bị vũ khí mới, thay thế Cattleman mặc định. Tầm bắn lần lượt 1 / 2 / 3.", example: "Volcanic còn cho phép đánh nhiều Bang! trong một lượt." },
   { name: "Mustang", icon: "🐎", type: "Trang bị", effect: "Người khác nhìn bạn xa hơn 1 khoảng cách khi nhắm bắn — khó bị Bang! trúng hơn." },
   { name: "Thùng rượu", icon: "🛢", type: "Trang bị", effect: "Khi bị nhắm Bang!, tự động rút 1 lá kiểm tra — nếu ra lá ♥ thì coi như đỡ được." },
 ];
