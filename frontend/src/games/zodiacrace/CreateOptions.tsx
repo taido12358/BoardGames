@@ -2,7 +2,7 @@
 
 /** UI tuỳ chọn tạo phòng riêng cho Đua Xe Hoàng Đạo — chọn số người chơi (2-6), theo đúng khuôn BangCreateOptions. */
 export default function ZodiacRaceCreateOptions({ value, onChange }: CreateOptionsFormProps) {
-  const seatCount = typeof value.seatCount === "number" ? value.seatCount : 4;
+  const seatCount = typeof value.seatCount === "number" ? value.seatCount : 2;
   return (
     <div>
       {/* Nhóm nút chọn 1-trong-N, không phải input đơn lẻ — dùng role="group" + aria-labelledby

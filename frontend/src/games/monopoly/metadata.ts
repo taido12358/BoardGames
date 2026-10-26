@@ -1,6 +1,6 @@
 import type { GameMetadata, InstructionSection } from "../../platform/gameLibraryTypes";
 
-export const monopolyDefaultCreateOptions = { seatCount: 4 };
+export const monopolyDefaultCreateOptions = { seatCount: 2 };
 
 export const monopolyMetadata: GameMetadata = {
   gameKey: "monopoly", title: "CỜ TỈ PHÚ", subtitle: "Mua đất · Xây nhà · Giao dịch",

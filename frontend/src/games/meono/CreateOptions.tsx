@@ -1,7 +1,7 @@
 import type { CreateOptionsFormProps } from "../../platform/gameLibraryTypes";
 
 export default function MeoNoCreateOptions({ value, onChange }: CreateOptionsFormProps) {
-  const seatCount = typeof value.seatCount === "number" ? value.seatCount : 3;
+  const seatCount = typeof value.seatCount === "number" ? value.seatCount : 2;
   return (
     <div>
       <span id="meono-seat-label" className="text-[#e879a4] text-[10px] font-bold uppercase tracking-widest">
