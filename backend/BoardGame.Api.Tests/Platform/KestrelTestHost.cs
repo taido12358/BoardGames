@@ -37,7 +37,7 @@ internal sealed class KestrelTestHost(string postgres, IConfiguration config) : 
         start.Environment["Auth__DevLogOtp"] = "false"; // No OTP is requested from the child host.
         start.Environment["JWT_SECRET"] = config["JWT_SECRET"] is { Length: > 0 } secret ? secret : config["Jwt:Secret"];
         start.Environment["ConnectionStrings__Postgres"] = postgres;
-        start.Environment["ConnectionStrings__Redis"] = "127.0.0.1:1,connectTimeout=50,syncTimeout=100,asyncTimeout=100,abortConnect=false";
+        start.Environment["ConnectionStrings__Redis"] = "127.0.0.1:1,connectTimeout=50,connectRetry=1,syncTimeout=100,asyncTimeout=100,abortConnect=false";
         start.Environment["ConnectionStrings__RabbitMq"] = "amqp://guest:guest@127.0.0.1:1/";
         start.Environment["ConnectionStrings__OpenSearch"] = "http://127.0.0.1:1";
         start.Environment["Minio__Endpoint"] = "127.0.0.1:1";

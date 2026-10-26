@@ -84,7 +84,7 @@ public class AuthApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
                 ["Auth:DevLogOtp"] = "true",
                 // Transport tests deliberately exercise best-effort cache/queue failure without
                 // depending on a developer's running services or long hostname-resolution timeouts.
-                ["ConnectionStrings:Redis"] = "127.0.0.1:1,connectTimeout=50,syncTimeout=100,asyncTimeout=100,abortConnect=false",
+                ["ConnectionStrings:Redis"] = "127.0.0.1:1,connectTimeout=50,connectRetry=1,syncTimeout=100,asyncTimeout=100,abortConnect=false",
                 ["ConnectionStrings:RabbitMq"] = "amqp://guest:guest@127.0.0.1:1/",
                 ["ConnectionStrings:OpenSearch"] = "http://127.0.0.1:1",
                 ["Minio:Endpoint"] = "127.0.0.1:1",

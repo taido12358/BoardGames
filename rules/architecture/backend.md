@@ -21,6 +21,11 @@ biến artifact bị hỏng thành lỗi 500. Legacy không có `moves[].state` 
 
 ## Presence và timeout
 
+Khởi tạo Redis phải giữ các giá trị timeout/retry đã cung cấp trong connection string.
+Không ghi đè ConnectTimeout/ConnectRetry sau `ConfigurationOptions.Parse`: việc đó từng đổi
+fixture fail-fast 50ms thành 5000ms, làm activation của hub sau restart vượt deadline WebSocket
+trên Linux CI. AbortOnConnectFail=false vẫn được giữ để hạ tầng phụ không chặn khởi động lâu dài.
+
 Một SignalR connection theo dõi một phòng. `LeaveRoom` kiểm tra roomId, rời group và đánh dấu
 ghế mất kết nối khi không còn tab nào của cùng user trong phòng đó. Socket còn mở không đồng
 nghĩa với việc vẫn ở phòng. `JoinRoom` sang phòng khác tự tách group/ghế cũ; rời phòng lặp lại

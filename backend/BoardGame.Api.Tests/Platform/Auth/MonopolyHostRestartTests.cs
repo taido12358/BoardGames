@@ -11,12 +11,21 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Testcontainers.PostgreSql;
+using StackExchange.Redis;
 
 namespace BoardGame.Api.Tests.Platform.Auth;
 
 [Collection("AuthApi")]
 public class MonopolyHostRestartTests(AuthApiFactory factory)
 {
+    [Fact]
+    public void RedisConnectionHonorsExplicitTimeoutAndRetryConfiguration()
+    {
+        var actual = ConfigurationOptions.Parse(factory.Services.GetRequiredService<IConnectionMultiplexer>().Configuration);
+        Assert.Equal(50, actual.ConnectTimeout);
+        Assert.Equal(1, actual.ConnectRetry);
+    }
+
     [Theory]
     [InlineData("HouseDemand")]
     [InlineData("HotelDemand")]

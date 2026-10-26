@@ -29,8 +29,8 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(_ =>
     var conn = builder.Configuration.GetConnectionString("Redis") ?? "localhost:6379";
     var options = ConfigurationOptions.Parse(conn);
     options.AbortOnConnectFail = false;
-    options.ConnectRetry = 5;
-    options.ConnectTimeout = 5000;
+    // Preserve timeout/retry values from configuration. Overwriting these here made a cold
+    // unavailable Redis block hub activation after restart despite explicit fail-fast settings.
     return ConnectionMultiplexer.Connect(options);
 });
 builder.Services.AddSingleton<RedisCacheService>();
