@@ -61,37 +61,74 @@ function RolesSection({ roles }: { roles: Extract<InstructionSection, { kind: "r
   );
 }
 
+const TYPE_STYLE: Record<string, { badge: string; border: string; fromBg: string; glow: string }> = {
+  "Tấn công":           { badge: "bg-red-900/50 border-red-700/50 text-red-300",        border: "border-red-900/60",    fromBg: "from-[#2b1010]", glow: "hover:shadow-[0_0_10px_rgba(220,38,38,0.2)]"   },
+  "Tấn công diện rộng": { badge: "bg-orange-900/50 border-orange-700/50 text-orange-300",border: "border-orange-900/60", fromBg: "from-[#2b1a0e]", glow: "hover:shadow-[0_0_10px_rgba(249,115,22,0.2)]"  },
+  "Phòng thủ":          { badge: "bg-sky-900/50 border-sky-700/50 text-sky-300",         border: "border-sky-900/60",    fromBg: "from-[#0f1828]", glow: "hover:shadow-[0_0_10px_rgba(56,189,248,0.2)]"  },
+  "Hồi máu":            { badge: "bg-green-900/50 border-green-700/50 text-green-300",   border: "border-green-900/60",  fromBg: "from-[#0d2010]", glow: "hover:shadow-[0_0_10px_rgba(34,197,94,0.2)]"   },
+  "Hành động":          { badge: "bg-purple-900/50 border-purple-700/50 text-purple-300",border: "border-purple-900/60", fromBg: "from-[#1a1028]", glow: "hover:shadow-[0_0_10px_rgba(168,85,247,0.2)]"  },
+  "Vũ khí":             { badge: "bg-amber-900/50 border-amber-700/50 text-amber-300",   border: "border-amber-900/60",  fromBg: "from-[#2b2013]", glow: "hover:shadow-[0_0_10px_rgba(245,158,11,0.2)]"  },
+  "Trang bị":           { badge: "bg-teal-900/50 border-teal-700/50 text-teal-300",      border: "border-teal-900/60",   fromBg: "from-[#0d2020]", glow: "hover:shadow-[0_0_10px_rgba(20,184,166,0.2)]"  },
+};
+const TYPE_STYLE_DEFAULT = { badge: "bg-amber-900/40 border-amber-700/40 text-amber-400", border: "border-[#7a5c2e]/60", fromBg: "from-[#2b2013]", glow: "hover:shadow-[0_0_8px_rgba(245,158,11,0.15)]" };
+
 function CardEntry({ card }: { card: CardGuideEntry }) {
   const [open, setOpen] = useState(false);
   const panelId = useId();
+  const ts = TYPE_STYLE[card.type] ?? TYPE_STYLE_DEFAULT;
   return (
     <button
       type="button"
       onClick={() => setOpen((o) => !o)}
       aria-expanded={open}
       aria-controls={panelId}
-      className="text-left rounded-sm border border-[#7a5c2e]/60 bg-gradient-to-b from-[#2b2013] to-[#1c150c] p-3 hover:border-amber-500/60 hover:shadow-[0_0_8px_rgba(245,158,11,0.15)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-300 transition-all"
+      className={`text-left w-full rounded-sm border ${ts.border} bg-gradient-to-b ${ts.fromBg} to-[#1c150c] p-3 ${ts.glow} focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-300 transition-all`}
     >
       <div className="text-2xl text-center">{card.icon}</div>
-      <div className="text-sm font-bold text-[#f5d09d] text-center mt-1">{card.name}</div>
-      <div className="text-[10px] text-amber-300/60 text-center uppercase tracking-wide">{card.type}</div>
+      <div className="text-sm font-bold text-[#f5d09d] text-center mt-1 leading-tight">{card.name}</div>
+      <div className={`mt-1.5 text-[9px] font-semibold text-center uppercase tracking-wide rounded-full px-2 py-0.5 border ${ts.badge}`}>{card.type}</div>
       <div id={panelId} aria-hidden={!open} className={`game-guide-collapse ${open ? "is-open" : ""}`}>
         <div className="min-h-0 overflow-hidden">
-        <div className="mt-2 pt-2 border-t border-amber-900/40 space-y-1">
-          <p className="text-xs text-[#d4b996]/75">{card.effect}</p>
-          {card.example && <p className="text-[11px] text-[#e8c07e]/70 italic">{card.example}</p>}
-        </div>
+          <div className="mt-2 pt-2 border-t border-amber-900/40 space-y-1">
+            <p className="text-xs text-[#d4b996]/75">{card.effect}</p>
+            {card.example && <p className="text-[11px] text-[#e8c07e]/70 italic">{card.example}</p>}
+          </div>
         </div>
       </div>
-      {!open && <div className="text-[10px] text-amber-800/50 text-center mt-1">nhấn để xem chi tiết</div>}
+      {!open && <div className="text-[10px] text-amber-800/50 text-center mt-1.5">nhấn để xem</div>}
     </button>
   );
 }
 
 function CardsSection({ cards }: { cards: CardGuideEntry[] }) {
+  const types = Array.from(new Set(cards.map((c) => c.type)));
+  const [filter, setFilter] = useState("Tất cả");
+  const visible = filter === "Tất cả" ? cards : cards.filter((c) => c.type === filter);
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5">
-      {cards.map((c) => <CardEntry key={c.name} card={c} />)}
+    <div className="space-y-3">
+      <div className="flex flex-wrap gap-1.5">
+        {["Tất cả", ...types].map((t) => {
+          const active = filter === t;
+          const ts = TYPE_STYLE[t];
+          return (
+            <button
+              key={t}
+              type="button"
+              onClick={() => setFilter(t)}
+              className={`text-[11px] rounded-full px-3 py-1 border font-semibold uppercase tracking-wide transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-amber-300 ${
+                active
+                  ? ts ? `${ts.badge} shadow-sm` : "bg-amber-700/80 border-amber-500/70 text-amber-100"
+                  : "border-amber-900/40 bg-[#1a130a] text-amber-700/60 hover:text-amber-400 hover:border-amber-700/50"
+              }`}
+            >
+              {t === "Tất cả" ? `Tất cả (${cards.length})` : t}
+            </button>
+          );
+        })}
+      </div>
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5">
+        {visible.map((c) => <CardEntry key={c.name} card={c} />)}
+      </div>
     </div>
   );
 }
