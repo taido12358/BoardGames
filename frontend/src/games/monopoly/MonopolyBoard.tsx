@@ -107,7 +107,11 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
             <h2 className="text-3xl font-black tracking-widest">CỜ TỈ PHÚ</h2>
             <p className="max-w-sm text-sm text-emerald-100/75">Mua đất. Xây dựng. Thương lượng.<br />Quản lý tiền mặt để ở lại đến cuối cùng.</p>
             {state.started && <div role="status" aria-live="polite" className="space-y-3">
-              <p className="text-lg">{state.winner ? `🏆 ${state.players[Number(state.winner.slice(1))]?.name} chiến thắng!` : `${TOKENS[currentActor]} ${state.players[currentActor]?.name}: ${PHASES[state.phase] ?? state.phase}`}</p>
+              {state.winner ? (
+                <p className="monopoly-winner-banner text-2xl font-black text-amber-300">🏆 {state.players[Number(state.winner.slice(1))]?.name} chiến thắng!</p>
+              ) : (
+                <p className="text-lg">{TOKENS[currentActor]} {state.players[currentActor]?.name}: {PHASES[state.phase] ?? state.phase}</p>
+              )}
               <div className="flex justify-center gap-3" aria-label={`Xúc xắc ${state.dice.join(" và ")}`} role="img">
                 {state.dice.map((n, i) => (
                   <div key={i} className={`monopoly-die${diceRolling ? " monopoly-die-rolling" : ""}`} style={diceRolling ? { animationDelay: `${i * 70}ms` } : {}}>
