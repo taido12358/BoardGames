@@ -188,8 +188,8 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
           {!deciding && <p className="text-sm text-amber-200/70">Chờ {state.players[currentActor]?.name} quyết định.</p>}
           <div className="flex flex-wrap gap-2">
             {state.phase === "Roll" && <>{action("🎲 Đổ xúc xắc", "ROLL", false, deciding ? "monopoly-roll-btn-ready" : "")}{player?.inJail && <>{action("Nộp 50 ra tù", "PAY_JAIL", player.cash < 50)}{action("Dùng thẻ ra tù", "JAIL_CARD", player.jailCards.length === 0)}</>}</>}
-            {state.phase === "Buy" && <>{action(`Mua với giá ${map.tiles[state.players[state.turn].position].price}`, "BUY")}{action("Đưa ra đấu giá", "DECLINE")}</>}
-            {state.phase === "End" && action(state.extraRoll ? "Tiếp tục lượt đổ đôi" : "Kết thúc lượt", "END")}
+            {state.phase === "Buy" && <>{action(`🏠 Mua với giá ${map.tiles[state.players[state.turn].position].price}`, "BUY", false, deciding ? "monopoly-action-pulse" : "")}{action("Đưa ra đấu giá", "DECLINE")}</>}
+            {state.phase === "End" && action(state.extraRoll ? "↩ Tiếp tục lượt đổ đôi" : "✓ Kết thúc lượt", "END", false, deciding ? "monopoly-action-pulse" : "")}
             {state.phase === "Debt" && <><p className="w-full text-sm">Nợ {state.payments[0]?.amount} cho {state.payments[0]?.to === null ? "ngân hàng" : state.players[state.payments[0]?.to ?? -1]?.name}. Bán nhà hoặc thế chấp để thanh toán.</p>{action("Thanh toán", "SETTLE")}{action("Tuyên bố phá sản", "BANKRUPT")}</>}
             {state.phase === "Inheritance" && inheritedTile && <>
               <p className="w-full text-sm">Thừa kế {inheritedTile.name}: trả {inheritanceInterest} lãi để giữ thế chấp, hoặc {inheritedTile.price / 2 + inheritanceInterest} để giải chấp ngay.</p>

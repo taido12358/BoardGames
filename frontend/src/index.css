@@ -2163,6 +2163,16 @@ button[draggable="true"]:active { cursor: grabbing; }
   color: #fde68a !important;
 }
 
+/* ─── Monopoly: Generic primary action pulse (Buy / End Turn) ─────────── */
+@keyframes monopolyActionPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+  50% { box-shadow: 0 0 0 5px rgba(245, 158, 11, 0.22), 0 0 10px rgba(245, 158, 11, 0.1); }
+}
+.monopoly-action-pulse {
+  animation: monopolyActionPulse 2.2s ease-in-out infinite;
+  border-color: rgba(245, 158, 11, 0.6) !important;
+}
+
 /* ─── Monopoly: Game log entry slide-in ──────────────────────────────── */
 @keyframes monopolyLogEntry {
   from { opacity: 0; transform: translateX(-10px); }
@@ -2466,6 +2476,7 @@ button[draggable="true"]:active { cursor: grabbing; }
   .monopoly-player-active { animation: none !important; }
   .game-library-waiting-badge { animation: none !important; }
   .monopoly-roll-btn-ready { animation: none !important; border-color: rgba(245, 158, 11, 0.6) !important; color: #fde68a !important; }
+  .monopoly-action-pulse { animation: none !important; border-color: rgba(245, 158, 11, 0.55) !important; }
   .monopoly-log-entry { animation: none !important; opacity: 1; }
   .monopoly-token-bounce { animation: none !important; }
   .monopoly-winner-banner { animation: monopolyWinnerEntry 0.65s cubic-bezier(0.34, 1.5, 0.64, 1) both !important; }
