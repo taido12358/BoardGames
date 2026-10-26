@@ -37,6 +37,22 @@ public class OAnQuanRulesTests
         };
 
     [Fact]
+    public void ConfirmedMovesKeepIncreasingSequenceAndSurviveSnapshotSerialization()
+    {
+        var state = OAnQuanRules.CreateState();
+        for (var sequence = 1; sequence <= 2; sequence++)
+        {
+            var side = state.Turn;
+            var pit = Enumerable.Range(0, state.Pits.Length).First(index =>
+                OAnQuanRules.ValidMove(state, side, index, "cw"));
+            OAnQuanRules.ApplyMove(state, side, pit, "cw");
+            Assert.Equal(new OAnQuanLastMove(pit, "cw", side, sequence), state.LastMove);
+            state = BoardGame.Api.Platform.GameJson.Deserialize<GameState>(BoardGame.Api.Platform.GameJson.Serialize(state));
+            Assert.Equal(sequence, state.LastMove!.Sequence);
+        }
+    }
+
+    [Fact]
     public void CreateState_InitialSetup_HasCorrectStonesAndTurn()
     {
         var s = OAnQuanRules.CreateState();

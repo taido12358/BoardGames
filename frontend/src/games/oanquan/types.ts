@@ -13,6 +13,7 @@ export interface GameState {
   scores: [number, number];
   turn: Side;
   winner: Side | "DRAW" | null;
+  lastMove?: { pitIndex: number; direction: Direction; side: Side; sequence: number } | null;
 }
 
 export type OAnQuanMove = { pitIndex: number; direction: Direction };

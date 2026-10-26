@@ -174,6 +174,20 @@ function sameState(left: GameState, right: GameState): boolean {
 }
 
 function inferMove(previous: GameState, current: GameState): Omit<SowingAnimation, "id" | "startedAt"> | null {
+  const confirmedMove = current.lastMove;
+  if (confirmedMove && confirmedMove.sequence !== previous.lastMove?.sequence) {
+    const simulation = simulate(previous, confirmedMove.pitIndex, confirmedMove.direction);
+    if (!simulation || !sameState(simulation.state, current)) return null;
+    return {
+      start: confirmedMove.pitIndex,
+      direction: confirmedMove.direction,
+      steps: simulation.steps,
+      capture: simulation.capture,
+      settlements: simulation.settlements,
+      refills: simulation.refills,
+    };
+  }
+
   const matches: Omit<SowingAnimation, "id" | "startedAt">[] = [];
   const sidePits = DAN_INDICES[previous.turn];
   for (const start of sidePits) {
