@@ -27,6 +27,12 @@ export const oanQuanInstructions: InstructionSection[] = [
     ],
   },
   {
+    id: "board",
+    label: "BÀN CỜ",
+    kind: "board",
+    boardKind: "oanquan",
+  },
+  {
     id: "how-to-play",
     label: "CÁCH CHƠI",
     kind: "text",

@@ -1,5 +1,5 @@
 import { useId, useRef, useState } from "react";
-import type { CardGuideEntry, InstructionSection } from "../platform/gameLibraryTypes";
+import type { CardGuideEntry, InstructionSection, RacerGuideEntry } from "../platform/gameLibraryTypes";
 
 interface Props {
   sections: InstructionSection[];
@@ -34,11 +34,14 @@ function FlowSection({ steps }: { steps: string[] }) {
 }
 
 function RolesSection({ roles }: { roles: Extract<InstructionSection, { kind: "roles" }>["roles"] }) {
+  const hasHidden = roles.some((r) => r.hidden);
   return (
     <div className="space-y-3">
-      <p className="text-xs text-amber-300/70 bg-amber-950/30 border border-amber-800/40 rounded-sm px-3 py-2">
-        ⚠ Trong ván thật, chỉ Cảnh sát trưởng công khai — các vai trò khác được GIỮ BÍ MẬT cho tới khi lộ hoặc bị loại.
-      </p>
+      {hasHidden && (
+        <p className="text-xs text-amber-300/70 bg-amber-950/30 border border-amber-800/40 rounded-sm px-3 py-2">
+          ⚠ Trong ván thật, chỉ Cảnh sát trưởng công khai — các vai trò khác được GIỮ BÍ MẬT cho tới khi lộ hoặc bị loại.
+        </p>
+      )}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {roles.map((r) => (
           <div key={r.name} className="relative overflow-hidden rounded-sm border border-amber-900/40 bg-[#1a1208] p-3.5">
@@ -157,6 +160,88 @@ function CharactersSection({ characters }: { characters: Extract<InstructionSect
   );
 }
 
+const ZODIAC_COLOR: Record<string, string> = {
+  "♈": "from-red-950 border-red-800/60 text-red-300",
+  "♉": "from-emerald-950 border-emerald-800/60 text-emerald-300",
+  "♊": "from-yellow-950 border-yellow-800/60 text-yellow-300",
+  "♋": "from-sky-950 border-sky-800/60 text-sky-300",
+  "♌": "from-orange-950 border-orange-800/60 text-orange-300",
+  "♍": "from-teal-950 border-teal-800/60 text-teal-300",
+  "♎": "from-violet-950 border-violet-800/60 text-violet-300",
+  "♏": "from-red-950 border-red-900/60 text-red-400",
+  "♐": "from-purple-950 border-purple-800/60 text-purple-300",
+  "♑": "from-stone-900 border-stone-700/60 text-stone-300",
+  "♒": "from-blue-950 border-blue-800/60 text-blue-300",
+  "♓": "from-cyan-950 border-cyan-800/60 text-cyan-300",
+};
+
+function RacersSection({ racers }: { racers: RacerGuideEntry[] }) {
+  return (
+    <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+      {racers.map((r) => {
+        const colorCls = ZODIAC_COLOR[r.sign] ?? "from-amber-950 border-amber-800/60 text-amber-300";
+        return (
+          <div key={r.name} className={`relative overflow-hidden rounded-sm border bg-gradient-to-b ${colorCls} to-[#0d0a07] p-2.5 text-center`}>
+            <div className="pointer-events-none absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+            <div className="text-2xl">{r.emoji}</div>
+            <div className="text-[11px] font-bold text-[#f5d09d] mt-1 leading-tight">{r.name}</div>
+            <div className="text-lg leading-none mt-0.5 opacity-60">{r.sign}</div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function OAnQuanBoardSection() {
+  const QUAN_STYLE = "rounded border border-amber-600/70 bg-gradient-to-b from-amber-900/60 to-amber-950/80 p-2 text-center";
+  const DAN_STYLE = "rounded border border-[#5c3818]/60 bg-[#1a1208]/80 p-2 text-center";
+  const fivePits = Array.from({ length: 5 });
+  return (
+    <div className="space-y-3">
+      <p className="text-xs text-amber-700/60 italic text-center">Bố cục ban đầu — mỗi ô Dân có 5 quân, mỗi ô Quan có 10 quân.</p>
+      {/* Board layout: Quan A | top row (Người chơi 2) | Quan B */}
+      <div className="grid grid-cols-[44px_1fr_44px] gap-1.5 items-center text-[11px]">
+        {/* Left Quan */}
+        <div className={`${QUAN_STYLE} row-span-2`}>
+          <div className="text-lg">👑</div>
+          <div className="font-bold text-amber-300 leading-tight">Quan</div>
+          <div className="text-amber-400/70 mt-0.5">10 quân</div>
+        </div>
+        {/* Top row — player 2 side (reversed) */}
+        <div className="grid grid-cols-5 gap-1">
+          {[...fivePits].reverse().map((_, i) => (
+            <div key={i} className={DAN_STYLE}>
+              <div className="text-sm">🌾</div>
+              <div className="text-[#d6c1a8]/60 mt-0.5">5</div>
+            </div>
+          ))}
+        </div>
+        {/* Right Quan */}
+        <div className={`${QUAN_STYLE} row-span-2`}>
+          <div className="text-lg">👑</div>
+          <div className="font-bold text-amber-300 leading-tight">Quan</div>
+          <div className="text-amber-400/70 mt-0.5">10 quân</div>
+        </div>
+        {/* Bottom row — player 1 side */}
+        <div className="grid grid-cols-5 gap-1">
+          {fivePits.map((_, i) => (
+            <div key={i} className={DAN_STYLE}>
+              <div className="text-sm">🌾</div>
+              <div className="text-[#d6c1a8]/60 mt-0.5">5</div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="flex justify-between text-[10px] text-amber-700/50 px-[52px]">
+        <span>← Người chơi 2</span>
+        <span>Người chơi 1 →</span>
+      </div>
+      <p className="text-xs text-[#d6c1a8]/60 text-center">2 ô Quan ở hai đầu · 5 ô Dân mỗi bên · Tổng 70 quân</p>
+    </div>
+  );
+}
+
 function DistanceDemoSection({ paragraphs }: { paragraphs: string[] }) {
   return (
     <div className="space-y-4">
@@ -233,6 +318,8 @@ export default function GameInstructions({ sections }: Props) {
         {section.kind === "cards" && <CardsSection cards={section.cards} />}
         {section.kind === "characters" && <CharactersSection characters={section.characters} />}
         {section.kind === "distanceDemo" && <DistanceDemoSection paragraphs={section.paragraphs} />}
+        {section.kind === "racers" && <RacersSection racers={section.racers} />}
+        {section.kind === "board" && section.boardKind === "oanquan" && <OAnQuanBoardSection />}
       </div>
     </div>
   );

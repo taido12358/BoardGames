@@ -28,7 +28,9 @@ export type InstructionSection =
   | { id: string; label: string; kind: "cards"; cards: CardGuideEntry[] }
   | { id: string; label: string; kind: "characters"; characters: CharacterGuideEntry[] }
   | { id: string; label: string; kind: "distanceDemo"; paragraphs: string[] }
-  | { id: string; label: string; kind: "flow"; steps: string[] };
+  | { id: string; label: string; kind: "flow"; steps: string[] }
+  | { id: string; label: string; kind: "racers"; racers: RacerGuideEntry[] }
+  | { id: string; label: string; kind: "board"; boardKind: "oanquan" };
 
 export interface RoleGuideEntry {
   name: string;
@@ -50,6 +52,12 @@ export interface CharacterGuideEntry {
   hp: number;
   ability: string;
   abilityName: string;
+}
+
+export interface RacerGuideEntry {
+  name: string;
+  emoji: string;
+  sign: string;
 }
 
 /** UI tuỳ chọn khi tạo phòng, do TỪNG GAME tự cung cấp (đăng ký qua gameRegistry.ts) — GameDetails
