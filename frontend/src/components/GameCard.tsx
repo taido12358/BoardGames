@@ -71,7 +71,7 @@ export default function GameCard({ metadata: m, waitingRooms, disabled = false, 
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_40%,rgba(0,0,0,0.65)_100%)] pointer-events-none z-10" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/20 z-10" />
         {waitingRooms !== undefined && waitingRooms > 0 && (
-          <span className="absolute top-2 right-2 rounded-full bg-amber-900/80 border border-amber-600/50 px-2.5 py-1 text-[11px] font-semibold text-amber-200 shadow-[0_0_8px_rgba(245,158,11,0.3)]">
+          <span className="game-library-waiting-badge absolute top-2 right-2 rounded-full bg-amber-900/80 border border-amber-600/50 px-2.5 py-1 text-[11px] font-semibold text-amber-200">
             🕯 <AnimatedNumber value={waitingRooms} durationMs={320} /> phòng đang chờ
           </span>
         )}

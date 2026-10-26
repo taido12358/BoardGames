@@ -1958,6 +1958,142 @@ button[draggable="true"]:active { cursor: grabbing; }
 }
 .vay-capture-ring { transform-box: fill-box; transform-origin: center; animation: vayCaptureRing 560ms cubic-bezier(0.16, 0.72, 0.25, 1) var(--vay-capture-delay, 0ms) both; }
 
+/* ============================================================
+   MONOPOLY (CỜ TỈ PHÚ) ANIMATIONS
+   ============================================================ */
+
+@keyframes monopolyDieBounce {
+  0%   { transform: translateY(0) rotate(0deg) scale(1); }
+  18%  { transform: translateY(-14px) rotate(-20deg) scale(1.12); }
+  36%  { transform: translateY(5px) rotate(12deg) scale(0.94); }
+  54%  { transform: translateY(-9px) rotate(-8deg) scale(1.07); }
+  72%  { transform: translateY(3px) rotate(4deg) scale(0.98); }
+  88%  { transform: translateY(-3px) rotate(-2deg) scale(1.02); }
+  100% { transform: translateY(0) rotate(0deg) scale(1); }
+}
+
+.monopoly-die {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 0.875rem;
+  border: 2px solid rgba(251, 191, 36, 0.25);
+  background: rgba(28, 25, 23, 0.9);
+  box-shadow: inset 0 2px 5px rgba(0,0,0,0.55), 0 1px 4px rgba(0,0,0,0.45);
+  transition: box-shadow 0.35s ease, border-color 0.35s ease;
+  will-change: transform;
+  user-select: none;
+}
+
+.monopoly-die-rolling {
+  animation: monopolyDieBounce 0.88s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+  border-color: rgba(251, 191, 36, 0.7) !important;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.4), 0 0 18px rgba(251, 191, 36, 0.55) !important;
+}
+
+.monopoly-die-rolling:nth-child(2) { animation-delay: 70ms; }
+
+@keyframes monopolyCardOverlayFade {
+  0%   { opacity: 0; }
+  10%  { opacity: 1; }
+  78%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes monopolyCardFlipIn {
+  0%   { transform: perspective(900px) rotateY(-90deg) scale(0.82); opacity: 0; }
+  40%  { transform: perspective(900px) rotateY(9deg) scale(1.05); opacity: 1; }
+  62%  { transform: perspective(900px) rotateY(-4deg) scale(1.01); opacity: 1; }
+  100% { transform: perspective(900px) rotateY(0deg) scale(1); opacity: 1; }
+}
+
+@keyframes monopolyCardShimmer {
+  0%   { background-position: -220% center; }
+  100% { background-position: 220% center; }
+}
+
+.monopoly-card-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.62);
+  backdrop-filter: blur(5px);
+  animation: monopolyCardOverlayFade 3.5s ease forwards;
+  cursor: pointer;
+}
+
+.monopoly-card-reveal {
+  max-width: 22rem;
+  width: 90%;
+  animation: monopolyCardFlipIn 0.55s cubic-bezier(0.34, 1.5, 0.64, 1) 0.08s both;
+}
+
+.monopoly-card-inner {
+  background: linear-gradient(145deg, #1c1917 0%, #292524 55%, #1c1917 100%);
+  border: 2px solid rgba(251, 191, 36, 0.5);
+  border-radius: 1.25rem;
+  padding: 2rem 1.75rem;
+  box-shadow: 0 28px 64px rgba(0,0,0,0.72), 0 0 44px rgba(251, 191, 36, 0.14), inset 0 1px 0 rgba(255,255,255,0.07);
+  position: relative;
+  overflow: hidden;
+}
+
+.monopoly-card-inner::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 38%, rgba(251, 191, 36, 0.07) 50%, transparent 62%);
+  background-size: 220% 100%;
+  animation: monopolyCardShimmer 2.8s linear 0.55s 2;
+  pointer-events: none;
+}
+
+.monopoly-card-chance .monopoly-card-inner {
+  border-color: rgba(251, 191, 36, 0.7);
+  box-shadow: 0 28px 64px rgba(0,0,0,0.72), 0 0 44px rgba(251, 191, 36, 0.26), inset 0 1px 0 rgba(255,255,255,0.07);
+}
+
+.monopoly-card-community .monopoly-card-inner {
+  border-color: rgba(167, 243, 208, 0.52);
+  box-shadow: 0 28px 64px rgba(0,0,0,0.72), 0 0 44px rgba(52, 211, 153, 0.18), inset 0 1px 0 rgba(255,255,255,0.07);
+}
+
+@keyframes monopolyTokenLand {
+  0%   { transform: scale(1) translateY(0); filter: none; }
+  28%  { transform: scale(1.4) translateY(-5px); filter: drop-shadow(0 0 6px rgba(251, 191, 36, 0.8)); }
+  52%  { transform: scale(0.88) translateY(2px); filter: drop-shadow(0 0 3px rgba(251, 191, 36, 0.4)); }
+  72%  { transform: scale(1.12) translateY(-2px); filter: none; }
+  100% { transform: scale(1) translateY(0); filter: none; }
+}
+
+.monopoly-token-land {
+  display: inline-block;
+  animation: monopolyTokenLand 0.52s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+
+/* Active player panel glow */
+@keyframes monopolyPlayerPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0); }
+  50% { box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.16), 0 0 20px rgba(251, 191, 36, 0.16); }
+}
+.monopoly-player-active {
+  animation: monopolyPlayerPulse 2.1s ease-in-out infinite;
+}
+
+/* Game library — live waiting rooms badge glow */
+@keyframes waitingBadgeLive {
+  0%, 100% { box-shadow: 0 0 6px rgba(245, 158, 11, 0.22); opacity: 1; }
+  50% { box-shadow: 0 0 16px rgba(245, 158, 11, 0.55), 0 0 32px rgba(245, 158, 11, 0.14); opacity: 0.92; }
+}
+.game-library-waiting-badge {
+  animation: waitingBadgeLive 2.4s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   /* Future and third-party cues should also respect reduced motion by default. */
   *, *::before, *::after { transition-duration: 1ms !important; transition-delay: 0ms !important; scroll-behavior: auto !important; animation-duration: 1ms !important; animation-delay: 0ms !important; animation-iteration-count: 1 !important; }
@@ -2233,4 +2369,11 @@ button[draggable="true"]:active { cursor: grabbing; }
   }
   .bang-defense-flash, .bang-duel-loss-flash { animation: none !important; opacity: 0.85; transform: none; }
   .bang-defense-flash::after, .bang-duel-loss-flash::after { animation: none !important; opacity: 0.72; transform: scale(1.15); }
+  .monopoly-die-rolling { animation: none !important; border-color: rgba(251, 191, 36, 0.7) !important; box-shadow: 0 0 10px rgba(251, 191, 36, 0.45) !important; }
+  .monopoly-card-overlay { animation: none !important; opacity: 1; backdrop-filter: blur(5px); }
+  .monopoly-card-reveal { animation: none !important; }
+  .monopoly-card-inner::before { animation: none !important; opacity: 0; }
+  .monopoly-token-land { animation: none !important; }
+  .monopoly-player-active { animation: none !important; }
+  .game-library-waiting-badge { animation: none !important; }
 }

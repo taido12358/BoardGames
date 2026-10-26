@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useGameStore } from "../../platform/gameStore";
 import { ConnectionBanner, DisconnectBadge, LeaveRoomButton, RematchButton, RoomErrorBanner, RoomStatusBanner } from "../../platform/RoomShell";
 import { actor, boardPosition, GROUP_COLORS } from "./types";
@@ -23,6 +23,33 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
   const connectionState = replayRoom ? "connected" : live.connectionState;
   const [selected, setSelected] = useState(0);
   const [bid, setBid] = useState(10);
+  const [diceRolling, setDiceRolling] = useState(false);
+  const [cardOverlay, setCardOverlay] = useState<{ text: string; kind: "chance" | "community" | "other" } | null>(null);
+  const prevDiceKey = useRef<string>("");
+  const prevCard = useRef<string>("");
+
+  const gameState = (room?.state ?? null) as MonopolyState | null;
+  const diceKey = gameState?.dice?.some(n => n > 0) ? (gameState.dice ?? []).join(",") : "";
+  const lastCardText = gameState?.lastCard ?? "";
+
+  useEffect(() => {
+    if (!diceKey || diceKey === prevDiceKey.current) return;
+    prevDiceKey.current = diceKey;
+    setDiceRolling(true);
+    const t = setTimeout(() => setDiceRolling(false), 920);
+    return () => clearTimeout(t);
+  }, [diceKey]);
+
+  useEffect(() => {
+    if (!lastCardText || lastCardText === prevCard.current) return;
+    prevCard.current = lastCardText;
+    const lower = lastCardText.toLowerCase();
+    const kind = lower.includes("cộng đồng") ? "community" : lower.includes("may mắn") ? "chance" : "other";
+    setCardOverlay({ text: lastCardText, kind });
+    const t = setTimeout(() => setCardOverlay(null), 3500);
+    return () => clearTimeout(t);
+  }, [lastCardText]);
+
   if (!room) return null;
   const map = room.map as MonopolyMap | null;
   const state = room.state as MonopolyState | null;
@@ -72,7 +99,7 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
               <span className="p-0.5">{t.name}</span>
               {t.price > 0 && <span>{t.price}</span>}
               {p.owner !== null && <span title={state.players[p.owner]?.name}>{TOKENS[p.owner]}{p.mortgaged ? " 🔒" : p.buildings === 5 ? " 🏨" : p.buildings > 0 ? ` 🏠${p.buildings}` : ""}</span>}
-              <span className="mt-auto text-xs" aria-hidden="true">{occupants.map(i => TOKENS[i]).join("")}</span>
+              <span className="mt-auto text-xs" aria-hidden="true">{occupants.map(i => <span key={i} className="monopoly-token-land">{TOKENS[i]}</span>)}</span>
             </button>;
           })}
           <div className="col-start-2 col-end-11 row-start-2 row-end-11 flex flex-col items-center justify-center gap-5 overflow-auto p-5 text-center">
@@ -81,9 +108,15 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
             <p className="max-w-sm text-sm text-emerald-100/75">Mua đất. Xây dựng. Thương lượng.<br />Quản lý tiền mặt để ở lại đến cuối cùng.</p>
             {state.started && <div role="status" aria-live="polite" className="space-y-3">
               <p className="text-lg">{state.winner ? `🏆 ${state.players[Number(state.winner.slice(1))]?.name} chiến thắng!` : `${TOKENS[currentActor]} ${state.players[currentActor]?.name}: ${PHASES[state.phase] ?? state.phase}`}</p>
-              <p className="text-4xl" aria-label={`Xúc xắc ${state.dice.join(" và ")}`}>{state.dice.map(n => n > 0 ? ["⚀","⚁","⚂","⚃","⚄","⚅"][n-1] : "◇").join(" ")}</p>
+              <div className="flex justify-center gap-3" aria-label={`Xúc xắc ${state.dice.join(" và ")}`} role="img">
+                {state.dice.map((n, i) => (
+                  <div key={i} className={`monopoly-die${diceRolling ? " monopoly-die-rolling" : ""}`} style={diceRolling ? { animationDelay: `${i * 70}ms` } : {}}>
+                    <span className="text-3xl" aria-hidden="true">{n > 0 ? ["⚀","⚁","⚂","⚃","⚄","⚅"][n-1] : "◇"}</span>
+                  </div>
+                ))}
+              </div>
               {state.utilityDice && <p className="text-sm text-amber-200">Xúc xắc tính thuê dịch vụ: {state.utilityDice.join(" + ")} = {state.utilityDice.reduce((sum,n)=>sum+n,0)}</p>}
-              {state.lastCard && <p className="max-w-sm rounded border border-amber-700 bg-stone-950/70 p-3 text-sm">{state.lastCard}</p>}
+              {state.lastCard && !cardOverlay && <p className="max-w-sm rounded border border-amber-700 bg-stone-950/70 p-3 text-sm">{state.lastCard}</p>}
               {state.extraRoll && <p className="text-sm text-amber-300">Đổ đôi — được đi thêm sau khi xử lý ô này.</p>}
             </div>}
           </div>
@@ -146,7 +179,7 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
       </aside>
     </div>
     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{state.players.map((p,i) => <div key={i}
-      className={`rounded-lg border p-3 ${p.bankrupt ? "border-stone-800 opacity-50" : i === currentActor ? "border-amber-400 bg-amber-950/50" : "border-amber-900"}`}>
+      className={`rounded-lg border p-3 ${p.bankrupt ? "border-stone-800 opacity-50" : i === currentActor ? "border-amber-400 bg-amber-950/50 monopoly-player-active" : "border-amber-900"}`}>
       <h2 className="font-bold">{TOKENS[i]} {p.name}{i === seat ? " (Bạn)" : ""}</h2>
       <p>{p.bankrupt ? "Đã phá sản" : `${p.cash.toLocaleString("vi-VN")} · ${map.tiles[p.position].name}`}</p>
       {p.inJail && <p className="text-sm">Trong tù · Đã thử {p.jailAttempts}/3</p>}
@@ -156,5 +189,18 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
     <details open className="rounded-xl border border-amber-900 p-4"><summary className="cursor-pointer font-semibold">Nhật ký ván đấu</summary>
       <ol className="mt-3 max-h-52 overflow-y-auto space-y-1 text-sm text-amber-200/80">{state.log.map((line,i) => <li key={i}>{line}</li>)}</ol>
     </details>
+    {cardOverlay && (
+      <div className={`monopoly-card-overlay monopoly-card-${cardOverlay.kind}`} onClick={() => setCardOverlay(null)} role="dialog" aria-modal="true" aria-label="Rút thẻ">
+        <div className="monopoly-card-reveal">
+          <div className="monopoly-card-inner text-center">
+            <p className="mb-3 text-xs font-bold uppercase tracking-widest text-amber-400/75">
+              {cardOverlay.kind === "chance" ? "🎲 Thẻ may mắn" : cardOverlay.kind === "community" ? "📦 Thẻ cộng đồng" : "🃏 Rút thẻ"}
+            </p>
+            <p className="text-lg leading-relaxed text-stone-100">{cardOverlay.text}</p>
+            <p className="mt-4 text-xs text-stone-500">Nhấn để đóng</p>
+          </div>
+        </div>
+      </div>
+    )}
   </section>;
 }
