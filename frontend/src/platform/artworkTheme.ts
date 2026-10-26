@@ -15,5 +15,6 @@ export const ARTWORK_BG: Record<GameMetadata["accent"], string> = {
   graph: "bg-[radial-gradient(circle_at_30%_20%,#2a3a6b_0%,#151d3d_60%,#0a0e1f_100%)]",
   folk: "bg-[radial-gradient(circle_at_30%_20%,#3d4a2a_0%,#232b17_60%,#12160b_100%)]",
   zodiac: "bg-[radial-gradient(circle_at_30%_20%,#4a2a6b_0%,#251740_60%,#120a20_100%)]",
+  kittens: "bg-[radial-gradient(circle_at_30%_20%,#6b1a3a_0%,#3a0d1e_60%,#1a0610_100%)]",
   default: "bg-[radial-gradient(circle_at_30%_20%,#334155_0%,#1e293b_60%,#0f172a_100%)]",
 };

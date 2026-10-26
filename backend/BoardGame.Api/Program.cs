@@ -1,5 +1,6 @@
 using BoardGame.Api.Data;
 using BoardGame.Api.Games.Bang;
+using BoardGame.Api.Games.MeoNo;
 using BoardGame.Api.Games.OAnQuan;
 using BoardGame.Api.Games.VayBat;
 using BoardGame.Api.Games.ZodiacRace;
@@ -58,6 +59,7 @@ builder.Services.AddSingleton<IGameEngine, BangEngine>();
 builder.Services.AddSingleton<IGameEngine, OAnQuanEngine>();
 builder.Services.AddSingleton<IGameEngine, ZodiacRaceEngine>();
 builder.Services.AddSingleton<IGameEngine, MonopolyEngine>();
+builder.Services.AddSingleton<IGameEngine, MeoNoEngine>();
 builder.Services.AddSingleton<GameEngineRegistry>();
 
 // --- Auth: đăng nhập OTP qua email (SMTP), JWT trong cookie HttpOnly ---

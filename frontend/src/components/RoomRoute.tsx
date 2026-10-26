@@ -12,6 +12,7 @@ const BangBoard = lazy(() => import("../games/bang/BangBoard"));
 const OAnQuanBoard = lazy(() => import("../games/oanquan/OAnQuanBoard"));
 const ZodiacRaceBoard = lazy(() => import("../games/zodiacrace/ZodiacRaceBoard"));
 const MonopolyBoard = lazy(() => import("../games/monopoly/MonopolyBoard"));
+const MeoNoBoard = lazy(() => import("../games/meono/MeoNoBoard"));
 
 /**
  * Route thật cho "đang ở trong một phòng" (`/games/:gameKey/room/:roomId`) — trước đây
@@ -203,6 +204,8 @@ export default function RoomRoute() {
         return <OAnQuanBoard makeMove={makeMove} onLeave={handleLeave} onRematch={handleRematch} rematching={rematching} />;
       case "zodiacrace":
         return <ZodiacRaceBoard makeMove={makeMove} onLeave={handleLeave} onRematch={handleRematch} rematching={rematching} />;
+      case "meono":
+        return <MeoNoBoard makeMove={makeMove} onLeave={handleLeave} onRematch={handleRematch} rematching={rematching} />;
       default:
         return (
           <div className="animate-game-action-enter rounded-2xl border border-amber-900/30 bg-[#1a1208]/40 p-6 text-center space-y-4">
