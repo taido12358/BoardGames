@@ -55,6 +55,9 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
   const prevCashRef = useRef<Record<number, number>>({});
   const prevOwnerRef = useRef<Record<number, number>>({});
   const deltaIdRef = useRef(0);
+  const logRef = useRef<HTMLOListElement>(null);
+  const prevLogLenRef = useRef<number>(0);
+  const [logNewStart, setLogNewStart] = useState<number>(Number.MAX_SAFE_INTEGER);
 
   const cashKey = (gameState?.players ?? []).map(p => p.cash).join(",");
   const ownerKey = (gameState?.properties ?? []).map(p => p.owner ?? -1).join(",");
@@ -92,6 +95,17 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
     return () => clearTimeout(t);
   }, [ownerKey]);
 
+  const logLen = gameState?.log?.length ?? 0;
+  useEffect(() => {
+    const prev = prevLogLenRef.current;
+    prevLogLenRef.current = logLen;
+    if (logLen <= prev) return;
+    setLogNewStart(prev);
+    if (logRef.current) logRef.current.scrollTop = logRef.current.scrollHeight;
+    const t = setTimeout(() => setLogNewStart(Number.MAX_SAFE_INTEGER), 600);
+    return () => clearTimeout(t);
+  }, [logLen]);
+
   if (!room) return null;
   const map = room.map as MonopolyMap | null;
   const state = room.state as MonopolyState | null;
@@ -115,7 +129,7 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
   const canManage = !!player && !player.bankrupt && room.status === "Playing" && connectionState === "connected"
     && !["Auction", "BuildingDemand", "Trade"].includes(state.phase) && (!["Debt", "Inheritance"].includes(state.phase) || seat === currentActor);
   const send = (move: MonopolyMove) => makeMove(room.id, move);
-  const action = (label: string, type: string, disabled = false) => <button key={type} className={buttonClass}
+  const action = (label: string, type: string, disabled = false, extraClass = "") => <button key={type} className={`${buttonClass}${extraClass ? ` ${extraClass}` : ""}`}
     disabled={!deciding || disabled} onClick={() => send({ type })}>{label}</button>;
   const names = (ids: number[]) => ids.map(i => map.tiles[i]?.name ?? "?").join(", ") || "Không có đất";
 
@@ -173,7 +187,7 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
           <h2 className="font-semibold">{PHASES[state.phase]}</h2>
           {!deciding && <p className="text-sm text-amber-200/70">Chờ {state.players[currentActor]?.name} quyết định.</p>}
           <div className="flex flex-wrap gap-2">
-            {state.phase === "Roll" && <>{action("Đổ xúc xắc", "ROLL")}{player?.inJail && <>{action("Nộp 50 ra tù", "PAY_JAIL", player.cash < 50)}{action("Dùng thẻ ra tù", "JAIL_CARD", player.jailCards.length === 0)}</>}</>}
+            {state.phase === "Roll" && <>{action("🎲 Đổ xúc xắc", "ROLL", false, deciding ? "monopoly-roll-btn-ready" : "")}{player?.inJail && <>{action("Nộp 50 ra tù", "PAY_JAIL", player.cash < 50)}{action("Dùng thẻ ra tù", "JAIL_CARD", player.jailCards.length === 0)}</>}</>}
             {state.phase === "Buy" && <>{action(`Mua với giá ${map.tiles[state.players[state.turn].position].price}`, "BUY")}{action("Đưa ra đấu giá", "DECLINE")}</>}
             {state.phase === "End" && action(state.extraRoll ? "Tiếp tục lượt đổ đôi" : "Kết thúc lượt", "END")}
             {state.phase === "Debt" && <><p className="w-full text-sm">Nợ {state.payments[0]?.amount} cho {state.payments[0]?.to === null ? "ngân hàng" : state.players[state.payments[0]?.to ?? -1]?.name}. Bán nhà hoặc thế chấp để thanh toán.</p>{action("Thanh toán", "SETTLE")}{action("Tuyên bố phá sản", "BANKRUPT")}</>}
@@ -231,14 +245,14 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
           {delta.amount > 0 ? `+${delta.amount.toLocaleString("vi-VN")}` : delta.amount.toLocaleString("vi-VN")}
         </span>
       ))}
-      <h2 className="font-bold">{TOKENS[i]} {p.name}{i === seat ? " (Bạn)" : ""}</h2>
+      <h2 className="font-bold"><span className={i === currentActor ? "monopoly-token-bounce" : ""}>{TOKENS[i]}</span> {p.name}{i === seat ? " (Bạn)" : ""}</h2>
       <p>{p.bankrupt ? "Đã phá sản" : `${p.cash.toLocaleString("vi-VN")} · ${map.tiles[p.position].name}`}</p>
       {p.inJail && <p className="text-sm">Trong tù · Đã thử {p.jailAttempts}/3</p>}
       {p.jailCards.length > 0 && <p className="text-sm">Thẻ ra tù: {p.jailCards.length}</p>}
       <div className="mt-2 flex flex-wrap gap-1">{map.tiles.filter(t => state.properties[t.index].owner === i).map(t => <button className={`rounded border border-stone-600 px-1 text-xs ${GROUP_COLORS[t.group] ?? "bg-stone-700"}`} key={t.index} onClick={() => setSelected(t.index)} title={t.name} aria-label={`Xem ${t.name}`}>{t.index}{state.properties[t.index].mortgaged ? "🔒" : ""}</button>)}</div>
     </div>)}</div>
     <details open className="rounded-xl border border-amber-900 p-4"><summary className="cursor-pointer font-semibold">Nhật ký ván đấu</summary>
-      <ol className="mt-3 max-h-52 overflow-y-auto space-y-1 text-sm text-amber-200/80">{state.log.map((line,i) => <li key={i}>{line}</li>)}</ol>
+      <ol ref={logRef} className="mt-3 max-h-52 overflow-y-auto space-y-1 text-sm text-amber-200/80">{state.log.map((line,i) => <li key={i} className={i >= logNewStart ? "monopoly-log-entry" : ""}>{line}</li>)}</ol>
     </details>
     {cardOverlay && (
       <div className={`monopoly-card-overlay monopoly-card-${cardOverlay.kind}`} onClick={() => setCardOverlay(null)} role="dialog" aria-modal="true" aria-label="Rút thẻ">
