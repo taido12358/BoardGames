@@ -26,7 +26,7 @@ interface ExitingGame { metadata: GameMetadata; waitingRooms?: number; }
 function SkeletonCard() {
   return (
     <div className="rounded-sm border border-amber-900/30 bg-[#1a140c] overflow-hidden animate-pulse">
-      <div className="h-40 sm:h-48 bg-amber-950/30" />
+      <div className="h-36 sm:h-48 bg-amber-950/30" />
       <div className="p-4 space-y-2">
         <div className="h-4 w-2/3 bg-amber-950/40 rounded" />
         <div className="h-3 w-1/2 bg-amber-950/30 rounded" />
@@ -204,7 +204,7 @@ export default function GameLibrary() {
           />
         </div>
         {search && <button type="button" onClick={() => setSearch("")} className="rounded-sm border border-[#6b4725]/60 bg-[#22140c]/90 px-3 py-2 text-xs text-[#bba182] hover:border-[#b47a3c]/80 hover:bg-[#2c1a10] hover:text-[#f3d4a2] transition-colors">Xóa từ khóa</button>}
-        <div className="flex flex-wrap gap-2">
+        <div className="flex gap-2 overflow-x-auto pb-1 -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap sm:overflow-x-visible sm:pb-0">
           {filterChips.map((chip) => (
             <button
               key={chip.id}

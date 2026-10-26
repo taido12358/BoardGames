@@ -55,7 +55,7 @@ export default function GameCard({ metadata: m, waitingRooms, disabled = false, 
         onClick={onViewDetails}
         disabled={disabled}
         aria-label={`Xem hướng dẫn ${m.title}`}
-        className={`relative h-40 sm:h-48 w-full flex items-center justify-center overflow-hidden border-b border-[#573517] ${ARTWORK_BG[m.accent]} shadow-[inset_0_2px_8px_rgba(0,0,0,0.85)]`}
+        className={`relative h-36 sm:h-48 w-full flex items-center justify-center overflow-hidden border-b border-[#573517] ${ARTWORK_BG[m.accent]} shadow-[inset_0_2px_8px_rgba(0,0,0,0.85)]`}
       >
         {/* Corner bracket nẹp kim loại giả lập đóng khung */}
         <span className="pointer-events-none absolute top-1.5 left-1.5 w-3 h-3 border-t border-l border-[#c8924b]/40 z-20" />
