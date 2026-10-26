@@ -83,7 +83,7 @@ describe("BangBoard — phản hồi và hồi máu", () => {
     setRoom(state);
     const makeMove = vi.fn();
     render(<BangBoard makeMove={makeMove} onLeave={vi.fn()} onRematch={vi.fn()} rematching={false} />);
-    expect(screen.getByRole("status")).toHaveTextContent("Bạn không có Bang! để đỡ");
+    expect(screen.getByText(/Bạn không có Bang! để đỡ/).closest('[role="status"]')).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Bia" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Chịu đòn (−1 máu)" })).toBeEnabled();
     expect(makeMove).not.toHaveBeenCalled();
@@ -118,8 +118,8 @@ describe("BangBoard — phản hồi và hồi máu", () => {
     const makeMove = vi.fn();
     render(<BangBoard makeMove={makeMove} onLeave={vi.fn()} onRematch={vi.fn()} rematching={false} />);
     await userEvent.click(screen.getByRole("button", { name: "Đấu súng" }));
-    expect(screen.getByRole("status")).toHaveTextContent("Đang dùng Đấu súng");
-    expect(screen.getByRole("status")).toHaveTextContent("1 mục tiêu hợp lệ");
+    const prompt = screen.getByText("🎯 Đang dùng Đấu súng").closest('[role="status"]');
+    expect(prompt).toHaveTextContent("1 mục tiêu hợp lệ");
     expect(makeMove).not.toHaveBeenCalled();
     await userEvent.click(screen.getByRole("button", { name: "Hủy" }));
     expect(screen.queryByText("Đang dùng Đấu súng")).not.toBeInTheDocument();
@@ -132,7 +132,7 @@ describe("BangBoard — phản hồi và hồi máu", () => {
     expect(screen.getByRole("button", { name: "Bang!" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Bang!" })).toHaveAttribute("title", "Bang! — Bạn đã dùng lượt bắn này.");
     expect(screen.getByRole("button", { name: "Bia" })).toBeEnabled();
-    expect(screen.getByText(/Bạn đã dùng lượt bắn/)).toBeInTheDocument();
+    expect(screen.getAllByRole("status").some(status => status.textContent?.includes("Bạn đã dùng lượt bắn"))).toBe(true);
   });
   it("server chuyển lượt sẽ hủy chọn bỏ bài và hiển thị người đang chơi", async () => {
     const initial = myTurnState();
@@ -290,8 +290,8 @@ describe("BangBoard — chế độ bỏ bài khi vượt giới hạn tay bài"
     render(<BangBoard makeMove={makeMove} onLeave={vi.fn()} onRematch={vi.fn()} rematching={false} />);
 
     await user.click(screen.getByRole("button", { name: "KẾT THÚC LƯỢT" }));
-    await user.click(screen.getByTitle("Bang!"));
-    await user.click(screen.getByTitle("Trượt!"));
+    await user.click(screen.getByRole("button", { name: "Bang!" }));
+    await user.click(screen.getByRole("button", { name: "Trượt!" }));
 
     expect(screen.getByText(/\(2\/2\)/)).toBeInTheDocument();
     const confirmButton = screen.getByRole("button", { name: "Xác nhận bỏ bài" });
@@ -308,7 +308,7 @@ describe("BangBoard — chế độ bỏ bài khi vượt giới hạn tay bài"
     render(<BangBoard makeMove={vi.fn()} onLeave={vi.fn()} onRematch={vi.fn()} rematching={false} />);
 
     await user.click(screen.getByRole("button", { name: "KẾT THÚC LƯỢT" }));
-    await user.click(screen.getByTitle("Bang!")); // mới chọn 1/2
+    await user.click(screen.getByRole("button", { name: "Bang!" })); // mới chọn 1/2
 
     expect(screen.getByRole("button", { name: "Xác nhận bỏ bài" })).toBeDisabled();
   });
@@ -319,8 +319,8 @@ describe("BangBoard — chế độ bỏ bài khi vượt giới hạn tay bài"
     render(<BangBoard makeMove={vi.fn()} onLeave={vi.fn()} onRematch={vi.fn()} rematching={false} />);
 
     await user.click(screen.getByRole("button", { name: "KẾT THÚC LƯỢT" }));
-    await user.click(screen.getByTitle("Bang!"));
-    await user.click(screen.getByTitle("Trượt!"));
+    await user.click(screen.getByRole("button", { name: "Bang!" }));
+    await user.click(screen.getByRole("button", { name: "Trượt!" }));
     expect(screen.getByRole("button", { name: "Bia" })).toBeDisabled(); // lá thứ 3 — vượt overflow=2
     expect(screen.getByRole("button", { name: "Bia" })).toHaveAttribute("title", "Bia — Đã chọn đủ số lá cần bỏ.");
 
@@ -334,7 +334,7 @@ describe("BangBoard — chế độ bỏ bài khi vượt giới hạn tay bài"
     render(<BangBoard makeMove={makeMove} onLeave={vi.fn()} onRematch={vi.fn()} rematching={false} />);
 
     await user.click(screen.getByRole("button", { name: "KẾT THÚC LƯỢT" }));
-    await user.click(screen.getByTitle("Bang!"));
+    await user.click(screen.getByRole("button", { name: "Bang!" }));
     await user.click(screen.getByRole("button", { name: "Hủy" }));
 
     expect(screen.queryByText(/Tay bài .* cần bỏ/)).not.toBeInTheDocument();

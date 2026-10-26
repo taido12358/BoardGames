@@ -1,5 +1,7 @@
 import type { GameMetadata, InstructionSection } from "../../platform/gameLibraryTypes";
 
+export const monopolyDefaultCreateOptions = { seatCount: 4 };
+
 export const monopolyMetadata: GameMetadata = {
   gameKey: "monopoly", title: "CỜ TỈ PHÚ", subtitle: "Mua đất · Xây nhà · Giao dịch",
   description: "Chinh phục bàn cờ classic 40 ô. Thuê đất, đấu giá, xây khách sạn và quản lý tiền mặt để trở thành người cuối cùng còn tài sản.",

@@ -45,14 +45,14 @@ describe("OAnQuanBoard", () => {
     expect(pit).toBeDisabled();
     await userEvent.click(pit);
     expect(makeMove).not.toHaveBeenCalled();
-    expect(screen.queryByText("Phải →")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Phải" })).not.toBeInTheDocument();
   });
   it("không hiện nút chọn chiều trước khi chọn ô nào", () => {
     setRoom(fullState(), "P0");
     render(<OAnQuanBoard makeMove={vi.fn()} onLeave={vi.fn()} onRematch={vi.fn()} rematching={false} />);
 
-    expect(screen.queryByText("← Trái")).not.toBeInTheDocument();
-    expect(screen.queryByText("Phải →")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Trái" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Phải" })).not.toBeInTheDocument();
   });
 
   it("chọn 1 ô dân của mình (đến lượt) rồi bấm 'Phải' gửi đúng move cw", async () => {
@@ -62,9 +62,9 @@ describe("OAnQuanBoard", () => {
     render(<OAnQuanBoard makeMove={makeMove} onLeave={vi.fn()} onRematch={vi.fn()} rematching={false} />);
 
     await user.click(screen.getByRole("button", { name: "Ô dân số 3, 5 quân" }));
-    expect(screen.getByText("Phải →")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Phải" })).toBeInTheDocument();
 
-    await user.click(screen.getByText("Phải →"));
+    await user.click(screen.getByRole("button", { name: "Phải" }));
 
     expect(makeMove).toHaveBeenCalledWith("room-1", { pitIndex: 3, direction: "cw" });
   });
@@ -76,7 +76,7 @@ describe("OAnQuanBoard", () => {
     render(<OAnQuanBoard makeMove={makeMove} onLeave={vi.fn()} onRematch={vi.fn()} rematching={false} />);
 
     await user.click(screen.getByRole("button", { name: "Ô dân số 3, 5 quân" }));
-    await user.click(screen.getByText("← Trái"));
+    await user.click(screen.getByRole("button", { name: "Trái" }));
 
     expect(makeMove).toHaveBeenCalledWith("room-1", { pitIndex: 3, direction: "ccw" });
   });
@@ -88,7 +88,7 @@ describe("OAnQuanBoard", () => {
     render(<OAnQuanBoard makeMove={makeMove} onLeave={vi.fn()} onRematch={vi.fn()} rematching={false} />);
 
     await user.click(screen.getByRole("button", { name: "Ô dân số 9, 5 quân" }));
-    await user.click(screen.getByText("Phải →"));
+    await user.click(screen.getByRole("button", { name: "Phải" }));
 
     expect(makeMove).toHaveBeenCalledWith("room-1", { pitIndex: 9, direction: "ccw" });
   });
@@ -103,7 +103,7 @@ describe("OAnQuanBoard", () => {
     expect(opponentPit).toBeDisabled();
 
     await user.click(opponentPit);
-    expect(screen.queryByText("Phải →")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Phải" })).not.toBeInTheDocument();
   });
 
   it("không cho chọn khi chưa đến lượt mình", () => {

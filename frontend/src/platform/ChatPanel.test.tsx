@@ -72,7 +72,7 @@ describe("ChatPanel", () => {
     renderPanel();
 
     expect(screen.getByText(/Trò Chuyện/i)).toBeInTheDocument();
-    expect(screen.queryByLabelText("Nhập tin nhắn")).not.toBeInTheDocument();
+    expect(screen.queryByRole("textbox", { name: "Nhập tin nhắn" })).not.toBeInTheDocument();
   });
 
   it("hiện số lượng tin nhắn trong tiêu đề khi đã có tin", () => {
@@ -91,7 +91,7 @@ describe("ChatPanel", () => {
     expect(screen.getByLabelText("Nhập tin nhắn")).toBeInTheDocument();
 
     await user.click(screen.getByText(/Trò Chuyện/i));
-    expect(screen.queryByLabelText("Nhập tin nhắn")).not.toBeInTheDocument();
+    expect(screen.queryByRole("textbox", { name: "Nhập tin nhắn" })).not.toBeInTheDocument();
   });
 
   it("hiện 'Chưa có tin nhắn nào' khi mở panel lúc chưa có tin", async () => {

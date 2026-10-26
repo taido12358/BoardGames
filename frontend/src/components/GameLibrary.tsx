@@ -91,11 +91,14 @@ export default function GameLibrary() {
   }, [allMetadata]);
 
   const filtered = useMemo(() => {
-    const terms = normalizeSearch(search).split(/\s+/).filter(Boolean);
+    const terms = normalizeSearch(search).match(/[\p{L}\p{N}]+/gu) ?? [];
     return allMetadata.filter((m) => {
       if (terms.length > 0) {
         const haystack = normalizeSearch(`${m.title} ${m.subtitle} ${m.description} ${m.category.join(" ")}`);
-        if (!terms.every((term) => haystack.includes(term))) return false;
+        const words = haystack.match(/[\p{L}\p{N}]+/gu) ?? [];
+        // Completed words must match words: "ti" must not match an unrelated "tinh".
+        // Keep prefix matching for the final word while the user is still typing it.
+        if (!terms.every((term, index) => words.some(word => index === terms.length - 1 ? word.startsWith(term) : word === term))) return false;
       }
       if (filter === "all") return true;
       if (filter === "waiting") return (waitingCountByGame[m.gameKey] ?? 0) > 0;
@@ -260,9 +263,9 @@ export default function GameLibrary() {
 
       {/* Lưới thẻ game */}
       {!enginesLoading && !enginesError && (filtered.length > 0 || exitingGames.length > 0) && (
-        <div role="status" className="animate-game-action-enter flex items-center gap-3 py-1 text-xs uppercase tracking-widest text-amber-600/70">
+        <div role="status" aria-label={`Tìm thấy ${filtered.length} trò chơi`} aria-atomic="true" className="animate-game-action-enter flex items-center gap-3 py-1 text-xs uppercase tracking-widest text-amber-600/70">
           <span className="h-px flex-1 bg-gradient-to-r from-transparent via-amber-900/40 to-amber-900/20" />
-          <div className="flex items-center gap-1.5">
+          <div aria-hidden="true" className="flex items-center gap-1.5">
             <span>Tìm thấy{" "}</span>
             <span className="rounded border border-amber-800/40 bg-amber-950/60 px-1.5 py-0.5 font-mono text-xs font-bold text-amber-300 shadow-[inset_0_1px_2px_rgba(0,0,0,0.7)]"><AnimatedNumber value={filtered.length} durationMs={260} className="inline-block tabular-nums" /></span>
             {" "}<span>trò chơi</span>

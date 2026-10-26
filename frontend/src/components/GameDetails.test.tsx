@@ -9,6 +9,7 @@ import { vaybatMetadata } from "../games/vaybat/metadata";
 import { bangMetadata } from "../games/bang/metadata";
 import { oanQuanMetadata } from "../games/oanquan/metadata";
 import { zodiacRaceMetadata } from "../games/zodiacrace/metadata";
+import { monopolyMetadata } from "../games/monopoly/metadata";
 import type { EngineInfo, RoomDto, RoomSummaryDto } from "../platform/types";
 
 const hubActions: GameRoomHubActions = {
@@ -27,6 +28,7 @@ function engineFor(gameKey: string): EngineInfo {
     bang: { key: "bang", displayName: bangMetadata.title, minPlayers: 4, maxPlayers: 8 },
     oanquan: { key: "oanquan", displayName: oanQuanMetadata.title, minPlayers: 2, maxPlayers: 2 },
     zodiacrace: { key: "zodiacrace", displayName: zodiacRaceMetadata.title, minPlayers: 2, maxPlayers: 6 },
+    monopoly: { key: "monopoly", displayName: monopolyMetadata.title, minPlayers: 2, maxPlayers: 6 },
   };
   return byKey[gameKey];
 }
@@ -39,7 +41,7 @@ function artworkClassFor(title: string): string {
 
 function renderDetails(gameKey: string, room?: RoomSummaryDto, search = "", loading = false) {
   useGameStore.setState({
-    engines: [engineFor("vaybat"), engineFor("bang"), engineFor("oanquan"), engineFor("zodiacrace")],
+    engines: [engineFor("vaybat"), engineFor("bang"), engineFor("oanquan"), engineFor("zodiacrace"), engineFor("monopoly")],
     enginesLoading: loading,
     enginesError: "",
     rooms: room ? [room] : [],
@@ -69,6 +71,26 @@ function renderDetails(gameKey: string, room?: RoomSummaryDto, search = "", load
 
 beforeEach(() => {
   useGameStore.setState({ engines: [], enginesLoading: false, enginesError: "", rooms: [], error: "" });
+});
+
+describe("GameDetails — tạo Cờ Tỉ Phú", () => {
+  it("gửi đúng 4 ghế mặc định đang hiển thị, không để backend chọn 6", async () => {
+    renderDetails("monopoly");
+    expect(screen.getByRole("button", { name: "4" })).toHaveAttribute("aria-pressed", "true");
+    await userEvent.click(screen.getByRole("button", { name: "➕ TẠO PHÒNG" }));
+    expect(useGameStore.getState().createRoom).toHaveBeenCalledWith("monopoly", { seatCount: 4 });
+    expect(await screen.findByText("room")).toBeInTheDocument();
+  });
+
+  it.each([2, 6])("tạo được phòng %i ghế trong giới hạn edition", async (seatCount) => {
+    renderDetails("monopoly");
+    expect(screen.queryByRole("button", { name: "7" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "8" })).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: String(seatCount) }));
+    await userEvent.click(screen.getByRole("button", { name: "➕ TẠO PHÒNG" }));
+    expect(useGameStore.getState().createRoom).toHaveBeenCalledWith("monopoly", { seatCount });
+    expect(await screen.findByText("room")).toBeInTheDocument();
+  });
 });
 
 describe("GameDetails — nền artwork đúng accent (regression cho bug đã sửa 2026-09-11)", () => {
@@ -109,7 +131,7 @@ describe("GameDetails — chuyển tab hướng dẫn (GameInstructions, chưa t
 
     await user.click(screen.getByRole("tab", { name: tabLabel }));
 
-    expect(screen.getByText(new RegExp(expectedText))).toBeInTheDocument();
+    expect(screen.getByRole("tabpanel")).toHaveTextContent(expectedText);
   });
 });
 

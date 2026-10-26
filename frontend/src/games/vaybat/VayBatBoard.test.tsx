@@ -199,6 +199,6 @@ describe("VayBatBoard — trạng thái phòng", () => {
     setRoom(makeState({ redTurnsUsed: 5, maxRedTurns: 30 }));
     render(<VayBatBoard makeMove={vi.fn()} onLeave={vi.fn()} onRematch={vi.fn()} rematching={false} />);
 
-    expect(screen.getByText("5 / 30")).toBeInTheDocument();
+    expect(screen.getByText(/\/\s*30/)).toHaveTextContent(/5\s*\/\s*30/);
   });
 });

@@ -4,11 +4,13 @@ PAUSED by explicit user request. Commit/push checkpoint does not resume autonomo
 Ruleset: Hasbro C1009 US 2016/2017, 2-6 players, auction minimum 10, fresh utility rent dice.
 BuildingDemand, debt/inheritance, public snapshots and full-game replay implemented.
 
-PUBLISH: feature/monopoly-classic, based on already-pushed feature/vaybat-move-announcement.
-Exclude unfinished GameDetails/GameLibrary tests, pre-existing O An Quan edits and test-output.
-Known pending issue: UI defaults to 4 seats but empty options make backend create 6; not fixed before pause.
+PUBLISH: user now requests all remaining source committed/pushed and merged to master.
+Include O An Quan confirmed moves and complete frontend fixes; ignore generated backend/test-output.
+Fixed Monopoly default 4/6 mismatch, result status/search semantics and stale frontend assertions.
+Full frontend 375/375 local pass, build pass, lint 0 error (3 existing warnings).
+Full backend Release 379/379 pass; full frontend 375/375, build/lint pass. PR CI required before merge. Autonomous goal stays PAUSED.
 
-LATEST: targeted backend 124/124 pass (5m11s): 116 Monopoly rules/source cases and 8 actual
+PREVIOUS MONOPOLY CHECKPOINT: targeted backend 124/124 pass (5m11s): 116 Monopoly rules/source cases and 8 actual
 Kestrel subprocess crash/restart cases. TRX: backend/test-output/test-results/monopoly-source-private-restart-20261026.trx.
 New source fixture fields cover rail rents/prices, utility factors/prices, Illinois price,
 four color-set rents and component counts. See references/monopoly-source-audit.md for exact coverage.
@@ -17,8 +19,8 @@ all 32 card faces and the complete board ordering. Seven illustrated samples are
 Private StateJson and MapJson now compared across crashes, with 15 cards in each pile and one
 held jail-free card per deck. Property auction with bid 10 survives crash; bid 11 wins after restore.
 Public HTTP/SignalR still hide deck order. No runtime/frontend changes this audit checkpoint.
-Last FULL backend suite remains 370/370; do not call the new test discovery count a full pass.
-Last frontend target 71/71, build/changed-file lint pass; unrelated broad frontend failures remain.
+Current full backend Release is 379/379. Prior full checkpoint was 370/370.
+Current full frontend is 375/375; prior targeted scope was 71/71. Shared frontend failures now fixed.
 Crash heartbeat fix: refresh live presence ~10s, expire stale Connected after 45s, protect newer
 leave/other-host timestamps under row locks. Actual absent-buyer timeout/new-host broadcast verified.
 MinIO archive/legacy/fallback/corruption verified; build docker compose build minio before tests.

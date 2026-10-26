@@ -95,16 +95,16 @@ export function ConnectionBanner({ connectionState }: { connectionState: Connect
   if (!displayed) return null;
   const displayedState = displayed as Exclude<ConnectionState, "connected">;
   const bannerClass = `animate-game-action-enter rounded-sm p-2 text-center text-xs ${leaving ? "connection-banner-exit" : ""}`;
-  if (displayedState === "connecting") return <div key={displayedState} role="status" className={`${bannerClass} bg-amber-900/40 text-amber-300`}>Đang kết nối máy chủ trò chơi…</div>;
+  if (displayedState === "connecting") return <div key={displayedState} role="status" aria-hidden={leaving || undefined} className={`${bannerClass} bg-amber-900/40 text-amber-300`}>Đang kết nối máy chủ trò chơi…</div>;
   if (displayedState === "reconnecting") {
     return (
-      <div key={displayedState} role="status" aria-atomic="true" className={`${bannerClass} bg-amber-900/40 text-amber-300`}>
+      <div key={displayedState} role="status" aria-hidden={leaving || undefined} aria-atomic="true" className={`${bannerClass} bg-amber-900/40 text-amber-300`}>
         Đang kết nối lại…
       </div>
     );
   }
   return (
-    <div key={displayedState} role="alert" className={`${bannerClass} bg-red-900/40 text-red-300`}>
+    <div key={displayedState} role="alert" aria-hidden={leaving || undefined} className={`${bannerClass} bg-red-900/40 text-red-300`}>
       Mất kết nối tới máy chủ — vui lòng tải lại trang.
     </div>
   );

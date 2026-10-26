@@ -102,8 +102,9 @@ describe("ZodiacRaceBoard — đang đua", () => {
     setRoom(makeState({ positions: [4, 7], cratesCollected: [1, 0] }), "P0");
     render(<ZodiacRaceBoard makeMove={vi.fn()} onLeave={vi.fn()} onRematch={vi.fn()} rematching={false} />);
 
-    expect(screen.getByText("Ô 4/10 · 📦 1")).toBeInTheDocument();
-    expect(screen.getByText("Ô 7/10 · 📦 0")).toBeInTheDocument();
+    const positions = screen.getAllByText(/Ô.*\/10.*📦/);
+    expect(positions[0]).toHaveTextContent(/Ô\s*4\/10\s*·\s*📦\s*1/);
+    expect(positions[1]).toHaveTextContent(/Ô\s*7\/10\s*·\s*📦\s*0/);
   });
 });
 

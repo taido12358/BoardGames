@@ -1,6 +1,7 @@
 # .NET
 bin/
 obj/
+backend/test-output/
 *.user
 
 # Node

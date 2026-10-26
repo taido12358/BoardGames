@@ -12,7 +12,7 @@ import { zodiacRaceMetadata, zodiacRaceInstructions } from "../games/zodiacrace/
 import VayBatCreateOptions from "../games/vaybat/CreateOptions";
 import BangCreateOptions from "../games/bang/CreateOptions";
 import ZodiacRaceCreateOptions from "../games/zodiacrace/CreateOptions";
-import { monopolyMetadata, monopolyInstructions } from "../games/monopoly/metadata";
+import { monopolyMetadata, monopolyInstructions, monopolyDefaultCreateOptions } from "../games/monopoly/metadata";
 import MonopolyCreateOptions from "../games/monopoly/CreateOptions";
 
 interface GameRegistryEntry {
@@ -20,10 +20,11 @@ interface GameRegistryEntry {
   instructions: InstructionSection[];
   /** UI tuỳ chọn khi tạo phòng — GameDetails chỉ render nếu có, không hard-code theo gameKey. */
   CreateOptionsForm?: ComponentType<CreateOptionsFormProps>;
+  defaultCreateOptions?: Readonly<Record<string, unknown>>;
 }
 
 const REGISTRY: Record<string, GameRegistryEntry> = {
-  monopoly: { metadata: monopolyMetadata, instructions: monopolyInstructions, CreateOptionsForm: MonopolyCreateOptions },
+  monopoly: { metadata: monopolyMetadata, instructions: monopolyInstructions, CreateOptionsForm: MonopolyCreateOptions, defaultCreateOptions: monopolyDefaultCreateOptions },
   vaybat: { metadata: vaybatMetadata, instructions: vaybatInstructions, CreateOptionsForm: VayBatCreateOptions },
   bang: { metadata: bangMetadata, instructions: bangInstructions, CreateOptionsForm: BangCreateOptions },
   oanquan: { metadata: oanQuanMetadata, instructions: oanQuanInstructions }, // không có tuỳ chọn tạo phòng riêng
@@ -68,4 +69,9 @@ export function getGameTitle(gameKey: string): string {
 /** Component UI tuỳ chọn tạo phòng của game này, nếu có đăng ký — GameDetails render có điều kiện. */
 export function getCreateOptionsForm(gameKey: string): ComponentType<CreateOptionsFormProps> | undefined {
   return REGISTRY[gameKey]?.CreateOptionsForm;
+}
+
+/** Fresh defaults shared by the displayed form and the actual create-room request. */
+export function getDefaultCreateOptions(gameKey: string): Record<string, unknown> {
+  return { ...(REGISTRY[gameKey]?.defaultCreateOptions ?? {}) };
 }

@@ -115,6 +115,15 @@ Mobile-first: `max-w-md mx-auto`, flex-col. Thứ tự: Status bar → Board →
 - sendChatMessage trong hub action trả Promise<boolean> (true sau khi invoke hoàn tất, false nếu lỗi/mất kết nối). ChatPanel giữ nội dung cho đến khi server xác nhận.
 - Gửi thất bại giữ draft và lỗi local, không tự gửi lại; khóa yêu cầu trùng và cho người dùng chủ động retry. ChatPanel được key theo roomId để draft không đi sang phòng khác.
 
+## Hoàn thiện luồng tạo phòng và trạng thái thư viện (2026-10-26)
+
+- Registry cung cấp bản sao defaultCreateOptions cho GameDetails; Cờ Tỉ Phú dùng chung mặc định
+  4 ghế giữa form và request. Không để form hiển thị 4 nhưng request rỗng làm server chọn 6.
+- Tìm kiếm không dấu khớp theo từ, cho prefix ở từ cuối đang gõ; từ hoàn chỉnh không khớp
+  substring của từ khác. Số kết quả công bố qua status lấy filtered.length, ẩn số đang animate khỏi a11y.
+- ConnectionBanner đang exit sau khi connected được aria-hidden ngay, dù DOM còn giữ để hoàn tất hiệu ứng.
+  Test chat thu gọn/board có icon trang trí tìm bằng role và accessible name thay vì ghép text DOM.
+
 
 ## Tìm kiếm lịch sử (2026-10-24)
 - GameHistoryPage debounce 300ms; cleanup hủy timer, abort fetch và active guard chặn mọi response cũ khi query đổi/unmount.

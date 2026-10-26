@@ -111,11 +111,11 @@ archive cho ván đã kết thúc. Frame cuối dùng public snapshot thay vì l
 
 Chi tiết kết quả: [log 2026-10-25](../logs/2026-10-25.md).
 
-Full backend gần nhất: **370/370** (gồm 109 test luật Monopoly, 11 ca WebSocket xác định,
-3 ca MinIO thật, 7 ca crash/restart Kestrel và 4 ca heartbeat PostgreSQL), frontend mục tiêu
-**71/71** (25 Monopoly + 10 replay + 32 hub + 4 route), build/lint file đổi không có error. Xem [log mới](../logs/2026-10-26.md).
+Full backend Release gần nhất: **379/379** (gồm 116 test luật/nguồn Monopoly, 11 ca WebSocket xác định,
+3 ca MinIO thật, 8 ca crash/restart Kestrel và 4 ca heartbeat PostgreSQL), full frontend
+**375/375**, production build/lint không có error. Xem [log mới](../logs/2026-10-26.md).
 Nhóm backend mới nhất **124/124 pass**: 116 luật/nguồn + 8 crash/restart sau mở rộng fixture
-và kiểm tra private state. Không có thay đổi runtime ở lượt audit này; chưa chạy lại full suite.
+và kiểm tra private state. Lượt chuẩn bị merge sau đó đã chạy lại full suite như trên.
 
 Đã chạy PostgreSQL thật và smoke 2 player + 1 spectator: 80 hành động, mua qua đấu giá,
 giao dịch, đồng bộ 3 viewer, chặn spectator đi, REST/hub ẩn bài, reconnect đúng ghế,
@@ -162,9 +162,9 @@ và 6 hành động đấu giá House. Reconnect, rematch và toàn bộ frame/s
    Đã có 32 test hiệu ứng từng thẻ, chưa thay thế việc đối chiếu source ngoài repo.
 5. Các ván chơi trước khi có snapshot vẫn chỉ có intent; không thể tái tạo chính xác RNG
    lịch sử của các ván này. Không tạo snapshot giả cho dữ liệu cũ.
-6. Các failure frontend cũ: kiểm tra baseline thay hai module tích hợp bằng nội dung HEAD,
-   26 fail/336 test; worktree mới 24 fail/349 test, không có failure mới so với baseline.
-   Số failure GameLibrary thay đổi theo timing. Chi tiết trong log.
+6. Các failure frontend cũ đã được xử lý khi chuẩn bị merge toàn bộ: **375/375 local pass**.
+   Sửa mặc định số ghế, accessibility của banner/count, tìm kiếm và cập nhật test theo role/API
+   hiện tại. Kết quả baseline cũ được giữ trong log; CI của PR phải pass trước merge.
 7. Scope sự kiện frontend đã có regression cho chuyển/rời phòng, start chậm, abort join đang gửi,
    cleanup route và reconnect. Backend gửi mã phòng trên state/ghế/chat/lời mời; frontend lọc theo
    ý định phòng, không lấy snapshot cũ làm ý định sau leave. Vẫn cần xác nhận thao tác trực quan bằng browser.
