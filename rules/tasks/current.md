@@ -1,3 +1,40 @@
+# Active objective: Monopoly / Co Ti Phu (2026-10-26)
+
+PAUSED by explicit user request. Commit/push checkpoint does not resume autonomous development.
+Ruleset: Hasbro C1009 US 2016/2017, 2-6 players, auction minimum 10, fresh utility rent dice.
+BuildingDemand, debt/inheritance, public snapshots and full-game replay implemented.
+
+PUBLISH: feature/monopoly-classic, based on already-pushed feature/vaybat-move-announcement.
+Exclude unfinished GameDetails/GameLibrary tests, pre-existing O An Quan edits and test-output.
+Known pending issue: UI defaults to 4 seats but empty options make backend create 6; not fixed before pause.
+
+LATEST: targeted backend 124/124 pass (5m11s): 116 Monopoly rules/source cases and 8 actual
+Kestrel subprocess crash/restart cases. TRX: backend/test-output/test-results/monopoly-source-private-restart-20261026.trx.
+New source fixture fields cover rail rents/prices, utility factors/prices, Illinois price,
+four color-set rents and component counts. See references/monopoly-source-audit.md for exact coverage.
+Missing direct evidence: 18 street rent tables, 24 purchase prices, all 28 mortgage backs,
+all 32 card faces and the complete board ordering. Seven illustrated samples are only partial coverage.
+Private StateJson and MapJson now compared across crashes, with 15 cards in each pile and one
+held jail-free card per deck. Property auction with bid 10 survives crash; bid 11 wins after restore.
+Public HTTP/SignalR still hide deck order. No runtime/frontend changes this audit checkpoint.
+Last FULL backend suite remains 370/370; do not call the new test discovery count a full pass.
+Last frontend target 71/71, build/changed-file lint pass; unrelated broad frontend failures remain.
+Crash heartbeat fix: refresh live presence ~10s, expire stale Connected after 45s, protect newer
+leave/other-host timestamps under row locks. Actual absent-buyer timeout/new-host broadcast verified.
+MinIO archive/legacy/fallback/corruption verified; build docker compose build minio before tests.
+Local MinIO 9000/9001. API session 69300 last confirmed live; no restart needed for test-only changes.
+Latest completed Kestrel smoke: 5250dd4c-9a6b-4672-8086-d003bc7b6e9b, 3 players + spectator,
+722 actions, winner P1, 725 public frames, reconnect/rematch pass. Preserve pre-existing O An Quan changes.
+
+NEXT: continue source audit when direct edition-matched artifacts can be inspected, review shared
+frontend flows used by Monopoly, and visual desktop/mobile QA. Browser control recheck: No browser is available.
+No claim of full goal completion. Encoded task history below is preserved byte-for-byte.
+
+See [scope](../references/monopoly.md), [latest log](../logs/2026-10-26.md), architecture and ADR.
+Preview: http://127.0.0.1:5173 ; API: http://127.0.0.1:5000 (process-local dev-log OTP only).
+
+---
+
 # Current Task
 
 ## Objective

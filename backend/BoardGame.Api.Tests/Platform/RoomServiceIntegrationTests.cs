@@ -1,6 +1,7 @@
 using System.Text.Json;
 using BoardGame.Api.Data;
 using BoardGame.Api.Games.Bang;
+using BoardGame.Api.Games.Monopoly;
 using BoardGame.Api.Games.VayBat;
 using BoardGame.Api.Platform;
 using BoardGame.Api.Platform.Abstractions;
@@ -56,10 +57,225 @@ public class RoomServiceIntegrationTests : IAsyncLifetime
     }
 
     private static GameEngineRegistry NewRegistry()
-        => new(new IGameEngine[] { new VayBatEngine(), new BangEngine() });
+        => new(new IGameEngine[] { new VayBatEngine(), new BangEngine(), new MonopolyEngine() });
 
     /// <summary>DbContext + RoomService MỚI mỗi lần gọi — mô phỏng đúng 1 request thật.</summary>
     private RoomService NewRoomService() => new(NewDbContext(), NewRegistry(), NullLogger<RoomService>.Instance);
+
+    [Theory]
+    [InlineData("LocalHeartbeat")]
+    [InlineData("OtherHostHeartbeat")]
+    [InlineData("LeaveAfterSnapshot")]
+    [InlineData("ExpiredAfterCrash")]
+    public async Task PresenceRefreshUsesLockedTimestampsWithoutChangingGameOrCreatingMoves(string scenario)
+    {
+        var users = new[] { Guid.NewGuid(), Guid.NewGuid() };
+        var (created, _) = await NewRoomService().CreateRoomAsync("monopoly", users[0], "Alice",
+            JsonSerializer.SerializeToElement(new { seatCount = 2 }));
+        Assert.NotNull(created);
+        await NewRoomService().JoinRoomAsync(created.Id, users[1], "Bob");
+        var observedAt = DateTime.UtcNow.AddSeconds(-1);
+        using (var arrange = NewDbContext())
+        {
+            var room = await arrange.GameRooms.SingleAsync(r => r.Id == created.Id);
+            SeatCodec.SetSeats(room, SeatCodec.SeatsOf(room).Select(seat => seat! with
+                { Connected = true, LastSeenAt = observedAt.AddMinutes(-2) }).ToArray());
+            await arrange.SaveChangesAsync();
+        }
+        using var scanningDb = NewDbContext();
+        var scanned = await scanningDb.GameRooms.SingleAsync(r => r.Id == created.Id);
+        var stateBefore = scanned.StateJson;
+        var countBefore = await scanningDb.GameMoves.CountAsync(m => m.RoomId == created.Id);
+        if (scenario == "OtherHostHeartbeat")
+            await NewRoomService().RefreshSeatPresenceAsync(created.Id, new HashSet<Guid> { users[1] },
+                DateTime.UtcNow, observedAt.AddSeconds(-45));
+        if (scenario == "LeaveAfterSnapshot")
+            await NewRoomService().MarkSeatDisconnectedAsync(created.Id, users[1]);
+        var localUsers = scenario is "LocalHeartbeat" or "LeaveAfterSnapshot" ? new HashSet<Guid> { users[1] } : [];
+        await new RoomService(scanningDb, NewRegistry(), NullLogger<RoomService>.Instance)
+            .RefreshSeatPresenceAsync(created.Id, localUsers, observedAt, observedAt.AddSeconds(-45));
+        using var verify = NewDbContext();
+        var persisted = await verify.GameRooms.SingleAsync(r => r.Id == created.Id);
+        var seat = SeatCodec.SeatsOf(persisted)[1]!;
+        Assert.Equal(scenario is "LocalHeartbeat" or "OtherHostHeartbeat", seat.Connected);
+        if (scenario == "ExpiredAfterCrash") Assert.True(seat.LastSeenAt < observedAt.AddSeconds(-45));
+        else Assert.True(seat.LastSeenAt > observedAt.AddSeconds(-1));
+        Assert.Equal(stateBefore, persisted.StateJson);
+        Assert.Equal(countBefore, await verify.GameMoves.CountAsync(m => m.RoomId == created.Id));
+    }
+
+    [Fact]
+    public async Task TimeoutRefreshesTrackedRoomAfterConcurrentPurchaseWithoutConcurrencyFailure()
+    {
+        var users=new[]{Guid.NewGuid(),Guid.NewGuid()};
+        var (created,_)=await NewRoomService().CreateRoomAsync("monopoly",users[0],"Alice",JsonSerializer.SerializeToElement(new{seatCount=2}));
+        Assert.NotNull(created);await NewRoomService().JoinRoomAsync(created.Id,users[1],"Bob");
+        using(var prepare=NewDbContext())
+        {
+            var room=await prepare.GameRooms.FindAsync(created.Id);Assert.NotNull(room);
+            var state=GameJson.Deserialize<MonopolyState>(room.StateJson);
+            state.Turn=0;state.Phase="Buy";state.Players[0].Position=1;
+            room.StateJson=GameJson.Serialize(state);await prepare.SaveChangesAsync();
+        }
+        // SeatTimeoutService scans tracked rooms before locking any one room. Another request
+        // may commit between those operations, even though the later SELECT obtains a row lock.
+        using var scanningDb=NewDbContext();
+        var scanned=await scanningDb.GameRooms.SingleAsync(r=>r.Id==created.Id);
+        Assert.Equal("Buy",GameJson.Deserialize<MonopolyState>(scanned.StateJson).Phase);
+        var (_,purchase,_,error)=await NewRoomService().MakeMoveAsync(created.Id,users[0],"{\"type\":\"BUY\"}");
+        Assert.Null(error);Assert.NotNull(purchase);Assert.True(purchase.Ok);
+        var timeoutService=new RoomService(scanningDb,NewRegistry(),NullLogger<RoomService>.Instance);
+        var (_,outcome)=await timeoutService.ApplySeatTimeoutAsync(created.Id,"P0");
+        Assert.NotNull(outcome);Assert.True(outcome.Ok);
+        using var verify=NewDbContext();var persisted=await verify.GameRooms.AsNoTracking().SingleAsync(r=>r.Id==created.Id);
+        var final=GameJson.Deserialize<MonopolyState>(persisted.StateJson);
+        Assert.Equal(0,final.Properties[1].Owner);Assert.Equal(1440,final.Players[0].Cash);
+        Assert.Equal(1,final.Turn);Assert.Equal("Roll",final.Phase);Assert.Null(final.Auction);
+    }
+
+    [Fact]
+    public async Task Monopoly_BuildingDemandPersistsWithoutSpendingAndTimeoutBuysAtFaceValue()
+    {
+        var users=new[]{Guid.NewGuid(),Guid.NewGuid()};
+        var (created,error)=await NewRoomService().CreateRoomAsync("monopoly",users[0],"Alice",JsonSerializer.SerializeToElement(new{seatCount=2}));
+        Assert.Null(error);Assert.NotNull(created);await NewRoomService().JoinRoomAsync(created.Id,users[1],"Bob");
+        using(var db=NewDbContext())
+        {
+            var room=await db.GameRooms.FindAsync(created.Id);Assert.NotNull(room);
+            var state=GameJson.Deserialize<MonopolyState>(room.StateJson);state.Turn=0;state.Phase="Roll";state.Houses=1;
+            foreach(var i in new[]{1,3})state.Properties[i].Owner=0;
+            foreach(var i in new[]{37,39})state.Properties[i].Owner=1;
+            room.StateJson=GameJson.Serialize(state);await db.SaveChangesAsync();
+        }
+        var (_,built,_,buildError)=await NewRoomService().MakeMoveAsync(created.Id,users[0],"{\"type\":\"BUILD\",\"tile\":1}");
+        Assert.Null(buildError);Assert.NotNull(built);Assert.True(built.Ok);
+        using(var verify=NewDbContext())
+        {
+            var room=await verify.GameRooms.AsNoTracking().SingleAsync(r=>r.Id==created.Id);
+            var state=GameJson.Deserialize<MonopolyState>(room.StateJson);
+            Assert.Equal("BuildingDemand",state.Phase);Assert.Equal(1,MonopolyRules.Actor(state));
+            Assert.Equal(1500,state.Players[0].Cash);Assert.Equal(0,state.Properties[1].Buildings);
+            Assert.Equal(1,state.BuildingDemand!.Requests[0]);
+            var frame=await verify.GameMoves.AsNoTracking().Where(m=>m.RoomId==created.Id).OrderByDescending(m=>m.MoveNumber).FirstAsync();
+            Assert.Equal("BuildingDemand",GameJson.Element(frame.ReplayStateJson!).GetProperty("phase").GetString());
+        }
+        var (_,rejected,_,wrongError)=await NewRoomService().MakeMoveAsync(created.Id,users[0],"{\"type\":\"REQUEST_BUILD\",\"tile\":3}");
+        Assert.Null(rejected);Assert.NotNull(wrongError);
+        var (finished,outcome)=await NewRoomService().ApplySeatTimeoutAsync(created.Id,"P1");
+        Assert.NotNull(outcome);Assert.True(outcome.Ok);Assert.NotNull(finished);
+        var final=GameJson.Deserialize<MonopolyState>(finished.StateJson);
+        Assert.Equal("Roll",final.Phase);Assert.Null(final.BuildingDemand);Assert.Null(final.Auction);
+        Assert.Equal(1450,final.Players[0].Cash);Assert.Equal(1500,final.Players[1].Cash);Assert.Equal(0,final.Houses);
+        using var check=NewDbContext();
+        Assert.Equal(3,await check.GameMoves.CountAsync(m=>m.RoomId==created.Id));
+    }
+
+    [Fact]
+    public async Task ReplaySnapshotSchemaUpgradePreservesLegacyRowsAndIsIdempotent()
+    {
+        // This fixture owns a disposable PostgreSQL container per test; emulate its old table only.
+        using var db=NewDbContext();var roomId=Guid.NewGuid();
+        await db.Database.ExecuteSqlRawAsync("ALTER TABLE \"GameMoves\" DROP COLUMN \"ReplayStateJson\"");
+        var legacyMove="{\"type\":\"legacy\"}";
+        await db.Database.ExecuteSqlInterpolatedAsync($"INSERT INTO \"GameMoves\" (\"RoomId\",\"MoveNumber\",\"Side\",\"MoveJson\",\"CreatedAt\") VALUES ({roomId},1,'P0',{legacyMove}::jsonb,now())");
+        await SchemaBootstrapper.ApplyAsync(db,NullLogger.Instance,maxAttempts:1);
+        await SchemaBootstrapper.ApplyAsync(db,NullLogger.Instance,maxAttempts:1);
+        var preserved=await db.GameMoves.AsNoTracking().SingleAsync(m=>m.RoomId==roomId);
+        Assert.Null(preserved.ReplayStateJson);Assert.Equal("legacy",GameJson.Element(preserved.MoveJson).GetProperty("type").GetString());
+    }
+
+    [Fact]
+    public async Task Monopoly_InheritedMortgageChoiceSurvivesReloadAndResumesCorrectSeat()
+    {
+        var users=new[]{Guid.NewGuid(),Guid.NewGuid(),Guid.NewGuid()};
+        var (created,error)=await NewRoomService().CreateRoomAsync("monopoly",users[0],"Alice",JsonSerializer.SerializeToElement(new{seatCount=3}));
+        Assert.Null(error);Assert.NotNull(created);
+        await NewRoomService().JoinRoomAsync(created.Id,users[1],"Bob");
+        await NewRoomService().JoinRoomAsync(created.Id,users[2],"Carol");
+        using(var db=NewDbContext())
+        {
+            var room=await db.GameRooms.FindAsync(created.Id);Assert.NotNull(room);
+            var state=GameJson.Deserialize<MonopolyState>(room.StateJson);
+            state.Turn=0;state.Phase="Inheritance";state.InheritanceResumePhase="End";
+            state.Players[0].Bankrupt=true;state.Players[1].Cash=50;
+            state.Properties[1].Owner=1;state.Properties[1].Mortgaged=true;
+            state.InheritedMortgages=[new InheritedMortgage(1,1)];room.StateJson=GameJson.Serialize(state);
+            await db.SaveChangesAsync();
+        }
+        var (_,wrong,_,wrongError)=await NewRoomService().MakeMoveAsync(created.Id,users[2],"{\"type\":\"REDEEM_INHERITED\"}");
+        Assert.True(wrong is null || !wrong.Ok);Assert.NotNull(wrongError);
+        var (moved,outcome,side,moveError)=await NewRoomService().MakeMoveAsync(created.Id,users[1],"{\"type\":\"REDEEM_INHERITED\"}");
+        Assert.Null(moveError);Assert.NotNull(outcome);Assert.True(outcome.Ok);Assert.Equal("P1",side);Assert.NotNull(moved);
+        using var verify=NewDbContext();var persisted=await verify.GameRooms.AsNoTracking().SingleAsync(r=>r.Id==created.Id);
+        var final=GameJson.Deserialize<MonopolyState>(persisted.StateJson);
+        Assert.Equal(17,final.Players[1].Cash);Assert.False(final.Properties[1].Mortgaged);
+        Assert.Empty(final.InheritedMortgages);Assert.Equal(1,final.Turn);Assert.Equal("Roll",final.Phase);
+    }
+
+    [Fact]
+    public async Task Monopoly_RoomStartMoveAndHiddenDecksSurviveDatabaseReload()
+    {
+        var users = new[] { Guid.NewGuid(), Guid.NewGuid() };
+        var (created, createError) = await NewRoomService().CreateRoomAsync("monopoly", users[0], "Alice",
+            JsonSerializer.SerializeToElement(new { seatCount = 2 }));
+        Assert.Null(createError); Assert.NotNull(created);
+        var (joined, side, joinError) = await NewRoomService().JoinRoomAsync(created.Id, users[1], "Bob");
+        Assert.Null(joinError); Assert.Equal("P1", side); Assert.NotNull(joined);
+        var initial = GameJson.Deserialize<MonopolyState>(joined.StateJson);
+        Assert.True(initial.Started); Assert.Equal(2, initial.Players.Count);
+        var (moved, outcome, _, error) = await NewRoomService().MakeMoveAsync(created.Id, users[initial.Turn], "{\"type\":\"ROLL\"}");
+        Assert.Null(error); Assert.NotNull(outcome); Assert.True(outcome.Ok); Assert.NotNull(moved);
+        using var db = NewDbContext();
+        var persisted = await db.GameRooms.AsNoTracking().SingleAsync(r => r.Id == created.Id);
+        var state = GameJson.Deserialize<MonopolyState>(persisted.StateJson);
+        Assert.All(state.Dice, value => Assert.InRange(value, 1, 6));
+        Assert.Equal(GameJson.Serialize(GameJson.Deserialize<MonopolyState>(moved.StateJson)), GameJson.Serialize(state));
+        Assert.True(GameJson.Element(persisted.StateJson).TryGetProperty("chance", out _));
+        Assert.False(GameJson.Element(new MonopolyEngine().RedactStateForViewer(persisted.StateJson, null)).TryGetProperty("chance", out _));
+        Assert.Equal(1, await db.GameMoves.CountAsync(m => m.RoomId == created.Id && m.MoveJson == "{\"type\":\"ROLL\"}"));
+        var frames=await db.GameMoves.AsNoTracking().Where(m=>m.RoomId==created.Id).OrderBy(m=>m.MoveNumber).ToListAsync();
+        Assert.Equal(2,frames.Count);
+        Assert.All(frames,m=>
+        {
+            Assert.NotNull(m.ReplayStateJson);
+            Assert.False(GameJson.Element(m.ReplayStateJson).TryGetProperty("chance",out _));
+        });
+        Assert.Equal(state.Dice,GameJson.Deserialize<MonopolyState>(frames[^1].ReplayStateJson!).Dice);
+        var (_,timedOut)=await NewRoomService().ApplySeatTimeoutAsync(created.Id,$"P{MonopolyRules.Actor(state)}");
+        Assert.NotNull(timedOut);Assert.True(timedOut.Ok);
+        var timeoutFrame=await db.GameMoves.AsNoTracking().Where(m=>m.RoomId==created.Id).OrderByDescending(m=>m.MoveNumber).FirstAsync();
+        Assert.NotNull(timeoutFrame.ReplayStateJson);
+        Assert.Equal(GameJson.Serialize(GameJson.Deserialize<MonopolyState>(new MonopolyEngine().CreatePublicReplaySnapshot(timedOut.StateJson)!)),
+            GameJson.Serialize(GameJson.Deserialize<MonopolyState>(timeoutFrame.ReplayStateJson)));
+    }
+
+    [Fact]
+    public async Task Monopoly_BankruptcyPersistsWinnerAndRematchCreatesFreshClassicBoard()
+    {
+        var owner=Guid.NewGuid();var opponent=Guid.NewGuid();
+        var (created,_)=await NewRoomService().CreateRoomAsync("monopoly",owner,"Alice",JsonSerializer.SerializeToElement(new{seatCount=2}));
+        Assert.NotNull(created);await NewRoomService().JoinRoomAsync(created.Id,opponent,"Bob");
+        // Arrange a real unpaid bank debt in this isolated test database, then use the real move path.
+        using(var db=NewDbContext())
+        {
+            var room=await db.GameRooms.FindAsync(created.Id);Assert.NotNull(room);
+            var state=GameJson.Deserialize<MonopolyState>(room.StateJson);
+            state.Turn=0;state.Phase="Debt";state.ResumePhase="End";state.Players[0].Cash=0;
+            state.Payments=[new Payment(0,null,50)];room.StateJson=GameJson.Serialize(state);
+            await db.SaveChangesAsync();
+        }
+        var (finished,outcome,_,error)=await NewRoomService().MakeMoveAsync(created.Id,owner,"{\"type\":\"BANKRUPT\"}");
+        Assert.Null(error);Assert.NotNull(outcome);Assert.True(outcome.Ok);Assert.NotNull(finished);
+        Assert.Equal(RoomStatus.Finished,finished.Status);Assert.Equal("P1",finished.Winner);
+        var (rematch,rematchError)=await NewRoomService().CreateRematchAsync(created.Id,owner,"Alice");
+        Assert.Null(rematchError);Assert.NotNull(rematch);Assert.Equal("monopoly",rematch.GameKey);
+        Assert.Equal(2,rematch.SeatCount);Assert.Equal(RoomStatus.Waiting,rematch.Status);
+        var fresh=GameJson.Deserialize<MonopolyState>(rematch.StateJson);
+        Assert.False(fresh.Started);Assert.Null(fresh.Winner);Assert.Empty(fresh.Players);
+        Assert.All(fresh.Properties,p=>Assert.Null(p.Owner));
+        using var verify=NewDbContext();var persisted=await verify.GameRooms.FindAsync(created.Id);
+        Assert.Equal("P1",persisted?.Winner);
+    }
 
     [Fact]
     public async Task CreateRoomAsync_PersistsRoomWithOwnerSeatedAndCorrectSeatCount()

@@ -35,6 +35,7 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<GameMove>(e =>
         {
             e.Property(m => m.MoveJson).HasColumnType("jsonb");
+            e.Property(m => m.ReplayStateJson).HasColumnType("jsonb");
             e.HasIndex(m => new { m.RoomId, m.MoveNumber });
         });
 

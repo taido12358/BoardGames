@@ -111,6 +111,123 @@ describe("useGameRoomHub — wiring sự kiện hub vào gameStore", () => {
 });
 
 describe("useGameRoomHub — trạng thái kết nối", () => {
+  it("đổi phòng xóa ghế và lựa chọn cũ trước khi nhận xác nhận mới", async () => {
+    useGameStore.setState({ room, mySide: "P0", selected: "old", error: "old" });
+    const { result } = renderHook(() => useGameRoomHub());
+    await result.current.joinRoom("r2");
+    expect(useGameStore.getState().mySide).toBeNull();
+    expect(useGameStore.getState().selected).toBeNull();
+    expect(useGameStore.getState().error).toBe("");
+  });
+
+  it("hủy join đang gửi bỏ sự kiện và rời phòng ngay khi server xác nhận", async () => {
+    const { result } = renderHook(() => useGameRoomHub());
+    await waitFor(() => expect(useGameStore.getState().connectionState).toBe("connected"));
+    let finish!: () => void;
+    mocks.conn.invoke.mockReturnValueOnce(new Promise<void>((resolve) => { finish = resolve; }));
+    const controller = new AbortController();
+    const joining = result.current.joinRoom("r1", controller.signal);
+    await waitFor(() => expect(mocks.conn.invoke).toHaveBeenCalledWith("JoinRoom", "r1"));
+    controller.abort();
+    fire("GameStateUpdated", room);
+    fire("Seated", { roomId: "r1", side: "P0" });
+    finish();
+    await joining;
+    expect(useGameStore.getState().room).toBeNull();
+    expect(useGameStore.getState().mySide).toBeNull();
+    expect(mocks.conn.invoke).toHaveBeenLastCalledWith("LeaveRoom", "r1");
+  });
+
+  it("hủy join cũ đã gửi không Leave nhầm sau khi join phòng mới", async () => {
+    const { result } = renderHook(() => useGameRoomHub());
+    await waitFor(() => expect(useGameStore.getState().connectionState).toBe("connected"));
+    let finish!: () => void;
+    mocks.conn.invoke.mockReturnValueOnce(new Promise<void>((resolve) => { finish = resolve; }));
+    const controller = new AbortController();
+    const first = result.current.joinRoom("r1", controller.signal);
+    await waitFor(() => expect(mocks.conn.invoke).toHaveBeenCalledWith("JoinRoom", "r1"));
+    controller.abort();
+    await result.current.joinRoom("r2");
+    finish();
+    await first;
+    expect(mocks.conn.invoke).not.toHaveBeenCalledWith("LeaveRoom", "r1");
+    fire("Seated", { roomId: "r1", side: "P0" });
+    expect(useGameStore.getState().mySide).toBeNull();
+  });
+
+  it("rời trong lúc start không tự join lại cache phòng cũ", async () => {
+    let finish!: () => void;
+    mocks.conn.start.mockReturnValueOnce(new Promise<void>((resolve) => { finish = resolve; }));
+    useGameStore.setState({ room });
+    const { result } = renderHook(() => useGameRoomHub());
+    const joining = result.current.joinRoom("r1");
+    result.current.leaveRoom("r1");
+    finish();
+    await joining;
+    expect(mocks.conn.invoke).not.toHaveBeenCalledWith("JoinRoom", "r1");
+  });
+
+  it("chuyển phòng bỏ state, ghế, chat và lời mời đến muộn từ phòng cũ", async () => {
+    const { result } = renderHook(() => useGameRoomHub());
+    await result.current.joinRoom("r1");
+    await result.current.joinRoom("r2");
+    const next = { ...room, id: "r2", mySide: "P1" };
+    fire("GameStateUpdated", next);
+    fire("Seated", { roomId: "r2", side: "P1" });
+    fire("GameStateUpdated", room);
+    fire("Seated", { roomId: "r1", side: "P0" });
+    fire("ChatMessageReceived", { roomId: "r1", text: "cũ" });
+    fire("RematchAvailable", { oldRoomId: "r1", newRoomId: "r3" });
+    expect(useGameStore.getState().room).toEqual(next);
+    expect(useGameStore.getState().mySide).toBe("P1");
+    expect(useGameStore.getState().chatMessages).toEqual([]);
+    expect(useGameStore.getState().rematchInvite).toBeNull();
+    fire("ChatMessageReceived", { roomId: "r2", text: "mới" });
+    fire("RematchAvailable", { oldRoomId: "r2", newRoomId: "r4" });
+    expect(useGameStore.getState().chatMessages).toHaveLength(1);
+    expect(useGameStore.getState().rematchInvite?.newRoomId).toBe("r4");
+    await fire("__reconnected");
+    expect(mocks.conn.invoke).toHaveBeenLastCalledWith("JoinRoom", "r2");
+  });
+
+  it("rời phòng chặn sự kiện cũ kể cả khi store chưa được route dọn", async () => {
+    const { result } = renderHook(() => useGameRoomHub());
+    await result.current.joinRoom("r1");
+    useGameStore.setState({ room });
+    result.current.leaveRoom("r1");
+    fire("GameStateUpdated", { ...room, winner: "P0" });
+    fire("Seated", { roomId: "r1", side: "P0" });
+    fire("ChatMessageReceived", { roomId: "r1", text: "cũ" });
+    fire("RematchAvailable", { oldRoomId: "r1", newRoomId: "r3" });
+    expect(useGameStore.getState().room).toEqual(room);
+    expect(useGameStore.getState().mySide).toBeNull();
+    expect(useGameStore.getState().chatMessages).toEqual([]);
+    expect(useGameStore.getState().rematchInvite).toBeNull();
+    await fire("__reconnected");
+    expect(mocks.conn.invoke).toHaveBeenLastCalledWith("SubscribeLobby");
+  });
+
+  it("chỉ join yêu cầu mới nhất khi start chưa hoàn tất", async () => {
+    let finish!: () => void;
+    mocks.conn.start.mockReturnValueOnce(new Promise<void>((resolve) => { finish = resolve; }));
+    const { result } = renderHook(() => useGameRoomHub());
+    const first = result.current.joinRoom("r1");
+    const second = result.current.joinRoom("r2");
+    finish();
+    await Promise.all([first, second]);
+    expect(mocks.conn.invoke).not.toHaveBeenCalledWith("JoinRoom", "r1");
+    expect(mocks.conn.invoke).toHaveBeenCalledWith("JoinRoom", "r2");
+  });
+
+  it("leave cũ không tháo phòng mới khi điều hướng nhanh", async () => {
+    const { result } = renderHook(() => useGameRoomHub());
+    await result.current.joinRoom("r2");
+    result.current.leaveRoom("r1");
+    expect(mocks.conn.invoke).not.toHaveBeenCalledWith("LeaveRoom", "r1");
+    fire("GameStateUpdated", { ...room, id: "r2" });
+    expect(useGameStore.getState().room?.id).toBe("r2");
+  });
+
   it("hủy khi đang chờ start không vào phòng cũ", async () => {
     let finish!: () => void;
     mocks.conn.start.mockReturnValueOnce(new Promise<void>((resolve) => { finish = resolve; }));

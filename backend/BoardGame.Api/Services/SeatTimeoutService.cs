@@ -18,6 +18,8 @@ namespace BoardGame.Api.Services;
 /// Nếu MỌI ghế đã có người đều mất kết nối quá lâu mà engine vẫn không xử lý ra được kết quả
 /// (hiếm — ví dụ mọi người cùng rớt mạng một lúc, không ai để "kết thúc lượt"/"phản hồi" mà
 /// timeout), đánh dấu Abandoned thay vì để phòng kẹt "Playing" vĩnh viễn.
+/// Mỗi lượt refresh LastSeenAt từ các connection sống và hết hạn Connected cũ sau crash;
+/// không phụ thuộc việc OnDisconnected có cơ hội chạy khi tiến trình chết hay không.
 /// </summary>
 public class SeatTimeoutService : BackgroundService
 {
@@ -38,7 +40,7 @@ public class SeatTimeoutService : BackgroundService
     {
         while (!stoppingToken.IsCancellationRequested)
         {
-            try { await ScanOnce(stoppingToken); }
+            try { await ScanOnceAsync(stoppingToken); }
             catch (Exception ex) { _log.LogWarning(ex, "Quét ghế mất kết nối thất bại — thử lại ở lần sau"); }
 
             try { await Task.Delay(ScanInterval, stoppingToken); }
@@ -46,7 +48,8 @@ public class SeatTimeoutService : BackgroundService
         }
     }
 
-    private async Task ScanOnce(CancellationToken ct)
+    /// <summary>Chạy một lượt quét bằng cùng logic của background loop; mỗi lượt tạo scope/transaction mới.</summary>
+    public async Task ScanOnceAsync(CancellationToken ct)
     {
         // DbContext/RoomService là scoped — BackgroundService là singleton, phải tự tạo scope.
         using var scope = _scopeFactory.CreateScope();
@@ -56,12 +59,19 @@ public class SeatTimeoutService : BackgroundService
         var hub = scope.ServiceProvider.GetRequiredService<IHubContext<GameHub>>();
 
         var now = DateTime.UtcNow;
+        var liveUsers = GameHub.ConnectedUsersByRoom();
         var playingRooms = await db.GameRooms.Where(r => r.Status == RoomStatus.Playing).ToListAsync(ct);
 
         foreach (var room in playingRooms)
         {
             if (!engines.Has(room.GameKey)) continue;
             var engine = engines.Get(room.GameKey);
+            // OnDisconnected cannot run after process termination. Persist liveness periodically;
+            // timestamps from another host keep its users alive without a global startup reset.
+            var changed = await rooms.RefreshSeatPresenceAsync(room.Id,
+                liveUsers.GetValueOrDefault(room.Id) ?? new HashSet<Guid>(), now, now - DisconnectGracePeriod);
+            if (room.Status != RoomStatus.Playing) continue;
+            if (changed) await GameHub.BroadcastRoomStateAsync(hub.Clients, room.Id.ToString(), room, engine);
 
             var timedOutIdx = SeatCodec.SeatsOf(room)
                 .Select((s, idx) => (Seat: s, Index: idx))
@@ -72,8 +82,8 @@ public class SeatTimeoutService : BackgroundService
             foreach (var idx in timedOutIdx)
             {
                 // RoomService.ApplySeatTimeoutAsync dùng CHUNG DbContext (cùng scope) — EF tự
-                // identity-resolve về đúng "room" instance ở trên, nên sau lời gọi này room đã
-                // phản ánh state/status mới nhất mà không cần đọc lại.
+                // identity-resolve về đúng "room" instance ở trên. LockRoomAsync reload entity
+                // đã track dưới row lock trước khi tính timeout, nên không dùng state cũ của lần scan.
                 var (updatedRoom, outcome) = await rooms.ApplySeatTimeoutAsync(room.Id, engine.SideForSeat(idx));
                 if (updatedRoom is null || outcome is null) continue; // no-op (chưa liên quan lượt/phản hồi hiện tại) — thử lại lần quét sau
 

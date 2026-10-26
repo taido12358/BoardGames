@@ -2,11 +2,14 @@
 import { Link, useLocation, useParams } from "react-router-dom";
 import { useRef } from "react";
 import { getGameTitle } from "../platform/gameRegistry";
+import { lazy, Suspense } from "react";
+const MonopolyReplayBoard = lazy(() => import("../games/monopoly/MonopolyReplayBoard"));
 
 interface MoveEntry {
   moveNumber: number;
   side: string;
   move: unknown;
+  state?: unknown;
 }
 
 interface Replay {
@@ -15,6 +18,8 @@ interface Replay {
   winner: string | null;
   seats: (string | null)[];
   moves: MoveEntry[];
+  map?: unknown;
+  finalState?: unknown;
 }
 
 type LoadState = "loading" | "ok" | "not-found" | "unavailable" | "error";
@@ -27,6 +32,29 @@ function moveSummary(move: unknown): string {
     case "playcard": return "Đánh bài";
     case "endturn": return "Kết thúc lượt";
     case "respond": return data.cardId ? "Dùng bài để phản hồi" : "Không dùng bài phản hồi";
+    case "roll": return "Đổ xúc xắc";
+    case "buy": return "Mua tài sản";
+    case "decline": return "Đưa đất ra đấu giá";
+    case "bid": return `Trả giá ${typeof data.amount === "number" ? data.amount : ""}`;
+    case "pass": return "Bỏ đấu giá";
+    case "build": return "Xây nhà";
+    case "sell": case "sellgroup": return "Bán nhà";
+    case "mortgage": return "Thế chấp";
+    case "unmortgage": return "Giải chấp";
+    case "trade": return "Đề nghị giao dịch";
+    case "accept": return "Chấp nhận giao dịch";
+    case "reject": return "Từ chối giao dịch";
+    case "settle": return "Thanh toán nợ";
+    case "bankrupt": return "Phá sản";
+    case "end": return "Kết thúc lượt";
+    case "roomfull": return "Bắt đầu ván";
+    case "seattimeout": return "Xử lý mất kết nối";
+    case "keepinherited": return "Giữ thế chấp thừa kế";
+    case "redeeminherited": return "Giải chấp tài sản thừa kế";
+    case "payjail": return "Nộp phí ra tù";
+    case "jailcard": return "Dùng thẻ ra tù";
+    case "requestbuild": return "Xác nhận mua nhà";
+    case "skipbuild": return "Không mua nhà đợt này";
     default: return "Nước đi đã ghi nhận";
   }
 }
@@ -35,8 +63,8 @@ function moveSummary(move: unknown): string {
  * Xem lại diễn biến 1 ván đã kết thúc — `GET /api/games/:roomId/replay` đọc artifact đã lưu ở
  * MinIO lúc ván kết thúc (xem `GameHub.FinishGame`) nhưng CHƯA từng có giao diện gọi tới trước
  * 2026-09-11 (`MinioStorageService` trước đó chỉ ghi, không có cách đọc lại). Chỉ hiện tóm tắt +
- * danh sách nước đi theo thứ tự — KHÔNG dựng lại bàn cờ từng bước (cần engine hỗ trợ tái tạo state
- * ban đầu từ 1 map cố định, hiện chưa có, để dành làm sau nếu cần).
+ * danh sách nước đi theo thứ tự. Engine có public snapshot (Monopoly) hiển thị bàn cờ đúng
+ * state sau từng hành động, không chạy lại RNG hoặc thay đổi phòng đang chơi trong store.
  */
 export default function GameReplayPage() {
   const { roomId = "" } = useParams();
@@ -151,6 +179,13 @@ export default function GameReplayPage() {
             </div>
           </div>
 
+          {replay.gameKey === "monopoly" && replay.map && (
+            <Suspense fallback={<p role="status" className="text-sm text-amber-300">Đang chuẩn bị bàn cờ phát lại…</p>}>
+              <MonopolyReplayBoard roomId={replay.id} map={replay.map} seats={replay.seats}
+                state={replayStep < 0 ? replay.moves[0]?.state ?? replay.finalState : replay.moves[replayStep]?.state} />
+            </Suspense>
+          )}
+
           <div className="animate-game-action-enter rounded-sm border border-amber-900/30 overflow-hidden">
             <div className="bg-gradient-to-r from-[#2b2013] to-[#1c150c] text-amber-400/70 text-xs uppercase px-3 py-2.5 tracking-widest border-b border-amber-900/30">Diễn biến</div>
             {replay.moves.length === 0 ? (
@@ -195,7 +230,7 @@ export default function GameReplayPage() {
                     <span className="text-amber-800/50 w-8 shrink-0 text-right font-mono">{index + 1}.</span>
                     <div className="min-w-0 flex-1 space-y-1">
                       <button type="button" onClick={() => selectReplayStep(index)} aria-label={`Tua tới nước đi ${index + 1}`} className="replay-move-seek text-left text-amber-200/80 hover:text-amber-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-300 rounded-sm">
-                        <span className="text-amber-300 font-semibold">{/^P\d+$/.test(m.side) ? replay.seats[Number(m.side.slice(1))] ?? m.side : m.side}</span> · {moveSummary(m.move)}
+                        <span className="text-amber-300 font-semibold">{m.side === "SYSTEM" ? "Hệ thống" : /^P\d+$/.test(m.side) ? replay.seats[Number(m.side.slice(1))] ?? m.side : m.side}</span> · {moveSummary(m.move)}
                       </button>
                       <details className="replay-move-details text-xs text-amber-700/60"><summary className="cursor-pointer py-1 hover:text-amber-400"><span aria-hidden="true" className="replay-details-chevron inline-block mr-1">›</span>Chi tiết nước đi</summary><div className="replay-move-details-content"><code className="block min-h-0 overflow-hidden break-all pt-1 text-amber-600/60">{JSON.stringify(m.move)}</code></div></details>
                     </div>

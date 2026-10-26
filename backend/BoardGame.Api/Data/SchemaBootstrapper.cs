@@ -114,6 +114,7 @@ public static class SchemaBootstrapper
     """ALTER TABLE "GameMoves" ADD COLUMN IF NOT EXISTS "MoveJson"   jsonb   NOT NULL DEFAULT '{{}}'::jsonb""",
     """ALTER TABLE "GameMoves" ADD COLUMN IF NOT EXISTS "Side"       text    NOT NULL DEFAULT ''""",
     """ALTER TABLE "GameMoves" ADD COLUMN IF NOT EXISTS "MoveNumber" integer NOT NULL DEFAULT 0""",
+    """ALTER TABLE "GameMoves" ADD COLUMN IF NOT EXISTS "ReplayStateJson" jsonb NULL""",
     """CREATE INDEX IF NOT EXISTS "IX_GameMoves_RoomId_MoveNumber" ON "GameMoves" ("RoomId", "MoveNumber")""",
     """CREATE UNIQUE INDEX IF NOT EXISTS "UX_GameMoves_RoomId_MoveNumber" ON "GameMoves" ("RoomId", "MoveNumber")""",
     """

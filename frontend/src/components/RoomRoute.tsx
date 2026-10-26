@@ -11,6 +11,7 @@ const VayBatBoard = lazy(() => import("../games/vaybat/VayBatBoard"));
 const BangBoard = lazy(() => import("../games/bang/BangBoard"));
 const OAnQuanBoard = lazy(() => import("../games/oanquan/OAnQuanBoard"));
 const ZodiacRaceBoard = lazy(() => import("../games/zodiacrace/ZodiacRaceBoard"));
+const MonopolyBoard = lazy(() => import("../games/monopoly/MonopolyBoard"));
 
 /**
  * Route thật cho "đang ở trong một phòng" (`/games/:gameKey/room/:roomId`) — trước đây
@@ -85,6 +86,11 @@ export default function RoomRoute() {
     return () => {
       cancelled = true;
       controller.abort();
+      // Back/link điều hướng cũng phải rời group, không chỉ nút Thoát.
+      leaveRoom(roomId);
+      if (useGameStore.getState().room?.id === roomId) {
+        useGameStore.setState({ room: null, mySide: null, selected: null, error: "", chatMessages: [], rematchInvite: null });
+      }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roomId, gameKey, loadAttempt]);
@@ -187,6 +193,8 @@ export default function RoomRoute() {
 
   const board = (() => {
     switch (room.gameKey) {
+      case "monopoly":
+        return <MonopolyBoard key={room.id} makeMove={makeMove} onLeave={handleLeave} onRematch={handleRematch} rematching={rematching} />;
       case "vaybat":
         return <VayBatBoard makeMove={makeMove} onLeave={handleLeave} onRematch={handleRematch} rematching={rematching} />;
       case "bang":

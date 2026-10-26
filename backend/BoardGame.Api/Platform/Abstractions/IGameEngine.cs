@@ -31,6 +31,12 @@ public interface IGameEngine
     MoveOutcome ApplyMove(string mapJson, string stateJson, string side, string moveJson);
 
     /// <summary>
+    /// Optional public state after a move, persisted atomically for visual replay. Engines opting
+    /// in must remove private data. Null preserves legacy intent-only replay without snapshot storage.
+    /// </summary>
+    string? CreatePublicReplaySnapshot(string stateJson) => null;
+
+    /// <summary>
     /// Ẩn thông tin riêng tư (bài trên tay, vai trò ẩn…) khỏi state TRƯỚC KHI gửi
     /// cho một người xem cụ thể qua SignalR — thay vì gửi nguyên state rồi ẩn bằng
     /// CSS phía client (không an toàn: dữ liệu vẫn nằm trong response).

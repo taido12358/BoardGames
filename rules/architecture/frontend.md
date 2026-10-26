@@ -79,6 +79,14 @@ Mobile-first: `max-w-md mx-auto`, flex-col. Thứ tự: Status bar → Board →
 ## Kết nối realtime
 
 - Một hub connection dùng chung cho vòng đời trang chơi, quản lý trong `useGameRoomHub`.
+- Hook giữ ý định phòng riêng với snapshot trong store. Join mới thay yêu cầu đang chờ start;
+  leave chặn ngay sự kiện phòng cũ và reconnect không dùng lại cache phòng đã rời.
+- `GameStateUpdated.id`, `Seated.roomId`, `ChatMessageReceived.roomId` và
+  `RematchAvailable.oldRoomId` phải khớp phòng mong muốn trước khi cập nhật UI. Trường mã phòng
+  được server bổ sung vào các sự kiện phụ; payload chat/rematch cũ chỉ đọc được ngoài subscription có scope.
+- Join bị abort khi đã gửi sẽ Leave sau xác nhận nếu chưa bị yêu cầu mới thay thế. Không gửi
+  Leave cũ sau khi đã chuyển phòng. Đổi phòng xóa ghế/lựa chọn/chat/lời mời cũ trước xác nhận mới.
+- Cleanup của `RoomRoute` rời subscription và dọn snapshot của đúng phòng đó, kể cả điều hướng Back/link.
 - Lỗi `invoke` (mất kết nối SignalR) phải đi vào state `error` và hiển thị UI — không chỉ `console.error` (xem lịch sử bug "không thể di chuyển quân" trong [`../history/decisions.md`](../history/decisions.md)).
 
 ## Trạng thái tương tác BANG! (2026-10-24)

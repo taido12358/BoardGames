@@ -11,5 +11,6 @@ public class GameMove
     public int MoveNumber { get; set; }
     public string Side { get; set; } = "";   // ghế của người đi
     public string MoveJson { get; set; } = "{}"; // jsonb — payload tuỳ game
+    public string? ReplayStateJson { get; set; } // optional public snapshot after this accepted move
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

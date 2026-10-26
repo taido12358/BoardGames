@@ -31,7 +31,11 @@ jobs:
         run: dotnet restore backend/BoardGame.sln
       - name: Build
         run: dotnet build backend/BoardGame.sln --no-restore --configuration Release
-      - name: Test
+      - name: Build MinIO for archive integration tests
+        # Real archive integration tests use the same source-built MinIO as Compose.
+        # The community image is no longer published on Docker Hub.
+        run: docker build -t boardgames/minio:2025-10-15 ./infra/minio
+      - name: Run backend tests
         run: dotnet test backend/BoardGame.sln --no-build --configuration Release --logger "console;verbosity=normal"
 
   frontend:

@@ -12,6 +12,8 @@ import { zodiacRaceMetadata, zodiacRaceInstructions } from "../games/zodiacrace/
 import VayBatCreateOptions from "../games/vaybat/CreateOptions";
 import BangCreateOptions from "../games/bang/CreateOptions";
 import ZodiacRaceCreateOptions from "../games/zodiacrace/CreateOptions";
+import { monopolyMetadata, monopolyInstructions } from "../games/monopoly/metadata";
+import MonopolyCreateOptions from "../games/monopoly/CreateOptions";
 
 interface GameRegistryEntry {
   metadata: GameMetadata;
@@ -21,6 +23,7 @@ interface GameRegistryEntry {
 }
 
 const REGISTRY: Record<string, GameRegistryEntry> = {
+  monopoly: { metadata: monopolyMetadata, instructions: monopolyInstructions, CreateOptionsForm: MonopolyCreateOptions },
   vaybat: { metadata: vaybatMetadata, instructions: vaybatInstructions, CreateOptionsForm: VayBatCreateOptions },
   bang: { metadata: bangMetadata, instructions: bangInstructions, CreateOptionsForm: BangCreateOptions },
   oanquan: { metadata: oanQuanMetadata, instructions: oanQuanInstructions }, // không có tuỳ chọn tạo phòng riêng

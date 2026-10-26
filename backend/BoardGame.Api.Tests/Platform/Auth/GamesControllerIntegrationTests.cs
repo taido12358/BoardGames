@@ -2,6 +2,10 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using BoardGame.Api.Platform;
+using BoardGame.Api.Data;
+using BoardGame.Api.Games.Monopoly;
+using BoardGame.Api.Platform.Models;
+using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
 namespace BoardGame.Api.Tests.Platform.Auth;
@@ -27,7 +31,7 @@ public class GamesControllerIntegrationTests
     public GamesControllerIntegrationTests(AuthApiFactory factory) => _factory = factory;
 
     [Fact]
-    public async Task Engines_ReturnsAllFourRegisteredGames()
+    public async Task Engines_ReturnsAllRegisteredGamesIncludingMonopoly()
     {
         using var client = await _factory.LoggedInClientAsync();
 
@@ -36,7 +40,7 @@ public class GamesControllerIntegrationTests
         Assert.Equal(HttpStatusCode.OK, res.StatusCode);
         var body = await res.Content.ReadFromJsonAsync<JsonElement[]>();
         var keys = body!.Select(e => e.GetProperty("key").GetString()).ToHashSet();
-        Assert.Equal(new HashSet<string?> { "vaybat", "bang", "oanquan", "zodiacrace" }, keys);
+        Assert.Equal(new HashSet<string?> { "vaybat", "bang", "oanquan", "zodiacrace", "monopoly" }, keys);
     }
 
     [Fact]
@@ -174,16 +178,10 @@ public class GamesControllerIntegrationTests
     }
 
     [Fact]
-    public async Task Replay_RoomNeverFinished_ReturnsNotFoundOrServiceUnavailableNeverCrashes()
+    public async Task Replay_ExistingUnfinishedRoomReturnsNotFoundWithoutReadingArchive()
     {
-        // Không cấu hình MinIO thật cho môi trường test này (xem doc comment AuthApiFactory) —
-        // nhưng máy chạy test CÓ THỂ (như lúc phát triển local) đã có sẵn 1 MinIO thật đang chạy ở
-        // cổng mặc định (vd còn sót từ live-test thủ công qua Docker Compose), khiến 2 kết quả đều
-        // hợp lệ tuỳ môi trường: 404 (MinIO thật, object không tồn tại vì phòng chưa từng kết
-        // thúc) hoặc 503 (không kết nối được MinIO — đúng hành vi phòng thủ của
-        // GamesController.Replay). Điều quan trọng cần xác nhận là KHÔNG BAO GIỜ lộ 500 không rõ
-        // nguyên nhân — happy-path đọc đúng nội dung replay thật cần MinIO thật, xem live-test thủ
-        // công trong rules/coding/testing.md.
+        // Existing unfinished rooms are rejected from PostgreSQL before any archive access.
+        // The unreachable MinIO configured by AuthApiFactory must not turn this into 503.
         using var client = await _factory.LoggedInClientAsync();
         var created = await (await client.PostAsJsonAsync("/api/games", new { gameKey = "vaybat" }))
             .Content.ReadFromJsonAsync<JsonElement>();
@@ -191,9 +189,7 @@ public class GamesControllerIntegrationTests
 
         var res = await client.GetAsync($"/api/games/{id}/replay");
 
-        Assert.True(
-            res.StatusCode is HttpStatusCode.NotFound or HttpStatusCode.ServiceUnavailable,
-            $"Expected NotFound or ServiceUnavailable, got {res.StatusCode}");
+        Assert.Equal(HttpStatusCode.NotFound, res.StatusCode);
     }
 
     [Fact]
@@ -204,6 +200,36 @@ public class GamesControllerIntegrationTests
         var res = await anonClient.GetAsync($"/api/games/{Guid.NewGuid()}/replay");
 
         Assert.Equal(HttpStatusCode.Unauthorized, res.StatusCode);
+    }
+
+    [Fact]
+    public async Task Replay_FinishedMonopolyServesPublicSnapshotsFromDatabaseWithoutArchive()
+    {
+        using var owner=await _factory.LoggedInClientAsync();
+        using var opponent=await _factory.LoggedInClientAsync();
+        var user=await (await opponent.GetAsync("/api/auth/me")).Content.ReadFromJsonAsync<JsonElement>();
+        var created=await (await owner.PostAsJsonAsync("/api/games",new{gameKey="monopoly",options=new{seatCount=2}})).Content.ReadFromJsonAsync<JsonElement>();
+        var id=created.GetProperty("id").GetGuid();
+        Assert.Equal(HttpStatusCode.NotFound,(await owner.GetAsync($"/api/games/{id}/replay")).StatusCode);
+        using(var scope=_factory.Services.CreateScope())
+        {
+            var rooms=scope.ServiceProvider.GetRequiredService<RoomService>();
+            await rooms.JoinRoomAsync(id,user.GetProperty("id").GetGuid(),"Bob");
+            var db=scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var room=await db.GameRooms.FindAsync(id);Assert.NotNull(room);
+            var state=GameJson.Deserialize<MonopolyState>(room.StateJson);
+            state.Players[1].Bankrupt=true;state.Winner="P0";state.Phase="Finished";state.Dice=[3,4];
+            room.StateJson=GameJson.Serialize(state);room.Status=RoomStatus.Finished;room.Winner="P0";
+            db.GameMoves.Add(new GameMove{RoomId=id,MoveNumber=2,Side="P1",MoveJson="{\"type\":\"BANKRUPT\"}",ReplayStateJson=new MonopolyEngine().CreatePublicReplaySnapshot(room.StateJson)});
+            await db.SaveChangesAsync();
+        }
+        var response=await owner.GetAsync($"/api/games/{id}/replay");
+        Assert.Equal(HttpStatusCode.OK,response.StatusCode);
+        var replay=await response.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(2,replay.GetProperty("moves").GetArrayLength());
+        Assert.False(replay.GetProperty("finalState").TryGetProperty("chance",out _));
+        Assert.All(replay.GetProperty("moves").EnumerateArray(),m=>Assert.False(m.GetProperty("state").TryGetProperty("chest",out _)));
+        Assert.Equal(3,replay.GetProperty("finalState").GetProperty("dice")[0].GetInt32());
     }
 
     [Fact]

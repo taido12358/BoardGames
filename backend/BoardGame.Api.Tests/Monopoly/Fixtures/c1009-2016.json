@@ -1,0 +1,35 @@
+{
+  "source": "https://instructions.hasbro.com/api/download/C1009_en-my_monopoly-classic-game.pdf",
+  "print": "C10090000 17 I MN, 2017-02-15; copyright 2016",
+  "rulesetId": "classic-us-c1009-2016",
+  "minPlayers": 2,
+  "maxPlayers": 6,
+  "auctionMinimumBid": 10,
+  "initialCash": 1500,
+  "goSalary": 200,
+  "incomeTax": 200,
+  "luxuryTax": 100,
+  "houses": 32,
+  "hotels": 12,
+  "titleDeeds": 28,
+  "chanceCards": 16,
+  "chestCards": 16,
+  "railroadSample": { "index": 5, "name": "Reading Railroad", "price": 200, "rentsByOwnedCount": [25, 50, 100, 200] },
+  "utilitySamples": [
+    { "index": 12, "name": "Electric Company", "price": 150 },
+    { "index": 28, "name": "Water Works", "price": 150 }
+  ],
+  "utilityMultipliersByOwnedCount": [4, 10],
+  "sourceLocations": {
+    "deedSamples": "PDF page 2: illustrated Title Deed fronts",
+    "railroadSample": "PDF page 2: Reading Railroad space/deed and Owned Railroads table",
+    "utilitySamples": "PDF page 2: utility spaces and Owned Utilities section",
+    "components": "PDF page 1: contents"
+  },
+  "deedSamples": [
+    { "index": 21, "name": "Kentucky Avenue", "houseCost": 150, "colorSetRent": 36, "rents": [18, 90, 250, 700, 875, 1050] },
+    { "index": 23, "name": "Indiana Avenue", "houseCost": 150, "colorSetRent": 36, "rents": [18, 90, 250, 700, 875, 1050] },
+    { "index": 24, "name": "Illinois Avenue", "price": 240, "houseCost": 150, "colorSetRent": 40, "rents": [20, 100, 300, 750, 925, 1100] },
+    { "index": 32, "name": "North Carolina Avenue", "houseCost": 200, "colorSetRent": 52, "rents": [26, 130, 390, 900, 1100, 1275] }
+  ]
+}

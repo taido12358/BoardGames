@@ -14,6 +14,18 @@ Hệ quả cho mọi thay đổi schema: phải backward-compatible ngay khi cod
 
 ## Quan hệ với các thành phần khác
 
+### Snapshot replay công khai (2026-10-25)
+
+`GameMoves.ReplayStateJson` là JSONB nullable, dùng chung cho các engine muốn lưu state sau
+mỗi hành động. `IGameEngine.CreatePublicReplaySnapshot` mặc định trả null; Monopoly opt in
+và loại thứ tự bộ bài trước khi lưu. Snapshot được ghi cùng transaction với intent/state phòng,
+bao gồm bắt đầu ván, nước đi thường và timeout. Game khác không phải lưu thêm state.
+
+Bootstrap thêm cột bằng `ADD COLUMN IF NOT EXISTS`, giữ các bản ghi cũ với giá trị null.
+Test PostgreSQL riêng mô phỏng bảng cũ, nâng schema hai lần và xác nhận intent cũ còn nguyên.
+Replay ván đã kết thúc ưu tiên dựng từ DB; MinIO tiếp tục lưu archive và phục vụ khi không còn
+phòng tương ứng trong DB. Phòng chưa kết thúc không được trả replay qua endpoint.
+
 ```
 PostgreSQL (nguồn sự thật, JSONB)
    ↕ cache

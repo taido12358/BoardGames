@@ -15,6 +15,11 @@ Pipeline tối thiểu cho mỗi PR (thứ tự fail-fast):
 2. Frontend: `npm ci` → lint → type-check (`tsc --noEmit`) → build
 3. Build Docker image (chỉ trên branch chính / tag)
 
+Backend CI build `infra/minio` thành `boardgames/minio:2025-10-15` trước test archive thật.
+Local dùng `docker compose build minio` một lần trước `dotnet test`. Khi deploy Kubernetes,
+push image này lên registry riêng và sửa image trong `k8s/14-minio.yaml`; không dựa vào image
+community cũ trên Docker Hub. Build không thay/xóa volume MinIO đang có.
+
 - PR đỏ CI thì không merge (xem [`git.md`](./git.md)).
 - Image tag theo git SHA (+ tag phiên bản khi release), ❌ không deploy `latest`.
 - Build một lần, deploy image đó qua các môi trường — không rebuild riêng cho production.
