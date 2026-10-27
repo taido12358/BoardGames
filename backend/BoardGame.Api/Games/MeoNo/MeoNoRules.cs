@@ -45,15 +45,17 @@ public static class MeoNoRules
         var card = player?.Hand.FirstOrDefault(c => c.Id == move.CardId);
         if (player is null || card is null) return (state, "Bài không tồn tại trong tay");
 
+        // Không thể đánh trực tiếp: ExplodingKitten, Defuse, Nope (reactive), và cat cards (cần combo)
         if (card.Kind is CardKind.ExplodingKitten or CardKind.Defuse)
             return (state, "Không thể đánh bài này trực tiếp");
+        if (card.Kind == CardKind.Nope)
+            return (state, "Dùng Nope để phản trong giai đoạn AwaitingNope, không phải đánh trực tiếp");
+        if (MeoNoCards.IsCatCard(card.Kind))
+            return (state, "Lá mèo phải đánh combo (2, 3 hoặc 5 lá) — không thể đánh đơn lẻ");
 
         // Đưa bài vào discard
         player.Hand.Remove(card);
         state.DiscardPile.Add(card);
-
-        // Nope không thể bị Nope (theo luật gốc Nope-ing a Nope)
-        if (card.Kind == CardKind.Nope) return (state, "Dùng Nope để phản là PASS_NOPE hoặc NOPE trong AwaitingNope");
 
         Log(state, $"{player.Name} đánh {MeoNoCards.DisplayName(card.Kind)}");
 
@@ -301,7 +303,10 @@ public static class MeoNoRules
                 break;
 
             case CardKind.Attack:
-                int nextTurns = state.TurnsLeft + 1;
+                // Luật gốc: mỗi Attack cộng 2 lượt rút cho người tiếp theo.
+                // Từ lượt bình thường (TurnsLeft=1): người sau rút 2 lần.
+                // Khi stack (TurnsLeft=2): người sau rút 2 (còn lại) + 2 (mới) = 4.
+                int nextTurns = state.TurnsLeft == 1 ? 2 : state.TurnsLeft + 2;
                 AdvanceTurnWithExtra(state, rng, nextTurns);
                 break;
 
