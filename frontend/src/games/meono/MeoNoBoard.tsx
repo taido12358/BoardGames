@@ -5,6 +5,57 @@ import type { Card, CardKind, MeoNoMove, MeoNoViewerState, PublicPlayer } from "
 
 // ─── Card display config ──────────────────────────────────────────────────────
 
+const CARD_IMG_BASE = "/assets/games/meono/cards";
+
+// Number of art variants per card type
+const CARD_VARIANTS: Record<string, number> = {
+  exploding_kitten: 4,
+  defuse: 6,
+  skip: 4,
+  attack: 4,
+  see_the_future: 5,
+  shuffle: 4,
+  favor: 4,
+  nope: 5,
+};
+
+// Cat cards each have a fixed index in cat_card/
+const CAT_IMG_INDEX: Record<string, number> = {
+  tacocat: 0,
+  beardCat: 1,
+  hairyPotatoCat: 2,
+  rainbowRalphingCat: 3,
+  cattermelon: 4,
+};
+
+// Map CardKind → image folder name
+const KIND_FOLDER: Record<string, string> = {
+  explodingKitten: "exploding_kitten",
+  defuse: "defuse",
+  skip: "skip",
+  attack: "attack",
+  seeFuture: "see_the_future",
+  shuffle: "shuffle",
+  favor: "favor",
+  nope: "nope",
+  tacocat: "cat_card",
+  beardCat: "cat_card",
+  hairyPotatoCat: "cat_card",
+  rainbowRalphingCat: "cat_card",
+  cattermelon: "cat_card",
+};
+
+function cardImageUrl(kind: CardKind, cardId: string): string {
+  const folder = KIND_FOLDER[kind] ?? "back";
+  if (kind in CAT_IMG_INDEX) {
+    return `${CARD_IMG_BASE}/${folder}/${CAT_IMG_INDEX[kind]}.png`;
+  }
+  const variants = CARD_VARIANTS[folder] ?? 1;
+  // Use numeric part of id (e.g. "c007" → 7) to deterministically pick variant
+  const num = parseInt(cardId.replace(/\D/g, ""), 10) || 0;
+  return `${CARD_IMG_BASE}/${folder}/${num % variants}.png`;
+}
+
 const CARD_INFO: Record<CardKind, { emoji: string; name: string; color: string; bg: string }> = {
   explodingKitten: { emoji: "💣", name: "Mèo Nổ",      color: "text-red-200",    bg: "bg-red-950/80 border-red-500/60" },
   defuse:          { emoji: "🧨", name: "Khuếch Tán",  color: "text-green-200",  bg: "bg-green-950/80 border-green-500/60" },
@@ -186,8 +237,18 @@ export default function MeoNoBoard({ makeMove, onLeave, onRematch, rematching }:
       {/* ── Deck + Discard ── */}
       <div className="flex items-center gap-4 justify-center py-1">
         <div className="flex flex-col items-center gap-1">
-          <div className="relative w-14 h-20 rounded-lg border-2 border-pink-900/60 bg-gradient-to-b from-pink-950/80 to-black/80 flex items-center justify-center shadow-lg">
-            <span className="text-2xl">🂠</span>
+          <div className="relative w-14 h-20 rounded-lg border-2 border-pink-900/60 overflow-hidden shadow-lg">
+            <img
+              src={`${CARD_IMG_BASE}/back/0.jpg`}
+              alt="Mặt sau bài"
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                const t = e.target as HTMLImageElement;
+                t.style.display = "none";
+                t.parentElement!.classList.add("bg-gradient-to-b", "from-pink-950/80", "to-black/80", "flex", "items-center", "justify-center");
+                t.parentElement!.innerHTML = '<span class="text-2xl">🂠</span>';
+              }}
+            />
           </div>
           <span className="text-xs text-pink-300/60">{gs.deckCount} lá</span>
         </div>
@@ -303,6 +364,7 @@ export default function MeoNoBoard({ makeMove, onLeave, onRematch, rematching }:
           <div className="flex flex-wrap gap-2">
             {gs.yourHand.map((card) => {
               const info = CARD_INFO[card.kind];
+              const imgUrl = cardImageUrl(card.kind, card.id);
               const selected = selectedCardIds.includes(card.id);
               const clickable = (isMyTurn && card.kind !== "explodingKitten") || isGiver;
               return (
@@ -313,12 +375,23 @@ export default function MeoNoBoard({ makeMove, onLeave, onRematch, rematching }:
                     if (clickable) toggleCard(card.id);
                   }}
                   disabled={!clickable}
-                  className={`rounded-lg border-2 px-2 py-1.5 flex flex-col items-center gap-0.5 text-center transition-all min-w-[52px] ${info.bg} ${
+                  title={info.name}
+                  className={`rounded-lg border-2 flex flex-col items-center text-center transition-all w-[52px] ${info.bg} overflow-hidden ${
                     selected ? "ring-2 ring-pink-400 scale-105 shadow-lg" : "hover:scale-105 hover:brightness-110"
                   } disabled:opacity-40 disabled:cursor-not-allowed`}
                 >
-                  <span className="text-xl leading-none">{info.emoji}</span>
-                  <span className={`text-[9px] font-bold uppercase tracking-tight leading-tight ${info.color}`}>
+                  <img
+                    src={imgUrl}
+                    alt={info.name}
+                    className="w-full h-[60px] object-cover object-top"
+                    onError={(e) => {
+                      const t = e.target as HTMLImageElement;
+                      t.style.display = "none";
+                      t.nextElementSibling?.classList.remove("hidden");
+                    }}
+                  />
+                  <span className="hidden text-xl leading-none py-1">{info.emoji}</span>
+                  <span className={`text-[8px] font-bold uppercase tracking-tight leading-tight py-0.5 px-0.5 bg-black/60 w-full text-center ${info.color}`}>
                     {info.name}
                   </span>
                 </button>
@@ -408,10 +481,16 @@ export default function MeoNoBoard({ makeMove, onLeave, onRematch, rematching }:
 
 function MiniCard({ card }: { card: Card }) {
   const info = CARD_INFO[card.kind];
+  const imgUrl = cardImageUrl(card.kind, card.id);
   return (
-    <div className={`w-14 h-20 rounded-lg border-2 ${info.bg} flex flex-col items-center justify-center gap-1 shadow`}>
-      <span className="text-xl">{info.emoji}</span>
-      <span className={`text-[8px] font-bold text-center leading-tight px-1 ${info.color}`}>{info.name}</span>
+    <div className={`w-14 h-20 rounded-lg border-2 ${info.bg} overflow-hidden flex flex-col shadow`}>
+      <img
+        src={imgUrl}
+        alt={info.name}
+        className="w-full flex-1 object-cover object-top"
+        onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+      />
+      <span className={`text-[8px] font-bold text-center leading-tight px-1 py-0.5 ${info.color} bg-black/60 shrink-0`}>{info.name}</span>
     </div>
   );
 }
@@ -454,9 +533,11 @@ function PlayerCard({
         {isActor && <span className="text-[10px] bg-yellow-900/60 text-yellow-300 px-1.5 py-0.5 rounded-full shrink-0">Đang đánh</span>}
         {isWaiting && <span className="text-[10px] bg-pink-900/60 text-pink-300 px-1.5 py-0.5 rounded-full shrink-0 animate-pulse">Chờ…</span>}
       </div>
-      <div className="mt-1.5 flex items-center gap-1">
+      <div className="mt-1.5 flex items-center gap-0.5">
         {Array.from({ length: Math.min(player.cardCount, 8) }).map((_, i) => (
-          <div key={i} className="w-3 h-4 rounded-sm bg-pink-900/60 border border-pink-800/40 text-[7px] flex items-center justify-center">🂠</div>
+          <div key={i} className="w-3 h-4 rounded-sm overflow-hidden border border-pink-800/40">
+            <img src={`${CARD_IMG_BASE}/back/0.jpg`} alt="" className="w-full h-full object-cover" />
+          </div>
         ))}
         {player.cardCount > 8 && <span className="text-pink-400/50 text-[10px]">+{player.cardCount - 8}</span>}
         {player.cardCount === 0 && <span className="text-pink-800/40 text-xs italic">Không có bài</span>}
