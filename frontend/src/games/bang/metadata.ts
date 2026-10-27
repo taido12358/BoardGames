@@ -47,9 +47,18 @@ const cards: CardGuideEntry[] = [
   { name: "Xe ngựa", icon: "🏇", type: "Hành động", effect: "Rút thêm 2 lá bài.", imageUrl: "/bang/card/Stagecoach.png" },
   { name: "Wells Fargo", icon: "🏦", type: "Hành động", effect: "Rút thêm 3 lá bài.", imageUrl: "/bang/card/Wells_Fargo.png" },
   { name: "Người da đỏ!", icon: "🏹", type: "Tấn công diện rộng", effect: "Mọi người chơi khác phải bỏ 1 lá Bang! hoặc mất 1 HP.", imageUrl: "/bang/card/Indians.png" },
-  { name: "Volcanic / Schofield / Remington", icon: "🌋", type: "Vũ khí", effect: "Trang bị vũ khí mới, thay thế Cattleman mặc định. Tầm bắn lần lượt 1 / 2 / 3.", example: "Volcanic còn cho phép đánh nhiều Bang! trong một lượt.", imageUrl: "/bang/card/Volcanic.png" },
+  { name: "Volcanic", icon: "🌋", type: "Vũ khí", effect: "Tầm bắn 1. Được phép đánh nhiều Bang! trong cùng một lượt (không giới hạn).", imageUrl: "/bang/card/Volcanic.png" },
+  { name: "Schofield", icon: "🔫", type: "Vũ khí", effect: "Tầm bắn 2 — bắn được người ngồi xa hơn một ghế.", imageUrl: "/bang/card/Schofield.png" },
+  { name: "Remington", icon: "🔫", type: "Vũ khí", effect: "Tầm bắn 3 — bắn được người ngồi xa hơn hai ghế.", imageUrl: "/bang/card/Remington.png" },
+  { name: "Rev. Carabine", icon: "🔫", type: "Vũ khí", effect: "Tầm bắn 4 — bắn được hầu hết người chơi trong bàn.", imageUrl: "/bang/card/Rev_Carabine.png" },
+  { name: "Winchester", icon: "🔫", type: "Vũ khí", effect: "Tầm bắn 5 — bắn được tất cả mọi người ở mọi khoảng cách.", imageUrl: "/bang/card/Winchester.png" },
   { name: "Mustang", icon: "🐎", type: "Trang bị", effect: "Người khác nhìn bạn xa hơn 1 khoảng cách khi nhắm bắn — khó bị Bang! trúng hơn.", imageUrl: "/bang/card/Mustang.png" },
   { name: "Thùng rượu", icon: "🛢", type: "Trang bị", effect: "Khi bị nhắm Bang!, tự động rút 1 lá kiểm tra — nếu ra lá ♥ thì coi như đỡ được.", imageUrl: "/bang/card/Barrel.png" },
+  { name: "Scope", icon: "🔭", type: "Trang bị", effect: "Bạn nhìn mọi người gần hơn 1 khoảng cách khi nhắm bắn — dễ bắn trúng hơn.", imageUrl: "/bang/card/Scope.png" },
+  { name: "Dynamite", icon: "💣", type: "Trang bị", effect: "Đặt trước mặt. Đầu mỗi lượt tự rút 1 lá — nếu ra 2–9♠ thì nổ và bạn mất 3 HP; ngược lại Dynamite chuyển sang người tiếp theo.", imageUrl: "/bang/card/Dynamite.png" },
+  { name: "Jail", icon: "⛓️", type: "Trang bị", effect: "Đặt lên người chơi khác (không phải Cảnh sát trưởng). Đầu lượt của họ tự rút 1 lá — nếu ra ♥ thì thoát; ngược lại mất cả lượt.", imageUrl: "/bang/card/Jail.png" },
+  { name: "Saloon", icon: "🏠", type: "Hành động", effect: "Tất cả người chơi còn sống được hồi 1 HP (không vượt quá HP tối đa).", imageUrl: "/bang/card/Saloon.png" },
+  { name: "General Store", icon: "🏪", type: "Hành động", effect: "Mở N lá bài ngửa (N = số người còn sống). Mỗi người theo thứ tự lượt chọn 1 lá đưa vào tay.", imageUrl: "/bang/card/General_Store.png" },
 ];
 
 export const bangInstructions: InstructionSection[] = [

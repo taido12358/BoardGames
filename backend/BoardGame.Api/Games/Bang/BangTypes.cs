@@ -9,7 +9,9 @@ public enum CardType { Attack, Defense, Heal, Weapon, Equipment, Action }
 public enum CardKind
 {
     Bang, Missed, Beer, Gatling, Duel, Panic, CatBalou, Stagecoach, WellsFargo, Indians,
-    Volcanic, Schofield, Remington, Mustang, Barrel,
+    Volcanic, Schofield, Remington, Winchester, RevCarabine,  // vũ khí
+    Mustang, Barrel, Scope, Dynamite, Jail,                   // trang bị
+    Saloon, GeneralStore,                                     // hành động
 }
 
 /// <summary>Định nghĩa TĨNH của một loại bài (catalog) — xem BangCards.Catalog.</summary>
@@ -33,7 +35,7 @@ public enum GamePhase
     Finished,
 }
 
-public enum PendingResponseKind { Bang, Duel, Indians, Gatling }
+public enum PendingResponseKind { Bang, Duel, Indians, Gatling, GeneralStore }
 
 /// <summary>
 /// Một yêu cầu phản hồi đang treo. Chỉ người có id nằm trong TargetIds mới được
@@ -77,6 +79,7 @@ public class BangGameState
     public string? Winner { get; set; }                      // "Sheriff" | "Outlaw" | "Renegade" | null
     public List<string> GameLog { get; set; } = new();
     public bool BangPlayedThisTurn { get; set; }              // true sau lá Bang! đầu tiên trong lượt (trừ khi có Volcanic)
+    public List<Card>? GeneralStoreCards { get; set; }        // các lá đang hiển thị trong General Store (null khi không active)
 }
 
 /// <summary>
@@ -106,4 +109,5 @@ public record PendingResponseView(string Kind, string FromPlayerId, List<string>
 public record BangViewerState(
     string Phase, List<BangPublicPlayer> Players, string? CurrentPlayerId, int TurnNumber,
     int DeckCount, List<Card> DiscardPile, PendingResponseView? PendingResponse,
-    string? Winner, List<string> GameLog, BangYourView? You);
+    string? Winner, List<string> GameLog, BangYourView? You,
+    List<Card>? GeneralStoreCards = null);

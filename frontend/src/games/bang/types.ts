@@ -9,7 +9,9 @@
 export type CardKind =
   | "bang" | "missed" | "beer" | "gatling" | "duel" | "panic" | "catBalou"
   | "stagecoach" | "wellsFargo" | "indians" | "volcanic" | "schofield"
-  | "remington" | "mustang" | "barrel";
+  | "remington" | "winchester" | "revCarabine"
+  | "mustang" | "barrel" | "scope" | "dynamite" | "jail"
+  | "saloon" | "generalStore";
 
 export type CardType = "attack" | "defense" | "heal" | "weapon" | "equipment" | "action";
 
@@ -30,7 +32,7 @@ export interface Card {
 // lỗi thấy được cho tới khi có logic thật đầu tiên dùng tới.
 export type RoleKind = "Sheriff" | "Deputy" | "Outlaw" | "Renegade";
 export type GamePhase = "waitingForPlayers" | "action" | "awaitingResponse" | "finished";
-export type PendingResponseKind = "bang" | "duel" | "indians" | "gatling";
+export type PendingResponseKind = "bang" | "duel" | "indians" | "gatling" | "generalStore";
 
 export interface BangPublicPlayer {
   id: string;
@@ -79,6 +81,7 @@ export interface BangViewerState {
   winner: "sheriff" | "outlaw" | "renegade" | string | null;
   gameLog: string[];
   you: BangYourView | null;
+  generalStoreCards?: Card[] | null;
 }
 
 /** Chuẩn hóa projection từ các server cũ từng đưa enum vào field string bằng Enum.ToString(). */
@@ -119,11 +122,18 @@ export const CARD_DISPLAY: Record<CardKind, { name: string; icon: string }> = {
   stagecoach:  { name: "Xe ngựa",     icon: "🏇" },
   wellsFargo:  { name: "Wells Fargo", icon: "🏦" },
   indians:     { name: "Người da đỏ!", icon: "🏹" },
-  volcanic:    { name: "Volcanic",     icon: "🌋" },
-  schofield:   { name: "Schofield",   icon: "🔫" },
-  remington:   { name: "Remington",   icon: "🔫" },
-  mustang:     { name: "Mustang",      icon: "🐎" },
-  barrel:      { name: "Thùng rượu",  icon: "🛢" },
+  volcanic:    { name: "Volcanic",        icon: "🌋" },
+  schofield:   { name: "Schofield",      icon: "🔫" },
+  remington:   { name: "Remington",      icon: "🔫" },
+  winchester:  { name: "Winchester",     icon: "🔫" },
+  revCarabine: { name: "Rev. Carabine",  icon: "🔫" },
+  mustang:     { name: "Mustang",        icon: "🐎" },
+  barrel:      { name: "Thùng rượu",    icon: "🛢" },
+  scope:       { name: "Scope",          icon: "🔭" },
+  dynamite:    { name: "Dynamite",       icon: "💣" },
+  jail:        { name: "Jail",           icon: "⛓️" },
+  saloon:      { name: "Saloon",         icon: "🏠" },
+  generalStore:{ name: "General Store",  icon: "🏪" },
 };
 
 export const ROLE_ICON: Record<string, string> = {

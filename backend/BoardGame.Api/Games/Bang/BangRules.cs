@@ -36,7 +36,8 @@ public static class BangRules
         var bonus = 0;
         if (target.Equipment.Any(c => c.Kind == CardKind.Mustang)) bonus++;
         if (target.Character == CharacterKind.Morgan) bonus++;
-        return baseDist + bonus;
+        var scope = alive[fromIdx].Equipment.Any(c => c.Kind == CardKind.Scope) ? 1 : 0;
+        return Math.Max(1, baseDist + bonus - scope);
     }
 
     private static int EffectiveWeaponRange(BangPlayerState p)
@@ -97,6 +98,59 @@ public static class BangRules
 
     private static void ApplyStartOfTurnDraw(BangGameState state, BangPlayerState player, Random rng)
     {
+        // Kiểm tra Jail trước: nếu bị giam, rút bài kiểm tra; nếu không thoát → mất lượt.
+        var jail = player.Equipment.FirstOrDefault(c => c.Kind == CardKind.Jail);
+        if (jail is not null)
+        {
+            player.Equipment.Remove(jail);
+            state.DiscardPile.Add(jail);
+            var jailCheck = BangDeck.DrawOne(state, rng);
+            if (jailCheck is not null) state.DiscardPile.Add(jailCheck);
+            state.GameLog.Add($"{player.Name} kiểm tra Jail: rút được {jailCheck?.Rank}{jailCheck?.Suit}.");
+            if (jailCheck?.Suit != "♥")
+            {
+                state.GameLog.Add($"{player.Name} không thoát được Jail — mất lượt này.");
+                AdvanceTurn(state, rng);
+                return;
+            }
+            state.GameLog.Add($"{player.Name} thoát được Jail!");
+        }
+
+        // Kiểm tra Dynamite trước khi rút bài thường.
+        var dynamite = player.Equipment.FirstOrDefault(c => c.Kind == CardKind.Dynamite);
+        if (dynamite is not null)
+        {
+            var dynCheck = BangDeck.DrawOne(state, rng);
+            if (dynCheck is not null) state.DiscardPile.Add(dynCheck);
+            state.GameLog.Add($"{player.Name} kiểm tra Dynamite: rút được {dynCheck?.Rank}{dynCheck?.Suit}.");
+            var isDynamiteRank = dynCheck is not null && dynCheck.Suit == "♠" &&
+                dynCheck.Rank is "2" or "3" or "4" or "5" or "6" or "7" or "8" or "9";
+            if (isDynamiteRank)
+            {
+                player.Equipment.Remove(dynamite);
+                state.DiscardPile.Add(dynamite);
+                state.GameLog.Add($"💣 Dynamite NỔ! {player.Name} mất 3 HP.");
+                ApplyDamage(state, player, 3, null, rng);
+                var (_, _, winner) = CheckVictoryAndContinue(state, rng);
+                if (state.Phase == GamePhase.Finished) return;
+                // Nếu người này bị loại thì AdvanceTurn đã được gọi trong CheckVictoryAndContinue.
+                // Nếu vẫn sống → tiếp tục lượt bình thường (rút bài dưới).
+                if (!player.Alive) return;
+            }
+            else
+            {
+                // Chuyển Dynamite sang người tiếp theo còn sống.
+                player.Equipment.Remove(dynamite);
+                var alive = state.Players.Where(p => p.Alive).OrderBy(p => p.SeatIndex).ToList();
+                var idx = alive.FindIndex(p => p.Id == player.Id);
+                var next = alive[(idx + 1) % alive.Count];
+                var existingDyn = next.Equipment.FirstOrDefault(c => c.Kind == CardKind.Dynamite);
+                if (existingDyn is null) next.Equipment.Add(dynamite);
+                else state.DiscardPile.Add(dynamite); // không thể chồng 2 Dynamite
+                state.GameLog.Add($"Dynamite không nổ — chuyển sang {next.Name}.");
+            }
+        }
+
         var drawCount = player.Character == CharacterKind.Jack ? 3 : 2;
         var drawn = BangDeck.DrawMany(state, rng, drawCount);
         player.Hand.AddRange(drawn);
@@ -154,8 +208,13 @@ public static class BangRules
             CardKind.Stagecoach => PlayDrawCards(state, player, card, 2, rng),
             CardKind.WellsFargo => PlayDrawCards(state, player, card, 3, rng),
             CardKind.Indians => PlayIndians(state, player, card),
-            CardKind.Volcanic or CardKind.Schofield or CardKind.Remington => PlayWeapon(state, player, card),
-            CardKind.Mustang or CardKind.Barrel => PlayEquipment(state, player, card),
+            CardKind.Volcanic or CardKind.Schofield or CardKind.Remington
+            or CardKind.Winchester or CardKind.RevCarabine => PlayWeapon(state, player, card),
+            CardKind.Mustang or CardKind.Barrel or CardKind.Scope => PlayEquipment(state, player, card),
+            CardKind.Dynamite => PlayDynamite(state, player, card),
+            CardKind.Jail => PlayJail(state, player, card, move.TargetPlayerId),
+            CardKind.Saloon => PlaySaloon(state, player, card),
+            CardKind.GeneralStore => PlayGeneralStore(state, player, card, rng),
             _ => (false, "Loại bài không xử lý được.", null),
         };
     }
@@ -180,6 +239,7 @@ public static class BangRules
             PendingResponseKind.Bang or PendingResponseKind.Gatling => ResolveMissedStyleResponse(state, player, pr, card, rng),
             PendingResponseKind.Duel => ResolveDuelResponse(state, player, pr, card, rng),
             PendingResponseKind.Indians => ResolveIndiansResponse(state, player, pr, card, rng),
+            PendingResponseKind.GeneralStore => ResolveGeneralStoreResponse(state, player, pr, move.CardId),
             _ => (false, "Không xử lý được loại phản hồi.", null),
         };
     }
@@ -460,6 +520,92 @@ public static class BangRules
         return (true, null, null);
     }
 
+    private static (bool, string?, string?) PlayDynamite(BangGameState state, BangPlayerState player, Card card)
+    {
+        if (player.Equipment.Any(c => c.Kind == CardKind.Dynamite))
+            return (false, "Bạn đã có Dynamite trước mặt rồi.", null);
+        player.Hand.RemoveAll(c => c.Id == card.Id);
+        player.Equipment.Add(card);
+        state.GameLog.Add($"{player.Name} đặt Dynamite trước mặt.");
+        return (true, null, null);
+    }
+
+    private static (bool, string?, string?) PlayJail(BangGameState state, BangPlayerState player, Card card, string? targetId)
+    {
+        if (string.IsNullOrEmpty(targetId)) return (false, "Thiếu mục tiêu.", null);
+        var target = GetPlayer(state, targetId);
+        if (target is null || !target.Alive) return (false, "Mục tiêu không hợp lệ.", null);
+        if (target.Id == player.Id) return (false, "Không thể tự nhốt chính mình.", null);
+        if (target.Role == RoleKind.Sheriff) return (false, "Không thể nhốt Cảnh sát trưởng.", null);
+        if (target.Equipment.Any(c => c.Kind == CardKind.Jail))
+            return (false, "Người này đã bị Jail rồi.", null);
+        player.Hand.RemoveAll(c => c.Id == card.Id);
+        target.Equipment.Add(card);
+        state.GameLog.Add($"{player.Name} nhốt {target.Name} vào Jail.");
+        return (true, null, null);
+    }
+
+    private static (bool, string?, string?) PlaySaloon(BangGameState state, BangPlayerState player, Card card)
+    {
+        MoveToDiscard(state, player, card);
+        var healed = 0;
+        foreach (var p in state.Players.Where(p => p.Alive && p.Hp < p.MaxHp))
+        {
+            p.Hp++;
+            healed++;
+        }
+        state.GameLog.Add($"{player.Name} mở Saloon — {healed} người chơi hồi 1 HP.");
+        return (true, null, null);
+    }
+
+    private static (bool, string?, string?) PlayGeneralStore(BangGameState state, BangPlayerState player, Card card, Random rng)
+    {
+        var alive = state.Players.Where(p => p.Alive).ToList();
+        MoveToDiscard(state, player, card);
+        var revealed = new List<Card>();
+        for (var i = 0; i < alive.Count; i++)
+        {
+            var c = BangDeck.DrawOne(state, rng);
+            if (c is not null) revealed.Add(c);
+        }
+        state.GeneralStoreCards = revealed;
+        state.GameLog.Add($"{player.Name} mở General Store — {revealed.Count} lá bài được bày ra.");
+
+        // Thứ tự chọn: bắt đầu từ người hiện tại, theo chiều kim đồng hồ.
+        var order = alive.OrderBy(p => p.SeatIndex).ToList();
+        var startIdx = order.FindIndex(p => p.Id == player.Id);
+        var pickOrder = Enumerable.Range(0, order.Count)
+            .Select(i => order[(startIdx + i) % order.Count].Id)
+            .ToList();
+
+        BeginPendingResponse(state, PendingResponseKind.GeneralStore, player.Id, pickOrder, damage: 0);
+        return (true, null, null);
+    }
+
+    private static (bool, string?, string?) ResolveGeneralStoreResponse(BangGameState state, BangPlayerState player, PendingResponse pr, string? cardId)
+    {
+        var store = state.GeneralStoreCards;
+        if (store is null || store.Count == 0) return (false, "General Store đã hết bài.", null);
+        if (string.IsNullOrEmpty(cardId)) return (false, "Thiếu cardId để chọn từ General Store.", null);
+
+        var picked = store.FirstOrDefault(c => c.Id == cardId);
+        if (picked is null) return (false, "Lá bài này không có trong General Store.", null);
+
+        store.Remove(picked);
+        player.Hand.Add(picked);
+        state.GameLog.Add($"{player.Name} chọn {BangCards.Catalog[picked.Kind].Name} từ General Store.");
+
+        pr.TargetIds.Remove(player.Id);
+        if (pr.TargetIds.Count == 0)
+        {
+            // Bài thừa (nếu có) vào chồng bỏ
+            if (store.Count > 0) { state.DiscardPile.AddRange(store); store.Clear(); }
+            state.GeneralStoreCards = null;
+            EndPendingResponse(state);
+        }
+        return (true, null, null);
+    }
+
     // ===================== SÁT THƯƠNG / LOẠI / THẮNG THUA =====================
 
     private static void ApplyDamage(BangGameState state, BangPlayerState target, int amount, string? fromId, Random rng)
@@ -627,7 +773,7 @@ public static class BangRules
         return new BangViewerState(
             JsonNamingPolicy.CamelCase.ConvertName(state.Phase.ToString()), players, state.CurrentPlayerId, state.TurnNumber,
             state.Deck.Count, state.DiscardPile, prView,
-            state.Winner, state.GameLog, you);
+            state.Winner, state.GameLog, you, state.GeneralStoreCards);
     }
 
     // ===================== DEBUG (van-de.md §51 — CHỈ gọi từ BangDebugController, luôn gate

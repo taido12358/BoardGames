@@ -1,7 +1,9 @@
 import type { DragEvent, ReactNode } from "react";
 import { CARD_DISPLAY, type Card, type CardKind } from "../types";
 
-// ── Real card artwork from public BANG! v2 repo ───────────────────────────────
+// ── Real card artwork ─────────────────────────────────────────────────────────
+// Suit+rank specific images (AndrewCogi/Bang_v2) for cards that have variants.
+// Generic images (JacobLinCool/Bang-C, local /bang/card/) for the rest.
 const RAW = "https://raw.githubusercontent.com/AndrewCogi/Bang_v2/master/Bang_Client/resources/card/playing";
 
 const BANG_COMBOS = new Set([
@@ -15,6 +17,28 @@ const VOLCANIC_COMBOS  = new Set(["C_10","S_10"]);
 const SUIT_LETTER: Record<string, string> = { "♠":"S", "♥":"H", "♦":"D", "♣":"C" };
 const RANK_NUM: Record<string, string> = { A:"1", J:"11", Q:"12", K:"13" };
 
+const LOCAL: Record<string, string> = {
+  missed:      "/bang/card/Missed.png",
+  beer:        "/bang/card/Beer.png",
+  gatling:     "/bang/card/Gatling.png",
+  duel:        "/bang/card/Duel.png",
+  panic:       "/bang/card/Panic.png",
+  catBalou:    "/bang/card/Cat_Balou.png",
+  stagecoach:  "/bang/card/Stagecoach.png",
+  wellsFargo:  "/bang/card/Wells_Fargo.png",
+  indians:     "/bang/card/Indians.png",
+  mustang:     "/bang/card/Mustang.png",
+  schofield:   "/bang/card/Schofield.png",
+  remington:   "/bang/card/Remington.png",
+  winchester:  "/bang/card/Winchester.png",
+  revCarabine: "/bang/card/Rev_Carabine.png",
+  scope:       "/bang/card/Scope.png",
+  dynamite:    "/bang/card/Dynamite.png",
+  jail:        "/bang/card/Jail.png",
+  saloon:      "/bang/card/Saloon.png",
+  generalStore:"/bang/card/General_Store.png",
+};
+
 function getCardImageUrl(card: Card): string | null {
   const s = SUIT_LETTER[card.suit];
   const r = RANK_NUM[card.rank] ?? card.rank;
@@ -24,17 +48,12 @@ function getCardImageUrl(card: Card): string | null {
       const file = BANG_COMBOS.has(key) ? `bang_${key}_155.png` : "bang_D_8_155.png";
       return `${RAW}/brown/${file}`;
     }
-    case "barrel":    return `${RAW}/blue/barile_S_12_155.png`;
-    case "remington": return `${RAW}/blue/remington_C_13_155.png`;
-    case "schofield": {
-      const file = SCHOFIELD_COMBOS.has(key) ? `schofield_${key}_155.png` : "schofield_C_11_155.png";
-      return `${RAW}/blue/${file}`;
-    }
+    case "barrel":   return `${RAW}/blue/barile_S_12_155.png`;
     case "volcanic": {
       const file = VOLCANIC_COMBOS.has(key) ? `volcanic_${key}_155.png` : "volcanic_C_10_155.png";
       return `${RAW}/blue/${file}`;
     }
-    default: return null;
+    default: return LOCAL[card.kind] ?? null;
   }
 }
 

@@ -24,6 +24,13 @@ public static class BangCards
         [CardKind.Remington] = new(CardKind.Remington, CardType.Weapon, "Remington", "Vũ khí tầm bắn 3."),
         [CardKind.Mustang] = new(CardKind.Mustang, CardType.Equipment, "Mustang", "Người khác nhìn bạn xa hơn 1 khoảng cách khi nhắm bắn."),
         [CardKind.Barrel] = new(CardKind.Barrel, CardType.Equipment, "Thùng rượu", "Khi bị nhắm Bang!, tự rút 1 lá — nếu ra lá ♥ thì coi như đỡ được."),
+        [CardKind.Winchester] = new(CardKind.Winchester, CardType.Weapon, "Winchester", "Vũ khí tầm bắn 5."),
+        [CardKind.RevCarabine] = new(CardKind.RevCarabine, CardType.Weapon, "Rev. Carabine", "Vũ khí tầm bắn 4."),
+        [CardKind.Scope] = new(CardKind.Scope, CardType.Equipment, "Scope", "Bạn nhìn mọi người gần hơn 1 khoảng cách khi nhắm bắn."),
+        [CardKind.Dynamite] = new(CardKind.Dynamite, CardType.Equipment, "Dynamite", "Đặt trước mặt. Đầu lượt: rút bài — nếu 2–9♠ thì nổ (-3 HP); nếu không thì chuyển sang người tiếp theo."),
+        [CardKind.Jail] = new(CardKind.Jail, CardType.Equipment, "Jail", "Đặt lên người khác (không phải Cảnh sát trưởng). Đầu lượt họ: rút bài — nếu ♥ thì thoát; nếu không thì mất lượt."),
+        [CardKind.Saloon] = new(CardKind.Saloon, CardType.Action, "Saloon", "Tất cả người chơi còn sống hồi 1 HP (không vượt quá HP tối đa)."),
+        [CardKind.GeneralStore] = new(CardKind.GeneralStore, CardType.Action, "General Store", "Mở N lá bài (N = số người còn sống). Mỗi người lần lượt chọn 1 lá."),
     };
 
     /// <summary>Tầm bắn của vũ khí; null (chưa trang bị) = Cattleman mặc định, tầm 1.</summary>
@@ -32,6 +39,8 @@ public static class BangCards
         CardKind.Volcanic => 1,
         CardKind.Schofield => 2,
         CardKind.Remington => 3,
+        CardKind.RevCarabine => 4,
+        CardKind.Winchester => 5,
         null => 1, // Cattleman mặc định
         _ => 1,
     };
@@ -59,6 +68,13 @@ public static class BangCards
         (CardKind.Remington, 2),
         (CardKind.Mustang, 2),
         (CardKind.Barrel, 2),
+        (CardKind.Winchester, 1),
+        (CardKind.RevCarabine, 1),
+        (CardKind.Scope, 1),
+        (CardKind.Dynamite, 1),
+        (CardKind.Jail, 3),
+        (CardKind.Saloon, 1),
+        (CardKind.GeneralStore, 2),
     };
 
     /// <summary>Tạo bộ bài đầy đủ, CHƯA xáo — suit/rank gán tuần hoàn chỉ để hiển thị.</summary>

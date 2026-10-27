@@ -91,6 +91,8 @@ function allowedResponseKinds(pendingKind: string, isCalamity: boolean): CardKin
       return ["bang"];
     case "duel":
       return isCalamity ? ["bang", "missed"] : ["bang"];
+    case "generalStore":
+      return []; // chọn từ store, không từ tay bài
     default:
       return [];
   }
@@ -1456,11 +1458,13 @@ export default function BangBoard({ makeMove, onLeave, onRematch, rematching }: 
               <div className="font-bold mb-0.5">
                 {state.pendingResponse.kind === "bang" || state.pendingResponse.kind === "gatling" ? "🔫" :
                  state.pendingResponse.kind === "duel" ? "⚔️" :
-                 state.pendingResponse.kind === "indians" ? "🏹" : "⏳"}{" "}
+                 state.pendingResponse.kind === "indians" ? "🏹" :
+                 state.pendingResponse.kind === "generalStore" ? "🏪" : "⏳"}{" "}
                 {state.pendingResponse.kind === "bang" ? "Bang!" :
                  state.pendingResponse.kind === "gatling" ? "Gatling!" :
                  state.pendingResponse.kind === "duel" ? "Đấu súng" :
-                 state.pendingResponse.kind === "indians" ? "Người da đỏ!" : "Đang chờ"}
+                 state.pendingResponse.kind === "indians" ? "Người da đỏ!" :
+                 state.pendingResponse.kind === "generalStore" ? "General Store" : "Đang chờ"}
               </div>
               <div className="text-red-400/80 text-[10px]">
                 → {state.pendingResponse.targetIds
@@ -1471,6 +1475,39 @@ export default function BangBoard({ makeMove, onLeave, onRematch, rematching }: 
           </>
         )}
       </div>
+
+      {/* General Store picker */}
+      {state.generalStoreCards && state.generalStoreCards.length > 0 && (
+        <div className="rounded-sm border border-amber-700/50 bg-gradient-to-b from-[#221508] to-[#160f08] p-3 shadow-inner">
+          <p className="text-xs text-amber-400/80 uppercase tracking-widest mb-2 text-center font-medium">🏪 General Store — chọn 1 lá</p>
+          <div className="flex flex-wrap justify-center gap-2">
+            {state.generalStoreCards.map((storeCard) => {
+              const isMyPickTurn = awaitingResp && state.pendingResponse?.kind === "generalStore" && state.pendingResponse.itsYourTurn;
+              return (
+                <button
+                  key={storeCard.id}
+                  disabled={!isMyPickTurn || responding}
+                  onClick={() => {
+                    if (!isMyPickTurn || responding) return;
+                    markResponsePending();
+                    send({ type: "RESPOND", cardId: storeCard.id });
+                  }}
+                  className={`relative w-16 h-24 rounded-sm transition-all ${isMyPickTurn && !responding ? "cursor-pointer hover:scale-105 hover:ring-2 hover:ring-amber-400/60" : "cursor-default opacity-75"}`}
+                >
+                  <CardView card={storeCard} small />
+                </button>
+              );
+            })}
+          </div>
+          {awaitingResp && state.pendingResponse?.kind === "generalStore" && !state.pendingResponse.itsYourTurn && (
+            <p className="text-center text-xs text-amber-500/60 mt-2">
+              Đang chờ{" "}
+              {state.pendingResponse.targetIds.map((id) => state.players.find((p) => p.id === id)?.name ?? id).join(", ")}
+              {" "}chọn…
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Local player + action bar + hand */}
       {me && you && (
