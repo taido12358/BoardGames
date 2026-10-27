@@ -101,6 +101,12 @@ function WaitingRoomsList({ rooms, showEmpty, busy, cancelingId, onCancel, onJoi
             <div className="min-w-0">
               <div className="text-sm text-[#f5d09d] truncate font-medium">🚪 Phòng của {owner ?? "Ẩn danh"}</div>
               <div className="text-xs text-amber-700/70 mt-0.5">👥 <AnimatedNumber value={occupied} durationMs={300} />/{room.seatCount} người · {isExiting ? "Đang rời sảnh…" : "Đang chờ"}</div>
+              {!isExiting && room.isMine && occupied > 0 && room.seats.every((s) => s.displayName === null || !s.connected) && (
+                <div className="mt-1 text-[11px] text-orange-400/80 flex items-center gap-1">
+                  <span aria-hidden="true">⚠</span>
+                  Không có ai đang online — hãy huỷ phòng nếu không còn dùng.
+                </div>
+              )}
             </div>
             {!isExiting && (
               <div className="shrink-0 flex items-center gap-1.5">
