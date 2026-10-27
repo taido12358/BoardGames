@@ -45,6 +45,7 @@ export interface CardGuideEntry {
   type: string;
   effect: string;
   example?: string;
+  imageUrl?: string;
 }
 
 export interface CharacterGuideEntry {

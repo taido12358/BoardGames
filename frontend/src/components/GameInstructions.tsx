@@ -172,54 +172,65 @@ function CardEntry({ card }: { card: CardGuideEntry }) {
             : "0 4px 14px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.85)",
         }}
       >
-        {/* Parchment aging vignette */}
-        <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse at center, transparent 48%, rgba(100,65,15,0.28) 100%)" }} />
-        {/* Category colour wash */}
-        <div className="absolute inset-0 pointer-events-none" style={{ background: `${cl.banner}0b` }} />
-        {/* Inner ornamental border */}
-        <div className="absolute pointer-events-none" style={{ inset: "3px", border: `0.5px solid ${cl.border}45`, borderRadius: "1px" }} />
-        {/* Corner brackets */}
-        <div className="absolute top-[3px] left-[3px]  w-2.5 h-2.5 pointer-events-none" style={{ borderTop: `1px solid ${cl.border}60`, borderLeft:  `1px solid ${cl.border}60` }} />
-        <div className="absolute top-[3px] right-[3px] w-2.5 h-2.5 pointer-events-none" style={{ borderTop: `1px solid ${cl.border}60`, borderRight: `1px solid ${cl.border}60` }} />
-        <div className="absolute bottom-[3px] left-[3px]  w-2.5 h-2.5 pointer-events-none" style={{ borderBottom: `1px solid ${cl.border}60`, borderLeft:  `1px solid ${cl.border}60` }} />
-        <div className="absolute bottom-[3px] right-[3px] w-2.5 h-2.5 pointer-events-none" style={{ borderBottom: `1px solid ${cl.border}60`, borderRight: `1px solid ${cl.border}60` }} />
-
-        {/* Content */}
-        <div className="relative flex flex-col h-full p-1.5">
-          {/* Title banner */}
-          <div
-            className="flex items-center justify-center py-[5px]"
-            style={{
-              background: cl.banner,
-              boxShadow: "0 1px 3px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.18), inset 0 -1px 0 rgba(0,0,0,0.25)",
-            }}
-          >
-            <span className="font-black uppercase tracking-widest leading-tight text-center text-[8px]" style={{ color: cl.bannerText }}>
-              {card.name}
-            </span>
-          </div>
-
-          {/* Illustration */}
-          <div className="flex-1 flex flex-col items-center justify-center gap-1">
-            <div style={{ color: cl.border, filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.22))", lineHeight: 1 }}>
-              {svgIcon
-                ? svgIcon(38)
-                : <span className="text-[2.25rem]" style={{ lineHeight: 1 }} aria-hidden="true">{card.icon}</span>
-              }
+        {card.imageUrl ? (
+          /* Real artwork — full-bleed image */
+          <>
+            <img
+              src={card.imageUrl}
+              alt=""
+              draggable={false}
+              className="w-full h-full object-cover"
+              style={{ display: "block" }}
+            />
+            <div
+              className="absolute bottom-0 left-0 right-0 text-[7px] leading-snug italic text-center px-0.5 py-[3px]"
+              style={{ color: "#f5e8d0", background: "rgba(0,0,0,0.55)" }}
+            >
+              {open ? "✕ đóng" : "nhấn để xem"}
             </div>
-            <span className="text-[6px] font-bold uppercase tracking-[0.18em] text-center" style={{ color: `${cl.border}88` }}>
-              {cl.catLabel}
-            </span>
-          </div>
-
-          {/* Bottom hint */}
-          <div
-            className="text-[7px] leading-snug italic text-center pt-[3px] px-0.5"
-            style={{ color: "#7a5530", borderTop: `0.5px solid ${cl.border}35` }}
-          >
-            {open ? "✕ đóng" : "nhấn để xem"}
-          </div>
-        </div>
+          </>
+        ) : (
+          /* Parchment fallback */
+          <>
+            <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse at center, transparent 48%, rgba(100,65,15,0.28) 100%)" }} />
+            <div className="absolute inset-0 pointer-events-none" style={{ background: `${cl.banner}0b` }} />
+            <div className="absolute pointer-events-none" style={{ inset: "3px", border: `0.5px solid ${cl.border}45`, borderRadius: "1px" }} />
+            <div className="absolute top-[3px] left-[3px]  w-2.5 h-2.5 pointer-events-none" style={{ borderTop: `1px solid ${cl.border}60`, borderLeft:  `1px solid ${cl.border}60` }} />
+            <div className="absolute top-[3px] right-[3px] w-2.5 h-2.5 pointer-events-none" style={{ borderTop: `1px solid ${cl.border}60`, borderRight: `1px solid ${cl.border}60` }} />
+            <div className="absolute bottom-[3px] left-[3px]  w-2.5 h-2.5 pointer-events-none" style={{ borderBottom: `1px solid ${cl.border}60`, borderLeft:  `1px solid ${cl.border}60` }} />
+            <div className="absolute bottom-[3px] right-[3px] w-2.5 h-2.5 pointer-events-none" style={{ borderBottom: `1px solid ${cl.border}60`, borderRight: `1px solid ${cl.border}60` }} />
+            <div className="relative flex flex-col h-full p-1.5">
+              <div
+                className="flex items-center justify-center py-[5px]"
+                style={{
+                  background: cl.banner,
+                  boxShadow: "0 1px 3px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.18), inset 0 -1px 0 rgba(0,0,0,0.25)",
+                }}
+              >
+                <span className="font-black uppercase tracking-widest leading-tight text-center text-[8px]" style={{ color: cl.bannerText }}>
+                  {card.name}
+                </span>
+              </div>
+              <div className="flex-1 flex flex-col items-center justify-center gap-1">
+                <div style={{ color: cl.border, filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.22))", lineHeight: 1 }}>
+                  {svgIcon
+                    ? svgIcon(38)
+                    : <span className="text-[2.25rem]" style={{ lineHeight: 1 }} aria-hidden="true">{card.icon}</span>
+                  }
+                </div>
+                <span className="text-[6px] font-bold uppercase tracking-[0.18em] text-center" style={{ color: `${cl.border}88` }}>
+                  {cl.catLabel}
+                </span>
+              </div>
+              <div
+                className="text-[7px] leading-snug italic text-center pt-[3px] px-0.5"
+                style={{ color: "#7a5530", borderTop: `0.5px solid ${cl.border}35` }}
+              >
+                {open ? "✕ đóng" : "nhấn để xem"}
+              </div>
+            </div>
+          </>
+        )}
       </button>
 
       {/* Expandable effect panel — rendered below the card face */}
