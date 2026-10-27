@@ -33,6 +33,60 @@ function FlowSection({ steps }: { steps: string[] }) {
   );
 }
 
+function RoleEntry({ r }: { r: Extract<InstructionSection, { kind: "roles" }>["roles"][number] }) {
+  const [open, setOpen] = useState(false);
+  const panelId = useId();
+  return (
+    <div className="flex flex-col gap-1.5">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        aria-controls={panelId}
+        className="relative rounded border-2 overflow-hidden transition-all duration-200 hover:-translate-y-1 hover:shadow-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-300 w-full"
+        style={{
+          aspectRatio: "2/3",
+          borderColor: open ? "#fbbf24" : "#7a5c2e99",
+          boxShadow: open
+            ? "0 0 14px rgba(251,191,36,0.3), 0 6px 20px rgba(0,0,0,0.5)"
+            : "0 4px 14px rgba(0,0,0,0.55)",
+        }}
+      >
+        {r.imageUrl ? (
+          <>
+            <img src={r.imageUrl} alt="" draggable={false} className="w-full h-full object-cover" style={{ display: "block" }} />
+            <div className="absolute bottom-0 left-0 right-0 text-[7px] italic text-center px-0.5 py-[3px]" style={{ color: "#f5e8d0", background: "rgba(0,0,0,0.55)" }}>
+              {open ? "✕ đóng" : "nhấn để xem"}
+            </div>
+          </>
+        ) : (
+          <div className="w-full h-full flex flex-col items-center justify-center gap-1 p-2" style={{ background: "linear-gradient(168deg,#fef9ec,#f3e7c4 55%,#e8daab)" }}>
+            <span className="text-4xl">{r.icon}</span>
+            <span className="font-black text-[9px] uppercase tracking-widest text-center" style={{ color: "#5a3a14" }}>{r.name}</span>
+          </div>
+        )}
+        {!r.hidden && (
+          <div className="absolute top-1.5 right-1.5 text-[8px] rounded-sm bg-amber-900/80 border border-amber-500 px-1.5 py-0.5 text-amber-300 font-semibold leading-none">
+            CÔNG KHAI
+          </div>
+        )}
+      </button>
+      <div id={panelId} aria-hidden={!open} className={`game-guide-collapse ${open ? "is-open" : ""}`}>
+        <div className="min-h-0 overflow-hidden">
+          <div className="rounded-sm border border-amber-900/40 p-2.5 space-y-1 bg-[#1a1208]">
+            <div className="flex items-center gap-1.5">
+              <span>{r.icon}</span>
+              <span className="font-bold text-[#f5d09d] text-xs">{r.name}</span>
+              {r.hidden && <span className="text-[9px] rounded-sm bg-[#0d0a07] border border-amber-900/50 px-1.5 py-0.5 text-[#bba182] ml-auto">VAI TRÒ ẨN</span>}
+            </div>
+            <p className="text-xs text-amber-700/60 leading-relaxed"><span className="text-amber-300/70 font-medium">Mục tiêu:</span> {r.goal}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function RolesSection({ roles }: { roles: Extract<InstructionSection, { kind: "roles" }>["roles"] }) {
   const hasHidden = roles.some((r) => r.hidden);
   return (
@@ -42,30 +96,8 @@ function RolesSection({ roles }: { roles: Extract<InstructionSection, { kind: "r
           ⚠ Trong ván thật, chỉ Cảnh sát trưởng công khai — các vai trò khác được GIỮ BÍ MẬT cho tới khi lộ hoặc bị loại.
         </p>
       )}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {roles.map((r) => (
-          <div key={r.name} className="relative overflow-hidden rounded-sm border border-amber-900/40 bg-[#1a1208] p-3.5 flex gap-3">
-              <div className="pointer-events-none absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-amber-500/20 to-transparent" />
-            {r.imageUrl && (
-              <div className="shrink-0 w-14 rounded overflow-hidden border border-amber-900/50" style={{ aspectRatio: "2/3" }}>
-                <img src={r.imageUrl} alt={r.name} className="w-full h-full object-cover" draggable={false} />
-              </div>
-            )}
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center justify-between gap-1 flex-wrap">
-                <div className="font-bold text-[#f5d09d] flex items-center gap-1.5">
-                  <span>{r.icon}</span> {r.name}
-                </div>
-                {r.hidden ? (
-                  <span className="text-[10px] rounded-sm bg-[#0d0a07] border border-amber-900/50 px-2 py-0.5 text-[#bba182]">VAI TRÒ ẨN</span>
-                ) : (
-                  <span className="text-[10px] rounded-sm bg-amber-900/60 border border-amber-600 px-2 py-0.5 text-amber-300">CÔNG KHAI</span>
-                )}
-              </div>
-              <p className="text-xs text-amber-700/60 mt-1.5"><span className="text-amber-300/70 font-medium">Mục tiêu:</span> {r.goal}</p>
-            </div>
-          </div>
-        ))}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+        {roles.map((r) => <RoleEntry key={r.name} r={r} />)}
       </div>
     </div>
   );
@@ -286,28 +318,62 @@ function CardsSection({ cards }: { cards: CardGuideEntry[] }) {
   );
 }
 
+function CharacterEntry({ c }: { c: Extract<InstructionSection, { kind: "characters" }>["characters"][number] }) {
+  const [open, setOpen] = useState(false);
+  const panelId = useId();
+  return (
+    <div className="flex flex-col gap-1.5">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        aria-controls={panelId}
+        className="relative rounded border-2 overflow-hidden transition-all duration-200 hover:-translate-y-1 hover:shadow-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-300 w-full"
+        style={{
+          aspectRatio: "2/3",
+          borderColor: open ? "#fbbf24" : "#7a5c2e99",
+          boxShadow: open
+            ? "0 0 14px rgba(251,191,36,0.3), 0 6px 20px rgba(0,0,0,0.5)"
+            : "0 4px 14px rgba(0,0,0,0.55)",
+        }}
+      >
+        {c.imageUrl ? (
+          <>
+            <img src={c.imageUrl} alt="" draggable={false} className="w-full h-full object-cover" style={{ display: "block" }} />
+            <div className="absolute bottom-0 left-0 right-0 text-[7px] italic text-center px-0.5 py-[3px]" style={{ color: "#f5e8d0", background: "rgba(0,0,0,0.55)" }}>
+              {open ? "✕ đóng" : "nhấn để xem"}
+            </div>
+          </>
+        ) : (
+          <div className="w-full h-full flex flex-col items-center justify-center gap-1 p-2" style={{ background: "linear-gradient(168deg,#fef9ec,#f3e7c4 55%,#e8daab)" }}>
+            <span className="text-4xl font-black" style={{ color: "#5a3a14" }}>{c.name[0]}</span>
+          </div>
+        )}
+        <div className="absolute top-1.5 left-1.5 flex items-center gap-0.5">
+          {Array.from({ length: c.hp }).map((_, i) => (
+            <span key={i} className="text-[8px] leading-none">❤️</span>
+          ))}
+        </div>
+      </button>
+      <div id={panelId} aria-hidden={!open} className={`game-guide-collapse ${open ? "is-open" : ""}`}>
+        <div className="min-h-0 overflow-hidden">
+          <div className="rounded-sm border border-amber-900/40 p-2.5 space-y-1 bg-[#1a1208]">
+            <div className="font-bold text-[#f5d09d] text-xs">{c.name} <span className="text-red-400 font-normal">{c.hp} HP</span></div>
+            <div className="text-xs text-amber-300 font-semibold">{c.abilityName}</div>
+            <p className="text-xs text-amber-700/60 leading-relaxed">{c.ability}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function CharactersSection({ characters }: { characters: Extract<InstructionSection, { kind: "characters" }>["characters"] }) {
   return (
     <div className="space-y-2">
       <p className="text-xs text-amber-800/50 italic">Thông tin nhân vật LUÔN công khai — vai trò ẩn là chuyện khác, xem tab VAI TRÒ.</p>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {characters.map((c) => (
-          <div key={c.name} className="relative overflow-hidden rounded-sm border border-amber-900/40 bg-[#1a1208] p-3.5 flex gap-3">
-            <div className="pointer-events-none absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-amber-500/20 to-transparent" />
-            <div className="shrink-0 w-12 h-12 rounded-full overflow-hidden border border-amber-600/50 bg-gradient-to-b from-amber-800 to-amber-950 flex items-center justify-center text-lg font-black text-amber-200">
-              {c.imageUrl
-                ? <img src={c.imageUrl} alt={c.name} className="w-full h-full object-cover object-top" draggable={false} />
-                : c.name[0]
-              }
-            </div>
-            <div className="min-w-0">
-              <div className="font-bold text-[#f5d09d]">{c.name}</div>
-              <div className="text-xs text-red-400">{"❤️".repeat(c.hp)} {c.hp} HP</div>
-              <div className="text-xs text-amber-300 font-semibold mt-1">{c.abilityName}</div>
-              <p className="text-xs text-amber-700/60 leading-snug">{c.ability}</p>
-            </div>
-          </div>
-        ))}
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5">
+        {characters.map((c) => <CharacterEntry key={c.name} c={c} />)}
       </div>
     </div>
   );
