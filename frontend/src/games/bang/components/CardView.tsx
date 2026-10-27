@@ -11,7 +11,6 @@ const BANG_COMBOS = new Set([
   "D_1","D_2","D_3","D_4","D_5","D_6","D_7","D_8","D_9","D_10","D_11","D_12","D_13",
   "H_1","H_12","H_13","S_1",
 ]);
-const SCHOFIELD_COMBOS = new Set(["C_11","C_12","S_13"]);
 const VOLCANIC_COMBOS  = new Set(["C_10","S_10"]);
 
 const SUIT_LETTER: Record<string, string> = { "♠":"S", "♥":"H", "♦":"D", "♣":"C" };
@@ -78,21 +77,28 @@ interface Props {
 const RED_SUITS = new Set(["♥", "♦"]);
 
 const CARD_EFFECT: Record<CardKind, string> = {
-  bang:        "Bắn 1 mục tiêu trong tầm. Trúng: −1 máu.",
-  missed:      "Đỡ Bang! hoặc Gatling. Không mất máu.",
-  beer:        "Hồi 1 máu cho bạn. Doc hồi 2.",
-  gatling:     "Bắn tất cả đối thủ. Trúng: −1 máu.",
-  duel:        "Luân phiên dùng Bang! Người bỏ cuộc mất 1 máu.",
-  indians:     "Mỗi đối thủ bỏ Bang! hoặc mất 1 máu.",
-  panic:       "Lấy 1 lá của người ở khoảng cách 1.",
-  catBalou:    "Bỏ 1 lá của người chơi khác.",
-  stagecoach:  "Rút ngay 2 lá bài.",
-  wellsFargo:  "Rút ngay 3 lá bài.",
-  volcanic:    "Trang bị: bắn Bang! nhiều lần mỗi lượt.",
-  schofield:   "Trang bị: tầm bắn 2.",
-  remington:   "Trang bị: tầm bắn 3.",
-  mustang:     "Trang bị: đối thủ nhìn bạn xa hơn 1.",
-  barrel:      "Trang bị: lật ♥ để né Bang! hoặc Gatling.",
+  bang:         "Bắn 1 mục tiêu trong tầm. Trúng: −1 máu.",
+  missed:       "Đỡ Bang! hoặc Gatling. Không mất máu.",
+  beer:         "Hồi 1 máu cho bạn. Doc hồi 2.",
+  gatling:      "Bắn tất cả đối thủ. Trúng: −1 máu.",
+  duel:         "Luân phiên dùng Bang! Người bỏ cuộc mất 1 máu.",
+  indians:      "Mỗi đối thủ bỏ Bang! hoặc mất 1 máu.",
+  panic:        "Lấy 1 lá của người ở khoảng cách 1.",
+  catBalou:     "Bỏ 1 lá của người chơi khác.",
+  stagecoach:   "Rút ngay 2 lá bài.",
+  wellsFargo:   "Rút ngay 3 lá bài.",
+  volcanic:     "Trang bị: bắn Bang! nhiều lần mỗi lượt.",
+  schofield:    "Trang bị: tầm bắn 2.",
+  remington:    "Trang bị: tầm bắn 3.",
+  winchester:   "Trang bị: tầm bắn 5.",
+  revCarabine:  "Trang bị: tầm bắn 4.",
+  mustang:      "Trang bị: đối thủ nhìn bạn xa hơn 1.",
+  barrel:       "Trang bị: lật ♥ để né Bang! hoặc Gatling.",
+  scope:        "Trang bị: bạn nhìn mọi người gần hơn 1.",
+  dynamite:     "Đặt trước mặt. Đầu lượt: 2–9♠ → nổ −3 máu.",
+  jail:         "Đặt lên người chơi. Đầu lượt: không ♥ → mất lượt.",
+  saloon:       "Tất cả người chơi hồi 1 máu.",
+  generalStore: "Mở N lá, mỗi người chọn 1 bỏ vào tay.",
 };
 
 type CardCategory = "attack" | "defense" | "heal" | "weapon" | "equipment" | "action";
@@ -101,8 +107,8 @@ function cardCategory(kind: CardKind): CardCategory {
   if (kind === "bang" || kind === "gatling" || kind === "duel" || kind === "indians") return "attack";
   if (kind === "missed") return "defense";
   if (kind === "beer") return "heal";
-  if (kind === "volcanic" || kind === "schofield" || kind === "remington") return "weapon";
-  if (kind === "mustang" || kind === "barrel") return "equipment";
+  if (kind === "volcanic" || kind === "schofield" || kind === "remington" || kind === "winchester" || kind === "revCarabine") return "weapon";
+  if (kind === "mustang" || kind === "barrel" || kind === "scope" || kind === "dynamite" || kind === "jail") return "equipment";
   return "action";
 }
 
