@@ -448,20 +448,21 @@ export default function MeoNoBoard({ makeMove, onLeave, onRematch, rematching }:
               const info = CARD_INFO[card.kind];
               const imgUrl = cardImageUrl(card.kind, card.id);
               const selected = selectedCardIds.includes(card.id);
-              const clickable = (isMyTurn && card.kind !== "explodingKitten") || isGiver;
+              // selectable = có thể chọn để đánh/combo (không phải explodingKitten, defuse, nope)
+              const selectable = (isMyTurn && card.kind !== "explodingKitten" && card.kind !== "defuse" && card.kind !== "nope") || isGiver;
+              const dimmed = !isMyTurn && !isGiver;
               return (
                 <button
                   key={card.id}
                   onClick={() => {
                     setInfoCard(card.kind);
                     if (isGiver) { handleGiveCard(card.id); return; }
-                    if (clickable) toggleCard(card.id);
+                    if (selectable) toggleCard(card.id);
                   }}
-                  disabled={!clickable}
                   title={info.name}
                   className={`rounded-lg border-2 flex flex-col items-center text-center transition-all w-[52px] ${info.bg} overflow-hidden ${
-                    selected ? "ring-2 ring-pink-400 scale-105 shadow-lg" : "hover:scale-105 hover:brightness-110"
-                  } disabled:opacity-40 disabled:cursor-not-allowed`}
+                    selected ? "ring-2 ring-pink-400 scale-105 shadow-lg" : selectable ? "hover:scale-105 hover:brightness-110" : ""
+                  } ${dimmed ? "opacity-40 cursor-default" : !selectable ? "opacity-60 cursor-default" : ""}`}
                 >
                   <img
                     src={imgUrl}
