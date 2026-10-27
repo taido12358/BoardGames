@@ -19,21 +19,21 @@ export const bangMetadata: GameMetadata = {
 };
 
 const roles: RoleGuideEntry[] = [
-  { name: "Cảnh sát trưởng", icon: "⭐", hidden: false, goal: "Loại bỏ toàn bộ Kẻ ngoài vòng pháp luật và Kẻ phản bội." },
-  { name: "Phó cảnh sát", icon: "🎖️", hidden: true, goal: "Bảo vệ Cảnh sát trưởng và giúp loại Kẻ ngoài vòng pháp luật/Kẻ phản bội." },
-  { name: "Kẻ ngoài vòng pháp luật", icon: "💀", hidden: true, goal: "Hạ gục Cảnh sát trưởng." },
-  { name: "Kẻ phản bội", icon: "🃏", hidden: true, goal: "Trở thành người CUỐI CÙNG còn sống sót — kể cả phải phản cả hai phe kia." },
+  { name: "Cảnh sát trưởng", icon: "⭐", hidden: false, goal: "Loại bỏ toàn bộ Kẻ ngoài vòng pháp luật và Kẻ phản bội.", imageUrl: "/bang/role/Sheriff.png" },
+  { name: "Phó cảnh sát", icon: "🎖️", hidden: true, goal: "Bảo vệ Cảnh sát trưởng và giúp loại Kẻ ngoài vòng pháp luật/Kẻ phản bội.", imageUrl: "/bang/role/Deputy.png" },
+  { name: "Kẻ ngoài vòng pháp luật", icon: "💀", hidden: true, goal: "Hạ gục Cảnh sát trưởng.", imageUrl: "/bang/role/Criminal.png" },
+  { name: "Kẻ phản bội", icon: "🃏", hidden: true, goal: "Trở thành người CUỐI CÙNG còn sống sót — kể cả phải phản cả hai phe kia.", imageUrl: "/bang/role/Traitor.png" },
 ];
 
 const characters: CharacterGuideEntry[] = [
-  { name: "Wyatt", hp: 4, abilityName: "Xạ thủ xa", ability: "Tầm bắn vũ khí của Wyatt luôn +1." },
-  { name: "Calamity", hp: 4, abilityName: "Ứng biến", ability: "Có thể dùng lá Bang! như Trượt! và dùng lá Trượt! như Bang!." },
-  { name: "Billy", hp: 4, abilityName: "Không giới hạn", ability: "Bang! của Billy bắn được mọi khoảng cách, không cần trong tầm." },
-  { name: "Jesse", hp: 4, abilityName: "Giữ súng chắc", ability: "Vũ khí của Jesse không thể bị Hoảng loạn!/Cat Balou lấy hay bỏ." },
-  { name: "Doc", hp: 4, abilityName: "Lang y", ability: "Uống Bia hồi 2 HP thay vì 1." },
-  { name: "Jack", hp: 4, abilityName: "Nhanh tay", ability: "Đầu lượt rút 3 lá thay vì 2." },
-  { name: "Rose", hp: 4, abilityName: "Bền bỉ", ability: "Khi HP ≤ một nửa HP tối đa lúc đầu lượt, rút thêm 1 lá." },
-  { name: "Morgan", hp: 4, abilityName: "Né đòn", ability: "Người khác luôn nhìn Morgan xa hơn 1 khoảng cách khi nhắm bắn." },
+  { name: "Wyatt", hp: 4, abilityName: "Xạ thủ xa", ability: "Tầm bắn vũ khí của Wyatt luôn +1.", imageUrl: "/bang/character/Willy_the_Kid.png" },
+  { name: "Calamity", hp: 4, abilityName: "Ứng biến", ability: "Có thể dùng lá Bang! như Trượt! và dùng lá Trượt! như Bang!.", imageUrl: "/bang/character/Calamity_Janet.png" },
+  { name: "Billy", hp: 4, abilityName: "Không giới hạn", ability: "Bang! của Billy bắn được mọi khoảng cách, không cần trong tầm.", imageUrl: "/bang/character/Slab_the_Killer.png" },
+  { name: "Jesse", hp: 4, abilityName: "Giữ súng chắc", ability: "Vũ khí của Jesse không thể bị Hoảng loạn!/Cat Balou lấy hay bỏ.", imageUrl: "/bang/character/Jesse_Jones.png" },
+  { name: "Doc", hp: 4, abilityName: "Lang y", ability: "Uống Bia hồi 2 HP thay vì 1.", imageUrl: "/bang/character/Sid_Ketchum.png" },
+  { name: "Jack", hp: 4, abilityName: "Nhanh tay", ability: "Đầu lượt rút 3 lá thay vì 2.", imageUrl: "/bang/character/Black_Jack.png" },
+  { name: "Rose", hp: 4, abilityName: "Bền bỉ", ability: "Khi HP ≤ một nửa HP tối đa lúc đầu lượt, rút thêm 1 lá.", imageUrl: "/bang/character/Rose_Doolan.png" },
+  { name: "Morgan", hp: 4, abilityName: "Né đòn", ability: "Người khác luôn nhìn Morgan xa hơn 1 khoảng cách khi nhắm bắn.", imageUrl: "/bang/character/Paul_Regret.png" },
 ];
 
 const cards: CardGuideEntry[] = [

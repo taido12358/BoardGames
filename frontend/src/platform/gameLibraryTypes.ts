@@ -37,6 +37,7 @@ export interface RoleGuideEntry {
   icon: string;
   goal: string;
   hidden: boolean;
+  imageUrl?: string;
 }
 
 export interface CardGuideEntry {
@@ -53,6 +54,7 @@ export interface CharacterGuideEntry {
   hp: number;
   ability: string;
   abilityName: string;
+  imageUrl?: string;
 }
 
 export interface RacerGuideEntry {

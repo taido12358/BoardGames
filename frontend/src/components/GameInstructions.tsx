@@ -44,19 +44,26 @@ function RolesSection({ roles }: { roles: Extract<InstructionSection, { kind: "r
       )}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {roles.map((r) => (
-          <div key={r.name} className="relative overflow-hidden rounded-sm border border-amber-900/40 bg-[#1a1208] p-3.5">
+          <div key={r.name} className="relative overflow-hidden rounded-sm border border-amber-900/40 bg-[#1a1208] p-3.5 flex gap-3">
               <div className="pointer-events-none absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-amber-500/20 to-transparent" />
-            <div className="flex items-center justify-between">
-              <div className="font-bold text-[#f5d09d] flex items-center gap-1.5">
-                <span>{r.icon}</span> {r.name}
+            {r.imageUrl && (
+              <div className="shrink-0 w-14 rounded overflow-hidden border border-amber-900/50" style={{ aspectRatio: "2/3" }}>
+                <img src={r.imageUrl} alt={r.name} className="w-full h-full object-cover" draggable={false} />
               </div>
-              {r.hidden ? (
-                <span className="text-[10px] rounded-sm bg-[#0d0a07] border border-amber-900/50 px-2 py-0.5 text-[#bba182]">VAI TRÒ ẨN</span>
-              ) : (
-                <span className="text-[10px] rounded-sm bg-amber-900/60 border border-amber-600 px-2 py-0.5 text-amber-300">CÔNG KHAI</span>
-              )}
+            )}
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center justify-between gap-1 flex-wrap">
+                <div className="font-bold text-[#f5d09d] flex items-center gap-1.5">
+                  <span>{r.icon}</span> {r.name}
+                </div>
+                {r.hidden ? (
+                  <span className="text-[10px] rounded-sm bg-[#0d0a07] border border-amber-900/50 px-2 py-0.5 text-[#bba182]">VAI TRÒ ẨN</span>
+                ) : (
+                  <span className="text-[10px] rounded-sm bg-amber-900/60 border border-amber-600 px-2 py-0.5 text-amber-300">CÔNG KHAI</span>
+                )}
+              </div>
+              <p className="text-xs text-amber-700/60 mt-1.5"><span className="text-amber-300/70 font-medium">Mục tiêu:</span> {r.goal}</p>
             </div>
-            <p className="text-xs text-amber-700/60 mt-1.5"><span className="text-amber-300/70 font-medium">Mục tiêu:</span> {r.goal}</p>
           </div>
         ))}
       </div>
@@ -287,8 +294,11 @@ function CharactersSection({ characters }: { characters: Extract<InstructionSect
         {characters.map((c) => (
           <div key={c.name} className="relative overflow-hidden rounded-sm border border-amber-900/40 bg-[#1a1208] p-3.5 flex gap-3">
             <div className="pointer-events-none absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-amber-500/20 to-transparent" />
-            <div className="shrink-0 w-12 h-12 rounded-full bg-gradient-to-b from-amber-800 to-amber-950 border border-amber-600/50 flex items-center justify-center text-lg font-black text-amber-200">
-              {c.name[0]}
+            <div className="shrink-0 w-12 h-12 rounded-full overflow-hidden border border-amber-600/50 bg-gradient-to-b from-amber-800 to-amber-950 flex items-center justify-center text-lg font-black text-amber-200">
+              {c.imageUrl
+                ? <img src={c.imageUrl} alt={c.name} className="w-full h-full object-cover object-top" draggable={false} />
+                : c.name[0]
+              }
             </div>
             <div className="min-w-0">
               <div className="font-bold text-[#f5d09d]">{c.name}</div>
