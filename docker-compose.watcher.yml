@@ -1,0 +1,40 @@
+# Watcher service: polls a git branch and auto-deploys when new commits arrive.
+#
+# Setup (first time):
+#   docker compose -f docker-compose.watcher.yml build
+#   docker compose -f docker-compose.watcher.yml up -d
+#
+# View logs:
+#   docker compose -f docker-compose.watcher.yml logs -f
+#
+# Stop:
+#   docker compose -f docker-compose.watcher.yml down
+
+name: boardgame-watcher
+
+services:
+  watcher:
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile.watcher
+    entrypoint: ["/bin/bash", "/home/taido/boardgame/deploy/watch.sh"]
+    volumes:
+      # Docker socket — lets the watcher control the host Docker daemon
+      - /var/run/docker.sock:/var/run/docker.sock
+      # Repo mounted at the SAME host path so docker compose build paths resolve correctly
+      - /home/taido/boardgame:/home/taido/boardgame
+      # Git credentials (read-only) — needed for private repos
+      - /root/.gitconfig:/root/.gitconfig:ro
+      - /root/.ssh:/root/.ssh:ro
+    environment:
+      BRANCH:        ${WATCH_BRANCH:-master}
+      POLL_INTERVAL: ${POLL_INTERVAL:-60}         # seconds between checks
+      COMPOSE_FILE:  docker-compose.prod.yml
+      ENV_FILE:      .env
+      REPO_DIR:      /home/taido/boardgame
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file:  "3"
