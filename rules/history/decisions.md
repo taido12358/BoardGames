@@ -720,3 +720,93 @@ Tránh xung đột hai cơ chế quản lý vòng đời connection cùng lúc; 
 ### Consequences
 
 Bất kỳ thay đổi nào vào `RabbitMqPublisher` phải giữ nguyên lựa chọn "một cơ chế reconnect duy nhất" — xem [`../coding/backend.md`](../coding/backend.md).
+
+## 2026-10-25 - Monopoly uses platform JSONB and hides deck order
+
+Decision: add Monopoly as an IGameEngine with the existing generic room/seats, JSONB,
+transaction lock, SignalR, cache and replay pipeline. Do not add game-specific SQL columns.
+Persist pending debts/auctions/trades and full shuffled deck order so a restart keeps decisions.
+Strip chance/chest arrays for every viewer before transport; clients only submit intentions.
+Use crypto RNG at the adapter boundary and injected callbacks in pure rules for deterministic tests.
+Classic US 40-square data; fixed taxes 200/100. Online auctions are sequential and passing exits
+that auction. These online adaptations and remaining classic-rule gaps are documented in
+rules/references/monopoly.md. Full multiplayer verification still requires a running Docker daemon.
+
+## 2026-10-25 - Public replay snapshots are atomic, opt-in and recoverable from PostgreSQL
+
+Add nullable generic GameMoves.ReplayStateJson using idempotent ADD COLUMN. Existing rows stay null.
+IGameEngine.CreatePublicReplaySnapshot defaults to null. Monopoly opts in and strips both deck orders.
+Room-full, accepted moves and timeout outcomes capture public state in the same transaction as intent.
+This preserves actual dice and decisions; replay does not rerun randomness or mutate the live frontend room.
+Finished-room replay is built from PostgreSQL first. MinIO remains archive fallback when the room is absent.
+Active rooms never return replay. Last public snapshot supplies the public final frame.
+Verified old-table upgrade twice without losing a legacy move, all 325 backend tests, and a real
+3-player game with 675 actions and 678 replay frames. Archive MinIO and browser visual QA remain unverified.
+
+## 2026-10-26 - Freeze Monopoly edition and confirm actual building demand
+
+Authoritative ruleset: classic-us-c1009-2016, Hasbro C1009 English instructions printed 2017-02-15.
+Source: https://instructions.hasbro.com/api/download/C1009_en-my_monopoly-classic-game.pdf
+Use the concrete PDF rather than conflicting catalog copy: 2-6 players, auction opening 10,
+and a separate roll for ordinary utility rent. UtilityDice is persisted separately from movement Dice.
+The source fixture records audited constants and four deed samples; it does not claim to cover all deeds/cards.
+
+Replace automatic scarcity auctions based on eligible-owner count with persisted BuildingDemand.
+Only expressed demand in excess of supply triggers an auction. With sufficient supply, buyers pay
+the printed cost of their chosen deed; no one receives an uncontested discounted building.
+A player with only the auction opening amount can express interest in an actual contested auction;
+if there is no auction and they cannot pay face value, they do not buy or incur debt.
+One request and one auction sell one building at a time. Management is frozen while replies are pending;
+timeout declines buying for the absent responder. Normal moves and replay snapshots capture this phase.
+
+## 2026-10-26 - Room presence follows membership; refresh tracked state under row locks
+
+A live SignalR socket may have left its room. Use the same last-connection logic for LeaveRoom,
+OnDisconnected and implicit room switches; preserve a connected seat while another tab is still there.
+Validate LeaveRoom's roomId before removing tracking, and keep repeated leave idempotent.
+Three real WebSocket regressions failed before the fix, then passed with reconnect and multi-tab cases.
+
+SELECT FOR UPDATE does not refresh EF's already-tracked entity. Reload under that lock when a room
+was already tracked, so timeout scans see moves committed after their initial scan. The old UpdatedAt
+concurrency token prevented lost updates but caused the timeout operation to fail; it remains enabled.
+
+Deterministic WebSocket/TestServer/PostgreSQL tests cover House/Hotel supply/auction, spectator,
+room lifecycle, pending-decision reconnect and the actual timeout scanner. Public ScanOnceAsync is
+one background-job iteration, not a remote endpoint. All 355 backend tests pass after these changes.
+
+## 2026-10-26 - Scope incoming room events by navigation intent
+
+A room snapshot is server state, not the user's current navigation intent. Keep that intent in
+the hub hook so late packets cannot restore a room after leave or redirect a reconnect to the old room.
+Add source room IDs to Seated, chat and rematch events (additive wire change). Filter them before
+updating the store. Replace pending joins when navigation changes, compensate an aborted in-flight
+join only while it is still current, and ignore stale leave calls. Route cleanup also leaves membership.
+Four regressions reproduced stale state/seat/chat/invite, delayed-start joins and stale leaves before
+the fix. Additional cancellation/cleanup tests and a real WebSocket payload-contract test cover the fix.
+
+## 2026-10-26 - Build source-only MinIO and verify the real archive boundary
+
+The existing minio/minio:latest image failed to pull. The official repository documents source-only
+distribution. Build RELEASE.2025-10-15T17-29-55Z (module revision 9e49d5e7a648) with Go 1.24.8;
+ship the binary and CA bundle in a rootless Debian image. Compose, Kubernetes and tests reference
+boardgames/minio:2025-10-15. CI builds it before archive tests; deployment must push to its registry.
+Source: https://github.com/minio/minio and the release's go.mod. Keep existing named volume data.
+
+Real MinIO/PostgreSQL/HTTP/SignalR integration verifies a finished Monopoly archive, structural
+equality with DB replay, fallback after deleting only test-owned rows, legacy archives and 404s.
+A corrupt object reproduced HTTP 500; parsing now shares the storage error boundary and returns 503.
+No debug endpoint, fake storage service or development-room deletion is used for these checks.
+
+## 2026-10-26 - Heartbeat persisted seat presence to recover after abrupt host death
+
+An actual Kestrel process crash reproduced persisted Connected=true with no future heartbeat or
+OnDisconnected callback; the old scanner skipped it forever, leaving BuildingDemand stuck.
+Refresh LastSeenAt from local live connection snapshots every scan (~10s), and expire connected
+seats whose last heartbeat is older than the existing 45s grace. Preserve the last timestamp when
+expiring so the grace is not counted again. Do not reset every seat globally on host startup.
+
+Refresh/expiry locks the row and rechecks current timestamps. A fresh heartbeat from another host
+must survive; a leave committed after the connection snapshot must not be undone. Metadata refresh
+does not change the game state or create moves; Connected transitions are broadcast.
+Seven real subprocess/PostgreSQL/WebSocket scenarios verify crash/restart of House/Hotel demand
+and auctions, debt, inheritance, plus the absent buyer handled by the new host's actual scanner.

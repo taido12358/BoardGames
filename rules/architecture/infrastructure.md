@@ -31,6 +31,15 @@ Ports cố định: xem [`system.md`](./system.md).
 
 ## Vai trò từng service hạ tầng
 
+MinIO community được build từ mã nguồn chính thức bằng `infra/minio/Dockerfile`, release
+`RELEASE.2025-10-15T17-29-55Z` (Go module resolve `9e49d5e7a648`). Image local
+`boardgames/minio:2025-10-15` dùng chung Compose, Kubernetes và test archive. Không còn
+phụ thuộc `minio/minio:latest` trên Docker Hub (pull đã thất bại khi kiểm chứng 2026-10-26).
+Nguồn: [MinIO source-only distribution](https://github.com/minio/minio),
+[release go.mod](https://github.com/minio/minio/blob/RELEASE.2025-10-15T17-29-55Z/go.mod).
+Build trước bằng `docker compose build minio`; giữ volume `miniodata` khi đổi image.
+Kubernetes cần push image build này lên registry môi trường và thay prefix image tương ứng.
+
 | Service | Vai trò | Nguyên tắc |
 |---|---|---|
 | **PostgreSQL** | Nguồn sự thật duy nhất | Xem [`database.md`](./database.md) |

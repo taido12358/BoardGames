@@ -41,6 +41,8 @@ export interface RoomSummaryDto {
 
 /** Tin nhắn chat trong phòng — GENERIC cho mọi game, chỉ tồn tại trong bộ nhớ (không lưu DB). */
 export interface ChatMessageDto {
+  /** Có trên sự kiện hub; tùy chọn để đọc lịch sử/fixture cũ. */
+  roomId?: string;
   userId: string;
   displayName: string;
   text: string;
@@ -49,6 +51,7 @@ export interface ChatMessageDto {
 
 /** Lời mời "chơi lại" nhận được từ một người khác còn đang ở phòng cũ (xem GameHub.AnnounceRematch). */
 export interface RematchInviteDto {
+  oldRoomId?: string;
   newRoomId: string;
   byDisplayName: string;
 }

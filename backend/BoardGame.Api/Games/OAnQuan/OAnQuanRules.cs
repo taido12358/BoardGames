@@ -47,6 +47,7 @@ public static class OAnQuanRules
     /// <summary>Áp dụng nước đi — gọi sau khi <see cref="ValidMove"/> đã xác nhận true.</summary>
     public static void ApplyMove(GameState s, string side, int pitIndex, string direction)
     {
+        s.LastMove = new OAnQuanLastMove(pitIndex, direction, side, (s.LastMove?.Sequence ?? 0) + 1);
         var sideIdx = SideIndex(side);
         var stonesInHand = s.Pits[pitIndex];
         s.Pits[pitIndex] = 0;

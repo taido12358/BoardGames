@@ -13,13 +13,13 @@ afterEach(() => {
 describe("useDamageShake", () => {
   it("hp giảm → trả true, rồi tự tắt sau 400ms", () => {
     const { result, rerender } = renderHook(({ hp }) => useDamageShake(hp), { initialProps: { hp: 4 } });
-    expect(result.current).toBe(false);
+    expect(result.current.active).toBe(false);
 
     rerender({ hp: 3 });
-    expect(result.current).toBe(true);
+    expect(result.current.active).toBe(true);
 
     act(() => vi.advanceTimersByTime(400));
-    expect(result.current).toBe(false);
+    expect(result.current.active).toBe(false);
   });
 
   it("hp tăng (hồi máu) → không kích hoạt rung", () => {
@@ -27,7 +27,7 @@ describe("useDamageShake", () => {
 
     rerender({ hp: 3 });
 
-    expect(result.current).toBe(false);
+    expect(result.current.active).toBe(false);
   });
 
   it("hp không đổi → không kích hoạt rung", () => {
@@ -35,13 +35,13 @@ describe("useDamageShake", () => {
 
     rerender({ hp: 4 });
 
-    expect(result.current).toBe(false);
+    expect(result.current.active).toBe(false);
   });
 
   it("lần render đầu tiên (mount) không tính là vừa bị đánh dù hp thấp", () => {
     const { result } = renderHook(({ hp }) => useDamageShake(hp), { initialProps: { hp: 1 } });
 
-    expect(result.current).toBe(false);
+    expect(result.current.active).toBe(false);
   });
 
   it("mất máu liên tiếp 2 lần trước khi hết 400ms vẫn giữ trạng thái rung", () => {
@@ -52,6 +52,7 @@ describe("useDamageShake", () => {
     rerender({ hp: 2 });
     act(() => vi.advanceTimersByTime(200));
 
-    expect(result.current).toBe(true); // timer thứ 2 (bắt đầu lúc t=200) chưa chạy hết tới t=600
+    expect(result.current.active).toBe(true); // timer thứ 2 (bắt đầu lúc t=200) chưa chạy hết tới t=600
+    expect(result.current.sequence).toBe(2);
   });
 });

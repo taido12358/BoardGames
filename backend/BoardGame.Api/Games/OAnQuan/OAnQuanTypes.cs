@@ -23,9 +23,15 @@ public class GameState
 
     public string Turn { get; set; } = "P0";
 
+    /// <summary>Last confirmed move, retained in snapshots so clients can animate the exact sowing path.</summary>
+    public OAnQuanLastMove? LastMove { get; set; }
+
     /// <summary>"P0" | "P1" | "DRAW" | null (chưa kết thúc).</summary>
     public string? Winner { get; set; }
 }
 
 /// <summary>Payload nước đi — Direction: "cw" (tăng dần chỉ số ô) hoặc "ccw" (giảm dần).</summary>
 public record OAnQuanMove(int PitIndex, string Direction);
+
+/// <summary>Confirmed move metadata stored with the state for deterministic client-side animation.</summary>
+public record OAnQuanLastMove(int PitIndex, string Direction, string Side, long Sequence);

@@ -9,22 +9,29 @@ import { vaybatMetadata, vaybatInstructions } from "../games/vaybat/metadata";
 import { bangMetadata, bangInstructions } from "../games/bang/metadata";
 import { oanQuanMetadata, oanQuanInstructions } from "../games/oanquan/metadata";
 import { zodiacRaceMetadata, zodiacRaceInstructions } from "../games/zodiacrace/metadata";
+import { meoNoMetadata, meoNoInstructions } from "../games/meono/metadata";
 import VayBatCreateOptions from "../games/vaybat/CreateOptions";
 import BangCreateOptions from "../games/bang/CreateOptions";
 import ZodiacRaceCreateOptions from "../games/zodiacrace/CreateOptions";
+import MeoNoCreateOptions from "../games/meono/CreateOptions";
+import { monopolyMetadata, monopolyInstructions, monopolyDefaultCreateOptions } from "../games/monopoly/metadata";
+import MonopolyCreateOptions from "../games/monopoly/CreateOptions";
 
 interface GameRegistryEntry {
   metadata: GameMetadata;
   instructions: InstructionSection[];
   /** UI tuỳ chọn khi tạo phòng — GameDetails chỉ render nếu có, không hard-code theo gameKey. */
   CreateOptionsForm?: ComponentType<CreateOptionsFormProps>;
+  defaultCreateOptions?: Readonly<Record<string, unknown>>;
 }
 
 const REGISTRY: Record<string, GameRegistryEntry> = {
+  monopoly: { metadata: monopolyMetadata, instructions: monopolyInstructions, CreateOptionsForm: MonopolyCreateOptions, defaultCreateOptions: monopolyDefaultCreateOptions },
   vaybat: { metadata: vaybatMetadata, instructions: vaybatInstructions, CreateOptionsForm: VayBatCreateOptions },
   bang: { metadata: bangMetadata, instructions: bangInstructions, CreateOptionsForm: BangCreateOptions },
-  oanquan: { metadata: oanQuanMetadata, instructions: oanQuanInstructions }, // không có tuỳ chọn tạo phòng riêng
+  oanquan: { metadata: oanQuanMetadata, instructions: oanQuanInstructions },
   zodiacrace: { metadata: zodiacRaceMetadata, instructions: zodiacRaceInstructions, CreateOptionsForm: ZodiacRaceCreateOptions },
+  meono: { metadata: meoNoMetadata, instructions: meoNoInstructions, CreateOptionsForm: MeoNoCreateOptions },
 };
 
 /** Game backend hỗ trợ nhưng CHƯA có metadata trình bày riêng — vẫn hiển thị được, chỉ không có artwork/hướng dẫn chi tiết. */
@@ -65,4 +72,9 @@ export function getGameTitle(gameKey: string): string {
 /** Component UI tuỳ chọn tạo phòng của game này, nếu có đăng ký — GameDetails render có điều kiện. */
 export function getCreateOptionsForm(gameKey: string): ComponentType<CreateOptionsFormProps> | undefined {
   return REGISTRY[gameKey]?.CreateOptionsForm;
+}
+
+/** Fresh defaults shared by the displayed form and the actual create-room request. */
+export function getDefaultCreateOptions(gameKey: string): Record<string, unknown> {
+  return { ...(REGISTRY[gameKey]?.defaultCreateOptions ?? {}) };
 }

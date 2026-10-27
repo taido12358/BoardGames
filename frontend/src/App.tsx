@@ -30,35 +30,39 @@ export default function App() {
             trên desktop (xem GameLibrary/GameDetails). Nội dung hẹp hơn (bàn cờ, form
             đăng nhập) tự căn giữa bên trong, không bị ảnh hưởng. */}
         <div className="relative z-10 w-full max-w-6xl mx-auto flex flex-col min-h-screen">
-          <header className="sticky top-0 z-50 relative px-4 pt-4 pb-3 mb-1 shrink-0 flex flex-wrap gap-3 items-center justify-between border-b border-amber-950/80 bg-gradient-to-b from-[#1a110a] via-[#140d08] to-[#0e0805] shadow-[0_10px_25px_-5px_rgba(0,0,0,0.9)]">
+          <header className="sticky top-0 z-50 relative px-4 pt-3 pb-3 mb-1 shrink-0 flex items-center justify-between gap-2 border-b border-amber-950/80 bg-gradient-to-b from-[#1a110a] via-[#140d08] to-[#0e0805] shadow-[0_10px_25px_-5px_rgba(0,0,0,0.9)]">
             <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-amber-500/35 to-transparent" />
-            <Link to="/games" className="flex items-center gap-1.5 text-2xl font-western tracking-wide hover:brightness-110 transition-all">
+            <Link to="/games" className="flex shrink-0 items-center gap-1.5 text-xl sm:text-2xl font-western tracking-wide hover:brightness-110 transition-all">
               <span>🎲</span>
               <span className="bg-gradient-to-b from-[#fff3db] via-[#f7cb85] to-[#c7883a] bg-clip-text text-transparent drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">BoardGame</span>
             </Link>
             {user && (
-              <div className="flex flex-wrap items-center gap-2 min-w-0">
+              <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
                 <DisplayNameEditor displayName={user.displayName} email={user.email} />
                 <Link
                   to="/history"
-                  className="shrink-0 text-xs px-2.5 py-1.5 rounded-sm border border-[#6b4725]/60 bg-[#22140c]/90 text-[#bba182] shadow-[inset_0_1px_2px_rgba(0,0,0,0.6)] hover:border-[#b47a3c]/80 hover:bg-[#2c1a10] hover:text-[#f3d4a2] transition-all uppercase tracking-wider"
+                  aria-label="Lịch sử"
+                  className="shrink-0 text-xs px-2 sm:px-2.5 py-1.5 rounded-sm border border-[#6b4725]/60 bg-[#22140c]/90 text-[#bba182] shadow-[inset_0_1px_2px_rgba(0,0,0,0.6)] hover:border-[#b47a3c]/80 hover:bg-[#2c1a10] hover:text-[#f3d4a2] transition-all uppercase tracking-wider"
                 >
-                  📜 Lịch sử
+                  <span aria-hidden="true">📜</span><span className="hidden sm:inline ml-1">Lịch sử</span>
                 </Link>
                 {isAdmin && (
                   <Link
                     to="/admin"
-                    className="shrink-0 text-xs px-2.5 py-1.5 rounded-sm border border-[#6b4725]/60 bg-[#22140c]/90 text-[#bba182] shadow-[inset_0_1px_2px_rgba(0,0,0,0.6)] hover:border-[#b47a3c]/80 hover:bg-[#2c1a10] hover:text-[#f3d4a2] transition-all uppercase tracking-wider"
+                    aria-label="Quản trị"
+                    className="shrink-0 text-xs px-2 sm:px-2.5 py-1.5 rounded-sm border border-[#6b4725]/60 bg-[#22140c]/90 text-[#bba182] shadow-[inset_0_1px_2px_rgba(0,0,0,0.6)] hover:border-[#b47a3c]/80 hover:bg-[#2c1a10] hover:text-[#f3d4a2] transition-all uppercase tracking-wider"
                   >
-                    🛠 Quản trị
+                    <span aria-hidden="true">🛠</span><span className="hidden sm:inline ml-1">Quản trị</span>
                   </Link>
                 )}
                 <button
                   onClick={logout}
                   disabled={loggingOut}
-                  className="shrink-0 text-xs px-2.5 py-1.5 rounded-sm border border-[#6b4725]/60 bg-[#22140c]/90 text-[#bba182] shadow-[inset_0_1px_2px_rgba(0,0,0,0.6)] hover:border-red-700/50 hover:bg-red-950/40 hover:text-red-400 transition-all uppercase tracking-wider disabled:opacity-40"
+                  aria-label={loggingOut ? "Đang đăng xuất" : "Đăng xuất"}
+                  className="shrink-0 text-xs px-2 sm:px-2.5 py-1.5 rounded-sm border border-[#6b4725]/60 bg-[#22140c]/90 text-[#bba182] shadow-[inset_0_1px_2px_rgba(0,0,0,0.6)] hover:border-red-700/50 hover:bg-red-950/40 hover:text-red-400 transition-all uppercase tracking-wider disabled:opacity-40"
                 >
-                  {loggingOut ? "Đang đăng xuất…" : "Đăng xuất"}
+                  <span className="sm:hidden">{loggingOut ? "…" : "Xuất"}</span>
+                  <span className="hidden sm:inline">{loggingOut ? "Đang đăng xuất…" : "Đăng xuất"}</span>
                 </button>
               </div>
             )}

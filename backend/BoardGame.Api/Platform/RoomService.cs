@@ -28,9 +28,16 @@ public class RoomService
     }
 
     private async Task<GameRoom?> LockRoomAsync(Guid roomId)
-        => (await _db.GameRooms
+    {
+        var alreadyTracked = _db.ChangeTracker.Entries<GameRoom>().Any(e => e.Entity.Id == roomId);
+        var room = (await _db.GameRooms
             .FromSqlRaw("SELECT * FROM \"GameRooms\" WHERE \"Id\" = {0} FOR UPDATE", roomId)
             .ToListAsync()).FirstOrDefault();
+        // A row lock does not refresh EF's identity map. Timeout scans reuse a context
+        // that may predate another committed move; reload while this transaction owns the lock.
+        if (room is not null && alreadyTracked) await _db.Entry(room).ReloadAsync();
+        return room;
+    }
 
     /// <summary>Ghế của một user trong phòng — dùng ở cả JoinRoom/MakeMove và GameHub.BroadcastState.</summary>
     public static string? ResolveSide(GameRoom room, IGameEngine engine, Guid userId)
@@ -108,6 +115,7 @@ public class RoomService
         {
             RoomId = room.Id, MoveNumber = moveNumber, Side = "SYSTEM",
             MoveJson = GameJson.Serialize(new { type = "__room_full__", seats = seatNames }),
+            ReplayStateJson = engine.CreatePublicReplaySnapshot(outcome.StateJson),
         });
     }
 
@@ -197,7 +205,8 @@ public class RoomService
         if (!outcome.Ok) { await tx.RollbackAsync(); return (null, null, null, outcome.Error ?? "Nước đi không hợp lệ"); }
 
         var moveNumber = await _db.GameMoves.CountAsync(m => m.RoomId == roomId) + 1;
-        _db.GameMoves.Add(new GameMove { RoomId = roomId, MoveNumber = moveNumber, Side = side, MoveJson = moveJson });
+        _db.GameMoves.Add(new GameMove { RoomId = roomId, MoveNumber = moveNumber, Side = side, MoveJson = moveJson,
+            ReplayStateJson = engine.CreatePublicReplaySnapshot(outcome.StateJson) });
 
         room.StateJson = outcome.StateJson;
         if (outcome.Winner is not null) { room.Status = RoomStatus.Finished; room.Winner = outcome.Winner; }
@@ -281,7 +290,8 @@ public class RoomService
         if (!outcome.Ok) { await tx.RollbackAsync(); return (null, null); }
 
         var moveNumber = await _db.GameMoves.CountAsync(m => m.RoomId == roomId) + 1;
-        _db.GameMoves.Add(new GameMove { RoomId = roomId, MoveNumber = moveNumber, Side = side, MoveJson = "{\"type\":\"__seat_timeout__\"}" });
+        _db.GameMoves.Add(new GameMove { RoomId = roomId, MoveNumber = moveNumber, Side = side, MoveJson = "{\"type\":\"__seat_timeout__\"}",
+            ReplayStateJson = engine.CreatePublicReplaySnapshot(outcome.StateJson) });
 
         room.StateJson = outcome.StateJson;
         if (outcome.Winner is not null) { room.Status = RoomStatus.Finished; room.Winner = outcome.Winner; }
@@ -289,6 +299,43 @@ public class RoomService
         await _db.SaveChangesAsync();
         await tx.CommitAsync();
         return (room, outcome);
+    }
+
+    /// <summary>Refresh local live seats and expire stale persisted presence after a host crash.
+    /// Row locking rechecks timestamps written by other hosts or concurrent join/leave requests.
+    /// Returns true only when Connected changes and viewers need a broadcast; never creates a move.</summary>
+    public async Task<bool> RefreshSeatPresenceAsync(Guid roomId, IReadOnlySet<Guid> liveUsers,
+        DateTime observedAt, DateTime expiredBefore)
+    {
+        await using var tx = await _db.Database.BeginTransactionAsync();
+        var room = await LockRoomAsync(roomId);
+        if (room is null || room.Status != RoomStatus.Playing) { await tx.RollbackAsync(); return false; }
+        var seats = SeatCodec.SeatsOf(room);
+        var changed = false;
+        var connectedChanged = false;
+        for (var index = 0; index < seats.Count; index++)
+        {
+            var seat = seats[index];
+            if (seat is null) continue;
+            if (liveUsers.Contains(seat.UserId) && seat.LastSeenAt <= observedAt)
+            {
+                // A leave recorded after the connection snapshot must win over this heartbeat.
+                seats[index] = seat with { Connected = true, LastSeenAt = observedAt };
+                changed = true; connectedChanged |= !seat.Connected;
+            }
+            else if (!liveUsers.Contains(seat.UserId) && seat.Connected && seat.LastSeenAt < expiredBefore)
+            {
+                // Preserve the last heartbeat, so the same grace period is not charged twice.
+                seats[index] = seat with { Connected = false };
+                changed = true; connectedChanged = true;
+            }
+        }
+        if (!changed) { await tx.RollbackAsync(); return false; }
+        SeatCodec.SetSeats(room, seats);
+        room.UpdatedAt = DateTime.UtcNow;
+        await _db.SaveChangesAsync();
+        await tx.CommitAsync();
+        return connectedChanged;
     }
 
     /// <summary>Đánh dấu ghế của userId mất kết nối (connection cuối cùng của họ trong phòng vừa ngắt) — trả true nếu có thay đổi thật (cần broadcast lại).</summary>

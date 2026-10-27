@@ -1,26 +1,51 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import type { ChangeFlashState } from "../useChangeFlash";
+import { useReducedMotionPreference } from "../../hooks/useReducedMotionPreference";
 
 const SHAKE_DURATION_MS = 400;
 
-/**
- * Trả `true` trong {@link SHAKE_DURATION_MS}ms ngay sau khi `hp` GIẢM so với lần render trước —
- * dùng để kích hoạt animation "rung" khi người chơi mất máu (van-de.md §46 — trước 2026-09-11 dự
- * án gần như không có animation nào ngoài 1 hiệu ứng hover chung). Không kích hoạt khi hp tăng
- * (hồi máu bằng bia) hoặc lần render đầu tiên (mount không phải là "vừa bị đánh").
- */
-export function useDamageShake(hp: number): boolean {
+/** Shake only after a confirmed HP drop; room snapshots do not count as damage. */
+export function useDamageShake(hp: number, roomId?: string): ChangeFlashState {
+  const reducedMotion = useReducedMotionPreference();
   const prevHp = useRef(hp);
-  const [shaking, setShaking] = useState(false);
+  const previousRoomId = useRef(roomId);
+  const sequence = useRef(0);
+  const timer = useRef<number | undefined>(undefined);
+  const [shaking, setShaking] = useState<ChangeFlashState>({ active: false, sequence: 0 });
 
-  useEffect(() => {
-    if (hp < prevHp.current) {
-      setShaking(true);
-      const timer = setTimeout(() => setShaking(false), SHAKE_DURATION_MS);
+  useLayoutEffect(() => {
+    if (roomId !== previousRoomId.current) {
+      previousRoomId.current = roomId;
       prevHp.current = hp;
-      return () => clearTimeout(timer);
+      setShaking({ active: false, sequence: sequence.current });
+      window.clearTimeout(timer.current);
+      return;
+    }
+    if (hp < prevHp.current) {
+      sequence.current += 1;
+      const activeSequence = sequence.current;
+      setShaking({ active: true, sequence: activeSequence });
+      window.clearTimeout(timer.current);
+      timer.current = window.setTimeout(() => {
+        if (sequence.current !== activeSequence) return;
+        setShaking((current) => current.sequence === activeSequence ? { ...current, active: false } : current);
+      }, reducedMotion ? 180 : SHAKE_DURATION_MS);
+      prevHp.current = hp;
+      return;
     }
     prevHp.current = hp;
-  }, [hp]);
+  }, [hp, roomId, reducedMotion]);
 
+  useEffect(() => {
+    if (!reducedMotion || !shaking.active) return;
+    const activeSequence = shaking.sequence;
+    window.clearTimeout(timer.current);
+    timer.current = window.setTimeout(() => {
+      if (sequence.current !== activeSequence) return;
+      setShaking((current) => current.sequence === activeSequence ? { ...current, active: false } : current);
+    }, 180);
+  }, [reducedMotion, shaking.active, shaking.sequence]);
+
+  useEffect(() => () => window.clearTimeout(timer.current), []);
   return shaking;
 }

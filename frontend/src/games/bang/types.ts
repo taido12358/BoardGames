@@ -81,6 +81,22 @@ export interface BangViewerState {
   you: BangYourView | null;
 }
 
+/** Chuẩn hóa projection từ các server cũ từng đưa enum vào field string bằng Enum.ToString(). */
+export function normalizeBangViewerState(state: BangViewerState): BangViewerState {
+  const phaseByLowercase: Record<string, GamePhase> = {
+    waitingforplayers: "waitingForPlayers",
+    action: "action",
+    awaitingresponse: "awaitingResponse",
+    finished: "finished",
+  };
+  const phase = phaseByLowercase[state.phase.toLowerCase()] ?? state.phase;
+  const pendingResponse = state.pendingResponse
+    ? { ...state.pendingResponse, kind: state.pendingResponse.kind.toLowerCase() as PendingResponseKind }
+    : null;
+  if (phase === state.phase && pendingResponse?.kind === state.pendingResponse?.kind) return state;
+  return { ...state, phase, pendingResponse };
+}
+
 export interface BangMap {
   weaponRanges: Record<string, number>;
   roleDistribution: Record<string, number[]>;
@@ -93,28 +109,28 @@ export type BangMove =
   | { type: "END_TURN"; discardCardIds?: string[] };
 
 export const CARD_DISPLAY: Record<CardKind, { name: string; icon: string }> = {
-  bang: { name: "Bang!", icon: "🔫" },
-  missed: { name: "Trượt!", icon: "🛡" },
-  beer: { name: "Bia", icon: "🍺" },
-  gatling: { name: "Súng Gatling", icon: "💥" },
-  duel: { name: "Đấu súng", icon: "⚔️" },
-  panic: { name: "Hoảng loạn!", icon: "😱" },
-  catBalou: { name: "Cat Balou", icon: "🎯" },
-  stagecoach: { name: "Xe ngựa", icon: "🚃" },
-  wellsFargo: { name: "Wells Fargo", icon: "💰" },
-  indians: { name: "Người da đỏ!", icon: "🏹" },
-  volcanic: { name: "Volcanic", icon: "🔫" },
-  schofield: { name: "Schofield", icon: "🔫" },
-  remington: { name: "Remington", icon: "🔫" },
-  mustang: { name: "Mustang", icon: "🐎" },
-  barrel: { name: "Thùng rượu", icon: "🛢" },
+  bang:        { name: "Bang!",        icon: "🔫" },
+  missed:      { name: "Trượt!",       icon: "💨" },
+  beer:        { name: "Bia",          icon: "🍺" },
+  gatling:     { name: "Súng Gatling", icon: "💥" },
+  duel:        { name: "Đấu súng",     icon: "⚔️" },
+  panic:       { name: "Hoảng loạn!", icon: "🤚" },
+  catBalou:    { name: "Cat Balou",    icon: "🎯" },
+  stagecoach:  { name: "Xe ngựa",     icon: "🏇" },
+  wellsFargo:  { name: "Wells Fargo", icon: "🏦" },
+  indians:     { name: "Người da đỏ!", icon: "🏹" },
+  volcanic:    { name: "Volcanic",     icon: "🌋" },
+  schofield:   { name: "Schofield",   icon: "🔫" },
+  remington:   { name: "Remington",   icon: "🔫" },
+  mustang:     { name: "Mustang",      icon: "🐎" },
+  barrel:      { name: "Thùng rượu",  icon: "🛢" },
 };
 
 export const ROLE_ICON: Record<string, string> = {
   "Cảnh sát trưởng": "⭐",
-  "Phó cảnh sát": "🥈",
-  "Kẻ ngoài vòng pháp luật": "🏴",
-  "Kẻ phản bội": "🎭",
+  "Phó cảnh sát": "🎖️",
+  "Kẻ ngoài vòng pháp luật": "💀",
+  "Kẻ phản bội": "🃏",
   "Vai trò ẩn": "❓",
 };
 

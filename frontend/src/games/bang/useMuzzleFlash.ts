@@ -1,4 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import type { ChangeFlashState } from "../useChangeFlash";
+import { useReducedMotionPreference } from "../../hooks/useReducedMotionPreference";
 
 const MUZZLE_FLASH_DURATION_MS = 300;
 
@@ -16,22 +18,54 @@ const SHOT_PATTERN = /sử dụng (Bang!|Súng Gatling)|đáp trả bằng Bang!
  * (xem BangRules.HandleMove — mọi hành động đều ghi log kèm theo).
  * Không kích hoạt ở lần render đầu tiên (mount không phải là "vừa bắn" dù log có sẵn từ trước).
  */
-export function useMuzzleFlash(gameLog: string[]): boolean {
+export function useMuzzleFlashState(gameLog: string[], roomId?: string): ChangeFlashState {
+  const reducedMotion = useReducedMotionPreference();
   const prevLength = useRef(gameLog.length);
-  const [flashing, setFlashing] = useState(false);
+  const previousRoomId = useRef(roomId);
+  const sequence = useRef(0);
+  const timer = useRef<number | undefined>(undefined);
+  const [flashing, setFlashing] = useState<ChangeFlashState>({ active: false, sequence: 0 });
 
-  useEffect(() => {
+  useLayoutEffect(() => {
+    if (roomId !== previousRoomId.current) {
+      previousRoomId.current = roomId;
+      prevLength.current = gameLog.length;
+      setFlashing({ active: false, sequence: sequence.current });
+      window.clearTimeout(timer.current);
+      return;
+    }
     if (gameLog.length > prevLength.current) {
       const newEntries = gameLog.slice(prevLength.current);
       if (newEntries.some((entry) => SHOT_PATTERN.test(entry))) {
-        setFlashing(true);
-        const timer = setTimeout(() => setFlashing(false), MUZZLE_FLASH_DURATION_MS);
-        prevLength.current = gameLog.length;
-        return () => clearTimeout(timer);
+        sequence.current += 1;
+        const activeSequence = sequence.current;
+        setFlashing({ active: true, sequence: activeSequence });
+        window.clearTimeout(timer.current);
+        timer.current = window.setTimeout(() => {
+          if (sequence.current !== activeSequence) return;
+          setFlashing((current) => current.sequence === activeSequence ? { ...current, active: false } : current);
+        }, reducedMotion ? 180 : MUZZLE_FLASH_DURATION_MS);
       }
     }
     prevLength.current = gameLog.length;
-  }, [gameLog]);
+  }, [gameLog, roomId, reducedMotion]);
+
+  useEffect(() => {
+    if (!reducedMotion || !flashing.active) return;
+    const activeSequence = flashing.sequence;
+    window.clearTimeout(timer.current);
+    timer.current = window.setTimeout(() => {
+      if (sequence.current !== activeSequence) return;
+      setFlashing((current) => current.sequence === activeSequence ? { ...current, active: false } : current);
+    }, 180);
+  }, [reducedMotion, flashing.active, flashing.sequence]);
+
+  useEffect(() => () => window.clearTimeout(timer.current), []);
 
   return flashing;
+}
+
+/** Boolean compatibility wrapper for callers that only need to know whether a flash is active. */
+export function useMuzzleFlash(gameLog: string[], roomId?: string): boolean {
+  return useMuzzleFlashState(gameLog, roomId).active;
 }

@@ -35,6 +35,10 @@ public class GameHub : Hub
 
     private const string LobbyGroup = "lobby";
 
+    internal static Dictionary<Guid, HashSet<Guid>> ConnectedUsersByRoom() => _connections.Values.ToArray()
+        .GroupBy(connection => Guid.Parse(connection.RoomId))
+        .ToDictionary(group => group.Key, group => group.Select(connection => connection.UserId).ToHashSet());
+
     private readonly AppDbContext _db;
     private readonly RoomService _rooms;
     private readonly RedisCacheService _cache;
@@ -61,32 +65,27 @@ public class GameHub : Hub
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
         if (_connections.TryRemove(Context.ConnectionId, out var info))
-        {
-            // Chỉ đánh dấu "mất kết nối" khi đây là connection CUỐI CÙNG của user này trong
-            // phòng — một người mở 2 tab rồi đóng bớt 1 tab không phải là mất kết nối thật.
-            var stillConnected = _connections.Values.Any(v => v.RoomId == info.RoomId && v.UserId == info.UserId);
-            if (!stillConnected)
-            {
-                try
-                {
-                    if (Guid.TryParse(info.RoomId, out var roomGuid))
-                    {
-                        var changed = await _rooms.MarkSeatDisconnectedAsync(roomGuid, info.UserId);
-                        if (changed)
-                        {
-                            var room = await _db.GameRooms.FindAsync(roomGuid);
-                            if (room is not null && _engines.Has(room.GameKey))
-                                await BroadcastRoomStateAsync(Clients, info.RoomId, room, _engines.Get(room.GameKey));
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _log.LogWarning(ex, "Xử lý mất kết nối thất bại cho phòng {RoomId}", info.RoomId);
-                }
-            }
-        }
+            await MarkSeatDisconnectedIfLastConnectionAsync(info.RoomId, info.UserId);
         await base.OnDisconnectedAsync(exception);
+    }
+
+    private async Task MarkSeatDisconnectedIfLastConnectionAsync(string roomId, Guid userId)
+    {
+        // Leaving a room and closing the socket have the same seat-liveness semantics.
+        // Another tab in the same room must keep the seat connected.
+        if (_connections.Values.Any(v => v.RoomId == roomId && v.UserId == userId)) return;
+        try
+        {
+            if (!Guid.TryParse(roomId, out var id)) return;
+            if (!await _rooms.MarkSeatDisconnectedAsync(id, userId)) return;
+            var room = await _db.GameRooms.FindAsync(id);
+            if (room is not null && _engines.Has(room.GameKey))
+                await BroadcastRoomStateAsync(Clients, roomId, room, _engines.Get(room.GameKey));
+        }
+        catch (Exception ex)
+        {
+            _log.LogWarning(ex, "Xử lý rời phòng/mất kết nối thất bại cho phòng {RoomId}", roomId);
+        }
     }
 
     /// <summary>Danh tính người gọi từ JWT cookie — null nếu token không hợp lệ (không nên xảy ra sau [Authorize], phòng thủ thêm).</summary>
@@ -110,18 +109,29 @@ public class GameHub : Hub
         var (room, side, error) = await _rooms.JoinRoomAsync(id, userId.Value, CallerDisplayName);
         if (error is not null) { await Err(error); return; }
 
+        if (_connections.TryGetValue(Context.ConnectionId, out var previous) && previous.RoomId != roomId)
+        {
+            _connections.TryRemove(Context.ConnectionId, out _);
+            await Groups.RemoveFromGroupAsync(Context.ConnectionId, previous.RoomId);
+            await MarkSeatDisconnectedIfLastConnectionAsync(previous.RoomId, previous.UserId);
+        }
+
         await Groups.AddToGroupAsync(Context.ConnectionId, roomId);
         _connections[Context.ConnectionId] = (roomId, userId.Value);
 
         var engine = _engines.Get(room!.GameKey);
-        await Clients.Caller.SendAsync("Seated", new { side });
+        await Clients.Caller.SendAsync("Seated", new { roomId, side });
         await BroadcastRoomStateAsync(Clients, roomId, room, engine);
     }
 
-    public Task LeaveRoom(string roomId)
+    /// <summary>Rời đúng phòng đang theo dõi; tab cuối rời sẽ đánh dấu ghế mất kết nối để timeout xử lý.</summary>
+    public async Task LeaveRoom(string roomId)
     {
+        if (!_connections.TryGetValue(Context.ConnectionId, out var info)) return; // idempotent after an earlier leave
+        if (info.RoomId != roomId) { await Err("Bạn chưa ở trong phòng này."); return; }
         _connections.TryRemove(Context.ConnectionId, out _);
-        return Groups.RemoveFromGroupAsync(Context.ConnectionId, roomId);
+        await Groups.RemoveFromGroupAsync(Context.ConnectionId, roomId);
+        await MarkSeatDisconnectedIfLastConnectionAsync(info.RoomId, info.UserId);
     }
 
     /// <summary>
@@ -147,6 +157,7 @@ public class GameHub : Hub
 
         var message = new
         {
+            roomId,
             userId = userId.Value,
             displayName = CallerDisplayName,
             text = trimmed,
@@ -168,7 +179,7 @@ public class GameHub : Hub
             await Err("Bạn không ở trong phòng này.");
             return;
         }
-        await Clients.OthersInGroup(oldRoomId).SendAsync("RematchAvailable", new { newRoomId, byDisplayName = CallerDisplayName });
+        await Clients.OthersInGroup(oldRoomId).SendAsync("RematchAvailable", new { oldRoomId, newRoomId, byDisplayName = CallerDisplayName });
     }
 
     /// <summary>
@@ -266,14 +277,7 @@ public class GameHub : Hub
             FinishedAt = room.UpdatedAt,
         });
 
-        await storage.SaveReplayAsync($"replay-{room.Id}.json", GameJson.Serialize(new // MinIO
-        {
-            room.Id, room.GameKey, room.Winner,
-            seats = seatNames,
-            map = GameJson.Element(room.MapJson),
-            finalState = GameJson.Element(room.StateJson),
-            moves = moves.Select(m => new { m.MoveNumber, m.Side, move = GameJson.Element(m.MoveJson) }),
-        }));
+        await storage.SaveReplayAsync($"replay-{room.Id}.json", ReplayArtifact.Serialize(room, moves));
     }
 
     private Task Err(string message) => Clients.Caller.SendAsync("Error", message);

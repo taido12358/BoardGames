@@ -23,7 +23,7 @@ function room(overrides: Partial<RoomDto> = {}): RoomDto {
 describe("RoomStatusBanner", () => {
   it("phòng Waiting: hiện đúng số ghế đã có người / tổng ghế", () => {
     render(<RoomStatusBanner room={room({ status: "Waiting", seatCount: 4, seats: [seat({ displayName: "An" }), seat(), seat(), seat()] })} mySide={null} />);
-    expect(screen.getByText(/Đang chờ 1\/4 người vào phòng/)).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent(/Đang chờ 1\/4 người vào phòng/);
   });
 
   it("phòng Playing nhưng mySide null (khán giả): hiện banner xem", () => {

@@ -11,6 +11,40 @@ Controller / Hub  →  Engine (IGameEngine) + Services  →  DbContext / hạ t�
 - **Engine (`IGameEngine`)**: toàn bộ luật của một game — validate nước đi, tính state mới. Engine **thuần logic**: không chạm DB, Redis, hub; nhận JSON vào, trả JSON + outcome ra. Đăng ký `AddSingleton` → phải stateless.
 - **Services** (`RedisCacheService`, `RabbitMqPublisher`, `OpenSearchService`, `MinioStorageService`, `SmtpOtpSender`): hạ tầng thuần, không business logic.
 
+## Replay và archive
+
+Replay của phòng Finished còn trong DB được dựng từ PostgreSQL. Khi không còn row phòng,
+controller đọc archive MinIO; object/bucket thiếu trả 404, lỗi storage hoặc JSON archive hỏng
+trả 503 kèm thông báo thử lại và log Warning. Phòng chưa kết thúc luôn trả 404 trước archive.
+JSON archive phải parse trong cùng try/catch với thao tác storage; không để parse bên ngoài
+biến artifact bị hỏng thành lỗi 500. Legacy không có `moves[].state` vẫn được giữ nguyên khi đọc.
+
+## Presence và timeout
+
+Khởi tạo Redis phải giữ các giá trị timeout/retry đã cung cấp trong connection string.
+Không ghi đè ConnectTimeout/ConnectRetry sau `ConfigurationOptions.Parse`: việc đó từng đổi
+fixture fail-fast 50ms thành 5000ms, làm activation của hub sau restart vượt deadline WebSocket
+trên Linux CI. AbortOnConnectFail=false vẫn được giữ để hạ tầng phụ không chặn khởi động lâu dài.
+
+Một SignalR connection theo dõi một phòng. `LeaveRoom` kiểm tra roomId, rời group và đánh dấu
+ghế mất kết nối khi không còn tab nào của cùng user trong phòng đó. Socket còn mở không đồng
+nghĩa với việc vẫn ở phòng. `JoinRoom` sang phòng khác tự tách group/ghế cũ; rời phòng lặp lại
+không tạo lỗi. Cùng một helper xử lý disconnect vật lý và leave để giữ đúng semantics nhiều tab.
+
+`RoomService.LockRoomAsync` lấy row lock rồi reload nếu room đã được DbContext theo dõi.
+EF identity resolution không tự cập nhật state từ query mới; đặc biệt timeout scan có thể giữ
+entity từ trước một nước đi đã commit. Reload dưới khóa bảo toàn state và token UpdatedAt mới.
+`SeatTimeoutService.ScanOnceAsync` là một lượt quét của cùng background loop, cho phép test
+điều kiện timeout xác định mà không chờ thời gian thật; không có endpoint chạy scan từ client.
+
+Scanner cũng refresh `LastSeenAt` cho các connection thật của host mỗi khoảng 10 giây.
+`Connected=true` nhưng không có heartbeat quá 45 giây được đổi thành false; giữ timestamp
+heartbeat cuối để không tính thêm một grace period nữa. Điều này phục hồi timeout sau crash,
+khi callback OnDisconnected không chạy. Không reset tất cả ghế khi khởi động host.
+Refresh/expire lấy row lock và đọc lại timestamp mới nhất: heartbeat của host khác còn mới thì
+không bị expire; leave ghi sau snapshot connection thắng heartbeat cũ. Chỉ đổi presence metadata,
+không đổi state ván hoặc tạo GameMove. Khi Connected đổi, broadcast để viewer nhận trạng thái mới.
+
 ## Luồng xử lý một nước đi (`MakeMove`) — thứ tự bắt buộc
 
 1. **Validate bằng engine.** Không tin client gửi state hợp lệ.
@@ -49,7 +83,7 @@ Trước rebuild, `GameHub` và `GamesController` mỗi nơi tự rẽ nhánh `e
 
 - `GameHub.OnDisconnectedAsync`: chỉ đánh dấu `SeatSlot.Connected=false` (qua `RoomService.MarkSeatDisconnectedAsync`) khi đó là **connection cuối cùng** của user trong phòng (nhiều tab của cùng người không bị coi là mất kết nối), rồi broadcast lại state để người còn lại thấy ngay.
 - `Services/SeatTimeoutService.cs` (mới, `BackgroundService`, quét mỗi ~10s): ghế `Connected=false` quá `DisconnectGracePeriod` (45s) trong phòng `Playing` → gọi `IGameEngine.OnSeatTimedOut(mapJson, stateJson, side)`, engine tự quyết xử lý (VayBat: xử thua ngay vì chỉ 2 người, không thể tiếp tục; Bang: tự động kết thúc lượt nếu đang là lượt hành động của họ, tự áp dụng hệ quả "không đáp trả" nếu đang bị yêu cầu phản hồi — trả `Ok=false` nếu không liên quan, service thử lại lần quét sau). Nếu **mọi** ghế mất kết nối quá `AbandonedPlayingAfter` (10 phút) mà vẫn chưa có kết quả → `Status=Abandoned` (không ép `Winner` giả).
-- `GameHub.LeaveRoom` (rời tạm thời, ví dụ bấm nút "Thoát") **không** vacate ghế và không đánh dấu mất kết nối — chỉ dọn `Groups`/map connection nội bộ. Ghế chỉ thật sự "mất" qua `OnDisconnectedAsync`/`SeatTimeoutService`.
+- `GameHub.LeaveRoom` không vacate ghế; tab cuối rời đánh dấu ghế mất kết nối ngay để timeout có thể xử lý. Các tab còn lại của cùng user giữ ghế online.
 
 ## Ghép trận nhanh (từ rebuild 2026-09-05)
 

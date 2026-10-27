@@ -16,7 +16,7 @@ export interface GameMetadata {
   difficultyStars: number;
   category: string[];
   /** Token theme để GameCard/GameDetails chọn màu/hoạ tiết riêng cho game (không phải ảnh thật — xem ARTWORK). */
-  accent: "graph" | "western" | "folk" | "zodiac" | "default";
+  accent: "graph" | "western" | "folk" | "zodiac" | "kittens" | "default";
   /** Icon lớn dùng làm "artwork" (không có asset ảnh thật — dùng icon + CSS, không vi phạm bản quyền). */
   emblem: string;
 }
@@ -28,7 +28,9 @@ export type InstructionSection =
   | { id: string; label: string; kind: "cards"; cards: CardGuideEntry[] }
   | { id: string; label: string; kind: "characters"; characters: CharacterGuideEntry[] }
   | { id: string; label: string; kind: "distanceDemo"; paragraphs: string[] }
-  | { id: string; label: string; kind: "flow"; steps: string[] };
+  | { id: string; label: string; kind: "flow"; steps: string[] }
+  | { id: string; label: string; kind: "racers"; racers: RacerGuideEntry[] }
+  | { id: string; label: string; kind: "board"; boardKind: "oanquan" };
 
 export interface RoleGuideEntry {
   name: string;
@@ -50,6 +52,12 @@ export interface CharacterGuideEntry {
   hp: number;
   ability: string;
   abilityName: string;
+}
+
+export interface RacerGuideEntry {
+  name: string;
+  emoji: string;
+  sign: string;
 }
 
 /** UI tuỳ chọn khi tạo phòng, do TỪNG GAME tự cung cấp (đăng ký qua gameRegistry.ts) — GameDetails

@@ -1,4 +1,4 @@
-import type { GameMetadata, InstructionSection } from "../../platform/gameLibraryTypes";
+import type { GameMetadata, InstructionSection, RacerGuideEntry } from "../../platform/gameLibraryTypes";
 
 export const zodiacRaceMetadata: GameMetadata = {
   gameKey: "zodiacrace",
@@ -15,6 +15,21 @@ export const zodiacRaceMetadata: GameMetadata = {
   accent: "zodiac",
   emblem: "🎲",
 };
+
+const racers: RacerGuideEntry[] = [
+  { name: "Bạch Dương",  emoji: "🐏", sign: "♈" },
+  { name: "Kim Ngưu",    emoji: "🐂", sign: "♉" },
+  { name: "Song Tử",     emoji: "👯", sign: "♊" },
+  { name: "Cự Giải",     emoji: "🦀", sign: "♋" },
+  { name: "Sư Tử",       emoji: "🦁", sign: "♌" },
+  { name: "Xử Nữ",       emoji: "🌾", sign: "♍" },
+  { name: "Thiên Bình",  emoji: "⚖️", sign: "♎" },
+  { name: "Bọ Cạp",      emoji: "🦂", sign: "♏" },
+  { name: "Nhân Mã",     emoji: "🏹", sign: "♐" },
+  { name: "Ma Kết",      emoji: "🐐", sign: "♑" },
+  { name: "Bảo Bình",    emoji: "🏺", sign: "♒" },
+  { name: "Song Ngư",    emoji: "🐠", sign: "♓" },
+];
 
 export const zodiacRaceInstructions: InstructionSection[] = [
   {
@@ -45,6 +60,12 @@ export const zodiacRaceInstructions: InstructionSection[] = [
     label: "LƯỢT CHƠI",
     kind: "flow",
     steps: ["Đến lượt", "Bấm đổ xúc xắc", "Xe tự động tiến", "Nhận điểm nếu dừng đúng ô thùng hàng", "Đổi lượt cho người tiếp theo"],
+  },
+  {
+    id: "racers",
+    label: "12 XE ĐUA",
+    kind: "racers",
+    racers,
   },
   {
     id: "victory",

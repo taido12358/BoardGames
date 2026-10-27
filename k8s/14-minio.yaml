@@ -15,7 +15,8 @@ spec:
     spec:
       containers:
         - name: minio
-          image: minio/minio:latest
+          # Build infra/minio, then push this tag to the deployment's registry.
+          image: boardgames/minio:2025-10-15
           args: ["server", "/data", "--console-address", ":9001"]
           env:
             - name: MINIO_ROOT_USER

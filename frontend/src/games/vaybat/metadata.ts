@@ -1,4 +1,4 @@
-import type { GameMetadata, InstructionSection } from "../../platform/gameLibraryTypes";
+import type { GameMetadata, InstructionSection, RoleGuideEntry } from "../../platform/gameLibraryTypes";
 
 export const vaybatMetadata: GameMetadata = {
   gameKey: "vaybat",
@@ -19,6 +19,21 @@ export const vaybatMetadata: GameMetadata = {
   emblem: "🕸️",
 };
 
+const teams: RoleGuideEntry[] = [
+  {
+    name: "Phe Đỏ — Thợ săn",
+    icon: "🔴",
+    hidden: false,
+    goal: "Di chuyển 3 quân đỏ để vây bắt quân trắng — đưa quân trắng vào thế không còn đỉnh kề nào còn trống để đi.",
+  },
+  {
+    name: "Phe Trắng — Kẻ trốn",
+    icon: "⚪",
+    hidden: false,
+    goal: "Thoát khỏi vòng vây đủ số lượt quy định, hoặc dồn cả 3 quân đỏ vào thế kẹt (không còn nước đi).",
+  },
+];
+
 export const vaybatInstructions: InstructionSection[] = [
   {
     id: "overview",
@@ -28,6 +43,12 @@ export const vaybatInstructions: InstructionSection[] = [
       "Vây Bắt Trên Đồ Thị là một game chiến thuật thuần tuý cho 2 người, chơi trên một đồ thị phi hướng (các đỉnh nối nhau bằng cạnh).",
       "Phe Đỏ gồm 3 quân đi săn, phe Trắng chỉ có 1 quân trốn chạy. Mỗi lượt, một quân di chuyển sang đỉnh kề còn trống — không có xúc xắc, không có bài, chỉ có vị trí và nước đi.",
     ],
+  },
+  {
+    id: "teams",
+    label: "HAI PHE",
+    kind: "roles",
+    roles: teams,
   },
   {
     id: "how-to-play",

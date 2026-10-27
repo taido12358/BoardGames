@@ -31,7 +31,11 @@ jobs:
         run: dotnet restore backend/BoardGame.sln
       - name: Build
         run: dotnet build backend/BoardGame.sln --no-restore --configuration Release
-      - name: Test
+      - name: Build MinIO for archive integration tests
+        # Real archive integration tests use the same source-built MinIO as Compose.
+        # The community image is no longer published on Docker Hub.
+        run: docker build -t boardgames/minio:2025-10-15 ./infra/minio
+      - name: Run backend tests
         run: dotnet test backend/BoardGame.sln --no-build --configuration Release --logger "console;verbosity=normal"
 
   frontend:
@@ -68,3 +72,36 @@ jobs:
         run: docker build -t boardgame-backend:ci ./backend/BoardGame.Api
       - name: Build frontend image
         run: docker build -t boardgame-frontend:ci ./frontend
+
+  deploy:
+    name: Deploy to production
+    needs: [docker]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    runs-on: self-hosted
+    timeout-minutes: 20
+    concurrency:
+      group: production-deploy
+      cancel-in-progress: false
+    steps:
+      - name: Pull latest code
+        run: |
+          cd /home/taido/boardgame
+          git fetch origin master
+          git reset --hard origin/master
+
+      - name: Build changed images
+        run: |
+          cd /home/taido/boardgame
+          docker compose -f docker-compose.prod.yml --env-file .env build
+
+      - name: Restart services
+        run: |
+          cd /home/taido/boardgame
+          docker compose -f docker-compose.prod.yml --env-file .env up -d
+
+      - name: Health check
+        run: |
+          echo "Waiting for services to start..."
+          sleep 15
+          curl -f --retry 5 --retry-delay 5 http://localhost:5173
+          echo "Deploy OK — $(date)"

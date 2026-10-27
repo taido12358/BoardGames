@@ -29,7 +29,8 @@ public class MinioStorageService
         => SaveAsync(ReplaysBucket, objectName, json, "application/json");
 
     /// <summary>Đọc lại replay JSON đã lưu — trả null nếu chưa từng lưu (ván chưa kết thúc, hoặc
-    /// object không tồn tại) HOẶC không đọc được (MinIO không kết nối được). Trước 2026-09-11,
+    /// object/bucket không tồn tại) hoặc SDK trả stream rỗng. Lỗi storage khác được chuyển tới
+    /// caller để log và trả 503, không gộp thành object không tồn tại. Trước 2026-09-11,
     /// <see cref="MinioStorageService"/> chỉ ghi, chưa từng có cách đọc lại — xem
     /// <c>GamesController.Replay</c>.</summary>
     public async Task<string?> GetReplayAsync(string objectName)

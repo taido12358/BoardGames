@@ -54,7 +54,8 @@ services:
       - "9200:9200"
 
   minio:
-    image: minio/minio:latest
+    image: boardgames/minio:2025-10-15
+    build: ./infra/minio
     command: server /data --console-address ":9001"
     environment:
       MINIO_ROOT_USER: minioadmin

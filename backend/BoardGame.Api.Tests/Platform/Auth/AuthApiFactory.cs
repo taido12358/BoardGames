@@ -18,8 +18,8 @@ namespace BoardGame.Api.Tests.Platform.Auth;
 /// HTTP/middleware/[Authorize] thật — khác <see cref="Api.Tests.Platform.RoomServiceIntegrationTests"/>
 /// chỉ gọi thẳng service, bỏ qua toàn bộ tầng controller/auth) trên POSTGRES THẬT (Testcontainers,
 /// container tạm huỷ ngay sau khi test xong). Dùng CHUNG 1 container/factory cho MỌI test trong
-/// CẢ 3 class (<see cref="AuthControllerIntegrationTests"/>/<see cref="AdminControllerIntegrationTests"/>/
-/// <see cref="GamesControllerIntegrationTests"/>) qua <see cref="ICollectionFixture{TFixture}"/>
+/// các class HTTP (<see cref="AuthControllerIntegrationTests"/>/<see cref="AdminControllerIntegrationTests"/>/
+/// <see cref="GamesControllerIntegrationTests"/>) và <see cref="MonopolyHubIntegrationTests"/> qua <see cref="ICollectionFixture{TFixture}"/>
 /// (collection "AuthApi", xem <see cref="AuthApiCollection"/>) — an toàn vì mỗi test tự dùng 1
 /// email ngẫu nhiên riêng, không có race condition đồng thời cần cô lập DB như test ghép trận.
 /// Ban đầu dùng <c>IClassFixture</c> RIÊNG cho mỗi class (mỗi class 1 container) nhưng gây CI
@@ -29,10 +29,9 @@ namespace BoardGame.Api.Tests.Platform.Auth;
 /// tài nguyên runner CI (không tái hiện được local — máy dev có nhiều tài nguyên/cache image hơn).
 /// Gộp lại còn 1 container/host dùng chung giảm đáng kể áp lực đồng thời.
 ///
-/// Không cấu hình Redis/RabbitMQ/OpenSearch/MinIO thật — 3 controller được test ở đây
-/// (<see cref="Platform.Auth.AuthController"/>/<see cref="Platform.AdminController"/>) không đụng
-/// tới chúng, và cả 3 service tương ứng đều kết nối LAZY (xem comment trong từng file Services/),
-/// không throw lúc host khởi động dù không có service thật chạy.
+/// PostgreSQL chạy thật; cache/queue/search/archive dùng endpoint fail-fast có chủ đích.
+/// Các ca hub kiểm chứng rằng lỗi side effect không chặn persist/broadcast. Không phụ thuộc
+/// dịch vụ đang chạy trên máy dev và không gửi email thật.
 /// </summary>
 [CollectionDefinition("AuthApi")]
 public class AuthApiCollection : ICollectionFixture<AuthApiFactory> { }
@@ -83,6 +82,12 @@ public class AuthApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
                 // Bật fallback log OTP giống docker-compose.yml (Auth:DevLogOtp=true) — tường
                 // minh thay vì dựa vào IsDevelopment() (mặc định "Production" khi chạy test).
                 ["Auth:DevLogOtp"] = "true",
+                // Transport tests deliberately exercise best-effort cache/queue failure without
+                // depending on a developer's running services or long hostname-resolution timeouts.
+                ["ConnectionStrings:Redis"] = "127.0.0.1:1,connectTimeout=50,connectRetry=1,syncTimeout=100,asyncTimeout=100,abortConnect=false",
+                ["ConnectionStrings:RabbitMq"] = "amqp://guest:guest@127.0.0.1:1/",
+                ["ConnectionStrings:OpenSearch"] = "http://127.0.0.1:1",
+                ["Minio:Endpoint"] = "127.0.0.1:1",
                 // Tắt log SQL Information mặc định (appsettings.json) — chỉ làm nhiễu output test,
                 // không liên quan gì tới log OTP mà ExtractOtpCode() cần đọc.
                 ["Logging:LogLevel:Microsoft.EntityFrameworkCore.Database.Command"] = "Warning",

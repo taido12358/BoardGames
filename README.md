@@ -1,9 +1,18 @@
 # 🎲 BoardGame
 
+Đang phát triển **Cờ Tỉ Phú** (`monopoly`, 2–6 người, bản Hasbro C1009 2016/2017), bàn cờ classic 40 ô và engine
+server-authoritative. Tạo phòng từ thư viện hoặc `POST /api/games` với
+`{"gameKey":"monopoly","options":{"seatCount":4}}`.
+Xem [luật, dữ liệu và phần còn thiếu](rules/references/monopoly.md),
+[kết quả kiểm tra](rules/logs/2026-10-26.md). Chưa xác nhận hoàn tất toàn bộ luật/live-test.
+
+Cờ Tỉ Phú hiện có replay bàn cờ theo từng snapshot, gồm xúc xắc, tiền và tài sản thực tế
+sau mỗi nước đi; ván cũ chưa có snapshot vẫn xem được danh sách nước đi.
+
 Nền tảng boardgame full-stack dùng chung — mỗi trò chơi cắm vào Platform generic qua một
 interface duy nhất (`IGameEngine`), nên thêm game mới không phải sửa hạ tầng phòng/ghép trận/
-realtime/lưu trữ. Hiện có 4 game: **Vây Bắt Trên Đồ Thị**, **BANG!**, **Ô Ăn Quan**, **Đua Xe
-Hoàng Đạo**.
+realtime/lưu trữ. Hiện đăng ký 5 game: **Vây Bắt Trên Đồ Thị**, **BANG!**, **Ô Ăn Quan**, **Đua Xe
+Hoàng Đạo**, **Cờ Tỉ Phú** (đang hoàn thiện).
 
 Luồng một nước đi đi qua toàn bộ hạ tầng:
 
@@ -38,6 +47,7 @@ mới **không phải sửa** platform.
 BoardGame/
 ├── README.md
 ├── docker-compose.yml          # Chạy toàn bộ stack bằng 1 lệnh
+├── infra/minio/                # Build MinIO community từ release mã nguồn cố định
 ├── backend/                    # ASP.NET Core Web API
 │   └── BoardGame.Api/
 │       ├── Program.cs          # DI + đăng ký engine của từng game
@@ -59,13 +69,14 @@ BoardGame/
 │           │   └── VayBatEngine.cs  # adapter implement IGameEngine
 │           ├── Bang/           #   game 2 — 4-8 người, hidden-role
 │           ├── OAnQuan/        #   game 3 — 2 người, dân gian Việt Nam
-│           └── ZodiacRace/     #   game 4 — 2-6 người, đua xúc xắc
+│           ├── ZodiacRace/     #   game 4 — 2-6 người, đua xúc xắc
+│           └── Monopoly/       #   game 5 — 2-6 người, classic C1009
 ├── frontend/                   # React + TypeScript + Vite
 │   └── src/
 │       ├── App.tsx
 │       ├── platform/           # ❖ store/hub/lobby/chat/types dùng chung
 │       ├── games/              # ❖ mỗi game một thư mục
-│       │   ├── vaybat/  bang/  oanquan/  zodiacrace/
+│       │   ├── vaybat/  bang/  oanquan/  zodiacrace/  monopoly/
 │       ├── components/         # GameLibrary/GameDetails/RoomRoute/AdminPage (route theo gameKey)
 └── k8s/                        # Manifests Kubernetes (không đổi)
 ```
@@ -84,6 +95,10 @@ Platform (room, lobby, hub, replay, persistence) **không cần đụng tới**.
 ```bash
 docker compose up --build
 ```
+
+MinIO được build từ mã nguồn release cố định qua `infra/minio/Dockerfile`; lần đầu cần tải
+Go toolchain và dependencies. Chạy riêng `docker compose build minio` trước `dotnet test`
+để có image cho các ca archive tích hợp. Xem [hạ tầng](rules/architecture/infrastructure.md).
 
 | Dịch vụ            | URL                                    |
 | ------------------ | -------------------------------------- |

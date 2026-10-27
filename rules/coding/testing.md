@@ -8,9 +8,51 @@
 | Unit (frontend) | Logic thuần phía client — helper hiển thị/gợi ý UI của từng game (`games/<ten>/types.ts`), `platform/gameStore.ts` | Vitest (`frontend/`, mới 2026-09-11 — `npm run test`) |
 | Integration (service) | Service tầng dưới + DB thật, khoá hàng thật (`FOR UPDATE`/`SKIP LOCKED`) — gọi thẳng `RoomService`, KHÔNG qua HTTP/[Authorize] | xUnit + Testcontainers (`Platform/RoomServiceIntegrationTests.cs`, 2026-09-11 — cần Docker) |
 | Integration (HTTP) | Controller THẬT qua `WebApplicationFactory` — đúng pipeline routing/model binding/`[Authorize]`/cookie JWT, DB thật (Testcontainers) | xUnit + `Microsoft.AspNetCore.Mvc.Testing` (`Platform/Auth/AuthControllerIntegrationTests.cs` + `AdminControllerIntegrationTests.cs` + `GamesControllerIntegrationTests.cs`, mới 2026-09-11 — cần Docker, xem mục "Test HTTP tích hợp qua WebApplicationFactory" bên dưới) |
-| E2E | 2 client thật chơi một ván qua trình duyệt | Playwright (Chromium) + 2 SignalR client — **chưa có trong repo**, chỉ live-test thủ công qua Chrome DevTools/2 tab tới giờ |
+| Integration realtime | JWT, WebSocket/SignalR, hub, DB với tình huống cố định | `TestHubClient` + ASP.NET TestServer + PostgreSQL Testcontainers |
+| Smoke hệ thống | N client chơi tới winner/replay trên backend chạy thật | `frontend/scripts/monopoly-smoke.mjs --full-game --players=N` |
+| Visual E2E | Giao diện trình duyệt/desktop/mobile | Chưa có browser kết nối trong phiên hiện tại; không thay bằng chứng visual bằng test component |
 
 Ưu tiên đầu tư theo thứ tự: **engine unit test** (rẻ, giá trị cao nhất — luật chơi là phần dễ sai nhất) → integration cho luồng `MakeMove` → E2E smoke.
+
+## SignalR với tình huống xác định
+
+Test archive thật cần build image local một lần: `docker compose build minio` trước `dotnet test`.
+CI build cùng Dockerfile trước bước test. `MinioReplayIntegrationTests` dùng MinIO riêng với cổng
+ngẫu nhiên và PostgreSQL của AuthApiFactory; chỉ xóa room/move do chính ca đó tạo để kích hoạt
+nhánh archive. Không xóa dữ liệu dev, không sửa endpoint production để giả mất DB.
+
+`Platform/Auth/MonopolyHubIntegrationTests.cs` dùng `TestHubClient` trên WebSocket TestServer:
+JWT/middleware, protocol SignalR JSON, GameHub, RoomService và PostgreSQL thật đều chạy.
+Arrange chỉ ghi vào DB Testcontainers do fixture sở hữu; không có endpoint chỉnh state trong app.
+Phân biệt đây với visual/browser E2E và smoke trên Kestrel local.
+
+Fixture nhu cầu House/Hotel phải tính đủ kho 32 nhà/12 khách sạn từ công trình trên board.
+Kiểm tra nhiều viewer, spectator bị chặn, tiền/kho, snapshot và kết quả sau reconnect/timeout.
+AuthApiFactory cố ý dùng cache/queue fail-fast, không phụ thuộc dịch vụ của máy dev.
+Scenario kết thúc phải được đóng để background scanner không tiếp tục chơi fixture ở test sau.
+
+Ca transport phải kiểm tra mã phòng trên Seated/chat/rematch, gồm cả spectator. Phía frontend
+cần phát sự kiện phòng cũ sau join/leave, trì hoãn start và completion của JoinRoom, rồi xác nhận
+state/ghế/chat/lời mời và phòng reconnect không bị ghi đè. Kiểm tra cả route cleanup khi không
+bấm Thoát. Mock hook kiểm tra thứ tự/cancellation; WebSocket kiểm tra contract payload thực.
+
+Khi kiểm tra timeout, cần ca DbContext đã track phòng trước một giao dịch khác commit.
+`SELECT FOR UPDATE` chỉ khóa hàng, không tự refresh entity trong identity map của EF;
+`RoomService.LockRoomAsync` reload entity đang track dưới cùng row lock.
+
+`MonopolyHostRestartTests` chạy DLL API bằng tiến trình Kestrel riêng trên loopback, kill đúng
+tiến trình do ca test tạo rồi chạy tiến trình mới. PostgreSQL riêng cho từng scenario ngăn
+scanner TestServer của AuthApiFactory xử lý hộ room. JWT thật từ fixture auth được dùng cho
+WebSocket/HTTP; không yêu cầu OTP hoặc gửi email từ host con. Không dùng DB dev hoặc debug endpoint.
+Kiểm tra pending state, đúng ghế/spectator, số move không tăng khi rejoin, rồi xử lý quyết định.
+Ca absent buyer phải nhận broadcast từ background scanner của host con sau restart.
+So cả raw StateJson/MapJson trong DB để chứng minh thứ tự bài kín còn nguyên; chỉ so public
+snapshot không chứng minh được điều đó. Dùng trạng thái mỗi pile còn 15 thẻ và một thẻ ra tù
+đang được giữ để phát hiện việc khởi tạo lại bộ bài hoặc nhân bản thẻ khi rejoin.
+
+Fixture nguồn C1009 chứa các fact chép độc lập từ PDF và vị trí nguồn tương ứng. Kiểm tra nguồn
+phải ghi theo field (giá mua, thuê, xây, mặt sau thế chấp); bảng giá do code xuất ra không phải
+nguồn chuẩn độc lập. Xem `references/monopoly-source-audit.md` cho phạm vi chưa đủ bằng chứng.
 
 ## Unit test cho engine (bắt buộc với mỗi game)
 

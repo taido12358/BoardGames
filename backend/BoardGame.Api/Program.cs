@@ -1,8 +1,10 @@
 using BoardGame.Api.Data;
 using BoardGame.Api.Games.Bang;
+using BoardGame.Api.Games.MeoNo;
 using BoardGame.Api.Games.OAnQuan;
 using BoardGame.Api.Games.VayBat;
 using BoardGame.Api.Games.ZodiacRace;
+using BoardGame.Api.Games.Monopoly;
 using BoardGame.Api.Platform;
 using BoardGame.Api.Platform.Abstractions;
 using BoardGame.Api.Platform.Auth;
@@ -28,8 +30,8 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(_ =>
     var conn = builder.Configuration.GetConnectionString("Redis") ?? "localhost:6379";
     var options = ConfigurationOptions.Parse(conn);
     options.AbortOnConnectFail = false;
-    options.ConnectRetry = 5;
-    options.ConnectTimeout = 5000;
+    // Preserve timeout/retry values from configuration. Overwriting these here made a cold
+    // unavailable Redis block hub activation after restart despite explicit fail-fast settings.
     return ConnectionMultiplexer.Connect(options);
 });
 builder.Services.AddSingleton<RedisCacheService>();
@@ -56,6 +58,8 @@ builder.Services.AddSingleton<IGameEngine, VayBatEngine>();
 builder.Services.AddSingleton<IGameEngine, BangEngine>();
 builder.Services.AddSingleton<IGameEngine, OAnQuanEngine>();
 builder.Services.AddSingleton<IGameEngine, ZodiacRaceEngine>();
+builder.Services.AddSingleton<IGameEngine, MonopolyEngine>();
+builder.Services.AddSingleton<IGameEngine, MeoNoEngine>();
 builder.Services.AddSingleton<GameEngineRegistry>();
 
 // --- Auth: đăng nhập OTP qua email (SMTP), JWT trong cookie HttpOnly ---
