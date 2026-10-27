@@ -1,4 +1,4 @@
-import { useId, useRef, useState } from "react";
+import { type ReactNode, useId, useRef, useState } from "react";
 import type { CardGuideEntry, InstructionSection, RacerGuideEntry } from "../platform/gameLibraryTypes";
 
 interface Props {
@@ -75,31 +75,163 @@ const TYPE_STYLE: Record<string, { badge: string; border: string; fromBg: string
 };
 const TYPE_STYLE_DEFAULT = { badge: "bg-amber-900/40 border-amber-700/40 text-amber-400", border: "border-[#7a5c2e]/60", fromBg: "from-[#2b2013]", glow: "hover:shadow-[0_0_8px_rgba(245,158,11,0.15)]" };
 
+// ── Card-face visual style ────────────────────────────────────────────────────
+// Mirrors CATEGORY_STYLE in CardView — parchment cards with colored banners.
+
+const CARD_LOOK: Record<string, { border: string; banner: string; bannerText: string; catLabel: string }> = {
+  "Tấn công":           { border: "#8b2515", banner: "#8b2515", bannerText: "#fff3e8", catLabel: "TẤN CÔNG" },
+  "Tấn công diện rộng": { border: "#7a2a08", banner: "#7a2a08", bannerText: "#fff3e8", catLabel: "DIỆN RỘNG" },
+  "Phòng thủ":          { border: "#1e3a5a", banner: "#1e3a5a", bannerText: "#d8edff", catLabel: "PHÒNG THỦ" },
+  "Hồi máu":            { border: "#1a5a1a", banner: "#1a5a1a", bannerText: "#d8ffd8", catLabel: "HỒI MÁU" },
+  "Hành động":          { border: "#5a4507", banner: "#5a4507", bannerText: "#fffbd0", catLabel: "HÀNH ĐỘNG" },
+  "Vũ khí":             { border: "#6b3507", banner: "#6b3507", bannerText: "#fff3d0", catLabel: "VŨ KHÍ" },
+  "Trang bị":           { border: "#4a1a6b", banner: "#4a1a6b", bannerText: "#eed8ff", catLabel: "TRANG BỊ" },
+};
+const CARD_LOOK_DEFAULT = { border: "#5a3a07", banner: "#5a3a07", bannerText: "#fffbd0", catLabel: "ĐẶC BIỆT" };
+
+// Inline SVG icons — replaces emoji that render inconsistently across platforms.
+function RevolverSvg({ size }: { size: number }) {
+  return (
+    <svg width={size} height={Math.round(size * 0.64)} viewBox="0 0 50 32" fill="currentColor" aria-hidden="true">
+      <rect x="18" y="8" width="30" height="6" rx="2" />
+      <rect x="46" y="6" width="2" height="4" rx="1" />
+      <ellipse cx="16" cy="11" rx="9" ry="8" />
+      <ellipse cx="16" cy="11" rx="5.5" ry="5" fill="rgba(0,0,0,0.14)" />
+      <circle cx="16" cy="3.8" r="1.3" fill="rgba(255,255,255,0.38)" />
+      <circle cx="21.8" cy="6.5" r="1.3" fill="rgba(255,255,255,0.38)" />
+      <circle cx="22.8" cy="13" r="1.3" fill="rgba(255,255,255,0.38)" />
+      <circle cx="18" cy="18" r="1.3" fill="rgba(255,255,255,0.38)" />
+      <circle cx="10.5" cy="17" r="1.3" fill="rgba(255,255,255,0.38)" />
+      <circle cx="8.5" cy="10" r="1.3" fill="rgba(255,255,255,0.38)" />
+      <path d="M7 15 L5 22 L5 29 Q5 31 8 31 L12 31 Q15 31 14 28 L12.5 17 Z" />
+      <path d="M12.5 17 Q10 26 14 26 Q18 26 16.5 17" fill="none" stroke="currentColor" strokeWidth="2" />
+      <line x1="15" y1="18" x2="14" y2="25" strokeWidth="1.2" />
+      <path d="M9 8 L7 5 L8.5 4 L11 7 Z" />
+    </svg>
+  );
+}
+function GatlingSvg({ size }: { size: number }) {
+  return (
+    <svg width={size} height={Math.round(size * 0.78)} viewBox="0 0 48 37" fill="currentColor" aria-hidden="true">
+      <rect x="14" y="3"  width="32" height="5" rx="2" />
+      <rect x="14" y="10" width="32" height="5" rx="2" />
+      <rect x="14" y="17" width="32" height="5" rx="2" />
+      <rect x="14" y="24" width="32" height="5" rx="2" />
+      <rect x="8" y="1" width="8" height="31" rx="3" />
+      <circle cx="5" cy="16.5" r="5" />
+      <circle cx="5" cy="16.5" r="2.2" fill="rgba(255,255,255,0.18)" />
+      <line x1="5" y1="11.5" x2="5" y2="21.5" strokeWidth="1.5" stroke="rgba(255,255,255,0.28)" />
+      <line x1="0" y1="16.5" x2="10" y2="16.5" strokeWidth="1.5" stroke="rgba(255,255,255,0.28)" />
+    </svg>
+  );
+}
+function BarrelSvg({ size }: { size: number }) {
+  return (
+    <svg width={size} height={Math.round(size * 1.1)} viewBox="0 0 40 44" fill="currentColor" aria-hidden="true">
+      <ellipse cx="20" cy="8" rx="17" ry="6" />
+      <rect x="3" y="8" width="34" height="28" />
+      <ellipse cx="20" cy="36" rx="17" ry="6" />
+      <rect x="3" y="14" width="34" height="3" fill="rgba(0,0,0,0.2)" />
+      <rect x="3" y="27" width="34" height="3" fill="rgba(0,0,0,0.2)" />
+      <line x1="11" y1="8" x2="11" y2="36" strokeWidth="1" stroke="rgba(255,255,255,0.15)" />
+      <line x1="20" y1="2" x2="20" y2="42" strokeWidth="1" stroke="rgba(255,255,255,0.15)" />
+      <line x1="29" y1="8" x2="29" y2="36" strokeWidth="1" stroke="rgba(255,255,255,0.15)" />
+    </svg>
+  );
+}
+
+// Map icon emoji → SVG render function. Covers icons known to render inconsistently or that have a better SVG.
+const GUIDE_ICON_SVG: Record<string, (size: number) => ReactNode> = {
+  "🔫": (s) => <RevolverSvg size={s} />,
+  "🌋": (s) => <RevolverSvg size={s} />,  // Volcanic pistol
+  "💥": (s) => <GatlingSvg size={s} />,
+  "🛢": (s) => <BarrelSvg size={s} />,
+};
+
 function CardEntry({ card }: { card: CardGuideEntry }) {
   const [open, setOpen] = useState(false);
   const panelId = useId();
-  const ts = TYPE_STYLE[card.type] ?? TYPE_STYLE_DEFAULT;
+  const cl = CARD_LOOK[card.type] ?? CARD_LOOK_DEFAULT;
+  const svgIcon = GUIDE_ICON_SVG[card.icon];
+
   return (
-    <button
-      type="button"
-      onClick={() => setOpen((o) => !o)}
-      aria-expanded={open}
-      aria-controls={panelId}
-      className={`text-left w-full rounded-sm border ${ts.border} bg-gradient-to-b ${ts.fromBg} to-[#1c150c] p-3 ${ts.glow} focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-300 transition-all`}
-    >
-      <div className="text-2xl text-center">{card.icon}</div>
-      <div className="text-sm font-bold text-[#f5d09d] text-center mt-1 leading-tight">{card.name}</div>
-      <div className={`mt-1.5 text-[9px] font-semibold text-center uppercase tracking-wide rounded-full px-2 py-0.5 border ${ts.badge}`}>{card.type}</div>
+    <div className="flex flex-col gap-1.5">
+      {/* Playing-card face */}
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        aria-controls={panelId}
+        className="relative rounded border-2 overflow-hidden transition-all duration-200 hover:-translate-y-1 hover:shadow-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-300 w-full"
+        style={{
+          aspectRatio: "2/3",
+          borderColor: open ? cl.border : `${cl.border}cc`,
+          background: "linear-gradient(168deg, #fef9ec 0%, #f3e7c4 55%, #e8daab 100%)",
+          boxShadow: open
+            ? `0 0 14px ${cl.banner}55, 0 6px 20px rgba(0,0,0,0.5)`
+            : "0 4px 14px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.85)",
+        }}
+      >
+        {/* Parchment aging vignette */}
+        <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse at center, transparent 48%, rgba(100,65,15,0.28) 100%)" }} />
+        {/* Category colour wash */}
+        <div className="absolute inset-0 pointer-events-none" style={{ background: `${cl.banner}0b` }} />
+        {/* Inner ornamental border */}
+        <div className="absolute pointer-events-none" style={{ inset: "3px", border: `0.5px solid ${cl.border}45`, borderRadius: "1px" }} />
+        {/* Corner brackets */}
+        <div className="absolute top-[3px] left-[3px]  w-2.5 h-2.5 pointer-events-none" style={{ borderTop: `1px solid ${cl.border}60`, borderLeft:  `1px solid ${cl.border}60` }} />
+        <div className="absolute top-[3px] right-[3px] w-2.5 h-2.5 pointer-events-none" style={{ borderTop: `1px solid ${cl.border}60`, borderRight: `1px solid ${cl.border}60` }} />
+        <div className="absolute bottom-[3px] left-[3px]  w-2.5 h-2.5 pointer-events-none" style={{ borderBottom: `1px solid ${cl.border}60`, borderLeft:  `1px solid ${cl.border}60` }} />
+        <div className="absolute bottom-[3px] right-[3px] w-2.5 h-2.5 pointer-events-none" style={{ borderBottom: `1px solid ${cl.border}60`, borderRight: `1px solid ${cl.border}60` }} />
+
+        {/* Content */}
+        <div className="relative flex flex-col h-full p-1.5">
+          {/* Title banner */}
+          <div
+            className="flex items-center justify-center py-[5px]"
+            style={{
+              background: cl.banner,
+              boxShadow: "0 1px 3px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.18), inset 0 -1px 0 rgba(0,0,0,0.25)",
+            }}
+          >
+            <span className="font-black uppercase tracking-widest leading-tight text-center text-[8px]" style={{ color: cl.bannerText }}>
+              {card.name}
+            </span>
+          </div>
+
+          {/* Illustration */}
+          <div className="flex-1 flex flex-col items-center justify-center gap-1">
+            <div style={{ color: cl.border, filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.22))", lineHeight: 1 }}>
+              {svgIcon
+                ? svgIcon(38)
+                : <span className="text-[2.25rem]" style={{ lineHeight: 1 }} aria-hidden="true">{card.icon}</span>
+              }
+            </div>
+            <span className="text-[6px] font-bold uppercase tracking-[0.18em] text-center" style={{ color: `${cl.border}88` }}>
+              {cl.catLabel}
+            </span>
+          </div>
+
+          {/* Bottom hint */}
+          <div
+            className="text-[7px] leading-snug italic text-center pt-[3px] px-0.5"
+            style={{ color: "#7a5530", borderTop: `0.5px solid ${cl.border}35` }}
+          >
+            {open ? "✕ đóng" : "nhấn để xem"}
+          </div>
+        </div>
+      </button>
+
+      {/* Expandable effect panel — rendered below the card face */}
       <div id={panelId} aria-hidden={!open} className={`game-guide-collapse ${open ? "is-open" : ""}`}>
         <div className="min-h-0 overflow-hidden">
-          <div className="mt-2 pt-2 border-t border-amber-900/40 space-y-1">
-            <p className="text-xs text-[#d4b996]/75">{card.effect}</p>
-            {card.example && <p className="text-[11px] text-[#e8c07e]/70 italic">{card.example}</p>}
+          <div className="rounded-sm border p-2.5 space-y-1" style={{ borderColor: `${cl.border}40`, background: "#1a1208" }}>
+            <p className="text-xs text-[#d4b996]/80 leading-relaxed">{card.effect}</p>
+            {card.example && <p className="text-[11px] text-[#e8c07e]/70 italic leading-snug">{card.example}</p>}
           </div>
         </div>
       </div>
-      {!open && <div className="text-[10px] text-amber-800/50 text-center mt-1.5">nhấn để xem</div>}
-    </button>
+    </div>
   );
 }
 
