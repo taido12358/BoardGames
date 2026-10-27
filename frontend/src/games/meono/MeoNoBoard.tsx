@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useGameStore } from "../../platform/gameStore";
 import { ConnectionBanner, LeaveRoomButton, RematchButton, RoomErrorBanner } from "../../platform/RoomShell";
 import type { Card, CardKind, MeoNoMove, MeoNoViewerState, PublicPlayer } from "./types";
@@ -56,20 +56,22 @@ function cardImageUrl(kind: CardKind, cardId: string): string {
   return `${CARD_IMG_BASE}/${folder}/${num % variants}.png`;
 }
 
-const CARD_INFO: Record<CardKind, { emoji: string; name: string; color: string; bg: string }> = {
-  explodingKitten: { emoji: "💣", name: "Mèo Nổ",      color: "text-red-200",    bg: "bg-red-950/80 border-red-500/60" },
-  defuse:          { emoji: "🧨", name: "Khuếch Tán",  color: "text-green-200",  bg: "bg-green-950/80 border-green-500/60" },
-  skip:            { emoji: "⏭️",  name: "Bỏ Lượt",    color: "text-blue-200",   bg: "bg-blue-950/80 border-blue-500/50" },
-  attack:          { emoji: "⚔️",  name: "Tấn Công",   color: "text-orange-200", bg: "bg-orange-950/80 border-orange-500/50" },
-  seeFuture:       { emoji: "🔮", name: "Tiên Tri",    color: "text-purple-200", bg: "bg-purple-950/80 border-purple-500/50" },
-  shuffle:         { emoji: "🔀", name: "Trộn Bài",    color: "text-cyan-200",   bg: "bg-cyan-950/80 border-cyan-500/50" },
-  favor:           { emoji: "🤝", name: "Nhờ Vả",      color: "text-yellow-200", bg: "bg-yellow-950/80 border-yellow-500/50" },
-  nope:            { emoji: "🚫", name: "Dừng Lại",    color: "text-pink-200",   bg: "bg-pink-950/80 border-pink-500/50" },
-  tacocat:         { emoji: "🌮", name: "Mèo Taco",    color: "text-lime-200",   bg: "bg-lime-950/80 border-lime-500/40" },
-  beardCat:        { emoji: "🧔", name: "Mèo Râu",     color: "text-teal-200",   bg: "bg-teal-950/80 border-teal-500/40" },
-  hairyPotatoCat:  { emoji: "🥔", name: "Mèo Khoai",   color: "text-amber-200",  bg: "bg-amber-950/80 border-amber-500/40" },
-  rainbowRalphingCat: { emoji: "🌈", name: "Mèo Cầu Vồng", color: "text-sky-200", bg: "bg-sky-950/80 border-sky-500/40" },
-  cattermelon:     { emoji: "🍉", name: "Mèo Dưa Hấu", color: "text-rose-200",  bg: "bg-rose-950/80 border-rose-500/40" },
+const CAT_COMBO_DESC = "Mèo Combo: đánh 2 cùng loại để lấy ngẫu nhiên; 3 cùng loại để yêu cầu loại cụ thể; 5 khác loại để lấy từ discard.";
+
+const CARD_INFO: Record<CardKind, { emoji: string; name: string; color: string; bg: string; desc: string }> = {
+  explodingKitten: { emoji: "💣", name: "Mèo Nổ",         color: "text-red-200",    bg: "bg-red-950/80 border-red-500/60",       desc: "Nếu rút lá này mà không có Khuếch Tán, bạn bị loại. Đây là lá duy nhất không thể đánh — chỉ có thể rút." },
+  defuse:          { emoji: "🧨", name: "Khuếch Tán",     color: "text-green-200",  bg: "bg-green-950/80 border-green-500/60",   desc: "Vô hiệu hóa Mèo Nổ — đưa nó trở lại bộ bài ở vị trí bạn chọn. Không thể bị Nope." },
+  skip:            { emoji: "⏭️",  name: "Bỏ Lượt",       color: "text-blue-200",   bg: "bg-blue-950/80 border-blue-500/50",     desc: "Kết thúc lượt ngay mà không cần rút bài. Nếu đang bị Attack, giảm số lần rút còn lại đi 1." },
+  attack:          { emoji: "⚔️",  name: "Tấn Công",      color: "text-orange-200", bg: "bg-orange-950/80 border-orange-500/50", desc: "Kết thúc lượt không cần rút — người kế tiếp phải rút thêm 1 lần (có thể stack)." },
+  seeFuture:       { emoji: "🔮", name: "Tiên Tri",       color: "text-purple-200", bg: "bg-purple-950/80 border-purple-500/50", desc: "Xem 3 lá trên cùng của bộ bài (chỉ bạn thấy, theo thứ tự từ trên xuống)." },
+  shuffle:         { emoji: "🔀", name: "Trộn Bài",       color: "text-cyan-200",   bg: "bg-cyan-950/80 border-cyan-500/50",     desc: "Trộn ngẫu nhiên toàn bộ bài trong bộ bài (kể cả Mèo Nổ đang ẩn)." },
+  favor:           { emoji: "🤝", name: "Nhờ Vả",         color: "text-yellow-200", bg: "bg-yellow-950/80 border-yellow-500/50", desc: "Chọn 1 người chơi — họ phải trao cho bạn 1 lá bài tùy họ chọn." },
+  nope:            { emoji: "🚫", name: "Dừng Lại",       color: "text-pink-200",   bg: "bg-pink-950/80 border-pink-500/50",     desc: "Hủy hiệu ứng bất kỳ lá bài nào (trừ Mèo Nổ và Khuếch Tán). Có thể Nope lại Nope để phục hồi." },
+  tacocat:         { emoji: "🌮", name: "Mèo Taco",       color: "text-lime-200",   bg: "bg-lime-950/80 border-lime-500/40",     desc: CAT_COMBO_DESC },
+  beardCat:        { emoji: "🧔", name: "Mèo Râu",        color: "text-teal-200",   bg: "bg-teal-950/80 border-teal-500/40",     desc: CAT_COMBO_DESC },
+  hairyPotatoCat:  { emoji: "🥔", name: "Mèo Khoai",      color: "text-amber-200",  bg: "bg-amber-950/80 border-amber-500/40",   desc: CAT_COMBO_DESC },
+  rainbowRalphingCat: { emoji: "🌈", name: "Mèo Cầu Vồng", color: "text-sky-200",  bg: "bg-sky-950/80 border-sky-500/40",       desc: CAT_COMBO_DESC },
+  cattermelon:     { emoji: "🍉", name: "Mèo Dưa Hấu",   color: "text-rose-200",   bg: "bg-rose-950/80 border-rose-500/40",     desc: CAT_COMBO_DESC },
 };
 
 const CAT_CARDS: CardKind[] = ["tacocat", "beardCat", "hairyPotatoCat", "rainbowRalphingCat", "cattermelon"];
@@ -91,6 +93,8 @@ export default function MeoNoBoard({ makeMove, onLeave, onRematch, rematching }:
   const [targetPlayerId, setTargetPlayerId] = useState<string | null>(null);
   const [requestedKind, setRequestedKind] = useState<string>("");
   const [defusePos, setDefusePos] = useState<number>(0);
+  const [infoCard, setInfoCard] = useState<CardKind | null>(null);
+  const [anim, setAnim] = useState<"boom" | "shuffle" | "draw" | "play" | null>(null);
 
   const send = (move: MeoNoMove) => {
     if (!room) return;
@@ -125,7 +129,7 @@ export default function MeoNoBoard({ makeMove, onLeave, onRematch, rematching }:
     if (!isMyTurn) return false;
     if (selectedCards.length === 1) {
       const kind = selectedCards[0].kind;
-      return kind !== "explodingKitten" && kind !== "defuse";
+      return kind !== "explodingKitten" && kind !== "defuse" && !CAT_CARDS.includes(kind);
     }
     if (selectedCards.length >= 2) {
       const kinds = selectedCards.map((c) => c.kind);
@@ -169,6 +173,21 @@ export default function MeoNoBoard({ makeMove, onLeave, onRematch, rematching }:
     send({ type: "DEFUSE", insertPosition: defusePos });
   };
 
+  // ── Animation trigger from game log ───────────────────────────────────────
+  useEffect(() => {
+    if (!gs?.gameLog?.length) return;
+    const last = gs.gameLog[gs.gameLog.length - 1];
+    if (last.includes("MÈO NỔ") || last.includes("rút TRÚNG") || last.includes("RÚT TRÚNG")) {
+      setAnim("boom"); setTimeout(() => setAnim(null), 1800);
+    } else if (last.includes("trộn") || last.includes("Trộn")) {
+      setAnim("shuffle"); setTimeout(() => setAnim(null), 900);
+    } else if (last.includes("rút 1 lá")) {
+      setAnim("draw"); setTimeout(() => setAnim(null), 600);
+    } else if (last.includes("đánh ") || last.includes("combo")) {
+      setAnim("play"); setTimeout(() => setAnim(null), 500);
+    }
+  }, [gs?.gameLog]);
+
   // ── Derive top of discard ──────────────────────────────────────────────────
   const topDiscard = gs?.discardPile.length ? gs.discardPile[gs.discardPile.length - 1] : undefined;
 
@@ -207,7 +226,67 @@ export default function MeoNoBoard({ makeMove, onLeave, onRematch, rematching }:
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3" style={anim === "boom" ? { animation: "boom-shake 0.6s ease-in-out" } : {}}>
+      <style>{`
+        @keyframes boom-shake {
+          0%,100% { transform: translate(0,0) rotate(0deg); }
+          10% { transform: translate(-8px,6px) rotate(-3deg); }
+          20% { transform: translate(8px,-6px) rotate(3deg); }
+          30% { transform: translate(-10px,4px) rotate(-2deg); }
+          40% { transform: translate(10px,-4px) rotate(2deg); }
+          50% { transform: translate(-6px,6px) rotate(-1deg); }
+          60% { transform: translate(6px,-6px) rotate(1deg); }
+          70% { transform: translate(-4px,2px) rotate(-1deg); }
+          80% { transform: translate(4px,-2px) rotate(1deg); }
+          90% { transform: translate(-2px,1px); }
+        }
+        @keyframes boom-scale {
+          0% { transform: scale(0) rotate(-20deg); opacity:0; }
+          40% { transform: scale(1.3) rotate(5deg); opacity:1; }
+          60% { transform: scale(1.1) rotate(-2deg); }
+          80% { transform: scale(1.2) rotate(2deg); }
+          100% { transform: scale(1) rotate(0deg); opacity:1; }
+        }
+        @keyframes boom-fade {
+          0% { opacity:0.8; }
+          70% { opacity:0.8; }
+          100% { opacity:0; }
+        }
+        @keyframes shuffle-spin {
+          0% { transform: rotate(0deg) scale(1); }
+          20% { transform: rotate(-15deg) scale(1.05); }
+          40% { transform: rotate(15deg) scale(1.05); }
+          60% { transform: rotate(-10deg) scale(1.02); }
+          80% { transform: rotate(8deg) scale(1.02); }
+          100% { transform: rotate(0deg) scale(1); }
+        }
+        @keyframes card-draw {
+          0% { transform: translateY(0) scale(1); opacity:1; }
+          50% { transform: translateY(-12px) scale(1.08); opacity:1; }
+          100% { transform: translateY(0) scale(1); opacity:1; }
+        }
+        @keyframes card-play {
+          0% { transform: translateY(0) scale(1); opacity:1; }
+          30% { transform: translateY(-8px) scale(1.05); opacity:1; }
+          100% { transform: translateY(0) scale(1); opacity:1; }
+        }
+        @keyframes flash-red {
+          0%,100% { background: transparent; }
+          30% { background: rgba(220,38,38,0.25); }
+          60% { background: rgba(220,38,38,0.15); }
+        }
+      `}</style>
+
+      {anim === "boom" && (
+        <div className="fixed inset-0 z-50 pointer-events-none flex flex-col items-center justify-center" style={{ animation: "boom-fade 1.8s ease-out forwards", background: "rgba(0,0,0,0.01)" }}>
+          <div className="text-8xl" style={{ animation: "boom-scale 0.7s cubic-bezier(0.34,1.56,0.64,1) forwards" }}>💣</div>
+          <div className="text-2xl font-black text-red-400 mt-3 tracking-widest" style={{ animation: "boom-scale 0.8s 0.1s cubic-bezier(0.34,1.56,0.64,1) both" }}>💥 BOOM!</div>
+        </div>
+      )}
+      {anim === "boom" && (
+        <div className="fixed inset-0 z-40 pointer-events-none" style={{ animation: "flash-red 1.8s ease-out forwards" }} />
+      )}
+
       <ConnectionBanner connectionState={connectionState} />
       <RoomErrorBanner error={error} />
 
@@ -237,7 +316,10 @@ export default function MeoNoBoard({ makeMove, onLeave, onRematch, rematching }:
       {/* ── Deck + Discard ── */}
       <div className="flex items-center gap-4 justify-center py-1">
         <div className="flex flex-col items-center gap-1">
-          <div className="relative w-14 h-20 rounded-lg border-2 border-pink-900/60 overflow-hidden shadow-lg">
+          <div
+            className="relative w-14 h-20 rounded-lg border-2 border-pink-900/60 overflow-hidden shadow-lg"
+            style={anim === "shuffle" ? { animation: "shuffle-spin 0.9s ease-in-out" } : anim === "draw" ? { animation: "card-draw 0.6s ease-in-out" } : {}}
+          >
             <img
               src={`${CARD_IMG_BASE}/back/0.jpg`}
               alt="Mặt sau bài"
@@ -253,7 +335,7 @@ export default function MeoNoBoard({ makeMove, onLeave, onRematch, rematching }:
           <span className="text-xs text-pink-300/60">{gs.deckCount} lá</span>
         </div>
         <div className="text-pink-800/40 text-2xl">⇄</div>
-        <div className="flex flex-col items-center gap-1">
+        <div className="flex flex-col items-center gap-1" style={anim === "play" ? { animation: "card-play 0.5s ease-in-out" } : {}}>
           {topDiscard ? (
             <MiniCard card={topDiscard} />
           ) : (
@@ -371,6 +453,7 @@ export default function MeoNoBoard({ makeMove, onLeave, onRematch, rematching }:
                 <button
                   key={card.id}
                   onClick={() => {
+                    setInfoCard(card.kind);
                     if (isGiver) { handleGiveCard(card.id); return; }
                     if (clickable) toggleCard(card.id);
                   }}
@@ -397,6 +480,18 @@ export default function MeoNoBoard({ makeMove, onLeave, onRematch, rematching }:
                 </button>
               );
             })}
+          </div>
+        )}
+
+        {/* Card info panel */}
+        {infoCard && (
+          <div className="mt-2 rounded-lg border border-pink-800/40 bg-black/40 p-2 flex gap-2 items-start text-xs">
+            <span className="text-lg shrink-0">{CARD_INFO[infoCard].emoji}</span>
+            <div>
+              <span className={`font-bold ${CARD_INFO[infoCard].color}`}>{CARD_INFO[infoCard].name}</span>
+              <p className="text-pink-300/70 mt-0.5 leading-snug">{CARD_INFO[infoCard].desc}</p>
+            </div>
+            <button onClick={() => setInfoCard(null)} className="ml-auto text-pink-700 hover:text-pink-400 text-xs shrink-0">✕</button>
           </div>
         )}
 
