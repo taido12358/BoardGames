@@ -244,7 +244,7 @@ function CardsSection({ cards }: { cards: CardGuideEntry[] }) {
       <div className="flex flex-wrap gap-1.5">
         {["Tất cả", ...types].map((t) => {
           const active = filter === t;
-          const ts = TYPE_STYLE[t];
+          const ts = TYPE_STYLE[t] ?? TYPE_STYLE_DEFAULT;
           return (
             <button
               key={t}
@@ -252,7 +252,7 @@ function CardsSection({ cards }: { cards: CardGuideEntry[] }) {
               onClick={() => setFilter(t)}
               className={`text-[11px] rounded-full px-3 py-1 border font-semibold uppercase tracking-wide transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-amber-300 ${
                 active
-                  ? ts ? `${ts.badge} shadow-sm` : "bg-amber-700/80 border-amber-500/70 text-amber-100"
+                  ? `${ts.badge} shadow-sm`
                   : "border-amber-900/40 bg-[#1a130a] text-amber-700/60 hover:text-amber-400 hover:border-amber-700/50"
               }`}
             >
