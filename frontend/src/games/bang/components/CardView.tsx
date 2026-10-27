@@ -76,7 +76,7 @@ interface Props {
 
 const RED_SUITS = new Set(["♥", "♦"]);
 
-const CARD_EFFECT: Record<CardKind, string> = {
+export const CARD_EFFECT: Record<CardKind, string> = {
   bang:         "Bắn 1 mục tiêu trong tầm. Trúng: −1 máu.",
   missed:       "Đỡ Bang! hoặc Gatling. Không mất máu.",
   beer:         "Hồi 1 máu cho bạn. Doc hồi 2.",

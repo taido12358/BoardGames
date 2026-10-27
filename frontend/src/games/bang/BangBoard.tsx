@@ -13,6 +13,7 @@ import VictoryScreen from "./components/VictoryScreen";
 import CardView from "./components/CardView";
 import AnimatedNumber from "../../components/AnimatedNumber";
 import BangDebugPanel from "./components/BangDebugPanel";
+import DistanceRing from "./components/DistanceRing";
 import { useMuzzleFlashState } from "./useMuzzleFlash";
 import { useDefenseFlash } from "./useDefenseFlash";
 import { useDuelLossFlash } from "./useDuelLossFlash";
@@ -24,7 +25,7 @@ import { useInitialDealFlash } from "./useInitialDealFlash";
 import { useReducedMotionPreference } from "../../hooks/useReducedMotionPreference";
 import { useResizeRevision } from "../../hooks/useResizeRevision";
 import {
-  awaitingMyResponse, isMyTurn, myPlayer, CARD_DISPLAY,
+  awaitingMyResponse, isMyTurn, myPlayer, CARD_DISPLAY, ROLE_ICON,
   normalizeBangViewerState, type BangMove, type BangPublicPlayer, type BangViewerState, type Card, type CardKind,
 } from "./types";
 
@@ -154,6 +155,7 @@ export default function BangBoard({ makeMove, onLeave, onRematch, rematching }: 
   const [bulkDiscardTarget, setBulkDiscardTarget] = useState<CardOrigin | null>(null);
   const [equipmentTarget, setEquipmentTarget] = useState<CardOrigin | null>(null);
   const [shotFlights, setShotFlights] = useState<ShotFlight[]>([]);
+  const [selectedPlayerForInfo, setSelectedPlayerForInfo] = useState<BangPublicPlayer | null>(null);
   // Hook phải gọi KHÔNG điều kiện (Rules of Hooks, xem bug ESLint 2026-09-11 ở VayBatBoard.tsx)
   // — tính state dạng optional TRƯỚC nhánh return sớm bên dưới thay vì gọi hook sau đó. Khai báo
   // lại `state` KHÔNG optional NGAY SAU nhánh return (thay vì dùng thẳng biến optional này) vì
@@ -1357,6 +1359,67 @@ export default function BangBoard({ makeMove, onLeave, onRematch, rematching }: 
         />
       )}
 
+      {/* Player info popup */}
+      {selectedPlayerForInfo && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm"
+          onClick={() => setSelectedPlayerForInfo(null)}
+        >
+          <div
+            className="animate-game-action-enter relative mx-4 max-w-xs w-full rounded-sm border border-amber-700/50 bg-gradient-to-b from-[#2a1c0e] to-[#1a1208] p-4 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => setSelectedPlayerForInfo(null)}
+              className="absolute right-2 top-2 w-6 h-6 flex items-center justify-center text-amber-700/60 hover:text-amber-300 text-lg leading-none rounded-sm"
+            >
+              ×
+            </button>
+            <div className="flex items-start gap-3 mb-3">
+              <span className="text-3xl shrink-0">{ROLE_ICON[selectedPlayerForInfo.publicRole] ?? "❓"}</span>
+              <div className="min-w-0">
+                <div className="font-bold text-amber-200 text-base">{selectedPlayerForInfo.name}</div>
+                <div className="text-xs text-amber-700/60">{selectedPlayerForInfo.publicRole}</div>
+              </div>
+            </div>
+            <div className="border-t border-amber-900/30 pt-3 mb-3">
+              <div className="text-sm font-semibold text-amber-300">{selectedPlayerForInfo.character}</div>
+              {selectedPlayerForInfo.abilityName && (
+                <div className="text-xs text-amber-700/70 italic mt-0.5">{selectedPlayerForInfo.abilityName}</div>
+              )}
+            </div>
+            <div className="flex items-center gap-1 flex-wrap mb-3">
+              {Array.from({ length: selectedPlayerForInfo.maxHp }, (_, i) => (
+                <div
+                  key={i}
+                  className={`h-4 w-[6px] rounded-t-sm ${i < selectedPlayerForInfo.hp ? "border-t border-amber-300/60 bg-gradient-to-b from-amber-500 to-amber-700 shadow-[0_0_6px_rgba(245,158,11,0.4)]" : "border border-dashed border-amber-900/40 bg-[#1a1208]/60 opacity-30"}`}
+                />
+              ))}
+              <span className="ml-1 text-xs font-mono text-amber-300/60">{selectedPlayerForInfo.hp}/{selectedPlayerForInfo.maxHp} HP</span>
+            </div>
+            {selectedPlayerForInfo.distance !== null && (
+              <div className={`rounded-sm px-2 py-1 text-xs font-semibold text-center mb-2 ${selectedPlayerForInfo.inRange ? "bg-[#3d2008]/70 text-[#f5c872] border border-[#c87d2a]/60" : "border border-amber-950/40 bg-[#0d0805]/50 text-amber-900/40"}`}>
+                {selectedPlayerForInfo.inRange ? "✦ TRONG TẦM BẠN" : `✕ Ngoài tầm · ${selectedPlayerForInfo.distance} ô`}
+              </div>
+            )}
+            <div className="text-xs text-amber-300/70 mb-2">🔫 {selectedPlayerForInfo.weapon} · tầm {selectedPlayerForInfo.weaponRange} · 🃏 {selectedPlayerForInfo.cardCount} lá</div>
+            {selectedPlayerForInfo.equipment.length > 0 && (
+              <div className="flex flex-wrap gap-1">
+                {selectedPlayerForInfo.equipment.map((eq) => (
+                  <span key={eq} className="text-[10px] rounded-sm border border-[#8b5a2b]/50 bg-[#3a2012]/80 px-1.5 py-0.5 text-[#e8c07e]">
+                    {eq === "Thùng rượu" ? "🛢" : eq === "Ngựa" ? "🐎" : "🔫"} {eq}
+                  </span>
+                ))}
+              </div>
+            )}
+            {!selectedPlayerForInfo.alive && (
+              <div className="text-center text-2xl mt-2">💀 Đã bị loại</div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Top bar */}
       <div className="relative overflow-hidden bg-gradient-to-r from-[#1a1008] via-[#2a1c0e] to-[#1a1008] rounded-sm px-4 py-3 shadow-lg border border-amber-900/40 flex items-center justify-between">
         <div className="pointer-events-none absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-amber-400/40 to-transparent" />
@@ -1395,28 +1458,32 @@ export default function BangBoard({ makeMove, onLeave, onRematch, rematching }: 
       )}
 
       {/* Bàn tròn — đối thủ */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 bg-gradient-to-b from-[#1c150c] to-[#160f08] rounded-sm p-3 border border-amber-900/30 shadow-inner">
-        {opponents.map((p, seatIndex) => (
-          <PlayerSeat
-            key={p.id}
-            player={p}
-            roleRevealDelayMs={seatIndex * 36}
-            isCurrentTurn={state.phase === "awaitingResponse"
-              ? state.pendingResponse?.targetIds.includes(p.id) === true
-              : state.currentPlayerId === p.id}
-            isMe={false}
-            targeting={selectingTarget}
-            targetable={selectingTarget && !!selectedCard && isValidTarget(selectedCard.kind, p, false)}
-            dragTarget={dragOverTargetId === p.id && !!draggedCard && canPlayCard(draggedCard) && needsTarget(draggedCard.kind, isCalamity) && isValidTarget(draggedCard.kind, p, false)}
-            dragInvalidTarget={dragOverTargetId === p.id && !!draggedCard && canPlayCard(draggedCard) && needsTarget(draggedCard.kind, isCalamity) && !isValidTarget(draggedCard.kind, p, false)}
-            dragInvalidDrop={invalidDropTarget?.id === p.id ? invalidDropTarget.sequence : undefined}
-            draggingCard={draggingCardId !== null}
-            roomId={room.id}
-            defenseKey={defenseFlashKeys.get(p.id) ?? null}
-            duelLossKey={duelLossKeys.get(p.id) ?? null}
-            onClick={() => handleSeatClick(p)}
-          />
-        ))}
+      <div className="bg-gradient-to-b from-[#1c150c] to-[#160f08] rounded-sm p-3 border border-amber-900/30 shadow-inner flex flex-col gap-2">
+        <DistanceRing players={state.players} myId={me?.id ?? null} currentPlayerId={state.currentPlayerId} />
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          {opponents.map((p, seatIndex) => (
+            <PlayerSeat
+              key={p.id}
+              player={p}
+              roleRevealDelayMs={seatIndex * 36}
+              isCurrentTurn={state.phase === "awaitingResponse"
+                ? state.pendingResponse?.targetIds.includes(p.id) === true
+                : state.currentPlayerId === p.id}
+              isMe={false}
+              targeting={selectingTarget}
+              targetable={selectingTarget && !!selectedCard && isValidTarget(selectedCard.kind, p, false)}
+              dragTarget={dragOverTargetId === p.id && !!draggedCard && canPlayCard(draggedCard) && needsTarget(draggedCard.kind, isCalamity) && isValidTarget(draggedCard.kind, p, false)}
+              dragInvalidTarget={dragOverTargetId === p.id && !!draggedCard && canPlayCard(draggedCard) && needsTarget(draggedCard.kind, isCalamity) && !isValidTarget(draggedCard.kind, p, false)}
+              dragInvalidDrop={invalidDropTarget?.id === p.id ? invalidDropTarget.sequence : undefined}
+              draggingCard={draggingCardId !== null}
+              roomId={room.id}
+              defenseKey={defenseFlashKeys.get(p.id) ?? null}
+              duelLossKey={duelLossKeys.get(p.id) ?? null}
+              onClick={() => handleSeatClick(p)}
+              onInfoClick={() => setSelectedPlayerForInfo(p)}
+            />
+          ))}
+        </div>
       </div>
 
       {/* Giữa bàn: nọc bài / chồng bài bỏ / hiệu ứng đang treo */}
@@ -1580,8 +1647,7 @@ export default function BangBoard({ makeMove, onLeave, onRematch, rematching }: 
               {!you.hand.some((card) => canPlayCard(card)) && <p className="mt-1 text-amber-200/70">Bạn có thể kết thúc lượt hoặc chọn bỏ bài nếu vượt giới hạn.</p>}
             </div>
           )}
-          <p className="text-xs text-amber-200/70 px-2">Máu tự cập nhật theo hiệu ứng lá bài. Lá mờ chưa thể dùng ở bước này.</p>
-          {myTurn && you.canFire === false && <p role="status" className="px-2 text-xs text-amber-200">Bạn đã dùng lượt bắn. Hãy dùng lá khác hoặc kết thúc lượt; Volcanic cho phép bắn thêm.</p>}
+          {myTurn && you.canFire === false && <p role="status" className="px-2 text-xs text-amber-400/80">🔫 Đã dùng lượt bắn. Dùng lá khác hoặc kết thúc lượt (Volcanic cho phép bắn thêm).</p>}
         </fieldset>
       )}
 

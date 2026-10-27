@@ -23,6 +23,7 @@ interface Props {
   dragInvalidDrop?: number;
   draggingCard?: boolean;
   onClick?: () => void;
+  onInfoClick?: () => void;
   roomId?: string;
   defenseKey?: number | null;
   duelLossKey?: number | null;
@@ -69,7 +70,7 @@ const FACTION_BORDER: Record<string, string> = {
 };
 
 /** HUD của MỘT người chơi quanh bàn — không bao giờ lộ mặt bài của họ, chỉ số lượng. */
-export default function PlayerSeat({ player, isCurrentTurn, isMe, targetable, targeting, dragTarget = false, dragInvalidTarget = false, dragInvalidDrop, draggingCard = false, onClick, roomId, defenseKey, duelLossKey, roleRevealDelayMs = 0 }: Props) {
+export default function PlayerSeat({ player, isCurrentTurn, isMe, targetable, targeting, dragTarget = false, dragInvalidTarget = false, dragInvalidDrop, draggingCard = false, onClick, onInfoClick, roomId, defenseKey, duelLossKey, roleRevealDelayMs = 0 }: Props) {
   const shaking = useDamageShake(player.hp, roomId);
   const healing = useHealFlash(player.hp, roomId);
   const hpDeltaState = useHpDelta(player.hp, roomId);
@@ -88,8 +89,8 @@ export default function PlayerSeat({ player, isCurrentTurn, isMe, targetable, ta
     <button
       type="button"
       data-player-id={player.id}
-      onClick={targetable ? onClick : undefined}
-      disabled={!targetable && !draggingCard}
+      onClick={targetable ? onClick : (!targeting && onInfoClick ? onInfoClick : undefined)}
+      disabled={targeting && !targetable && !draggingCard}
       className={[
         "relative overflow-hidden w-full text-left rounded-sm border-2 p-2.5 transition-all",
         player.alive

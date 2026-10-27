@@ -1,6 +1,8 @@
 import type { Card } from "../types";
+import { CARD_DISPLAY } from "../types";
 import type { DragEvent } from "react";
-import { useLayoutEffect, useRef } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
+import { CARD_EFFECT } from "./CardView";
 import CardView from "./CardView";
 import { useCardDrawFlashState } from "../useCardDrawFlash";
 import { useNewHandCards } from "../useNewHandCards";
@@ -36,6 +38,8 @@ interface Props {
 /** Bài trên tay của CHÍNH người chơi — fan layout, hover nâng bài lên. */
 export default function HandFan({ hand, selectedId, selectedIds, pendingId, rejectedId, rejectedSequence, playable, responseMode = false, canPlay, getDisabledReason, onSelect, dealAnimation = false, roomId, incomingSourcePlayerId, deckReshuffleSequence = 0, boardLayoutRevision = 0, draggingCardId = null, onCardDragStart, onCardDragEnd }: Props) {
   const prefersReducedMotion = useReducedMotionPreference();
+  const [hoveredCardId, setHoveredCardId] = useState<string | null>(null);
+  const hoveredCard = hand.find((c) => c.id === hoveredCardId) ?? null;
   const justDrew = useCardDrawFlashState(hand.length, roomId);
   const newCardIds = useNewHandCards(hand, roomId, MAX_HAND_CARD_STAGGER_INDEX * HAND_CARD_STAGGER_MS + 520 + 120);
   const handRef = useRef<HTMLDivElement>(null);
@@ -192,6 +196,16 @@ export default function HandFan({ hand, selectedId, selectedIds, pendingId, reje
 
   return (
     <div>
+      {hoveredCard && (
+        <div className="animate-game-action-enter rounded-sm border border-amber-700/40 bg-[#1e1408] px-3 py-2 text-xs mb-1 flex items-start gap-2">
+          <span className="text-xl shrink-0 leading-none">{CARD_DISPLAY[hoveredCard.kind].icon}</span>
+          <div className="min-w-0">
+            <div className="font-bold text-amber-200">{CARD_DISPLAY[hoveredCard.kind].name}</div>
+            <div className="text-amber-400/80 mt-0.5">{CARD_EFFECT[hoveredCard.kind]}</div>
+            <div className="text-amber-900/50 text-[10px] mt-0.5 font-mono">{hoveredCard.suit} {hoveredCard.rank}</div>
+          </div>
+        </div>
+      )}
       <div
         ref={handRef}
         className={[
@@ -221,6 +235,8 @@ export default function HandFan({ hand, selectedId, selectedIds, pendingId, reje
             }
           }}
           className={`bang-hand-card shrink-0 relative ${newCardIds.has(card.id) || dealAnimation ? "bang-hand-card-arrival" : ""} ${draggingCardId === card.id ? "bang-hand-card-dragging" : ""}`}
+          onMouseEnter={() => setHoveredCardId(card.id)}
+          onMouseLeave={() => setHoveredCardId(null)}
         >
           <CardView
             card={card}
