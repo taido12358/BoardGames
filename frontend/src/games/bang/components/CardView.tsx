@@ -1,6 +1,43 @@
 import type { DragEvent, ReactNode } from "react";
 import { CARD_DISPLAY, type Card, type CardKind } from "../types";
 
+// ── Real card artwork from public BANG! v2 repo ───────────────────────────────
+const RAW = "https://raw.githubusercontent.com/AndrewCogi/Bang_v2/master/Bang_Client/resources/card/playing";
+
+const BANG_COMBOS = new Set([
+  "C_2","C_3","C_4","C_5","C_6","C_7","C_8","C_9",
+  "D_1","D_2","D_3","D_4","D_5","D_6","D_7","D_8","D_9","D_10","D_11","D_12","D_13",
+  "H_1","H_12","H_13","S_1",
+]);
+const SCHOFIELD_COMBOS = new Set(["C_11","C_12","S_13"]);
+const VOLCANIC_COMBOS  = new Set(["C_10","S_10"]);
+
+const SUIT_LETTER: Record<string, string> = { "♠":"S", "♥":"H", "♦":"D", "♣":"C" };
+const RANK_NUM: Record<string, string> = { A:"1", J:"11", Q:"12", K:"13" };
+
+function getCardImageUrl(card: Card): string | null {
+  const s = SUIT_LETTER[card.suit];
+  const r = RANK_NUM[card.rank] ?? card.rank;
+  const key = `${s}_${r}`;
+  switch (card.kind) {
+    case "bang": {
+      const file = BANG_COMBOS.has(key) ? `bang_${key}_155.png` : "bang_D_8_155.png";
+      return `${RAW}/brown/${file}`;
+    }
+    case "barrel":    return `${RAW}/blue/barile_S_12_155.png`;
+    case "remington": return `${RAW}/blue/remington_C_13_155.png`;
+    case "schofield": {
+      const file = SCHOFIELD_COMBOS.has(key) ? `schofield_${key}_155.png` : "schofield_C_11_155.png";
+      return `${RAW}/blue/${file}`;
+    }
+    case "volcanic": {
+      const file = VOLCANIC_COMBOS.has(key) ? `volcanic_${key}_155.png` : "volcanic_C_10_155.png";
+      return `${RAW}/blue/${file}`;
+    }
+    default: return null;
+  }
+}
+
 interface Props {
   card: Card;
   selected?: boolean;
@@ -159,39 +196,82 @@ export default function CardView({
   const suitClr = RED_SUITS.has(card.suit) ? "#9b1c1c" : "#1c1208";
   const iconSize = small ? 24 : 38;
   const svgIcon = CARD_SVG[card.kind];
+  const imageUrl = getCardImageUrl(card);
 
+  const sharedClass = [
+    "relative shrink-0 rounded border-2 text-left transition-all duration-200 ease-[cubic-bezier(0.2,0.75,0.25,1)] select-none overflow-hidden active:scale-[0.97]",
+    selected ? "bang-card-selected" : "",
+    pending ? "bang-card-pending" : "",
+    rejected ? `bang-card-rejected-${rejectedSequence % 2 === 0 ? "a" : "b"}` : "",
+    small ? "w-16 h-24" : "w-24 h-36",
+    selected
+      ? "-translate-y-3 shadow-[0_0_18px_rgba(251,191,36,0.75),0_6px_20px_rgba(0,0,0,0.5)] ring-1 ring-amber-400/60"
+      : "shadow-[0_4px_14px_rgba(0,0,0,0.65),inset_0_1px_0_rgba(255,255,255,0.9)]",
+    disabled
+      ? "opacity-40 grayscale cursor-not-allowed"
+      : onClick
+        ? "hover:-translate-y-2 hover:shadow-xl focus-visible:-translate-y-2 focus-visible:scale-[1.025] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-300 cursor-pointer"
+        : "cursor-default",
+  ].join(" ");
+
+  const sharedProps = {
+    type: "button" as const,
+    "data-card-id": card.id,
+    disabled: disabled || !onClick,
+    onClick,
+    title: disabled && disabledReason
+      ? `${display.name} — ${disabledReason}`
+      : `${display.name}${onDragStart ? " · Kéo để chơi hoặc chọn mục tiêu" : ""}`,
+    "aria-label": display.name,
+    "aria-description": `${card.rank}${card.suit}. ${CARD_EFFECT[card.kind]}${!disabled && onDragStart ? " Có thể kéo thả để thao tác." : ""}${disabled && disabledReason ? ` Không thể dùng: ${disabledReason}` : ""}`,
+    "aria-pressed": selectionMode ? !!selected : undefined,
+    draggable: !!onDragStart && !disabled,
+    onDragStart,
+    onDragEnd,
+  };
+
+  // ── Image mode: real BANG! card artwork ──────────────────────────────────────
+  if (imageUrl) {
+    return (
+      <button
+        {...sharedProps}
+        className={sharedClass}
+        style={{ borderColor: selected ? "#fbbf24" : cs.border, padding: 0 }}
+      >
+        {responseReady && !disabled && !pending && (
+          <span
+            aria-hidden="true"
+            className="bang-card-response-ready"
+            style={{ "--response-ready-delay": `${responseReadyDelayMs}ms` } as import("react").CSSProperties}
+          />
+        )}
+        <img
+          src={imageUrl}
+          alt=""
+          draggable={false}
+          className="w-full h-full object-cover"
+          style={{ display: "block" }}
+        />
+        {/* Rank/suit overlay — shows our game data (may differ from image) */}
+        {!hideIdentity && (
+          <div
+            className="absolute bottom-1 left-1 flex flex-col items-center leading-none font-black text-[9px] rounded px-[3px] py-[1px]"
+            style={{ color: suitClr, background: "rgba(255,255,255,0.72)" }}
+            aria-hidden="true"
+          >
+            <span style={{ lineHeight: 1 }}>{card.rank}</span>
+            <span style={{ lineHeight: 1 }}>{card.suit}</span>
+          </div>
+        )}
+      </button>
+    );
+  }
+
+  // ── Parchment mode: cards without artwork images ──────────────────────────────
   return (
     <button
-      type="button"
-      data-card-id={card.id}
-      disabled={disabled || !onClick}
-      onClick={onClick}
-      title={
-        disabled && disabledReason
-          ? `${display.name} — ${disabledReason}`
-          : `${display.name}${onDragStart ? " · Kéo để chơi hoặc chọn mục tiêu" : ""}`
-      }
-      aria-label={display.name}
-      aria-description={`${card.rank}${card.suit}. ${CARD_EFFECT[card.kind]}${!disabled && onDragStart ? " Có thể kéo thả để thao tác." : ""}${disabled && disabledReason ? ` Không thể dùng: ${disabledReason}` : ""}`}
-      aria-pressed={selectionMode ? !!selected : undefined}
-      draggable={!!onDragStart && !disabled}
-      onDragStart={onDragStart}
-      onDragEnd={onDragEnd}
-      className={[
-        "relative shrink-0 rounded border-2 text-left transition-all duration-200 ease-[cubic-bezier(0.2,0.75,0.25,1)] select-none overflow-hidden active:scale-[0.97]",
-        selected ? "bang-card-selected" : "",
-        pending ? "bang-card-pending" : "",
-        rejected ? `bang-card-rejected-${rejectedSequence % 2 === 0 ? "a" : "b"}` : "",
-        small ? "w-16 h-24" : "w-24 h-36",
-        selected
-          ? "-translate-y-3 shadow-[0_0_18px_rgba(251,191,36,0.75),0_6px_20px_rgba(0,0,0,0.5)] ring-1 ring-amber-400/60"
-          : "shadow-[0_4px_14px_rgba(0,0,0,0.65),inset_0_1px_0_rgba(255,255,255,0.9)]",
-        disabled
-          ? "opacity-40 grayscale cursor-not-allowed"
-          : onClick
-            ? "hover:-translate-y-2 hover:shadow-xl focus-visible:-translate-y-2 focus-visible:scale-[1.025] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-300 cursor-pointer"
-            : "cursor-default",
-      ].join(" ")}
+      {...sharedProps}
+      className={sharedClass}
       style={{
         borderColor: selected ? "#fbbf24" : cs.border,
         background: "linear-gradient(168deg, #fef9ec 0%, #f3e7c4 55%, #e8daab 100%)",
