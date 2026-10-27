@@ -404,18 +404,7 @@ export default function MeoNoBoard({ makeMove, onLeave, onRematch, rematching }:
         {selectedCards.length === 3 && selectedCards.every((c) => CAT_CARDS.includes(c.kind)) && (
           <div className="mt-2 space-y-1">
             <p className="text-xs text-pink-300/60">Yêu cầu loại bài (combo 3 lá):</p>
-            <select
-              value={requestedKind}
-              onChange={(e) => setRequestedKind(e.target.value)}
-              className="w-full rounded border border-pink-900/50 bg-black/60 text-pink-200 text-xs py-1 px-2"
-            >
-              <option value="">— chọn loại bài —</option>
-              {(Object.keys(CARD_INFO) as CardKind[])
-                .filter((k) => k !== "explodingKitten")
-                .map((k) => (
-                  <option key={k} value={k}>{CARD_INFO[k].emoji} {CARD_INFO[k].name}</option>
-                ))}
-            </select>
+            <CardKindPicker selected={requestedKind} onChange={setRequestedKind} />
           </div>
         )}
 
@@ -423,18 +412,7 @@ export default function MeoNoBoard({ makeMove, onLeave, onRematch, rematching }:
         {isCombo5 && (
           <div className="mt-2 space-y-1">
             <p className="text-xs text-pink-300/60">Lấy loại bài từ discard (combo 5 lá):</p>
-            <select
-              value={requestedKind}
-              onChange={(e) => setRequestedKind(e.target.value)}
-              className="w-full rounded border border-pink-900/50 bg-black/60 text-pink-200 text-xs py-1 px-2"
-            >
-              <option value="">— chọn loại bài —</option>
-              {(Object.keys(CARD_INFO) as CardKind[])
-                .filter((k) => k !== "explodingKitten")
-                .map((k) => (
-                  <option key={k} value={k}>{CARD_INFO[k].emoji} {CARD_INFO[k].name}</option>
-                ))}
-            </select>
+            <CardKindPicker selected={requestedKind} onChange={setRequestedKind} />
           </div>
         )}
       </div>
@@ -543,6 +521,46 @@ function PlayerCard({
         {player.cardCount === 0 && <span className="text-pink-800/40 text-xs italic">Không có bài</span>}
       </div>
     </button>
+  );
+}
+
+function CardKindPicker({ selected, onChange }: { selected: string; onChange: (k: string) => void }) {
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {(Object.keys(CARD_INFO) as CardKind[])
+        .filter((k) => k !== "explodingKitten")
+        .map((k) => {
+          const info = CARD_INFO[k];
+          const isSelected = selected === k;
+          return (
+            <button
+              key={k}
+              onClick={() => onChange(k)}
+              title={info.name}
+              className={`rounded border-2 overflow-hidden w-10 flex flex-col items-center transition-all ${info.bg} ${
+                isSelected
+                  ? "border-pink-400 ring-2 ring-pink-400 scale-105 shadow-lg"
+                  : "border-pink-900/40 hover:border-pink-600/80 hover:scale-105"
+              }`}
+            >
+              <img
+                src={cardImageUrl(k, "c000")}
+                alt={info.name}
+                className="w-full h-[52px] object-cover object-top"
+                onError={(e) => {
+                  const t = e.target as HTMLImageElement;
+                  t.style.display = "none";
+                  (t.nextElementSibling as HTMLElement | null)?.classList.remove("hidden");
+                }}
+              />
+              <span className="hidden text-lg leading-none py-1">{info.emoji}</span>
+              <span className={`text-[7px] font-bold w-full text-center bg-black/60 py-0.5 leading-tight px-0.5 ${info.color}`}>
+                {info.name}
+              </span>
+            </button>
+          );
+        })}
+    </div>
   );
 }
 
