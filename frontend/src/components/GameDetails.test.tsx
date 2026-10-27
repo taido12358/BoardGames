@@ -74,11 +74,11 @@ beforeEach(() => {
 });
 
 describe("GameDetails — tạo Cờ Tỉ Phú", () => {
-  it("gửi đúng 4 ghế mặc định đang hiển thị, không để backend chọn 6", async () => {
+  it("gửi đúng 2 ghế mặc định đang hiển thị, không để backend chọn 6", async () => {
     renderDetails("monopoly");
-    expect(screen.getByRole("button", { name: "4" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: "2" })).toHaveAttribute("aria-pressed", "true");
     await userEvent.click(screen.getByRole("button", { name: "➕ TẠO PHÒNG" }));
-    expect(useGameStore.getState().createRoom).toHaveBeenCalledWith("monopoly", { seatCount: 4 });
+    expect(useGameStore.getState().createRoom).toHaveBeenCalledWith("monopoly", { seatCount: 2 });
     expect(await screen.findByText("room")).toBeInTheDocument();
   });
 

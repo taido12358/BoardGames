@@ -40,7 +40,7 @@ public class GamesControllerIntegrationTests
         Assert.Equal(HttpStatusCode.OK, res.StatusCode);
         var body = await res.Content.ReadFromJsonAsync<JsonElement[]>();
         var keys = body!.Select(e => e.GetProperty("key").GetString()).ToHashSet();
-        Assert.Equal(new HashSet<string?> { "vaybat", "bang", "oanquan", "zodiacrace", "monopoly" }, keys);
+        Assert.Equal(new HashSet<string?> { "vaybat", "bang", "oanquan", "zodiacrace", "monopoly", "meono" }, keys);
     }
 
     [Fact]

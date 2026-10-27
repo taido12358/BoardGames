@@ -36,14 +36,14 @@ describe("Monopoly board",()=>{
   it("renders all board squares and sends a roll intent",()=>{
     setup(); const move=renderBoard();
     expect(screen.getAllByRole("button",{name:/^Ô \d+:/})).toHaveLength(40);
-    fireEvent.click(screen.getByRole("button",{name:"Đổ xúc xắc"})); expect(move).toHaveBeenCalledWith("m1",{type:"ROLL"});
+    fireEvent.click(screen.getByRole("button",{name:/Đổ xúc xắc/})); expect(move).toHaveBeenCalledWith("m1",{type:"ROLL"});
   });
   it("disables spectator and disconnected decisions",()=>{
-    setup("Roll",null); renderBoard(); expect(screen.getByRole("button",{name:"Đổ xúc xắc"})).toBeDisabled();
+    setup("Roll",null); renderBoard(); expect(screen.getByRole("button",{name:/Đổ xúc xắc/})).toBeDisabled();
   });
   it("disables decisions during reconnect",()=>{
     setup();useGameStore.setState({connectionState:"reconnecting"});renderBoard();
-    expect(screen.getByRole("button",{name:"Đổ xúc xắc"})).toBeDisabled();
+    expect(screen.getByRole("button",{name:/Đổ xúc xắc/})).toBeDisabled();
   });
   it("offers purchase or auction only in purchase phase",()=>{
     setup("Buy");const move=renderBoard();
@@ -74,7 +74,7 @@ describe("Monopoly board",()=>{
   });
   it("offers negotiation to a player outside the current turn",()=>{
     setup("Roll","P1");renderBoard();expect(screen.getByText("Đề nghị giao dịch")).toBeInTheDocument();
-    expect(screen.getByRole("button",{name:"Đổ xúc xắc"})).toBeDisabled();
+    expect(screen.getByRole("button",{name:/Đổ xúc xắc/})).toBeDisabled();
   });
   it("debtor can offer a jail-free card to raise cash",()=>{
     const {state}=setup("Debt");state.players[0].jailCards=["Chance"];state.payments=[{from:0,to:null,amount:200}];
@@ -119,7 +119,7 @@ describe("Monopoly board",()=>{
     const {room,state,map}=setup();const snapshot=structuredClone(state);snapshot.players[0].cash=987;
     const view=render(<MonopolyReplayBoard roomId="replay-only" map={map} state={snapshot} seats={["An","Bình"]}/>);
     expect(screen.getByText("Bản ghi chỉ đọc")).toBeInTheDocument();expect(screen.getByText(/987 ·/)).toBeInTheDocument();
-    expect(screen.queryByRole("button",{name:"Đổ xúc xắc"})).not.toBeInTheDocument();
+    expect(screen.queryByRole("button",{name:/Đổ xúc xắc/})).not.toBeInTheDocument();
     expect(screen.queryByRole("button",{name:/Rời phòng/})).not.toBeInTheDocument();
     expect(screen.queryByRole("button",{name:/Chơi lại/i})).not.toBeInTheDocument();
     expect(useGameStore.getState().room).toBe(room);expect(state.players[0].cash).toBe(1500);
