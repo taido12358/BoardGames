@@ -95,8 +95,10 @@ public static class MeoNoRules
         }
         else if (move.ComboCardIds.Count == 5)
         {
-            // 5 lá khác loại: lấy bài từ discard
-            if (kindGroups.Count < 5) return (state, "Combo 5 lá cần 5 loại bài khác nhau");
+            // 5 lá mèo khác loại: lấy bài từ discard
+            if (cards.Any(c => !MeoNoCards.IsCatCard(c!.Kind)))
+                return (state, "Combo 5 lá phải gồm 5 lá mèo khác loại");
+            if (kindGroups.Count < 5) return (state, "Combo 5 lá cần 5 loại mèo khác nhau");
         }
         else
         {
