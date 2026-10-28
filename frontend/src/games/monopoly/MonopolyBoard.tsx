@@ -491,7 +491,24 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
           </h2>
           {!deciding && <p className="text-sm text-amber-200/60">⏳ Chờ {state.players[currentActor]?.name}…</p>}
           <div className="flex flex-wrap gap-2">
-            {state.phase === "Roll" && <>{action("🎲 Đổ xúc xắc", "ROLL", false, deciding ? "monopoly-roll-btn-ready" : "")}{player?.inJail && <>{action("Nộp 50 ra tù", "PAY_JAIL", player.cash < 50)}{action("Dùng thẻ ra tù", "JAIL_CARD", player.jailCards.length === 0)}</>}</>}
+            {state.phase === "Roll" && <>
+              {player?.inJail && (
+                <div className="w-full rounded-lg border border-red-800/40 bg-red-950/30 px-2 py-1.5 text-xs text-red-300/80 flex items-center gap-2">
+                  <span>⛓</span>
+                  <span>Đang ở tù — đổ đôi để thoát ({player.jailAttempts}/3)</span>
+                </div>
+              )}
+              {!player?.inJail && player && (() => {
+                const curTile = map.tiles[player.position];
+                return curTile ? (
+                  <div className="w-full text-[10px] text-amber-200/40 flex items-center gap-1">
+                    <button type="button" onClick={() => setSelected(player.position)} className="hover:text-amber-200/70 truncate">📍 {curTile.name}</button>
+                  </div>
+                ) : null;
+              })()}
+              {action("🎲 Đổ xúc xắc", "ROLL", false, deciding ? "monopoly-roll-btn-ready" : "")}
+              {player?.inJail && <>{action("💰 Nộp $50 ra tù", "PAY_JAIL", (player?.cash ?? 0) < 50)}{action("🎫 Dùng thẻ ra tù", "JAIL_CARD", (player?.jailCards?.length ?? 0) === 0)}</>}
+            </>}
             {state.phase === "Buy" && (() => {
               const buyTile = map.tiles[state.players[state.turn].position];
               const buyProp = state.properties[state.players[state.turn].position];
@@ -519,7 +536,13 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
                 {action("🔨 Đưa ra đấu giá", "DECLINE")}
               </>;
             })()}
-            {state.phase === "End" && action(state.extraRoll ? "↩ Tiếp tục lượt đổ đôi" : "✓ Kết thúc lượt", "END", false, deciding ? "monopoly-action-pulse" : "")}
+            {state.phase === "End" && <>
+              {player && (() => {
+                const t = map.tiles[player.position];
+                return t ? <div className="w-full text-[10px] text-amber-200/50 px-1">Đã dừng tại: <button type="button" onClick={() => setSelected(player.position)} className="hover:text-amber-200/80">{t.name}</button></div> : null;
+              })()}
+              {action(state.extraRoll ? "↩ Tiếp tục lượt đổ đôi" : "✓ Kết thúc lượt", "END", false, deciding ? "monopoly-action-pulse" : "")}
+            </>}
             {state.phase === "Debt" && state.payments[0] && (() => {
               const debt = state.payments[0];
               const creditor = debt.to === null ? null : state.players[debt.to];
