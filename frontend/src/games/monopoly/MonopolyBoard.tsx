@@ -870,11 +870,16 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
                 {groupTiles[tile.group].map(idx => {
                   const sibProp = state.properties[idx];
                   const sibTile = map.tiles[idx];
+                  const sibIsMonopoly = monopolyTileSet.has(idx);
+                  const sibRent = sibTile.rents
+                    ? (sibIsMonopoly && sibProp.buildings === 0 ? sibTile.rents[0] * 2 : sibTile.rents[sibProp.buildings])
+                    : null;
                   return (
                     <button key={idx} type="button" onClick={() => setSelected(idx)}
                       className={`w-full flex items-center gap-2 rounded px-2 py-1 text-[10px] text-left transition-colors ${idx === selected ? "bg-amber-900/40" : "bg-stone-900/30 hover:bg-stone-900/60"}`}>
                       <span className={`w-2 h-2 rounded-sm shrink-0 ${GROUP_COLORS[tile.group] ?? "bg-stone-600"}`} />
                       <span className="flex-1 truncate text-amber-200/70">{sibTile.name}</span>
+                      {sibRent !== null && sibProp.owner !== null && !sibProp.mortgaged && <span className="text-amber-400/60 font-mono">${sibRent}</span>}
                       {sibProp.owner !== null && <span>{TOKENS[sibProp.owner]}</span>}
                       {sibProp.mortgaged && <span className="text-red-400/70">🔒</span>}
                       {sibProp.buildings > 0 && <span className={sibProp.buildings === 5 ? "text-red-400" : "text-emerald-400"}>{"●".repeat(sibProp.buildings === 5 ? 1 : sibProp.buildings)}{sibProp.buildings === 5 ? "H" : ""}</span>}
@@ -889,11 +894,12 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
               const mortgageVal = Math.floor(tile.price / 2);
               const unmortgageCost = Math.ceil(mortgageVal * 1.1);
               const sellVal = tile.houseCost ? Math.floor(tile.houseCost / 2) : 0;
+              const canAffordBuild = player && tile.houseCost > 0 && player.cash >= tile.houseCost;
               return (
                 <div className="grid grid-cols-2 gap-1.5">
                   {tile.houseCost > 0 && !property.mortgaged && (
-                    <button className={`${buttonClass} text-xs py-1.5 col-span-1`} disabled={inDebt}
-                      onClick={() => send({type:"BUILD", tile: selected})}>
+                    <button className={`${buttonClass} text-xs py-1.5 col-span-1 ${canAffordBuild && !inDebt && monopolyTileSet.has(selected) ? "border-emerald-700/60 text-emerald-300" : ""}`} disabled={inDebt || !canAffordBuild}
+                      onClick={() => send({type:"BUILD", tile: selected})} title={!canAffordBuild ? `Cần thêm $${tile.houseCost - (player?.cash ?? 0)}` : undefined}>
                       🏠 Xây · ${tile.houseCost}
                     </button>
                   )}
@@ -951,7 +957,21 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
           <span className="text-stone-700">·</span>
           <div className="flex items-center gap-1.5"><span className="text-stone-500">Còn:</span><span className="font-bold text-amber-200/80">{activePlayers.length} người</span></div>
           <span className="text-stone-700">·</span>
-          <div className="flex items-center gap-1.5"><span className="text-stone-500">🏠</span><span className="font-mono font-bold text-emerald-400/80">{state.houses}</span><span className="text-stone-600 mx-0.5">/</span><span className="text-stone-500">🏨</span><span className="font-mono font-bold text-red-400/80">{state.hotels}</span><span className="text-stone-600 ml-0.5 text-[9px]">còn</span></div>
+          {(() => {
+            const builtHouses = state.properties.filter(p => p.buildings > 0 && p.buildings < 5).reduce((s,p) => s + p.buildings, 0);
+            const builtHotels = state.properties.filter(p => p.buildings === 5).length;
+            return (
+              <div className="flex items-center gap-1">
+                <span className="text-stone-500">Đã xây:</span>
+                <span className="font-mono text-emerald-400/70">🏠{builtHouses}</span>
+                <span className="font-mono text-red-400/70">🏨{builtHotels}</span>
+                <span className="text-stone-600 mx-0.5">·</span>
+                <span className="text-stone-500">Kho:</span>
+                <span className="font-mono text-emerald-400/50">🏠{state.houses}</span>
+                <span className="font-mono text-red-400/50">🏨{state.hotels}</span>
+              </div>
+            );
+          })()}
         </div>
       );
     })()}
