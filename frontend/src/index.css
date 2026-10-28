@@ -2117,6 +2117,44 @@ button[draggable="true"]:active { cursor: grabbing; }
 }
 .monopoly-tile-trail { animation: monopolyTileTrail 0.42s ease-out both; }
 
+/* Pass-Go green flash */
+@keyframes monopolyTilePassGo {
+  0%   { background-color: rgba(52,211,153,0); box-shadow: none; }
+  28%  { background-color: rgba(52,211,153,0.38); box-shadow: 0 0 22px rgba(52,211,153,0.75), inset 0 0 14px rgba(52,211,153,0.45); }
+  100% { background-color: rgba(52,211,153,0); box-shadow: none; }
+}
+.monopoly-tile-passgo { animation: monopolyTilePassGo 0.6s ease-out both; }
+
+/* GoToJail red burst */
+@keyframes monopolyTileJailLand {
+  0%   { background-color: rgba(220,38,38,0); box-shadow: none; }
+  18%  { background-color: rgba(220,38,38,0.5); box-shadow: 0 0 28px rgba(220,38,38,0.85), inset 0 0 20px rgba(220,38,38,0.5); }
+  55%  { background-color: rgba(220,38,38,0.18); box-shadow: 0 0 10px rgba(220,38,38,0.3); }
+  100% { background-color: rgba(220,38,38,0); box-shadow: none; }
+}
+.monopoly-tile-jail-land { animation: monopolyTileJailLand 1.5s ease-out both; }
+
+/* Departure tile dim fade */
+@keyframes monopolyTileDepart {
+  0%   { background-color: rgba(251,191,36,0.22); box-shadow: inset 0 0 10px rgba(251,191,36,0.28); }
+  100% { background-color: rgba(251,191,36,0); box-shadow: none; }
+}
+.monopoly-tile-depart { animation: monopolyTileDepart 0.5s ease-out both; }
+
+/* Jail token shake */
+@keyframes monopolyTokenJailLand {
+  0%   { transform: scale(1) translateX(0) rotate(0); }
+  18%  { transform: scale(1.25) translateX(-5px) rotate(-10deg); }
+  36%  { transform: scale(1.2) translateX(5px) rotate(10deg); }
+  54%  { transform: scale(1.1) translateX(-3px) rotate(-5deg); }
+  72%  { transform: scale(1.05) translateX(2px) rotate(3deg); }
+  100% { transform: scale(1) translateX(0) rotate(0); }
+}
+.monopoly-token-jail-land {
+  display: inline-block;
+  animation: monopolyTokenJailLand 0.72s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
 /* Cash delta floating notification */
 @keyframes cashDeltaFloat {
   0%   { opacity: 0; transform: translateY(0) scale(0.8); }
@@ -2640,6 +2678,10 @@ button[draggable="true"]:active { cursor: grabbing; }
   .monopoly-tile-just-purchased { animation: none !important; background-color: rgba(34,197,94,0.18); box-shadow: inset 0 0 8px rgba(34,197,94,0.4); }
   .monopoly-tile-player-land { animation: none !important; background-color: rgba(251,191,36,0.15); }
   .monopoly-tile-trail { animation: none !important; background-color: rgba(251,191,36,0.08); }
+  .monopoly-tile-passgo { animation: none !important; background-color: rgba(52,211,153,0.1); }
+  .monopoly-tile-jail-land { animation: none !important; background-color: rgba(220,38,38,0.15); }
+  .monopoly-tile-depart { animation: none !important; }
+  .monopoly-token-jail-land { animation: none !important; }
   .monopoly-actor-badge { animation: none !important; }
   .monopoly-my-turn { animation: none !important; box-shadow: 0 0 0 2px rgba(251,191,36,0.35); }
   .monopoly-turn-enter { animation: none !important; opacity: 1; transform: none; }

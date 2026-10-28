@@ -77,7 +77,7 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
   const prevBankruptRef = useRef<Record<number, boolean>>({});
   const [newBankrupts, setNewBankrupts] = useState<Set<number>>(new Set());
   const prevPositionRef = useRef<Record<number, number>>({});
-  const [moveTiles, setMoveTiles] = useState<Map<number, {type: 'trail'|'land'; delay: number}>>(new Map());
+  const [moveTiles, setMoveTiles] = useState<Map<number, {type: 'trail'|'land'|'passgo'|'jail'|'depart'; delay: number}>>(new Map());
   const [logFilter, setLogFilter] = useState("");
   const [logShowAll, setLogShowAll] = useState(false);
 
@@ -155,18 +155,23 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
   useEffect(() => {
     const parts = positionKey ? positionKey.split(",").map(Number) : [];
     if (!parts.length) return;
-    const next = new Map<number, {type: 'trail'|'land'; delay: number}>();
+    const next = new Map<number, {type: 'trail'|'land'|'passgo'|'jail'|'depart'; delay: number}>();
     parts.forEach((pos, i) => {
       const prev = prevPositionRef.current[i];
       if (prev !== undefined && prev !== pos) {
         const steps = (pos - prev + 40) % 40;
+        // Departure flash on the tile the player just left
+        next.set(prev, { type: 'depart', delay: 0 });
         if (steps > 0 && steps <= 12) {
           for (let k = 1; k <= steps; k++) {
             const idx = (prev + k) % 40;
-            next.set(idx, { type: k < steps ? 'trail' : 'land', delay: (k - 1) * 55 });
+            const isLast = k === steps;
+            const type = isLast ? 'land' : (idx === 0 ? 'passgo' : 'trail');
+            next.set(idx, { type, delay: (k - 1) * 55 });
           }
         } else {
-          next.set(pos, { type: 'land', delay: 0 });
+          // GoToJail teleport (pos===10) or other big jump
+          next.set(pos, { type: pos === 10 ? 'jail' : 'land', delay: 0 });
         }
       }
       prevPositionRef.current[i] = pos;
@@ -313,12 +318,12 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
             const occupants = state.players.map((who,i) => !who.bankrupt && who.position === t.index ? i : -1).filter(i => i >= 0);
             const isAffordable = player && !player.bankrupt && p.owner === null && t.price > 0 && t.price <= player.cash && state.phase === "Buy" && state.players[state.turn]?.position === t.index;
             const moveData = moveTiles.get(t.index);
-            const isLanding = moveData?.type === 'land';
+            const isLanding = moveData?.type === 'land' || moveData?.type === 'jail';
             const tileStyle = moveData ? { ...boardPosition(t.index), animationDelay: `${moveData.delay}ms` } : boardPosition(t.index);
             const tokenAnimDelay = isLanding ? moveData!.delay + 80 : 0;
             return <button type="button" key={t.index} data-monopoly-tile="1" data-group={t.group} style={tileStyle} onClick={() => setSelected(t.index)}
               aria-pressed={selected === t.index} aria-label={`Ô ${t.index}: ${t.name}${p.owner !== null ? `, chủ ${state.players[p.owner]?.name}` : ""}`}
-              className={`relative flex min-h-0 flex-col overflow-hidden border text-[9px] leading-tight text-stone-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white transition-[box-shadow,transform] duration-150 active:scale-95 hover:brightness-125 ${selected === t.index ? "border-amber-200 bg-amber-900" : "border-emerald-800/70 bg-stone-900/80"} ${flashTiles.has(t.index) ? "monopoly-tile-just-purchased" : ""} ${monopolyTileSet.has(t.index) ? "ring-1 ring-inset ring-amber-300/50" : ""} ${moveData ? (isLanding ? "monopoly-tile-player-land" : "monopoly-tile-trail") : ""}${p.buildings > 0 ? "monopoly-tile-built" : ""} ${p.buildings === 5 ? "monopoly-tile-hotel" : ""} ${isAffordable ? "monopoly-tile-affordable" : ""} ${dangerTileSet.has(t.index) ? "monopoly-tile-danger" : ""}`}>
+              className={`relative flex min-h-0 flex-col overflow-hidden border text-[9px] leading-tight text-stone-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white transition-[box-shadow,transform] duration-150 active:scale-95 hover:brightness-125 ${selected === t.index ? "border-amber-200 bg-amber-900" : "border-emerald-800/70 bg-stone-900/80"} ${flashTiles.has(t.index) ? "monopoly-tile-just-purchased" : ""} ${monopolyTileSet.has(t.index) ? "ring-1 ring-inset ring-amber-300/50" : ""} ${moveData ? (moveData.type === 'land' ? "monopoly-tile-player-land" : moveData.type === 'jail' ? "monopoly-tile-jail-land" : moveData.type === 'passgo' ? "monopoly-tile-passgo" : moveData.type === 'depart' ? "monopoly-tile-depart" : "monopoly-tile-trail") : ""} ${p.buildings > 0 ? "monopoly-tile-built" : ""} ${p.buildings === 5 ? "monopoly-tile-hotel" : ""} ${isAffordable ? "monopoly-tile-affordable" : ""} ${dangerTileSet.has(t.index) ? "monopoly-tile-danger" : ""}`}>
               <span aria-hidden="true" className={`h-2 w-full shrink-0 ${GROUP_COLORS[t.group] ?? "bg-stone-700"}`} />
               {/* Special tile icon overlay */}
               {!t.group && ({"Go":"🏁","Jail":"⛓","FreeParking":"🅿","GoToJail":"🚔","Chance":"🎲","CommunityChest":"📦","IncomeTax":"💸","LuxuryTax":"💎","Railroad":"🚂","Utility":"⚡"} as Record<string,string>)[t.kind] && (
@@ -344,7 +349,7 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
               <span className="mt-auto text-xs relative" aria-hidden="true">
                 {occupants.length > 2
                   ? <>{TOKENS[occupants[0]]}<span className="text-[8px] bg-stone-800 border border-stone-600 rounded-full px-1 ml-0.5">+{occupants.length - 1}</span></>
-                  : occupants.map(i => <span key={i} className={isLanding ? "monopoly-token-land" : ""} style={isLanding ? { animationDelay: `${tokenAnimDelay}ms` } : undefined}>{TOKENS[i]}</span>)
+                  : occupants.map(i => <span key={i} className={moveData?.type === 'jail' ? "monopoly-token-jail-land" : isLanding ? "monopoly-token-land" : ""} style={isLanding ? { animationDelay: `${tokenAnimDelay}ms` } : undefined}>{TOKENS[i]}</span>)
                 }
               </span>
             </button>;
