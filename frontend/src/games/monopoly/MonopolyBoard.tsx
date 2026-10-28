@@ -397,19 +397,25 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
                   {state.players[currentActor] && <button type="button" onClick={() => setSelected(state.players[currentActor].position)} className="text-[10px] text-amber-200/40 hover:text-amber-300/70 truncate text-left mt-0.5 w-full">{map.tiles[state.players[currentActor].position]?.name ?? ""}</button>}
                   {state.doubles >= 3 && <p className="text-[10px] text-red-400/80 mt-0.5">⚠️ 3 đôi liên tiếp → vào tù!</p>}
                 </div>
-                {/* Next player preview */}
+                {/* Next players preview (up to 3) */}
                 {(() => {
                   const activePlayers = state.players.map((pl, idx) => ({ pl, idx })).filter(x => !x.pl.bankrupt);
+                  if (activePlayers.length < 2) return null;
                   const curPos = activePlayers.findIndex(x => x.idx === state.turn);
-                  const next = activePlayers[(curPos + 1) % activePlayers.length];
-                  return next && next.idx !== state.turn ? (
-                    <div className="flex items-center gap-1.5 text-[10px] text-stone-500 border border-stone-800/40 rounded px-2 py-1">
-                      <span className="shrink-0 text-stone-600">Tiếp:</span>
-                      <span className="shrink-0">{TOKENS[next.idx]}</span>
-                      <span className="text-stone-400 truncate flex-1 text-left">{next.pl.name}</span>
-                      <span className="font-mono text-stone-500 shrink-0">${next.pl.cash.toLocaleString("vi-VN")}</span>
+                  const upcoming = [1, 2, 3].map(offset => activePlayers[(curPos + offset) % activePlayers.length]).filter((x, i, arr) => x.idx !== state.turn && arr.findIndex(a => a.idx === x.idx) === i);
+                  if (!upcoming.length) return null;
+                  return (
+                    <div className="space-y-0.5">
+                      {upcoming.map(({ pl, idx }, i) => (
+                        <div key={idx} className={`flex items-center gap-1.5 text-[10px] border rounded px-2 py-0.5 ${i === 0 ? "border-stone-700/50 text-stone-400" : "border-stone-800/30 text-stone-600"}`}>
+                          <span className="text-stone-600 shrink-0 w-4">{i === 0 ? "▶" : `+${i+1}`}</span>
+                          <span className="shrink-0">{TOKENS[idx]}</span>
+                          <span className="truncate flex-1 text-left">{pl.name}</span>
+                          <span className="font-mono shrink-0">${pl.cash.toLocaleString("vi-VN")}</span>
+                        </div>
+                      ))}
                     </div>
-                  ) : null;
+                  );
                 })()}
                 {/* Dice */}
                 <div className="flex justify-center gap-2" aria-label={`Xúc xắc ${state.dice.join(" và ")}`} role="img">
@@ -522,6 +528,36 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
                     <button type="button" onClick={() => setSelected(player.position)} className="hover:text-amber-200/70 truncate">📍 {curTile.name}</button>
                   </div>
                 ) : null;
+              })()}
+              {deciding && player && !player.inJail && (() => {
+                const pos = player.position;
+                const dangers = Array.from({ length: 11 }, (_, i) => (pos + i + 2) % 40)
+                  .map(idx => ({ idx, tile: map.tiles[idx], prop: state.properties[idx] }))
+                  .filter(({ tile, prop }) => prop.owner !== null && prop.owner !== seat && !prop.mortgaged && Array.isArray(tile.rents))
+                  .map(({ idx, tile, prop }) => {
+                    const isMonop = monopolyTileSet.has(idx);
+                    const rent = isMonop && prop.buildings === 0 ? tile.rents[0] * 2 : tile.rents[prop.buildings];
+                    const steps = ((idx - pos + 40) % 40);
+                    return { idx, tile, prop, rent, steps };
+                  })
+                  .sort((a, b) => b.rent - a.rent)
+                  .slice(0, 3);
+                if (!dangers.length) return null;
+                return (
+                  <div className="w-full space-y-1">
+                    <div className="text-[9px] text-amber-400/40 uppercase tracking-wide">⚠️ Nguy hiểm phía trước</div>
+                    {dangers.map(({ idx, tile, prop, rent, steps }) => (
+                      <button key={idx} type="button" onClick={() => setSelected(idx)}
+                        className="w-full flex items-center gap-1.5 rounded border border-red-900/30 bg-red-950/20 px-2 py-1 text-[10px] hover:bg-red-950/40 transition-colors text-left">
+                        <span className="text-stone-500 shrink-0 w-5 text-right">+{steps}</span>
+                        <span className={`w-2 h-2 rounded-sm shrink-0 ${GROUP_COLORS[tile.group] ?? "bg-stone-600"}`} />
+                        <span className="flex-1 truncate text-amber-200/60">{tile.name}</span>
+                        <span className="text-red-300/80 font-mono font-bold shrink-0">${rent}</span>
+                        <span className="shrink-0">{TOKENS[prop.owner]}</span>
+                      </button>
+                    ))}
+                  </div>
+                );
               })()}
               {action("🎲 Đổ xúc xắc", "ROLL", false, deciding ? "monopoly-roll-btn-ready" : "")}
               {player?.inJail && <>{action("💰 Nộp $50 ra tù", "PAY_JAIL", (player?.cash ?? 0) < 50)}{action("🎫 Dùng thẻ ra tù", "JAIL_CARD", (player?.jailCards?.length ?? 0) === 0)}</>}
