@@ -761,6 +761,28 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
         <LeaveRoomButton onLeave={onLeave} /></>}
       </aside>
     </div>
+    {state.started && (() => {
+      const activePlayers = state.players.filter(p => !p.bankrupt);
+      const totalCash = activePlayers.reduce((s, p) => s + p.cash, 0);
+      const allNW = state.players.map((_, i) => playerNetWorth[i]).filter((_, i) => !state.players[i].bankrupt);
+      const avgNW = allNW.length ? Math.round(allNW.reduce((s, n) => s + n, 0) / allNW.length) : 0;
+      const richest = state.players.map((_, i) => ({ idx: i, nw: playerNetWorth[i] })).filter(x => !state.players[x.idx].bankrupt).sort((a, b) => b.nw - a.nw)[0];
+      const propertiesSold = state.properties.filter(p => p.owner !== null).length;
+      const totalProperties = map.tiles.filter(t => t.price > 0).length;
+      return (
+        <div className="flex flex-wrap gap-2 rounded-xl border border-stone-800/60 bg-stone-950/40 px-4 py-2.5 text-[10px] text-stone-400">
+          <div className="flex items-center gap-1.5"><span className="text-stone-500">Tiền mặt tổng:</span><span className="font-mono font-bold text-amber-200/80">${totalCash.toLocaleString("vi-VN")}</span></div>
+          <span className="text-stone-700">·</span>
+          <div className="flex items-center gap-1.5"><span className="text-stone-500">TB tài sản:</span><span className="font-mono font-bold text-amber-200/80">${avgNW.toLocaleString("vi-VN")}</span></div>
+          <span className="text-stone-700">·</span>
+          <div className="flex items-center gap-1.5"><span className="text-stone-500">Giàu nhất:</span><span className="font-bold text-amber-300/80">{richest ? `${TOKENS[richest.idx]} ${state.players[richest.idx]?.name}` : "—"}</span></div>
+          <span className="text-stone-700">·</span>
+          <div className="flex items-center gap-1.5"><span className="text-stone-500">Đất đã bán:</span><span className="font-mono font-bold text-amber-200/80">{propertiesSold}/{totalProperties}</span></div>
+          <span className="text-stone-700">·</span>
+          <div className="flex items-center gap-1.5"><span className="text-stone-500">Còn:</span><span className="font-bold text-amber-200/80">{activePlayers.length} người</span></div>
+        </div>
+      );
+    })()}
     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
       {state.players.map((p, i) => {
         const owned = map.tiles.filter(t => state.properties[t.index].owner === i);
