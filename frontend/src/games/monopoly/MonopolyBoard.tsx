@@ -272,6 +272,21 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
         </div>
       </div>
     </header>
+    {state.started && (() => {
+      const totalBuyable = map.tiles.filter(t => t.price > 0).length;
+      const sold = state.properties.filter(p => p.owner !== null).length;
+      const pct = totalBuyable ? Math.round((sold / totalBuyable) * 100) : 0;
+      return (
+        <div className="flex items-center gap-2 text-[10px] text-stone-500" title={`${sold}/${totalBuyable} bất động sản đã có chủ`}>
+          <span className="shrink-0">{sold}/{totalBuyable}</span>
+          <div className="flex-1 h-1.5 rounded-full bg-stone-800/60 overflow-hidden">
+            <div className="h-full rounded-full transition-all duration-700"
+              style={{ width: `${pct}%`, background: `linear-gradient(to right, #78350f, #d97706 ${pct < 60 ? "" : ", #10b981"})` }} />
+          </div>
+          <span className="shrink-0">{pct}%</span>
+        </div>
+      );
+    })()}
     <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
       <div className="overflow-x-auto rounded-xl border border-emerald-700/60 bg-emerald-950 p-2 shadow-inner shadow-emerald-900/40 monopoly-board-felt">
         <div className="grid min-w-[660px] grid-cols-11 grid-rows-11 gap-0.5 aspect-square" aria-label="Bàn cờ 40 ô">
@@ -913,7 +928,22 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
             {/* Ownership */}
             <div className="space-y-2">
               {property.owner === null ? (
-                <span className="text-xs text-amber-200/40 italic">Chưa có chủ</span>
+                <div className="space-y-1.5">
+                  <span className="text-xs text-amber-200/40 italic">Chưa có chủ</span>
+                  {tile.price > 0 && (() => {
+                    const canAffordList = state.players.map((pl, pi) => ({ pl, pi })).filter(({ pl }) => !pl.bankrupt && pl.cash >= tile.price);
+                    if (!canAffordList.length) return <div className="text-[9px] text-red-400/60">Không ai đủ tiền mua</div>;
+                    return (
+                      <div className="flex flex-wrap gap-1">
+                        {canAffordList.map(({ pl, pi }) => (
+                          <span key={pi} className={`inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[9px] border ${pi === seat ? "bg-amber-900/50 border-amber-700/50 text-amber-200" : "bg-stone-800/50 border-stone-700/40 text-stone-300"}`}>
+                            {TOKENS[pi]} ${pl.cash.toLocaleString("vi-VN")}
+                          </span>
+                        ))}
+                      </div>
+                    );
+                  })()}
+                </div>
               ) : (
                 <>
                   <div className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-sm border ${property.owner === seat ? "bg-amber-900/50 border-amber-700/60" : "bg-stone-900/60 border-stone-700/50"}`}>
