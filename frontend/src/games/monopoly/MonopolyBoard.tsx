@@ -1040,6 +1040,22 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
         </div>
       );
     })()}
+    {state.started && (() => {
+      const unowned = map.tiles.filter(t => t.price > 0 && state.properties[t.index].owner === null)
+        .sort((a, b) => b.price - a.price).slice(0, 5);
+      if (!unowned.length) return null;
+      return (
+        <div className="flex flex-wrap gap-2 items-center rounded-xl border border-stone-800/40 bg-stone-950/30 px-4 py-2 text-[10px]">
+          <span className="text-stone-500 shrink-0">Chưa mua:</span>
+          {unowned.map(t => (
+            <button key={t.index} type="button" onClick={() => setSelected(t.index)}
+              className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 border border-black/20 ${GROUP_COLORS[t.group] ?? "bg-stone-700"} text-stone-900 hover:brightness-110 transition-all`}>
+              {t.name} <span className="font-bold">${t.price}</span>
+            </button>
+          ))}
+        </div>
+      );
+    })()}
     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
       {(() => {
         const rankOrder = [...state.players.map((_, idx) => ({ idx, nw: playerNetWorth[idx] }))].sort((a,b) => b.nw - a.nw);
