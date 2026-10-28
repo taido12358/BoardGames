@@ -257,6 +257,10 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
                   )}
                 </span>
               )}
+              {/* Jail badge on tile 10 */}
+              {t.index === 10 && state.players.some(pl => pl.inJail && !pl.bankrupt) && (
+                <span className="absolute top-0.5 right-0.5 text-[8px] bg-red-950/80 border border-red-800/60 rounded px-0.5 leading-tight">⛓</span>
+              )}
               <span className="mt-auto text-xs" aria-hidden="true">{occupants.map(i => <span key={i} className="monopoly-token-land">{TOKENS[i]}</span>)}</span>
             </button>;
           })}
@@ -328,6 +332,22 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
             )}
           </div>
         </div>
+        {/* Color group legend */}
+        <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 px-1">
+          {Object.entries(GROUP_COLORS).map(([group, cls]) => {
+            const groupOwners = groupTiles[group] ? (() => {
+              const owner = state.properties[groupTiles[group][0]]?.owner;
+              const isMonopoly = owner !== null && groupTiles[group].every(idx => state.properties[idx].owner === owner);
+              return isMonopoly ? owner : null;
+            })() : null;
+            return (
+              <div key={group} className="flex items-center gap-1 text-[10px] text-amber-200/60">
+                <span className={`w-3 h-3 rounded-sm inline-block ${cls} ${groupOwners !== null ? "ring-1 ring-amber-300/60" : ""}`} />
+                <span>{group}{groupOwners !== null ? ` ${TOKENS[groupOwners]}` : ""}</span>
+              </div>
+            );
+          })}
+        </div>
       </div>
       <aside className="space-y-4">
         {state.started && room.status === "Playing" && (() => {
@@ -379,14 +399,46 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
               {action(`Giải chấp ngay · ${inheritedTile.price / 2 + inheritanceInterest}`, "REDEEM_INHERITED", !player || player.cash < inheritedTile.price / 2 + inheritanceInterest)}
             </>}
           </div>
-          {state.phase === "BuildingDemand" && state.buildingDemand && <div className="space-y-2 text-sm">
-            <p>Ngân hàng còn {state.buildingDemand.kind === "Hotel" ? `${state.hotels} khách sạn` : `${state.houses} nhà`}. Mỗi người xác nhận mua một đơn vị.</p>
-            <p>Đủ cung: mua theo giá trên giấy đất. Cầu vượt cung: đấu giá; người không muốn mua không tham gia.</p>
-            <p>Nếu bạn chỉ đủ tiền đấu giá mà chưa đủ giá niêm yết, xác nhận nhu cầu sẽ không tự mua khi không có đấu giá.</p>
-            {demandTiles.length > 0 && <label className="block">Đất muốn xây <select aria-label="Đất muốn xây" className="w-full rounded bg-stone-900 p-2" value={requestedTile}
-              onChange={e => setSelected(Number(e.target.value))}>{demandTiles.map(index => <option key={index} value={index}>{map.tiles[index].name} · {map.tiles[index].houseCost}</option>)}</select></label>}
-            <button className={buttonClass} disabled={!deciding} onClick={() => send({type:"REQUEST_BUILD",tile:requestedTile})}>Tôi muốn mua</button> {action("Không mua đợt này", "SKIP_BUILD")}
-          </div>}
+          {state.phase === "BuildingDemand" && state.buildingDemand && (() => {
+            const bd = state.buildingDemand;
+            const isHotel = bd.kind === "Hotel";
+            const stockLeft = isHotel ? state.hotels : state.houses;
+            const responded = bd.responded ?? [];
+            return <div className="space-y-2.5 rounded-lg border border-orange-800/50 bg-orange-950/20 p-3 text-sm">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-xs text-orange-400/70 uppercase tracking-wider">Xác nhận nhu cầu xây</div>
+                  <div className="font-bold text-orange-200">{isHotel ? "🏨 Khách sạn" : "🏠 Nhà"}</div>
+                </div>
+                <div className="text-right">
+                  <div className="text-[10px] text-orange-400/60">Kho ngân hàng</div>
+                  <div className="font-bold text-orange-300">{stockLeft} còn</div>
+                </div>
+              </div>
+              <p className="text-xs text-orange-200/60">Đủ cung → mua theo giá niêm yết. Cầu vượt cung → đấu giá.</p>
+              {/* Who responded */}
+              {state.players.length > 1 && (
+                <div className="flex flex-wrap gap-1">
+                  {state.players.map((pl, pi) => !pl.bankrupt && (
+                    <span key={pi} className={`text-[9px] rounded-full px-1.5 py-0.5 border ${responded.includes(pi) ? "bg-emerald-900/50 border-emerald-700/50 text-emerald-300" : "bg-stone-900/50 border-stone-700/40 text-stone-400"}`}>
+                      {TOKENS[pi]} {pl.name}{responded.includes(pi) ? " ✓" : ""}
+                    </span>
+                  ))}
+                </div>
+              )}
+              {demandTiles.length > 0 && <label className="block">
+                <span className="text-xs text-orange-200/70">Đất muốn xây</span>
+                <select aria-label="Đất muốn xây" className="w-full rounded bg-stone-900 border border-stone-700 p-1.5 mt-0.5 text-sm" value={requestedTile}
+                  onChange={e => setSelected(Number(e.target.value))}>
+                  {demandTiles.map(index => <option key={index} value={index}>{map.tiles[index].name} · ${map.tiles[index].houseCost}</option>)}
+                </select>
+              </label>}
+              <div className="flex gap-2">
+                <button className={`${buttonClass} flex-1`} disabled={!deciding} onClick={() => send({type:"REQUEST_BUILD",tile:requestedTile})}>🏗 Tôi muốn mua</button>
+                {action("Bỏ qua", "SKIP_BUILD")}
+              </div>
+            </div>;
+          })()}
           {state.auction && (() => {
             const auc = state.auction;
             const auctionName = auc.kind === "House" ? "🏠 Nhà" : auc.kind === "Hotel" ? "🏨 Khách sạn" : map.tiles[auc.tile]?.name ?? "?";
