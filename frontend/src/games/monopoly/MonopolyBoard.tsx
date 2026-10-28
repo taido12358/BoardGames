@@ -747,7 +747,14 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
           </div>
           {/* Color group header strip */}
           {GROUP_COLORS[tile.group] && <div className={`h-2.5 w-full ${GROUP_COLORS[tile.group]} ${property.mortgaged ? "opacity-30" : ""}`} />}
-          {property.mortgaged && <div className="bg-red-950/60 border-b border-red-800/50 px-3 py-1 flex items-center gap-1.5 text-[10px] text-red-400/90"><span>🔒</span><span>Đất đang thế chấp — không thu được thuê</span></div>}
+          {property.mortgaged && (() => {
+            const mortgageVal = Math.floor(tile.price / 2);
+            const unmortgageCost = Math.ceil(mortgageVal * 1.1);
+            return <div className="bg-red-950/60 border-b border-red-800/50 px-3 py-1.5 flex items-center justify-between text-[10px] text-red-400/90">
+              <div className="flex items-center gap-1"><span>🔒</span><span>Thế chấp — không thu thuê</span></div>
+              <span className="text-red-300/60 font-mono">Giải: ${unmortgageCost}</span>
+            </div>;
+          })()}
           {/* Special tile header for corner/special tiles */}
           {!tile.group && tile.kind !== "Street" && tile.kind !== "Railroad" && tile.kind !== "Utility" && (() => {
             const SPECIAL: Record<string, { icon: string; color: string; desc: string }> = {
@@ -791,20 +798,20 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
             </div>}
             {tile.price > 0 && (
               <div className="grid grid-cols-3 gap-2 text-sm">
-                <div className="rounded-lg bg-stone-900/60 px-2 py-1.5 text-center">
-                  <div className="text-[10px] text-amber-200/50">Mua</div>
+                <div className={`rounded-lg px-2 py-1.5 text-center ${property.owner === null ? "bg-emerald-950/40 border border-emerald-900/40" : "bg-stone-900/60"}`}>
+                  <div className="text-[10px] text-amber-200/50">Giá</div>
                   <div className="font-bold tabular-nums">${tile.price}</div>
                 </div>
                 {["Street","Railroad","Utility"].includes(tile.kind) && (
-                  <div className="rounded-lg bg-stone-900/60 px-2 py-1.5 text-center">
+                  <div className={`rounded-lg px-2 py-1.5 text-center ${property.mortgaged ? "bg-red-950/40 border border-red-900/40" : "bg-stone-900/60"}`}>
                     <div className="text-[10px] text-amber-200/50">TC</div>
-                    <div className="font-bold tabular-nums">${tile.price/2}</div>
+                    <div className="font-bold tabular-nums">${Math.floor(tile.price/2)}</div>
                   </div>
                 )}
                 {tile.houseCost > 0 && (
                   <div className="rounded-lg bg-stone-900/60 px-2 py-1.5 text-center">
-                    <div className="text-[10px] text-amber-200/50">Xây</div>
-                    <div className="font-bold tabular-nums">${tile.houseCost}</div>
+                    <div className="text-[10px] text-amber-200/50">Xây/bán</div>
+                    <div className="font-bold tabular-nums">${tile.houseCost}<span className="text-[9px] text-amber-200/30">/${Math.floor(tile.houseCost/2)}</span></div>
                   </div>
                 )}
               </div>
