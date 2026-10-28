@@ -381,20 +381,27 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
                 {state.utilityDice && <p className="text-[10px] text-amber-200/60">Dịch vụ: {state.utilityDice.join("+")}={state.utilityDice.reduce((s,n)=>s+n,0)}</p>}
                 {state.lastCard && !cardOverlay && <p className="max-w-[180px] rounded border border-amber-700/40 bg-stone-950/60 px-2 py-1 text-[10px] text-amber-100/80 leading-snug">{state.lastCard}</p>}
                 {/* Mini leaderboard */}
-                <div className="space-y-0.5 w-full">
-                  {[...state.players.map((pl, idx) => ({ pl, idx, nw: playerNetWorth[idx] }))]
+                {(() => {
+                  const leaderList = [...state.players.map((pl, idx) => ({ pl, idx, nw: playerNetWorth[idx] }))]
                     .filter(x => !x.pl.bankrupt)
-                    .sort((a, b) => b.nw - a.nw)
-                    .map(({ pl, idx, nw }, rank) => (
-                      <div key={idx} className={`flex items-center gap-1 rounded px-1.5 py-0.5 text-[9px] ${idx === currentActor ? "bg-amber-900/40" : "bg-stone-900/30"}`}>
-                        <span className="text-amber-400/60 w-3 shrink-0">{rank+1}</span>
-                        <span className="shrink-0">{TOKENS[idx]}</span>
-                        <span className="truncate flex-1 text-left text-amber-200/70">{pl.name}</span>
-                        <span className="font-mono font-bold text-amber-100/90 tabular-nums shrink-0">${nw.toLocaleString("vi-VN")}</span>
-                      </div>
-                    ))
-                  }
-                </div>
+                    .sort((a, b) => b.nw - a.nw);
+                  const topNW = leaderList[0]?.nw || 1;
+                  return (
+                    <div className="space-y-0.5 w-full">
+                      {leaderList.map(({ pl, idx, nw }, rank) => (
+                        <div key={idx} className={`relative rounded overflow-hidden ${idx === currentActor ? "bg-amber-900/40" : "bg-stone-900/30"}`}>
+                          <div className="absolute inset-0 left-0 top-0 h-full bg-amber-700/10 transition-all duration-700" style={{ width: `${Math.round((nw/topNW)*100)}%` }} />
+                          <div className="relative flex items-center gap-1 px-1.5 py-0.5 text-[9px]">
+                            <span className="text-amber-400/60 w-3 shrink-0">{rank === 0 ? "🥇" : rank === 1 ? "🥈" : rank === 2 ? "🥉" : `${rank+1}.`}</span>
+                            <span className="shrink-0">{TOKENS[idx]}</span>
+                            <span className="truncate flex-1 text-left text-amber-200/70">{pl.name}</span>
+                            <span className="font-mono font-bold text-amber-100/90 tabular-nums shrink-0">${nw.toLocaleString("vi-VN")}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })()}
               </div>
             )}
           </div>
@@ -789,6 +796,27 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
                 </>
               )}
             </div>
+            {/* Color group sibling tiles */}
+            {tile.group && groupTiles[tile.group] && groupTiles[tile.group].length > 1 && (
+              <div className="space-y-1">
+                <div className="text-[10px] text-amber-400/50 uppercase tracking-wider">Nhóm {tile.group}</div>
+                {groupTiles[tile.group].map(idx => {
+                  const sibProp = state.properties[idx];
+                  const sibTile = map.tiles[idx];
+                  return (
+                    <button key={idx} type="button" onClick={() => setSelected(idx)}
+                      className={`w-full flex items-center gap-2 rounded px-2 py-1 text-[10px] text-left transition-colors ${idx === selected ? "bg-amber-900/40" : "bg-stone-900/30 hover:bg-stone-900/60"}`}>
+                      <span className={`w-2 h-2 rounded-sm shrink-0 ${GROUP_COLORS[tile.group] ?? "bg-stone-600"}`} />
+                      <span className="flex-1 truncate text-amber-200/70">{sibTile.name}</span>
+                      {sibProp.owner !== null && <span>{TOKENS[sibProp.owner]}</span>}
+                      {sibProp.mortgaged && <span className="text-red-400/70">🔒</span>}
+                      {sibProp.buildings > 0 && <span className={sibProp.buildings === 5 ? "text-red-400" : "text-emerald-400"}>{"●".repeat(sibProp.buildings === 5 ? 1 : sibProp.buildings)}{sibProp.buildings === 5 ? "H" : ""}</span>}
+                      {sibProp.owner === null && <span className="text-stone-500 italic">Chưa mua</span>}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
             {property.owner === seat && canManage && (() => {
               const inDebt = ["Debt","Inheritance"].includes(state.phase);
               const mortgageVal = Math.floor(tile.price / 2);
@@ -855,16 +883,22 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
           <div className="flex items-center gap-1.5"><span className="text-stone-500">Đất đã bán:</span><span className="font-mono font-bold text-amber-200/80">{propertiesSold}/{totalProperties}</span></div>
           <span className="text-stone-700">·</span>
           <div className="flex items-center gap-1.5"><span className="text-stone-500">Còn:</span><span className="font-bold text-amber-200/80">{activePlayers.length} người</span></div>
+          <span className="text-stone-700">·</span>
+          <div className="flex items-center gap-1.5"><span className="text-stone-500">🏠</span><span className="font-mono font-bold text-emerald-400/80">{state.houses}</span><span className="text-stone-600 mx-0.5">/</span><span className="text-stone-500">🏨</span><span className="font-mono font-bold text-red-400/80">{state.hotels}</span><span className="text-stone-600 ml-0.5 text-[9px]">còn</span></div>
         </div>
       );
     })()}
     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-      {state.players.map((p, i) => {
+      {(() => {
+        const rankOrder = [...state.players.map((_, idx) => ({ idx, nw: playerNetWorth[idx] }))].sort((a,b) => b.nw - a.nw);
+        const rankMap = Object.fromEntries(rankOrder.map((x,r) => [x.idx, r+1]));
+        return state.players.map((p, i) => {
         const owned = map.tiles.filter(t => state.properties[t.index].owner === i);
         const nw = playerNetWorth[i];
         const nwPct = Math.min(100, Math.round((nw / maxNetWorth) * 100));
         const isMe = i === seat;
         const isActor = i === currentActor;
+        const rank = rankMap[i];
         return (
           <div key={i} className={`relative rounded-xl border overflow-hidden ${
             p.bankrupt ? "border-stone-800 opacity-40" :
@@ -896,11 +930,13 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
                   <div className="font-bold text-sm leading-tight truncate">
                     {p.name}{isMe && <span className="text-amber-500/70 text-[10px] font-normal ml-1">(Bạn)</span>}
                   </div>
-                  <div className="text-[10px] text-amber-200/50 truncate">{map.tiles[p.position]?.name ?? "—"}</div>
+                  <button type="button" className="text-[10px] text-amber-200/50 truncate hover:text-amber-300/70 text-left"
+                    onClick={() => setSelected(p.position)}>{map.tiles[p.position]?.name ?? "—"}</button>
                 </div>
                 <div className="flex gap-1 shrink-0 items-center">
                   {p.jailCards.length > 0 && <span title="Thẻ ra tù" className="text-xs bg-stone-800 border border-stone-600 rounded px-1">🎫{p.jailCards.length > 1 ? p.jailCards.length : ""}</span>}
                   {isActor && !p.bankrupt && <span className="text-[9px] bg-amber-900/70 text-amber-300 rounded px-1 py-0.5 font-bold">▶</span>}
+                {!p.bankrupt && <span className={`text-[9px] rounded px-1 py-0.5 font-bold shrink-0 ${rank === 1 ? "bg-amber-700/60 text-amber-200" : "bg-stone-800/60 text-stone-400"}`}>#{rank}</span>}
                 </div>
               </div>
               {/* Jail status */}
@@ -934,6 +970,17 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
                   )}
                 </div>
               )}
+              {/* Buildings summary */}
+              {(() => {
+                const houses = owned.filter(t => state.properties[t.index].buildings > 0 && state.properties[t.index].buildings < 5).reduce((s,t) => s + state.properties[t.index].buildings, 0);
+                const hotels = owned.filter(t => state.properties[t.index].buildings === 5).length;
+                return (houses > 0 || hotels > 0) ? (
+                  <div className="flex gap-2 text-[10px]">
+                    {houses > 0 && <span className="text-emerald-400">🏠×{houses}</span>}
+                    {hotels > 0 && <span className="text-red-400">🏨×{hotels}</span>}
+                  </div>
+                ) : null;
+              })()}
               {/* Property chips by color */}
               {owned.length > 0 && (
                 <div className="flex flex-wrap gap-0.5">
@@ -953,7 +1000,7 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
                   {playerMonopolies[i].map(g => (
                     <span key={g} title={`Độc quyền ${g}`}
                       className={`inline-flex items-center gap-0.5 text-[9px] rounded-full px-1.5 py-0.5 font-bold border border-black/20 text-stone-900 ${GROUP_COLORS[g] ?? "bg-stone-500"}`}>
-                      👑
+                      👑 {g}
                     </span>
                   ))}
                 </div>
@@ -961,7 +1008,8 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
             </div>
           </div>
         );
-      })}
+      });
+      })()}
     </div>
     <details open className="rounded-xl border border-amber-900/60 bg-stone-950/40 p-4">
       <summary className="cursor-pointer font-semibold text-amber-200/80 flex items-center gap-2">
@@ -971,6 +1019,7 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
       <ol ref={logRef} className="mt-3 max-h-52 overflow-y-auto space-y-0.5 text-sm text-amber-200/80">
         {state.log.map((line, i) => (
           <li key={i} className={`flex items-start gap-1.5 rounded px-1 py-0.5 ${i >= logNewStart ? "monopoly-log-entry bg-amber-900/20" : "hover:bg-stone-900/30"}`}>
+            <span className="shrink-0 text-[9px] mt-1 text-stone-600 tabular-nums w-5 text-right select-none">{i+1}</span>
             <span className="shrink-0 text-[11px] mt-0.5 opacity-70">{logIcon(line)}</span>
             <span className="text-xs leading-relaxed">{line}</span>
           </li>
