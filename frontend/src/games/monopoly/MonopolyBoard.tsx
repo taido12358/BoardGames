@@ -150,14 +150,41 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
     disabled={!deciding || disabled} onClick={() => send({ type })}>{label}</button>;
   const names = (ids: number[]) => ids.map(i => map.tiles[i]?.name ?? "?").join(", ") || "Không có đất";
 
+  // ── Net worth = cash + estimated property equity ─────────────────────────
+  const playerNetWorth = state.players.map((p, i) => {
+    if (p.bankrupt) return 0;
+    const propEq = map.tiles.reduce((s, t) => {
+      const pr = state.properties[t.index];
+      if (pr.owner !== i) return s;
+      const base = pr.mortgaged ? Math.floor(t.price / 4) : Math.floor(t.price / 2);
+      const houses = t.houseCost ? pr.buildings * Math.floor(t.houseCost / 2) : 0;
+      return s + base + houses;
+    }, 0);
+    return p.cash + propEq;
+  });
+  const maxNetWorth = Math.max(...playerNetWorth.filter((_, i) => !state.players[i].bankrupt), 1);
+
   return <section className="space-y-4 text-amber-100">
     {!replayRoom && <><ConnectionBanner connectionState={connectionState} />
     <RoomErrorBanner error={error} />
     <DisconnectBadge seats={room.seats} />
     <RoomStatusBanner room={room} mySide={mySide} /></>}
-    <header className="flex flex-wrap items-center justify-between gap-2">
-      <div><h1 className="text-2xl font-bold">🏦 CỜ TỈ PHÚ</h1><p className="text-xs text-amber-300/70">{map.edition} · 40 ô · Ngân hàng: {state.houses} nhà, {state.hotels} khách sạn</p></div>
-      <p>{replayRoom ? "Bản ghi chỉ đọc" : seat < 0 ? "Bạn đang xem ván đấu" : `${TOKENS[seat]} Bạn: ${player?.name ?? "Đang chờ"}`}</p>
+    <header className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-amber-900/40 bg-stone-950/60 px-4 py-3">
+      <div>
+        <h1 className="text-xl font-black tracking-wide text-amber-300">🏦 CỜ TỈ PHÚ</h1>
+        <p className="text-xs text-amber-300/50 mt-0.5">{map.edition} · Kho: {state.houses} nhà · {state.hotels} KS</p>
+      </div>
+      <div className="flex items-center gap-3">
+        {state.started && !state.winner && (
+          <div className="text-xs text-amber-200/60 text-right">
+            <span className="block">Pha: <span className="font-bold text-amber-300">{PHASES[state.phase] ?? state.phase}</span></span>
+            {state.doubles > 0 && <span className="text-amber-400/70">🎲×{state.doubles} liên tiếp</span>}
+          </div>
+        )}
+        <div className="text-sm text-amber-200/70">
+          {replayRoom ? "📼 Bản ghi" : seat < 0 ? "👁 Xem" : `${TOKENS[seat]} ${player?.name ?? "—"}`}
+        </div>
+      </div>
     </header>
     <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
       <div className="overflow-x-auto rounded-xl border border-emerald-800 bg-emerald-950/50 p-2">
@@ -239,35 +266,153 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
               onClick={() => send({type:"ACCEPT",redeemReceived:true})}>Chấp nhận và giải chấp ngay</button></>}
           </div>}
         </div>}
-        <div key={selected} className="animate-game-action-enter rounded-xl border border-amber-900 p-4">
-          <h2 className="font-bold">{tile.name}</h2>
-          <p className="text-sm text-amber-200/70">Ô {selected} · {tile.group || tile.kind}</p>
-          {tile.price > 0 && <p className="mt-2 text-sm">Giá {tile.price}{["Street","Railroad","Utility"].includes(tile.kind) && ` · Thế chấp ${tile.price/2}`}</p>}
-          {tile.rents && <table className="my-2 w-full text-sm"><caption className="text-left">Tiền thuê · Xây mỗi cấp {tile.houseCost}</caption><tbody>{tile.rents.map((rent,i) => <tr key={i}><td>{i === 0 ? "Đất trống" : i === 5 ? "Khách sạn" : `${i} nhà`}</td><td className="text-right">{rent}</td></tr>)}</tbody></table>}
-          {tile.kind === "Railroad" && <p className="text-sm">1/2/3/4 ga: thuê 25/50/100/200.</p>}
-          {tile.kind === "Utility" && <p className="text-sm">1/2 công ty: thuê 4/10 lần tổng xúc xắc.</p>}
-          <p className="my-2 text-sm">{property.owner === null ? "Chưa có chủ" : `Chủ: ${state.players[property.owner]?.name}${property.mortgaged ? " · Đang thế chấp" : ""}`}</p>
-          {property.owner === seat && canManage && <div className="flex flex-wrap gap-2">{["BUILD","SELL","SELL_GROUP","MORTGAGE","UNMORTGAGE"].map((type,i) => <button key={type} className={buttonClass}
-            disabled={["Debt","Inheritance"].includes(state.phase) && ["BUILD","UNMORTGAGE"].includes(type)} onClick={() => send({type,tile:selected})}>{["Xây nhà","Bán nhà","Bán nhà cả nhóm","Thế chấp","Giải chấp"][i]}</button>)}</div>}
+        <div key={selected} className="animate-game-action-enter rounded-xl border border-amber-900 overflow-hidden">
+          {/* Color group header strip */}
+          {GROUP_COLORS[tile.group] && <div className={`h-2.5 w-full ${GROUP_COLORS[tile.group]}`} />}
+          <div className="p-4 space-y-3">
+            <div>
+              <h2 className="font-bold text-amber-100">{tile.name}</h2>
+              <p className="text-xs text-amber-200/50">Ô {selected} · {tile.group || tile.kind}</p>
+            </div>
+            {tile.price > 0 && (
+              <div className="grid grid-cols-3 gap-2 text-sm">
+                <div className="rounded-lg bg-stone-900/60 px-2 py-1.5 text-center">
+                  <div className="text-[10px] text-amber-200/50">Mua</div>
+                  <div className="font-bold tabular-nums">${tile.price}</div>
+                </div>
+                {["Street","Railroad","Utility"].includes(tile.kind) && (
+                  <div className="rounded-lg bg-stone-900/60 px-2 py-1.5 text-center">
+                    <div className="text-[10px] text-amber-200/50">TC</div>
+                    <div className="font-bold tabular-nums">${tile.price/2}</div>
+                  </div>
+                )}
+                {tile.houseCost > 0 && (
+                  <div className="rounded-lg bg-stone-900/60 px-2 py-1.5 text-center">
+                    <div className="text-[10px] text-amber-200/50">Xây</div>
+                    <div className="font-bold tabular-nums">${tile.houseCost}</div>
+                  </div>
+                )}
+              </div>
+            )}
+            {tile.rents && (
+              <div className="rounded-lg overflow-hidden border border-amber-900/40 text-sm">
+                {tile.rents.map((rent, i) => (
+                  <div key={i} className={`flex justify-between items-center px-2 py-1 ${i > 0 ? "border-t border-amber-900/25" : ""} ${property.buildings === i ? "bg-amber-900/40" : i % 2 === 0 ? "bg-stone-900/30" : ""}`}>
+                    <span className="text-amber-200/70 text-xs">
+                      {i === 0 ? "Đất trống" : i === 5 ? "🏨 Khách sạn" : `${"🏠".repeat(i)}`}
+                    </span>
+                    <span className={`font-mono font-bold tabular-nums ${property.buildings === i ? "text-amber-300" : "text-amber-100"}`}>${rent}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+            {tile.kind === "Railroad" && <p className="text-xs text-amber-200/60 rounded bg-stone-900/40 px-2 py-1">1/2/3/4 ga: $25/$50/$100/$200</p>}
+            {tile.kind === "Utility" && <p className="text-xs text-amber-200/60 rounded bg-stone-900/40 px-2 py-1">1/2 công ty: 4× / 10× tổng xúc xắc</p>}
+            {/* Ownership */}
+            <div>
+              {property.owner === null ? (
+                <span className="text-xs text-amber-200/40 italic">Chưa có chủ</span>
+              ) : (
+                <div className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-sm border ${property.owner === seat ? "bg-amber-900/50 border-amber-700/60" : "bg-stone-900/60 border-stone-700/50"}`}>
+                  <span>{TOKENS[property.owner]}</span>
+                  <span className="font-medium">{state.players[property.owner]?.name}</span>
+                  {property.mortgaged && <span className="text-[10px] text-red-400/80 ml-0.5">🔒TC</span>}
+                  {property.buildings === 5 && <span className="ml-0.5">🏨</span>}
+                  {property.buildings > 0 && property.buildings < 5 && <span className="text-xs ml-0.5">{"🏠".repeat(property.buildings)}</span>}
+                </div>
+              )}
+            </div>
+            {property.owner === seat && canManage && (
+              <div className="flex flex-wrap gap-1.5">
+                {(["BUILD","SELL","SELL_GROUP","MORTGAGE","UNMORTGAGE"] as const).map((type, idx) => (
+                  <button key={type} className={`${buttonClass} text-xs py-1`}
+                    disabled={["Debt","Inheritance"].includes(state.phase) && ["BUILD","UNMORTGAGE"].includes(type)}
+                    onClick={() => send({type, tile: selected})}>
+                    {["🏠 Xây","🔨 Bán","Bán nhóm","🔒 TC","✓ Giải"][idx]}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
         {canManage && state.phase !== "Inheritance" && player && <TradeForm key={`${room.id}-${seat}`} map={map} state={state} seat={seat} send={send} />}
         {!replayRoom && <>{room.status === "Finished" && <RematchButton onRematch={onRematch} loading={rematching} />}
         <LeaveRoomButton onLeave={onLeave} /></>}
       </aside>
     </div>
-    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{state.players.map((p,i) => <div key={i}
-      className={`relative rounded-lg border p-3 ${p.bankrupt ? "border-stone-800 opacity-50" : i === currentActor ? "border-amber-400 bg-amber-950/50 monopoly-player-active" : "border-amber-900"} ${newBankrupts.has(i) ? "monopoly-bankrupt-enter" : ""}`}>
-      {cashDeltas.filter(d => d.player === i).map(delta => (
-        <span key={delta.id} className={`monopoly-cash-delta ${delta.amount > 0 ? "monopoly-cash-delta-gain" : "monopoly-cash-delta-loss"}`}>
-          {delta.amount > 0 ? `+${delta.amount.toLocaleString("vi-VN")}` : delta.amount.toLocaleString("vi-VN")}
-        </span>
-      ))}
-      <h2 className="font-bold"><span className={i === currentActor ? "monopoly-token-bounce" : ""}>{TOKENS[i]}</span> {p.name}{i === seat ? " (Bạn)" : ""}</h2>
-      <p>{p.bankrupt ? "Đã phá sản" : `${p.cash.toLocaleString("vi-VN")} · ${map.tiles[p.position].name}`}</p>
-      {p.inJail && <p className="text-sm">Trong tù · Đã thử {p.jailAttempts}/3</p>}
-      {p.jailCards.length > 0 && <p className="text-sm">Thẻ ra tù: {p.jailCards.length}</p>}
-      <div className="mt-2 flex flex-wrap gap-1">{map.tiles.filter(t => state.properties[t.index].owner === i).map(t => <button className={`rounded border border-stone-600 px-1 text-xs ${GROUP_COLORS[t.group] ?? "bg-stone-700"}`} key={t.index} onClick={() => setSelected(t.index)} title={t.name} aria-label={`Xem ${t.name}`}>{t.index}{state.properties[t.index].mortgaged ? "🔒" : ""}</button>)}</div>
-    </div>)}</div>
+    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      {state.players.map((p, i) => {
+        const owned = map.tiles.filter(t => state.properties[t.index].owner === i);
+        const nw = playerNetWorth[i];
+        const nwPct = Math.min(100, Math.round((nw / maxNetWorth) * 100));
+        const isMe = i === seat;
+        const isActor = i === currentActor;
+        return (
+          <div key={i} className={`relative rounded-xl border overflow-hidden ${
+            p.bankrupt ? "border-stone-800 opacity-40" :
+            isActor ? "border-amber-400 bg-amber-950/60 monopoly-player-active" :
+            isMe ? "border-amber-700/70 bg-amber-950/30" : "border-amber-900/50 bg-stone-950/40"
+          } ${newBankrupts.has(i) ? "monopoly-bankrupt-enter" : ""}`}>
+            {/* Net-worth progress bar at top */}
+            {!p.bankrupt && (
+              <div className="h-1 w-full bg-stone-800">
+                <div className="h-full bg-gradient-to-r from-amber-700 to-amber-400 transition-all duration-700 ease-out" style={{ width: `${nwPct}%` }} />
+              </div>
+            )}
+            <div className="p-3 space-y-2">
+              {/* Cash delta floaters */}
+              {cashDeltas.filter(d => d.player === i).map(delta => (
+                <span key={delta.id} className={`monopoly-cash-delta ${delta.amount > 0 ? "monopoly-cash-delta-gain" : "monopoly-cash-delta-loss"}`}>
+                  {delta.amount > 0 ? `+${delta.amount.toLocaleString("vi-VN")}` : delta.amount.toLocaleString("vi-VN")}
+                </span>
+              ))}
+              {/* Header row */}
+              <div className="flex items-center gap-2 min-w-0">
+                <span className={`text-xl shrink-0 ${isActor ? "monopoly-token-bounce" : ""}`}>{TOKENS[i]}</span>
+                <div className="flex-1 min-w-0">
+                  <div className="font-bold text-sm leading-tight truncate">
+                    {p.name}{isMe && <span className="text-amber-500/70 text-[10px] font-normal ml-1">(Bạn)</span>}
+                  </div>
+                  <div className="text-[10px] text-amber-200/50 truncate">{map.tiles[p.position]?.name ?? "—"}</div>
+                </div>
+                <div className="flex gap-1 shrink-0 items-center">
+                  {p.inJail && <span title={`Trong tù · thử ${p.jailAttempts}/3`} className="text-xs bg-red-950/80 border border-red-800/60 rounded px-1">⛓</span>}
+                  {p.jailCards.length > 0 && <span title="Thẻ ra tù" className="text-xs bg-stone-800 border border-stone-600 rounded px-1">🎫{p.jailCards.length > 1 ? p.jailCards.length : ""}</span>}
+                  {isActor && !p.bankrupt && <span className="text-[9px] bg-amber-900/70 text-amber-300 rounded px-1 py-0.5 font-bold">▶</span>}
+                </div>
+              </div>
+              {/* Cash */}
+              {p.bankrupt ? (
+                <p className="text-sm text-stone-500 font-bold">💀 Phá sản</p>
+              ) : (
+                <div>
+                  <div className="flex items-baseline justify-between">
+                    <span className="text-[10px] text-amber-200/50">Tiền mặt</span>
+                    <span className="font-bold text-amber-100 tabular-nums">${p.cash.toLocaleString("vi-VN")}</span>
+                  </div>
+                  {nw > p.cash && (
+                    <div className="text-[10px] text-amber-200/40 text-right">≈ ${nw.toLocaleString("vi-VN")} tài sản</div>
+                  )}
+                </div>
+              )}
+              {/* Property chips by color */}
+              {owned.length > 0 && (
+                <div className="flex flex-wrap gap-0.5">
+                  {owned.map(t => (
+                    <button key={t.index}
+                      className={`w-3.5 h-3.5 rounded-sm border border-black/30 transition-transform hover:scale-150 hover:z-10 relative ${GROUP_COLORS[t.group] ?? "bg-stone-600"} ${state.properties[t.index].mortgaged ? "opacity-30" : ""}`}
+                      onClick={() => setSelected(t.index)}
+                      title={`${t.name}${state.properties[t.index].mortgaged ? " (TC)" : ""}${state.properties[t.index].buildings > 0 ? ` 🏠×${state.properties[t.index].buildings}` : ""}`}
+                      aria-label={`Xem ${t.name}`}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      })}
+    </div>
     <details open className="rounded-xl border border-amber-900 p-4"><summary className="cursor-pointer font-semibold">Nhật ký ván đấu</summary>
       <ol ref={logRef} className="mt-3 max-h-52 overflow-y-auto space-y-1 text-sm text-amber-200/80">{state.log.map((line,i) => <li key={i} className={i >= logNewStart ? "monopoly-log-entry" : ""}>{line}</li>)}</ol>
     </details>

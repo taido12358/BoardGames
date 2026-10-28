@@ -2205,6 +2205,46 @@ button[draggable="true"]:active { cursor: grabbing; }
   will-change: filter;
 }
 
+/* ─── Monopoly: Selected tile group-color glow ───────────────────────── */
+[data-monopoly-tile][data-group="Brown"][aria-pressed="true"]      { border-color: #92400e; box-shadow: inset 0 0 16px rgba(146,64,14,0.55), 0 0 14px rgba(146,64,14,0.5); }
+[data-monopoly-tile][data-group="LightBlue"][aria-pressed="true"]  { border-color: #7dd3fc; box-shadow: inset 0 0 16px rgba(125,211,252,0.5), 0 0 14px rgba(125,211,252,0.45); }
+[data-monopoly-tile][data-group="Pink"][aria-pressed="true"]       { border-color: #f472b6; box-shadow: inset 0 0 16px rgba(244,114,182,0.5), 0 0 14px rgba(244,114,182,0.45); }
+[data-monopoly-tile][data-group="Orange"][aria-pressed="true"]     { border-color: #f97316; box-shadow: inset 0 0 16px rgba(249,115,22,0.5), 0 0 14px rgba(249,115,22,0.45); }
+[data-monopoly-tile][data-group="Red"][aria-pressed="true"]        { border-color: #ef4444; box-shadow: inset 0 0 16px rgba(220,38,38,0.5), 0 0 14px rgba(220,38,38,0.45); }
+[data-monopoly-tile][data-group="Yellow"][aria-pressed="true"]     { border-color: #fde047; box-shadow: inset 0 0 16px rgba(253,224,71,0.5), 0 0 14px rgba(253,224,71,0.4); }
+[data-monopoly-tile][data-group="Green"][aria-pressed="true"]      { border-color: #10b981; box-shadow: inset 0 0 16px rgba(5,150,105,0.5), 0 0 14px rgba(5,150,105,0.45); }
+[data-monopoly-tile][data-group="DarkBlue"][aria-pressed="true"]   { border-color: #3b82f6; box-shadow: inset 0 0 16px rgba(29,78,216,0.5), 0 0 14px rgba(29,78,216,0.45); }
+
+/* ─── Monopoly: Property chip hover tooltip ────────────────────────── */
+@keyframes monopolyNetWorthBar {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+
+/* ─── Monopoly: Payment received/sent ────────────────────────────────── */
+@keyframes monopolyPaymentIn {
+  0%   { transform: translateY(0) scale(1); opacity: 1; }
+  60%  { transform: translateY(-22px) scale(1.1); opacity: 1; }
+  100% { transform: translateY(-38px) scale(0.9); opacity: 0; }
+}
+@keyframes monopolyPaymentOut {
+  0%   { transform: translateY(0) scale(1); opacity: 1; }
+  60%  { transform: translateY(22px) scale(1.1); opacity: 1; }
+  100% { transform: translateY(38px) scale(0.9); opacity: 0; }
+}
+
+/* ─── Monopoly: Tile building level indicator ────────────────────────── */
+.monopoly-tile-built {
+  box-shadow: inset 0 0 12px rgba(34,197,94,0.35);
+}
+
+/* ─── Monopoly: Current actor badge flash ────────────────────────────── */
+@keyframes monopolyActorBadge {
+  0%,100% { opacity: 1; }
+  50%     { opacity: 0.5; }
+}
+.monopoly-actor-badge { animation: monopolyActorBadge 1.4s ease-in-out infinite; }
+
 @media (prefers-reduced-motion: reduce) {
   /* Future and third-party cues should also respect reduced motion by default. */
   *, *::before, *::after { transition-duration: 1ms !important; transition-delay: 0ms !important; scroll-behavior: auto !important; animation-duration: 1ms !important; animation-delay: 0ms !important; animation-iteration-count: 1 !important; }
@@ -2494,6 +2534,7 @@ button[draggable="true"]:active { cursor: grabbing; }
   .monopoly-bankrupt-enter { animation: none !important; filter: grayscale(1) brightness(0.55); }
   .monopoly-winner-banner { animation: monopolyWinnerEntry 0.65s cubic-bezier(0.34, 1.5, 0.64, 1) both !important; }
   .monopoly-tile-just-purchased { animation: none !important; background-color: rgba(34,197,94,0.18); box-shadow: inset 0 0 8px rgba(34,197,94,0.4); }
+  .monopoly-actor-badge { animation: none !important; }
   .monopoly-cash-delta { animation: none !important; opacity: 0; }
   [data-monopoly-tile]:active:not(:disabled) { transform: none; }
 }
