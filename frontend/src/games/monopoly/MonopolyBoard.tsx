@@ -432,16 +432,19 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
         {/* Color group legend */}
         <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 px-1">
           {Object.entries(GROUP_COLORS).map(([group, cls]) => {
-            const groupOwners = groupTiles[group] ? (() => {
-              const owner = state.properties[groupTiles[group][0]]?.owner;
-              const isMonopoly = owner !== null && groupTiles[group].every(idx => state.properties[idx].owner === owner);
-              return isMonopoly ? owner : null;
-            })() : null;
+            const tiles = groupTiles[group] ?? [];
+            if (!tiles.length) return null;
+            const firstOwner = state.properties[tiles[0]]?.owner;
+            const isMonopoly = firstOwner !== null && tiles.every(idx => state.properties[idx].owner === firstOwner);
+            const ownedCount = tiles.filter(idx => state.properties[idx].owner !== null).length;
             return (
-              <div key={group} className="flex items-center gap-1 text-[10px] text-amber-200/60">
-                <span className={`w-3 h-3 rounded-sm inline-block ${cls} ${groupOwners !== null ? "ring-1 ring-amber-300/60" : ""}`} />
-                <span>{group}{groupOwners !== null ? ` ${TOKENS[groupOwners]}` : ""}</span>
-              </div>
+              <button key={group} type="button" onClick={() => tiles[0] !== undefined && setSelected(tiles[0])}
+                className="flex items-center gap-1 text-[10px] text-amber-200/60 hover:text-amber-200/90 transition-colors">
+                <span className={`w-3 h-3 rounded-sm inline-block ${cls} ${isMonopoly ? "ring-1 ring-amber-300/60" : ""}`} />
+                <span>{group}</span>
+                {isMonopoly && <span>{TOKENS[firstOwner!]}👑</span>}
+                {!isMonopoly && ownedCount > 0 && <span className="text-stone-600">{ownedCount}/{tiles.length}</span>}
+              </button>
             );
           })}
         </div>
@@ -475,12 +478,24 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
               const buyTile = map.tiles[state.players[state.turn].position];
               const buyProp = state.properties[state.players[state.turn].position];
               return <>
-                {buyTile.group && <div className={`w-full flex items-center gap-2 rounded-lg p-2 border border-black/20 ${GROUP_COLORS[buyTile.group] ?? "bg-stone-700"}`}>
-                  <div className="text-stone-900">
-                    <div className="font-bold text-sm leading-tight">{buyTile.name}</div>
-                    <div className="text-[10px] opacity-70">{buyTile.group} · {buyProp.owner === null ? "Chưa ai mua" : state.players[buyProp.owner]?.name}</div>
+                {buyTile.group && <div className={`w-full rounded-lg border border-black/20 overflow-hidden ${GROUP_COLORS[buyTile.group] ?? "bg-stone-700"}`}>
+                  <div className="flex items-start gap-2 p-2">
+                    <div className="text-stone-900 flex-1 min-w-0">
+                      <div className="font-bold text-sm leading-tight">{buyTile.name}</div>
+                      <div className="text-[10px] opacity-70">{buyTile.group} · {buyProp.owner === null ? "Chưa ai mua" : state.players[buyProp.owner]?.name}</div>
+                    </div>
+                    <span className="text-stone-900 font-black text-lg shrink-0">${buyTile.price}</span>
                   </div>
-                  <span className="ml-auto text-stone-900 font-black text-lg">${buyTile.price}</span>
+                  {player && (
+                    <div className="px-2 pb-1.5 flex items-center justify-between text-[10px] text-stone-900/70">
+                      <span>Còn: ${(player.cash - buyTile.price).toLocaleString("vi-VN")}</span>
+                      {(() => {
+                        const groupAll = groupTiles[buyTile.group] ?? [];
+                        const ownedAfter = groupAll.filter(idx => state.properties[idx].owner === seat || idx === buyTile.index);
+                        return ownedAfter.length === groupAll.length && groupAll.length > 0 ? <span className="font-bold">👑 Độc quyền!</span> : <span>{ownedAfter.length}/{groupAll.length} nhóm</span>;
+                      })()}
+                    </div>
+                  )}
                 </div>}
                 {action(`🏠 Mua · $${buyTile.price}`, "BUY", false, deciding ? "monopoly-action-pulse" : "")}
                 {action("🔨 Đưa ra đấu giá", "DECLINE")}
@@ -492,13 +507,26 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
               const creditor = debt.to === null ? null : state.players[debt.to];
               const canPay = player && player.cash >= debt.amount;
               return <>
-                <div className="w-full rounded-lg border border-red-800/50 bg-red-950/40 p-3 space-y-1">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-red-400/70 uppercase tracking-wider">Khoản nợ</span>
-                    <span className="text-xl font-black text-red-300 tabular-nums">${debt.amount.toLocaleString("vi-VN")}</span>
+                <div className="w-full rounded-lg border border-red-800/50 bg-red-950/40 overflow-hidden">
+                  <div className="p-3 space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-red-400/70 uppercase tracking-wider">Khoản nợ</span>
+                      <span className="text-xl font-black text-red-300 tabular-nums">${debt.amount.toLocaleString("vi-VN")}</span>
+                    </div>
+                    <div className="text-sm text-red-200/80">→ {creditor ? `${TOKENS[debt.to!]} ${creditor.name}` : "🏦 Ngân hàng"}</div>
+                    {player && (
+                      <div className="flex items-center justify-between text-[10px] text-red-300/60">
+                        <span>Tiền mặt: ${player.cash.toLocaleString("vi-VN")}</span>
+                        <span>{canPay ? "✓ Đủ" : `Thiếu $${(debt.amount - player.cash).toLocaleString("vi-VN")}`}</span>
+                      </div>
+                    )}
                   </div>
-                  <div className="text-sm text-red-200/80">→ {creditor ? `${TOKENS[debt.to!]} ${creditor.name}` : "🏦 Ngân hàng"}</div>
-                  {!canPay && <div className="text-[10px] text-red-400/60">Tiền mặt không đủ — bán nhà hoặc thế chấp đất.</div>}
+                  {player && (
+                    <div className="h-1 w-full bg-red-900/60">
+                      <div className={`h-full transition-all ${canPay ? "bg-emerald-500/70" : "bg-red-500/70"}`} style={{ width: `${Math.min(100, Math.round((player.cash / debt.amount) * 100))}%` }} />
+                    </div>
+                  )}
+                  {!canPay && <div className="px-3 pb-2 text-[10px] text-red-400/60">Tiền mặt không đủ — bán nhà hoặc thế chấp đất.</div>}
                 </div>
                 {action("💸 Thanh toán", "SETTLE", false, deciding ? "monopoly-action-pulse" : "")}
                 {action("💀 Tuyên bố phá sản", "BANKRUPT")}
