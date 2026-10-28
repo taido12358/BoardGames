@@ -259,7 +259,7 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
       </div>
     </header>
     <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
-      <div className="overflow-x-auto rounded-xl border border-emerald-800 bg-emerald-950/50 p-2">
+      <div className="overflow-x-auto rounded-xl border border-emerald-700/60 bg-emerald-950 p-2 shadow-inner shadow-emerald-900/40">
         <div className="grid min-w-[660px] grid-cols-11 grid-rows-11 gap-0.5 aspect-square" aria-label="Bàn cờ 40 ô">
           {map.tiles.map(t => {
             const p = state.properties[t.index];
@@ -364,9 +364,20 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
                     </div>
                   ))}
                 </div>
-                {state.dice.some(n => n > 0) && (
-                  <p className="text-xs text-amber-200/60">= {state.dice.reduce((s,n)=>s+n,0)}{state.dice[0] === state.dice[1] ? " 🎲 Đôi!" : ""}</p>
-                )}
+                {state.dice.some(n => n > 0) && (() => {
+                  const sum = state.dice.reduce((s,n) => s+n, 0);
+                  const isDouble = state.dice[0] === state.dice[1];
+                  const actorTile = map.tiles[state.players[currentActor]?.position];
+                  return (
+                    <div className="space-y-1 text-xs text-amber-200/60">
+                      <p>= {sum}{isDouble ? " 🎲 Đôi!" : ""}</p>
+                      {actorTile && <button type="button" onClick={() => setSelected(state.players[currentActor]?.position)}
+                        className="text-[10px] rounded border border-amber-800/30 bg-stone-900/50 px-2 py-0.5 hover:bg-amber-900/30 transition-colors">
+                        {({"Go":"🏁","Jail":"⛓","FreeParking":"🅿","GoToJail":"🚔","Chance":"🎲","CommunityChest":"📦","IncomeTax":"💸","LuxuryTax":"💎"} as Record<string,string>)[actorTile.kind] ?? "📍"} {actorTile.name}
+                      </button>}
+                    </div>
+                  );
+                })()}
                 {state.utilityDice && <p className="text-[10px] text-amber-200/60">Dịch vụ: {state.utilityDice.join("+")}={state.utilityDice.reduce((s,n)=>s+n,0)}</p>}
                 {state.lastCard && !cardOverlay && <p className="max-w-[180px] rounded border border-amber-700/40 bg-stone-950/60 px-2 py-1 text-[10px] text-amber-100/80 leading-snug">{state.lastCard}</p>}
                 {/* Mini leaderboard */}
