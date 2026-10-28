@@ -116,6 +116,35 @@ export default function TradeForm({ map, state, seat, send }: TradeFormProps) {
             </label>
           </div>
         </div>
+        {/* Monopoly completion warnings */}
+        {(() => {
+          const warnings: string[] = [];
+          // Check if "offered" (tiles you give away) would complete a monopoly for target
+          const targetAfter = [...map.tiles.filter(t => state.properties[t.index].owner === target && !requested.includes(t.index)), ...map.tiles.filter(t => offered.includes(t.index))];
+          const groups = [...new Set(targetAfter.map(t => t.group).filter(Boolean))];
+          groups.forEach(g => {
+            const allInGroup = map.tiles.filter(t => t.group === g && t.kind === "Street");
+            if (allInGroup.length > 0 && allInGroup.every(t => targetAfter.some(t2 => t2.index === t.index))) {
+              warnings.push(`⚠️ ${TOKENS[target]} ${state.players[target]?.name} sẽ độc quyền nhóm ${g}!`);
+            }
+          });
+          // Check if "requested" (tiles you receive) would complete a monopoly for seat
+          const seatAfter = [...map.tiles.filter(t => state.properties[t.index].owner === seat && !offered.includes(t.index)), ...map.tiles.filter(t => requested.includes(t.index))];
+          const seatGroups = [...new Set(seatAfter.map(t => t.group).filter(Boolean))];
+          seatGroups.forEach(g => {
+            const allInGroup = map.tiles.filter(t => t.group === g && t.kind === "Street");
+            if (allInGroup.length > 0 && allInGroup.every(t => seatAfter.some(t2 => t2.index === t.index))) {
+              warnings.push(`✅ Bạn sẽ độc quyền nhóm ${g}!`);
+            }
+          });
+          return warnings.length > 0 ? (
+            <div className="space-y-1">
+              {warnings.map((w, wi) => (
+                <div key={wi} className={`text-xs rounded px-2 py-1 border ${w.startsWith("✅") ? "bg-emerald-950/40 border-emerald-800/40 text-emerald-300/80" : "bg-red-950/30 border-red-800/40 text-red-300/80"}`}>{w}</div>
+              ))}
+            </div>
+          ) : null;
+        })()}
         <label className="flex items-start gap-2 text-xs text-amber-200/60 cursor-pointer">
           <input type="checkbox" className="mt-0.5" checked={redeemRequested} onChange={e => setRedeemRequested(e.target.checked)} />
           Giải chấp ngay đất nhận (gốc + 10% lãi)
