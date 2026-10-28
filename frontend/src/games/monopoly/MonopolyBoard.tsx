@@ -393,11 +393,28 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
                 {action("💀 Tuyên bố phá sản", "BANKRUPT")}
               </>;
             })()}
-            {state.phase === "Inheritance" && inheritedTile && <>
-              <p className="w-full text-sm">Thừa kế {inheritedTile.name}: trả {inheritanceInterest} lãi để giữ thế chấp, hoặc {inheritedTile.price / 2 + inheritanceInterest} để giải chấp ngay.</p>
-              {action(`Giữ thế chấp · ${inheritanceInterest}`, "KEEP_INHERITED")}
-              {action(`Giải chấp ngay · ${inheritedTile.price / 2 + inheritanceInterest}`, "REDEEM_INHERITED", !player || player.cash < inheritedTile.price / 2 + inheritanceInterest)}
-            </>}
+            {state.phase === "Inheritance" && inheritedTile && (() => {
+              const redeemTotal = inheritedTile.price / 2 + inheritanceInterest;
+              const canRedeem = player && player.cash >= redeemTotal;
+              return <>
+                <div className="w-full rounded-lg border border-teal-800/50 bg-teal-950/30 p-3 space-y-1.5">
+                  <div className="text-xs text-teal-400/70 uppercase tracking-wider">📜 Thừa kế đất thế chấp</div>
+                  <div className="font-bold text-teal-100">{inheritedTile.name}</div>
+                  <div className="grid grid-cols-2 gap-2 mt-1">
+                    <div className="rounded bg-stone-900/50 p-2 text-center">
+                      <div className="text-[10px] text-teal-400/60">Giữ TC · trả lãi</div>
+                      <div className="font-bold text-teal-200">${inheritanceInterest}</div>
+                    </div>
+                    <div className="rounded bg-stone-900/50 p-2 text-center">
+                      <div className="text-[10px] text-teal-400/60">Giải chấp ngay</div>
+                      <div className="font-bold text-teal-200">${redeemTotal}</div>
+                    </div>
+                  </div>
+                </div>
+                {action(`✓ Giữ TC · $${inheritanceInterest}`, "KEEP_INHERITED", false, deciding ? "monopoly-action-pulse" : "")}
+                {action(`🔓 Giải chấp · $${redeemTotal}`, "REDEEM_INHERITED", !canRedeem)}
+              </>;
+            })()}
           </div>
           {state.phase === "BuildingDemand" && state.buildingDemand && (() => {
             const bd = state.buildingDemand;
@@ -568,6 +585,19 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
             )}
             {tile.kind === "Railroad" && <p className="text-xs text-amber-200/60 rounded bg-stone-900/40 px-2 py-1">1/2/3/4 ga: $25/$50/$100/$200</p>}
             {tile.kind === "Utility" && <p className="text-xs text-amber-200/60 rounded bg-stone-900/40 px-2 py-1">1/2 công ty: 4× / 10× tổng xúc xắc</p>}
+            {/* Occupants on this tile */}
+            {(() => {
+              const here = state.players.map((pl, pi) => !pl.bankrupt && pl.position === selected ? { pl, pi } : null).filter(Boolean) as { pl: typeof state.players[0]; pi: number }[];
+              return here.length > 0 ? (
+                <div className="flex flex-wrap gap-1">
+                  {here.map(({ pl, pi }) => (
+                    <span key={pi} className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] border ${pi === seat ? "bg-amber-900/50 border-amber-700/50 text-amber-200" : "bg-stone-800/60 border-stone-700/40 text-stone-300"}`}>
+                      {TOKENS[pi]} {pl.name}{pl.inJail && selected === 10 ? " ⛓" : ""}
+                    </span>
+                  ))}
+                </div>
+              ) : null;
+            })()}
             {/* Ownership */}
             <div>
               {property.owner === null ? (
@@ -636,11 +666,22 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
                   <div className="text-[10px] text-amber-200/50 truncate">{map.tiles[p.position]?.name ?? "—"}</div>
                 </div>
                 <div className="flex gap-1 shrink-0 items-center">
-                  {p.inJail && <span title={`Trong tù · thử ${p.jailAttempts}/3`} className="text-xs bg-red-950/80 border border-red-800/60 rounded px-1">⛓</span>}
                   {p.jailCards.length > 0 && <span title="Thẻ ra tù" className="text-xs bg-stone-800 border border-stone-600 rounded px-1">🎫{p.jailCards.length > 1 ? p.jailCards.length : ""}</span>}
                   {isActor && !p.bankrupt && <span className="text-[9px] bg-amber-900/70 text-amber-300 rounded px-1 py-0.5 font-bold">▶</span>}
                 </div>
               </div>
+              {/* Jail status */}
+              {p.inJail && (
+                <div className="flex items-center gap-1.5 rounded bg-red-950/50 border border-red-800/40 px-2 py-1">
+                  <span className="text-xs">⛓</span>
+                  <span className="text-[10px] text-red-300/80">Trong tù</span>
+                  <div className="ml-auto flex gap-0.5">
+                    {[1,2,3].map(n => (
+                      <span key={n} className={`w-2 h-2 rounded-full ${n <= p.jailAttempts ? "bg-red-500" : "bg-stone-700"}`} />
+                    ))}
+                  </div>
+                </div>
+              )}
               {/* Cash */}
               {p.bankrupt ? (
                 <p className="text-sm text-stone-500 font-bold">💀 Phá sản</p>
