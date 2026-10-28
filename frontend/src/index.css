@@ -2147,6 +2147,40 @@ button[draggable="true"]:active { cursor: grabbing; }
   display: inline-block;
 }
 
+/* ─── Monopoly: Winner confetti burst ──────────────────────────────── */
+@keyframes monopolyConfetti1 {
+  0%   { transform: translate(0,0) rotate(0deg) scale(1); opacity: 1; }
+  100% { transform: translate(-60px,-80px) rotate(270deg) scale(0.3); opacity: 0; }
+}
+@keyframes monopolyConfetti2 {
+  0%   { transform: translate(0,0) rotate(0deg) scale(1); opacity: 1; }
+  100% { transform: translate(60px,-80px) rotate(-270deg) scale(0.3); opacity: 0; }
+}
+@keyframes monopolyConfetti3 {
+  0%   { transform: translate(0,0) rotate(0deg) scale(1); opacity: 1; }
+  100% { transform: translate(-30px,-100px) rotate(180deg) scale(0.2); opacity: 0; }
+}
+.monopoly-winner-confetti {
+  position: relative;
+  display: inline-block;
+}
+.monopoly-winner-confetti::before {
+  content: "🎊";
+  position: absolute;
+  left: -8px;
+  top: -4px;
+  font-size: 1.2em;
+  animation: monopolyConfetti1 1.4s ease-out 0.65s both;
+}
+.monopoly-winner-confetti::after {
+  content: "🎉";
+  position: absolute;
+  right: -8px;
+  top: -4px;
+  font-size: 1.2em;
+  animation: monopolyConfetti2 1.4s ease-out 0.65s both;
+}
+
 /* Active player panel glow */
 @keyframes monopolyPlayerPulse {
   0%, 100% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0); }
@@ -2561,6 +2595,7 @@ button[draggable="true"]:active { cursor: grabbing; }
   .monopoly-tile-player-land { animation: none !important; background-color: rgba(251,191,36,0.15); }
   .monopoly-actor-badge { animation: none !important; }
   .monopoly-my-turn { animation: none !important; box-shadow: 0 0 0 2px rgba(251,191,36,0.35); }
+  .monopoly-winner-confetti::before, .monopoly-winner-confetti::after { animation: none !important; opacity: 0; }
   .monopoly-cash-delta { animation: none !important; opacity: 0; }
   [data-monopoly-tile]:active:not(:disabled) { transform: none; }
 }

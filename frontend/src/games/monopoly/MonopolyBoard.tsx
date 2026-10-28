@@ -334,33 +334,35 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
             ) : state.winner ? (
               <div className="w-full space-y-3">
                 <div className="space-y-1">
-                  <p className="monopoly-winner-banner text-2xl font-black text-amber-300">🏆 {state.players[Number(state.winner.slice(1))]?.name}</p>
-                  <p className="text-xs text-amber-400/60">Chiến thắng!</p>
+                  <p className="monopoly-winner-banner monopoly-winner-confetti text-2xl font-black text-amber-300">🏆 {state.players[Number(state.winner.slice(1))]?.name}</p>
+                  <p className="text-xs text-amber-400/60">🎉 Chiến thắng!</p>
                 </div>
-                <div className="w-full space-y-0.5">
-                  {[...state.players.map((pl, idx) => ({ pl, idx, nw: playerNetWorth[idx] }))]
-                    .sort((a, b) => b.nw - a.nw)
-                    .map(({ pl, idx, nw }, rank) => {
-                      const equity = nw - pl.cash;
-                      return (
-                        <div key={idx} className={`rounded border px-2 py-1.5 text-[10px] ${rank === 0 ? "bg-amber-900/50 border-amber-700/40" : pl.bankrupt ? "opacity-40 border-transparent bg-stone-900/20" : "bg-stone-900/40 border-stone-800/20"}`}>
-                          <div className="flex items-center gap-1.5">
-                            <span className={`font-bold w-4 shrink-0 ${rank === 0 ? "text-amber-400" : "text-stone-500"}`}>{rank === 0 ? "🥇" : rank === 1 ? "🥈" : rank === 2 ? "🥉" : `${rank+1}.`}</span>
-                            <span className="shrink-0">{TOKENS[idx]}</span>
-                            <span className="truncate flex-1 text-left text-amber-200/80">{pl.name}</span>
-                            <span className={`font-mono font-bold tabular-nums shrink-0 ${pl.bankrupt ? "text-stone-500" : "text-amber-100"}`}>{pl.bankrupt ? "💀" : `$${nw.toLocaleString("vi-VN")}`}</span>
-                          </div>
-                          {!pl.bankrupt && (
-                            <div className="flex gap-2 ml-5 mt-0.5 text-[9px] text-stone-500">
-                              <span className="text-yellow-400/60">${pl.cash.toLocaleString("vi-VN")} tiền</span>
-                              {equity > 0 && <span className="text-amber-600/60">+${equity.toLocaleString("vi-VN")} tài sản</span>}
+                {(() => {
+                  const sorted = [...state.players.map((pl, idx) => ({ pl, idx, nw: playerNetWorth[idx] }))].sort((a,b) => b.nw - a.nw);
+                  const topNW = sorted[0]?.nw || 1;
+                  return (
+                    <div className="w-full space-y-0.5">
+                      {sorted.map(({ pl, idx, nw }, rank) => {
+                        const equity = nw - pl.cash;
+                        const barW = Math.round((nw / topNW) * 100);
+                        return (
+                          <div key={idx} className={`relative rounded border overflow-hidden ${rank === 0 ? "border-amber-700/40" : pl.bankrupt ? "opacity-40 border-transparent" : "border-stone-800/20"}`}>
+                            <div className="absolute inset-0 bg-amber-700/10" style={{ width: `${barW}%` }} />
+                            <div className={`relative px-2 py-1.5 text-[10px] ${rank === 0 ? "bg-amber-900/40" : pl.bankrupt ? "bg-stone-900/20" : "bg-stone-900/30"}`}>
+                              <div className="flex items-center gap-1.5">
+                                <span className={`font-bold w-4 shrink-0 ${rank === 0 ? "text-amber-400" : "text-stone-500"}`}>{rank === 0 ? "🥇" : rank === 1 ? "🥈" : rank === 2 ? "🥉" : `${rank+1}.`}</span>
+                                <span className="shrink-0">{TOKENS[idx]}</span>
+                                <span className="truncate flex-1 text-left text-amber-200/80">{pl.name}</span>
+                                <span className={`font-mono font-bold tabular-nums shrink-0 ${pl.bankrupt ? "text-stone-500" : "text-amber-100"}`}>{pl.bankrupt ? "💀" : `$${nw.toLocaleString("vi-VN")}`}</span>
+                              </div>
+                              {!pl.bankrupt && <div className="flex gap-2 ml-5 text-[9px] text-stone-500"><span className="text-yellow-400/60">${pl.cash.toLocaleString("vi-VN")}</span>{equity > 0 && <span className="text-amber-600/60">+${equity.toLocaleString("vi-VN")}</span>}</div>}
                             </div>
-                          )}
-                        </div>
-                      );
-                    })
-                  }
-                </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
               </div>
             ) : (
               <div role="status" aria-live="polite" className="w-full space-y-3">
