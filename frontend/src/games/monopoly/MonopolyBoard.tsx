@@ -1226,7 +1226,7 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
           <span className="text-stone-700">·</span>
           <div className="flex items-center gap-1.5"><span className="text-stone-500">TB tài sản:</span><span className="font-mono font-bold text-amber-200/80">${avgNW.toLocaleString("vi-VN")}</span></div>
           <span className="text-stone-700">·</span>
-          <div className="flex items-center gap-1.5"><span className="text-stone-500">Giàu nhất:</span><span className="font-bold text-amber-300/80">{richest ? `${TOKENS[richest.idx]} ${state.players[richest.idx]?.name}` : "—"}</span></div>
+          <div className="flex items-center gap-1.5"><span className="text-stone-500">Giàu nhất:</span><span className="font-bold text-amber-300/80">{richest ? `${TOKENS[richest.idx]} ${state.players[richest.idx]?.name}` : "—"}</span>{richest && <span className="font-mono text-[9px] text-amber-200/50">${richest.nw.toLocaleString("vi-VN")}</span>}</div>
           <span className="text-stone-700">·</span>
           <div className="flex items-center gap-1.5"><span className="text-stone-500">Đất đã bán:</span><span className="font-mono font-bold text-amber-200/80">{propertiesSold}/{totalProperties}</span></div>
           <span className="text-stone-700">·</span>
@@ -1245,6 +1245,25 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
                 <span className="font-mono text-emerald-400/50">🏠{state.houses}</span>
                 <span className="font-mono text-red-400/50">🏨{state.hotels}</span>
               </div>
+            );
+          })()}
+          {seat >= 0 && player && !player.bankrupt && (() => {
+            const rentExposure = map.tiles.reduce((s, t) => {
+              const pr = state.properties[t.index];
+              if (pr.owner === null || pr.owner === seat || pr.mortgaged || !t.rents) return s;
+              const isMonop = monopolyTileSet.has(t.index);
+              const rent = isMonop && pr.buildings === 0 ? t.rents[0] * 2 : t.rents[pr.buildings];
+              return s + rent;
+            }, 0);
+            if (!rentExposure) return null;
+            return (
+              <>
+                <span className="text-stone-700">·</span>
+                <div className="flex items-center gap-1.5" title="Tổng tiền thuê có thể phải trả nếu dừng ở đất đối thủ">
+                  <span className="text-stone-500">Rủi ro:</span>
+                  <span className="font-mono font-bold text-red-400/70">${rentExposure.toLocaleString("vi-VN")}</span>
+                </div>
+              </>
             );
           })()}
         </div>
