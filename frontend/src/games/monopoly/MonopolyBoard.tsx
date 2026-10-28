@@ -164,6 +164,37 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
   });
   const maxNetWorth = Math.max(...playerNetWorth.filter((_, i) => !state.players[i].bankrupt), 1);
 
+  // Monopoly detection
+  const groupTiles = map.tiles.reduce<Record<string, number[]>>((acc, t) => {
+    if (t.group && t.kind === "Street") { if (!acc[t.group]) acc[t.group] = []; acc[t.group].push(t.index); }
+    return acc;
+  }, {});
+  const playerMonopolies = state.players.map((_, i) =>
+    Object.keys(groupTiles).filter(g => groupTiles[g].every(idx => state.properties[idx].owner === i))
+  );
+  const monopolyTileSet = new Set(
+    Object.values(groupTiles).filter(idxs => {
+      const owner = state.properties[idxs[0]].owner;
+      return owner !== null && idxs.every(idx => state.properties[idx].owner === owner);
+    }).flat()
+  );
+
+  const logIcon = (line: string) => {
+    const l = line.toLowerCase();
+    if (l.includes("phá sản")) return "💀";
+    if (l.includes("đổ") || l.includes("xúc xắc")) return "🎲";
+    if (l.includes("mua")) return "🏠";
+    if (l.includes("đấu giá") || l.includes("trả giá")) return "🔨";
+    if (l.includes("xây") || l.includes("khách sạn")) return "🏗";
+    if (l.includes("tù")) return "⛓";
+    if (l.includes("thế chấp") || l.includes("cầm")) return "🔒";
+    if (l.includes("giải chấp")) return "✓";
+    if (l.includes("may mắn")) return "🍀";
+    if (l.includes("cộng đồng")) return "📦";
+    if (l.includes("tiền") || l.includes("trả") || l.includes("thuê")) return "💸";
+    return "▸";
+  };
+
   return <section className="space-y-4 text-amber-100">
     {!replayRoom && <><ConnectionBanner connectionState={connectionState} />
     <RoomErrorBanner error={error} />
@@ -194,11 +225,20 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
             const occupants = state.players.map((who,i) => !who.bankrupt && who.position === t.index ? i : -1).filter(i => i >= 0);
             return <button type="button" key={t.index} data-monopoly-tile="1" data-group={t.group} style={boardPosition(t.index)} onClick={() => setSelected(t.index)}
               aria-pressed={selected === t.index} aria-label={`Ô ${t.index}: ${t.name}${p.owner !== null ? `, chủ ${state.players[p.owner]?.name}` : ""}`}
-              className={`relative flex min-h-0 flex-col overflow-hidden border text-[9px] leading-tight text-stone-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white transition-[box-shadow,transform] duration-150 ${selected === t.index ? "border-amber-200 bg-amber-900" : "border-emerald-800/70 bg-stone-900/80"} ${flashTiles.has(t.index) ? "monopoly-tile-just-purchased" : ""}`}>
+              className={`relative flex min-h-0 flex-col overflow-hidden border text-[9px] leading-tight text-stone-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white transition-[box-shadow,transform] duration-150 ${selected === t.index ? "border-amber-200 bg-amber-900" : "border-emerald-800/70 bg-stone-900/80"} ${flashTiles.has(t.index) ? "monopoly-tile-just-purchased" : ""} ${monopolyTileSet.has(t.index) ? "ring-1 ring-inset ring-amber-300/50" : ""}`}>
               <span aria-hidden="true" className={`h-2 w-full shrink-0 ${GROUP_COLORS[t.group] ?? "bg-stone-700"}`} />
               <span className="p-0.5">{t.name}</span>
               {t.price > 0 && <span>{t.price}</span>}
-              {p.owner !== null && <span title={state.players[p.owner]?.name}>{TOKENS[p.owner]}{p.mortgaged ? " 🔒" : p.buildings === 5 ? " 🏨" : p.buildings > 0 ? ` 🏠${p.buildings}` : ""}</span>}
+              {p.owner !== null && (
+                <span title={state.players[p.owner]?.name} className="flex flex-col items-center gap-0">
+                  <span>{TOKENS[p.owner]}{p.mortgaged ? "🔒" : ""}</span>
+                  {p.buildings > 0 && (
+                    <span className={`text-[6px] leading-none tracking-tight ${p.buildings === 5 ? "text-red-400" : "text-emerald-400"}`}>
+                      {"●".repeat(p.buildings === 5 ? 1 : p.buildings)}{p.buildings === 5 ? "H" : ""}
+                    </span>
+                  )}
+                </span>
+              )}
               <span className="mt-auto text-xs" aria-hidden="true">{occupants.map(i => <span key={i} className="monopoly-token-land">{TOKENS[i]}</span>)}</span>
             </button>;
           })}
@@ -449,11 +489,22 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
                 <div className="flex flex-wrap gap-0.5">
                   {owned.map(t => (
                     <button key={t.index}
-                      className={`w-3.5 h-3.5 rounded-sm border border-black/30 transition-transform hover:scale-150 hover:z-10 relative ${GROUP_COLORS[t.group] ?? "bg-stone-600"} ${state.properties[t.index].mortgaged ? "opacity-30" : ""}`}
+                      className={`w-3.5 h-3.5 rounded-sm border border-black/30 transition-transform hover:scale-150 hover:z-10 relative ${GROUP_COLORS[t.group] ?? "bg-stone-600"} ${state.properties[t.index].mortgaged ? "opacity-30" : ""} ${monopolyTileSet.has(t.index) ? "ring-1 ring-amber-300/70" : ""}`}
                       onClick={() => setSelected(t.index)}
                       title={`${t.name}${state.properties[t.index].mortgaged ? " (TC)" : ""}${state.properties[t.index].buildings > 0 ? ` 🏠×${state.properties[t.index].buildings}` : ""}`}
                       aria-label={`Xem ${t.name}`}
                     />
+                  ))}
+                </div>
+              )}
+              {/* Monopoly badges */}
+              {playerMonopolies[i].length > 0 && (
+                <div className="flex flex-wrap gap-1">
+                  {playerMonopolies[i].map(g => (
+                    <span key={g} title={`Độc quyền ${g}`}
+                      className={`inline-flex items-center gap-0.5 text-[9px] rounded-full px-1.5 py-0.5 font-bold border border-black/20 text-stone-900 ${GROUP_COLORS[g] ?? "bg-stone-500"}`}>
+                      👑
+                    </span>
                   ))}
                 </div>
               )}
@@ -462,8 +513,19 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
         );
       })}
     </div>
-    <details open className="rounded-xl border border-amber-900 p-4"><summary className="cursor-pointer font-semibold">Nhật ký ván đấu</summary>
-      <ol ref={logRef} className="mt-3 max-h-52 overflow-y-auto space-y-1 text-sm text-amber-200/80">{state.log.map((line,i) => <li key={i} className={i >= logNewStart ? "monopoly-log-entry" : ""}>{line}</li>)}</ol>
+    <details open className="rounded-xl border border-amber-900/60 bg-stone-950/40 p-4">
+      <summary className="cursor-pointer font-semibold text-amber-200/80 flex items-center gap-2">
+        <span>📋 Nhật ký ván đấu</span>
+        <span className="ml-auto text-[10px] text-amber-400/50">{state.log.length} sự kiện</span>
+      </summary>
+      <ol ref={logRef} className="mt-3 max-h-52 overflow-y-auto space-y-0.5 text-sm text-amber-200/80">
+        {state.log.map((line, i) => (
+          <li key={i} className={`flex items-start gap-1.5 rounded px-1 py-0.5 ${i >= logNewStart ? "monopoly-log-entry bg-amber-900/20" : "hover:bg-stone-900/30"}`}>
+            <span className="shrink-0 text-[11px] mt-0.5 opacity-70">{logIcon(line)}</span>
+            <span className="text-xs leading-relaxed">{line}</span>
+          </li>
+        ))}
+      </ol>
     </details>
     {cardOverlay && (
       <div className={`monopoly-card-overlay monopoly-card-${cardOverlay.kind}`} onClick={() => setCardOverlay(null)} role="dialog" aria-modal="true" aria-label="Rút thẻ">
