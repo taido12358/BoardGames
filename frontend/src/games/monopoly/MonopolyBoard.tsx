@@ -78,7 +78,7 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
   const [newBankrupts, setNewBankrupts] = useState<Set<number>>(new Set());
   const prevPositionRef = useRef<Record<number, number>>({});
   const prevInJailRef = useRef<Record<number, boolean>>({});
-  const [moveTiles, setMoveTiles] = useState<Map<number, {type: 'trail'|'land'|'passgo'|'jail'|'depart'|'jailrelease'; delay: number}>>(new Map());
+  const [moveTiles, setMoveTiles] = useState<Map<number, {type: 'trail'|'land'|'passgo'|'jail'|'depart'|'jailrelease'; delay: number; mover: number; totalSteps: number}>>(new Map());
   const [logFilter, setLogFilter] = useState("");
   const [logShowAll, setLogShowAll] = useState(false);
 
@@ -158,7 +158,7 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
     const parts = positionKey ? positionKey.split(",").map(Number) : [];
     const jailParts = inJailKey ? inJailKey.split(",").map(Number) : [];
     if (!parts.length) return;
-    const next = new Map<number, {type: 'trail'|'land'|'passgo'|'jail'|'depart'|'jailrelease'; delay: number}>();
+    const next = new Map<number, {type: 'trail'|'land'|'passgo'|'jail'|'depart'|'jailrelease'; delay: number; mover: number; totalSteps: number}>();
     parts.forEach((pos, i) => {
       const prev = prevPositionRef.current[i];
       const wasInJail = prevInJailRef.current[i] ?? false;
@@ -166,18 +166,18 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
         const steps = (pos - prev + 40) % 40;
         // Departure flash — green liberation burst if leaving jail, else amber dim
         const departType = (wasInJail && prev === 10 && steps <= 12) ? 'jailrelease' : 'depart';
-        next.set(prev, { type: departType, delay: 0 });
+        next.set(prev, { type: departType, delay: 0, mover: i, totalSteps: steps });
         if (steps > 0 && steps <= 12) {
           const stepMs = steps <= 3 ? 35 : steps <= 6 ? 48 : steps <= 9 ? 58 : 65;
           for (let k = 1; k <= steps; k++) {
             const idx = (prev + k) % 40;
             const isLast = k === steps;
             const type = isLast ? 'land' : (idx === 0 ? 'passgo' : 'trail');
-            next.set(idx, { type, delay: (k - 1) * stepMs });
+            next.set(idx, { type, delay: (k - 1) * stepMs, mover: i, totalSteps: steps });
           }
         } else {
           // GoToJail teleport (pos===10) or other big jump
-          next.set(pos, { type: pos === 10 ? 'jail' : 'land', delay: 0 });
+          next.set(pos, { type: pos === 10 ? 'jail' : 'land', delay: 0, mover: i, totalSteps: 0 });
         }
       }
       prevPositionRef.current[i] = pos;
@@ -356,10 +356,22 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
               {t.index === 10 && state.players.some(pl => pl.inJail && !pl.bankrupt) && (
                 <span className="absolute top-0.5 right-0.5 text-[8px] bg-red-950/80 border border-red-800/60 rounded px-0.5 leading-tight">⛓</span>
               )}
+              {isLanding && moveData!.totalSteps > 0 && (
+                <span className="monopoly-steps-badge absolute top-0 left-1/2 -translate-x-1/2 text-[7px] font-black text-amber-300 pointer-events-none z-10"
+                  style={{ animationDelay: `${moveData!.delay}ms` }}>
+                  +{moveData!.totalSteps}
+                </span>
+              )}
               <span className="mt-auto text-xs relative" aria-hidden="true">
                 {occupants.length > 2
                   ? <>{TOKENS[occupants[0]]}<span className="text-[8px] bg-stone-800 border border-stone-600 rounded-full px-1 ml-0.5">+{occupants.length - 1}</span></>
-                  : occupants.map(i => <span key={i} className={moveData?.type === 'jail' ? "monopoly-token-jail-land" : isLanding ? "monopoly-token-land" : ""} style={isLanding ? { animationDelay: `${tokenAnimDelay}ms` } : undefined}>{TOKENS[i]}</span>)
+                  : occupants.map(oi => {
+                      const isMover = moveData?.mover === oi;
+                      return <span key={oi}
+                        className={isMover ? (moveData!.type === 'jail' ? "monopoly-token-jail-land" : "monopoly-token-land") : ""}
+                        style={isMover && isLanding ? { animationDelay: `${tokenAnimDelay}ms` } : undefined}
+                      >{TOKENS[oi]}</span>;
+                    })
                 }
               </span>
             </button>;

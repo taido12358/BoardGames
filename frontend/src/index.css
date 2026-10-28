@@ -2205,6 +2205,18 @@ button[draggable="true"]:active { cursor: grabbing; }
   animation: monopolyTokenJailLand 0.72s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
 }
 
+/* Steps badge on landing tile */
+@keyframes monopolyStepsBadge {
+  0%   { opacity: 0; transform: translateX(-50%) scale(0.5) translateY(2px); }
+  22%  { opacity: 1; transform: translateX(-50%) scale(1.3) translateY(-4px); }
+  65%  { opacity: 1; transform: translateX(-50%) scale(1) translateY(-7px); }
+  100% { opacity: 0; transform: translateX(-50%) scale(0.8) translateY(-12px); }
+}
+.monopoly-steps-badge {
+  animation: monopolyStepsBadge 1.3s ease-out both;
+  white-space: nowrap;
+}
+
 /* Cash delta floating notification */
 @keyframes cashDeltaFloat {
   0%   { opacity: 0; transform: translateY(0) scale(0.8); }
@@ -2741,6 +2753,7 @@ button[draggable="true"]:active { cursor: grabbing; }
   .monopoly-tile-affordable { animation: none !important; box-shadow: 0 0 0 2px rgba(52,211,153,0.45); }
   .monopoly-tile-current-player { animation: none !important; box-shadow: 0 0 0 2px rgba(251,191,36,0.6); }
   .monopoly-board-rolling { animation: none !important; }
+  .monopoly-steps-badge { animation: none !important; opacity: 0; }
   .monopoly-winner-confetti::before, .monopoly-winner-confetti::after { animation: none !important; opacity: 0; }
   .monopoly-cash-delta { animation: none !important; opacity: 0; }
   [data-monopoly-tile]:active:not(:disabled) { transform: none; }
