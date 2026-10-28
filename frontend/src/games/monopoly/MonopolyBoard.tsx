@@ -606,7 +606,20 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
             {state.phase === "End" && <>
               {player && (() => {
                 const t = map.tiles[player.position];
-                return t ? <div className="w-full text-[10px] text-amber-200/50 px-1">Đã dừng tại: <button type="button" onClick={() => setSelected(player.position)} className="hover:text-amber-200/80">{t.name}</button></div> : null;
+                return t ? <div className="w-full text-[10px] text-amber-200/50 px-1">Đã dừng tại: <button type="button" onClick={() => setSelected(player.position)} className="hover:text-amber-200/80">📍 {t.name}</button></div> : null;
+              })()}
+              {state.log.length > 0 && (() => {
+                const recent = state.log.slice(-3);
+                return (
+                  <div className="w-full space-y-0.5">
+                    {recent.map((line, idx) => (
+                      <div key={idx} className="flex items-start gap-1 text-[9px] text-stone-500 rounded px-1">
+                        <span className="shrink-0 mt-0.5 opacity-60">{logIcon(line)}</span>
+                        <span className="truncate">{line}</span>
+                      </div>
+                    ))}
+                  </div>
+                );
               })()}
               {action(state.extraRoll ? "↩ Tiếp tục lượt đổ đôi" : "✓ Kết thúc lượt", "END", false, deciding ? "monopoly-action-pulse" : "")}
             </>}
@@ -1205,6 +1218,32 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
                 </div>
               );
             })()}
+          {/* Comparable tiles in same price range */}
+          {tile.kind === "Street" && tile.price > 0 && (() => {
+            const margin = tile.price * 0.35;
+            const comparables = map.tiles
+              .filter(t => t.kind === "Street" && t.index !== selected && Math.abs(t.price - tile.price) <= margin)
+              .sort((a, b) => Math.abs(a.price - tile.price) - Math.abs(b.price - tile.price))
+              .slice(0, 3);
+            if (!comparables.length) return null;
+            return (
+              <div className="space-y-1 border-t border-amber-900/20 pt-2">
+                <div className="text-[9px] text-stone-600 uppercase tracking-wide">Đất tương đương</div>
+                {comparables.map(ct => {
+                  const cp = state.properties[ct.index];
+                  return (
+                    <button key={ct.index} type="button" onClick={() => setSelected(ct.index)}
+                      className="w-full flex items-center gap-1.5 rounded px-1.5 py-0.5 text-[10px] hover:bg-stone-900/40 transition-colors text-left">
+                      <span className={`w-2 h-2 rounded-sm shrink-0 ${GROUP_COLORS[ct.group] ?? "bg-stone-600"}`} />
+                      <span className="flex-1 truncate text-amber-200/50">{ct.name}</span>
+                      <span className="text-stone-600 font-mono shrink-0">${ct.price}</span>
+                      {cp.owner !== null ? <span className="shrink-0">{TOKENS[cp.owner]}</span> : <span className="text-stone-600 text-[8px] shrink-0">—</span>}
+                    </button>
+                  );
+                })}
+              </div>
+            );
+          })()}
           </div>
         </div>
         {canManage && state.phase !== "Inheritance" && player && <TradeForm key={`${room.id}-${seat}`} map={map} state={state} seat={seat} send={send} />}
