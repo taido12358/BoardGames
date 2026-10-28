@@ -168,11 +168,12 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
         const departType = (wasInJail && prev === 10 && steps <= 12) ? 'jailrelease' : 'depart';
         next.set(prev, { type: departType, delay: 0 });
         if (steps > 0 && steps <= 12) {
+          const stepMs = steps <= 3 ? 35 : steps <= 6 ? 48 : steps <= 9 ? 58 : 65;
           for (let k = 1; k <= steps; k++) {
             const idx = (prev + k) % 40;
             const isLast = k === steps;
             const type = isLast ? 'land' : (idx === 0 ? 'passgo' : 'trail');
-            next.set(idx, { type, delay: (k - 1) * 55 });
+            next.set(idx, { type, delay: (k - 1) * stepMs });
           }
         } else {
           // GoToJail teleport (pos===10) or other big jump
@@ -320,7 +321,7 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
       );
     })()}
     <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
-      <div className="overflow-x-auto rounded-xl border border-emerald-700/60 bg-emerald-950 p-2 shadow-inner shadow-emerald-900/40 monopoly-board-felt">
+      <div className={`overflow-x-auto rounded-xl border border-emerald-700/60 bg-emerald-950 p-2 shadow-inner shadow-emerald-900/40 monopoly-board-felt${diceRolling ? " monopoly-board-rolling" : ""}`}>
         <div className="grid min-w-[660px] grid-cols-11 grid-rows-11 gap-0.5 aspect-square" aria-label="Bàn cờ 40 ô">
           {map.tiles.map(t => {
             const p = state.properties[t.index];
