@@ -272,6 +272,7 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
               {!t.group && ({"Go":"🏁","Jail":"⛓","FreeParking":"🅿","GoToJail":"🚔","Chance":"🎲","CommunityChest":"📦","IncomeTax":"💸","LuxuryTax":"💎"} as Record<string,string>)[t.kind] && (
                 <span className="text-sm leading-none mx-auto">{({"Go":"🏁","Jail":"⛓","FreeParking":"🅿","GoToJail":"🚔","Chance":"🎲","CommunityChest":"📦","IncomeTax":"💸","LuxuryTax":"💎"} as Record<string,string>)[t.kind]}</span>
               )}
+              {t.kind === "Go" && <span className="text-[6px] text-emerald-400 font-bold leading-none">+$200</span>}
               <span className="p-0.5">{t.name}</span>
               {t.price > 0 && <span>{t.price}</span>}
               {p.owner !== null && (
@@ -895,13 +896,18 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
               {p.bankrupt ? (
                 <p className="text-sm text-stone-500 font-bold">💀 Phá sản</p>
               ) : (
-                <div>
+                <div className="space-y-1">
                   <div className="flex items-baseline justify-between">
                     <span className="text-[10px] text-amber-200/50">Tiền mặt</span>
-                    <span className="font-bold text-amber-100 tabular-nums">${p.cash.toLocaleString("vi-VN")}</span>
+                    <span className={`font-bold tabular-nums ${p.cash < 50 ? "text-red-400" : p.cash < 150 ? "text-orange-300" : "text-amber-100"}`}>${p.cash.toLocaleString("vi-VN")}</span>
                   </div>
                   {nw > p.cash && (
                     <div className="text-[10px] text-amber-200/40 text-right">≈ ${nw.toLocaleString("vi-VN")} tài sản</div>
+                  )}
+                  {p.cash < 100 && !p.bankrupt && (
+                    <div className="text-[9px] text-red-400/70 flex items-center gap-1">
+                      <span>⚠️</span><span>Nguy cơ phá sản cao</span>
+                    </div>
                   )}
                 </div>
               )}
