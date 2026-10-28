@@ -2243,6 +2243,9 @@ button[draggable="true"]:active { cursor: grabbing; }
 .monopoly-tile-built {
   box-shadow: inset 0 0 12px rgba(34,197,94,0.35);
 }
+[data-monopoly-tile].monopoly-tile-built[aria-pressed="false"] {
+  background-color: rgba(20,83,45,0.18);
+}
 
 /* ─── Monopoly: Current actor badge flash ────────────────────────────── */
 @keyframes monopolyActorBadge {
@@ -2250,6 +2253,13 @@ button[draggable="true"]:active { cursor: grabbing; }
   50%     { opacity: 0.5; }
 }
 .monopoly-actor-badge { animation: monopolyActorBadge 1.4s ease-in-out infinite; }
+
+/* ─── Monopoly: Your-turn panel pulse ring ───────────────────────────── */
+@keyframes monopolyMyTurnRing {
+  0%,100% { box-shadow: 0 0 0 0 rgba(251,191,36,0), inset 0 0 0 0 rgba(251,191,36,0); }
+  40%     { box-shadow: 0 0 0 3px rgba(251,191,36,0.35), inset 0 0 14px rgba(251,191,36,0.12); }
+}
+.monopoly-my-turn { animation: monopolyMyTurnRing 2.2s ease-in-out infinite; }
 
 @media (prefers-reduced-motion: reduce) {
   /* Future and third-party cues should also respect reduced motion by default. */
@@ -2542,6 +2552,7 @@ button[draggable="true"]:active { cursor: grabbing; }
   .monopoly-tile-just-purchased { animation: none !important; background-color: rgba(34,197,94,0.18); box-shadow: inset 0 0 8px rgba(34,197,94,0.4); }
   .monopoly-tile-player-land { animation: none !important; background-color: rgba(251,191,36,0.15); }
   .monopoly-actor-badge { animation: none !important; }
+  .monopoly-my-turn { animation: none !important; box-shadow: 0 0 0 2px rgba(251,191,36,0.35); }
   .monopoly-cash-delta { animation: none !important; opacity: 0; }
   [data-monopoly-tile]:active:not(:disabled) { transform: none; }
 }

@@ -267,7 +267,7 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
             const occupants = state.players.map((who,i) => !who.bankrupt && who.position === t.index ? i : -1).filter(i => i >= 0);
             return <button type="button" key={t.index} data-monopoly-tile="1" data-group={t.group} style={boardPosition(t.index)} onClick={() => setSelected(t.index)}
               aria-pressed={selected === t.index} aria-label={`Ô ${t.index}: ${t.name}${p.owner !== null ? `, chủ ${state.players[p.owner]?.name}` : ""}`}
-              className={`relative flex min-h-0 flex-col overflow-hidden border text-[9px] leading-tight text-stone-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white transition-[box-shadow,transform] duration-150 active:scale-95 hover:brightness-125 ${selected === t.index ? "border-amber-200 bg-amber-900" : "border-emerald-800/70 bg-stone-900/80"} ${flashTiles.has(t.index) ? "monopoly-tile-just-purchased" : ""} ${monopolyTileSet.has(t.index) ? "ring-1 ring-inset ring-amber-300/50" : ""} ${movedTiles.has(t.index) ? "monopoly-tile-player-land" : ""}`}>
+              className={`relative flex min-h-0 flex-col overflow-hidden border text-[9px] leading-tight text-stone-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white transition-[box-shadow,transform] duration-150 active:scale-95 hover:brightness-125 ${selected === t.index ? "border-amber-200 bg-amber-900" : "border-emerald-800/70 bg-stone-900/80"} ${flashTiles.has(t.index) ? "monopoly-tile-just-purchased" : ""} ${monopolyTileSet.has(t.index) ? "ring-1 ring-inset ring-amber-300/50" : ""} ${movedTiles.has(t.index) ? "monopoly-tile-player-land" : ""} ${p.buildings > 0 ? "monopoly-tile-built" : ""}`}>
               <span aria-hidden="true" className={`h-2 w-full shrink-0 ${GROUP_COLORS[t.group] ?? "bg-stone-700"}`} />
               {/* Special tile icon overlay */}
               {!t.group && ({"Go":"🏁","Jail":"⛓","FreeParking":"🅿","GoToJail":"🚔","Chance":"🎲","CommunityChest":"📦","IncomeTax":"💸","LuxuryTax":"💎","Railroad":"🚂","Utility":"⚡"} as Record<string,string>)[t.kind] && (
@@ -444,7 +444,7 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
             Roll: "🎲", Buy: "🏠", Auction: "🔨", Debt: "💸", Trade: "🤝",
             BuildingDemand: "🏗", Inheritance: "📜", End: "✓",
           };
-          return <div key={state.phase} className={`animate-game-action-enter space-y-3 rounded-xl border p-4 ${phaseColors[state.phase] ?? "border-amber-800"}`}>
+          return <div key={state.phase} className={`animate-game-action-enter space-y-3 rounded-xl border p-4 ${phaseColors[state.phase] ?? "border-amber-800"} ${deciding ? "monopoly-my-turn" : ""}`}>
           <h2 className="font-semibold flex items-center gap-2">
             <span>{phaseIcons[state.phase] ?? "▶"}</span>
             <span>{PHASES[state.phase]}</span>
