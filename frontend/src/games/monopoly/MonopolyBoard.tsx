@@ -765,17 +765,46 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
                 </>
               )}
             </div>
-            {property.owner === seat && canManage && (
-              <div className="flex flex-wrap gap-1.5">
-                {(["BUILD","SELL","SELL_GROUP","MORTGAGE","UNMORTGAGE"] as const).map((type, idx) => (
-                  <button key={type} className={`${buttonClass} text-xs py-1`}
-                    disabled={["Debt","Inheritance"].includes(state.phase) && ["BUILD","UNMORTGAGE"].includes(type)}
-                    onClick={() => send({type, tile: selected})}>
-                    {["🏠 Xây","🔨 Bán","Bán nhóm","🔒 TC","✓ Giải"][idx]}
-                  </button>
-                ))}
-              </div>
-            )}
+            {property.owner === seat && canManage && (() => {
+              const inDebt = ["Debt","Inheritance"].includes(state.phase);
+              const mortgageVal = Math.floor(tile.price / 2);
+              const unmortgageCost = Math.ceil(mortgageVal * 1.1);
+              const sellVal = tile.houseCost ? Math.floor(tile.houseCost / 2) : 0;
+              return (
+                <div className="grid grid-cols-2 gap-1.5">
+                  {tile.houseCost > 0 && !property.mortgaged && (
+                    <button className={`${buttonClass} text-xs py-1.5 col-span-1`} disabled={inDebt}
+                      onClick={() => send({type:"BUILD", tile: selected})}>
+                      🏠 Xây · ${tile.houseCost}
+                    </button>
+                  )}
+                  {property.buildings > 0 && (
+                    <button className={`${buttonClass} text-xs py-1.5`}
+                      onClick={() => send({type:"SELL", tile: selected})}>
+                      🔨 Bán nhà · +${sellVal}
+                    </button>
+                  )}
+                  {property.buildings > 0 && (
+                    <button className={`${buttonClass} text-xs py-1.5`}
+                      onClick={() => send({type:"SELL_GROUP", tile: selected})}>
+                      🔨 Bán nhóm
+                    </button>
+                  )}
+                  {!property.mortgaged && property.buildings === 0 && (
+                    <button className={`${buttonClass} text-xs py-1.5`}
+                      onClick={() => send({type:"MORTGAGE", tile: selected})}>
+                      🔒 TC · +${mortgageVal}
+                    </button>
+                  )}
+                  {property.mortgaged && (
+                    <button className={`${buttonClass} text-xs py-1.5`} disabled={inDebt}
+                      onClick={() => send({type:"UNMORTGAGE", tile: selected})}>
+                      🔓 Giải · -${unmortgageCost}
+                    </button>
+                  )}
+                </div>
+              );
+            })()}
           </div>
         </div>
         {canManage && state.phase !== "Inheritance" && player && <TradeForm key={`${room.id}-${seat}`} map={map} state={state} seat={seat} send={send} />}
@@ -818,12 +847,17 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
             isActor ? "border-amber-400 bg-amber-950/60 monopoly-player-active" :
             isMe ? "border-amber-700/70 bg-amber-950/30" : "border-amber-900/50 bg-stone-950/40"
           } ${newBankrupts.has(i) ? "monopoly-bankrupt-enter" : ""}`}>
-            {/* Net-worth progress bar at top */}
-            {!p.bankrupt && (
-              <div className="h-1 w-full bg-stone-800">
-                <div className="h-full bg-gradient-to-r from-amber-700 to-amber-400 transition-all duration-700 ease-out" style={{ width: `${nwPct}%` }} />
-              </div>
-            )}
+            {/* Net-worth progress bar: cash (gold) + equity (amber) */}
+            {!p.bankrupt && (() => {
+              const cashPct = Math.min(100, Math.round((p.cash / maxNetWorth) * 100));
+              const eqPct = Math.min(100 - cashPct, Math.round(((nw - p.cash) / maxNetWorth) * 100));
+              return (
+                <div className="h-1.5 w-full bg-stone-800 flex overflow-hidden">
+                  <div className="h-full bg-yellow-400/80 transition-all duration-700 ease-out" style={{ width: `${cashPct}%` }} title={`Tiền mặt: $${p.cash.toLocaleString("vi-VN")}`} />
+                  <div className="h-full bg-amber-600/70 transition-all duration-700 ease-out" style={{ width: `${eqPct}%` }} title={`Tài sản: $${(nw - p.cash).toLocaleString("vi-VN")}`} />
+                </div>
+              );
+            })()}
             <div className="p-3 space-y-2">
               {/* Cash delta floaters */}
               {cashDeltas.filter(d => d.player === i).map(delta => (
