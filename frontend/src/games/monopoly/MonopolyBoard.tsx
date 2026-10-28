@@ -66,6 +66,8 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
 
   const [cashDeltas, setCashDeltas] = useState<{ id: number; player: number; amount: number }[]>([]);
   const [flashTiles, setFlashTiles] = useState<Set<number>>(new Set());
+  const [nwHistory, setNwHistory] = useState<number[][]>([]);
+  const prevNwRef = useRef<number[]>([]);
   const prevCashRef = useRef<Record<number, number>>({});
   const prevOwnerRef = useRef<Record<number, number>>({});
   const deltaIdRef = useRef(0);
@@ -123,6 +125,14 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
     const t = setTimeout(() => setLogNewStart(Number.MAX_SAFE_INTEGER), 600);
     return () => clearTimeout(t);
   }, [logLen]);
+
+  const cashSnapshotKey = (gameState?.players ?? []).map(p => p.cash).join(",");
+  useEffect(() => {
+    const parts = cashSnapshotKey.split(",").map(Number);
+    if (!parts.length || cashSnapshotKey === "" || parts.every((v, i) => v === (prevNwRef.current[i] ?? -1))) return;
+    prevNwRef.current = parts;
+    setNwHistory(h => [...h.slice(-14), parts]);
+  }, [cashSnapshotKey]);
 
   const bankruptKey = (gameState?.players ?? []).map(p => p.bankrupt ? 1 : 0).join(",");
   useEffect(() => {
@@ -1024,6 +1034,20 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
                       <span>⚠️</span><span>Nguy cơ phá sản cao</span>
                     </div>
                   )}
+                  {/* Cash sparkline */}
+                  {nwHistory.length >= 3 && (() => {
+                    const vals = nwHistory.map(snap => snap[i] ?? 0);
+                    const min = Math.min(...vals);
+                    const max = Math.max(...vals) || 1;
+                    const W = 60, H = 18;
+                    const pts = vals.map((v, idx) => `${Math.round((idx / (vals.length - 1)) * W)},${Math.round(H - ((v - min) / (max - min)) * H)}`).join(" ");
+                    const lastUp = vals[vals.length - 1] >= vals[vals.length - 2];
+                    return (
+                      <svg width={W} height={H} className="mt-0.5" aria-hidden="true">
+                        <polyline points={pts} fill="none" stroke={lastUp ? "rgba(134,239,172,0.6)" : "rgba(252,165,165,0.6)"} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    );
+                  })()}
                 </div>
               )}
               {/* Property count + buildings summary */}
