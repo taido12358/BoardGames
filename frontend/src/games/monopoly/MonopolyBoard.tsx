@@ -202,34 +202,83 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
               <span className="mt-auto text-xs" aria-hidden="true">{occupants.map(i => <span key={i} className="monopoly-token-land">{TOKENS[i]}</span>)}</span>
             </button>;
           })}
-          <div className="col-start-2 col-end-11 row-start-2 row-end-11 flex flex-col items-center justify-center gap-5 overflow-auto p-5 text-center">
-            <div className="text-5xl" aria-hidden="true">🏦</div>
-            <h2 className="text-3xl font-black tracking-widest">CỜ TỈ PHÚ</h2>
-            <p className="max-w-sm text-sm text-emerald-100/75">Mua đất. Xây dựng. Thương lượng.<br />Quản lý tiền mặt để ở lại đến cuối cùng.</p>
-            {state.started && <div role="status" aria-live="polite" className="space-y-3">
-              {state.winner ? (
-                <p className="monopoly-winner-banner text-2xl font-black text-amber-300">🏆 {state.players[Number(state.winner.slice(1))]?.name} chiến thắng!</p>
-              ) : (
-                <p className="text-lg">{TOKENS[currentActor]} {state.players[currentActor]?.name}: {PHASES[state.phase] ?? state.phase}</p>
-              )}
-              <div className="flex justify-center gap-3" aria-label={`Xúc xắc ${state.dice.join(" và ")}`} role="img">
-                {state.dice.map((n, i) => (
-                  <div key={i} className={`monopoly-die${diceRolling ? " monopoly-die-rolling" : ""}`} style={diceRolling ? { animationDelay: `${i * 70}ms` } : {}}>
-                    <span className="text-3xl" aria-hidden="true">{n > 0 ? ["⚀","⚁","⚂","⚃","⚄","⚅"][n-1] : "◇"}</span>
-                  </div>
-                ))}
+          <div className="col-start-2 col-end-11 row-start-2 row-end-11 flex flex-col items-center justify-center gap-3 overflow-auto p-4 text-center">
+            {!state.started ? (
+              <>
+                <div className="text-5xl" aria-hidden="true">🏦</div>
+                <h2 className="text-3xl font-black tracking-widest text-amber-300">CỜ TỈ PHÚ</h2>
+                <p className="max-w-[200px] text-xs text-emerald-100/60">Mua đất · Xây nhà · Thương lượng<br />Phá sản đối thủ để chiến thắng</p>
+              </>
+            ) : state.winner ? (
+              <div className="space-y-2">
+                <p className="monopoly-winner-banner text-2xl font-black text-amber-300">🏆 {state.players[Number(state.winner.slice(1))]?.name}</p>
+                <p className="text-xs text-amber-200/60">Chiến thắng!</p>
               </div>
-              {state.utilityDice && <p className="text-sm text-amber-200">Xúc xắc tính thuê dịch vụ: {state.utilityDice.join(" + ")} = {state.utilityDice.reduce((sum,n)=>sum+n,0)}</p>}
-              {state.lastCard && !cardOverlay && <p className="max-w-sm rounded border border-amber-700 bg-stone-950/70 p-3 text-sm">{state.lastCard}</p>}
-              {state.extraRoll && <p className="text-sm text-amber-300">Đổ đôi — được đi thêm sau khi xử lý ô này.</p>}
-            </div>}
+            ) : (
+              <div role="status" aria-live="polite" className="w-full space-y-3">
+                {/* Current player */}
+                <div className="rounded-lg bg-stone-900/60 border border-amber-800/30 px-3 py-2">
+                  <p className="text-xs text-amber-200/50 mb-1">Lượt hiện tại</p>
+                  <p className="font-bold text-sm">{TOKENS[currentActor]} {state.players[currentActor]?.name}</p>
+                  <p className="text-xs text-amber-300/70">{PHASES[state.phase] ?? state.phase}</p>
+                  {state.extraRoll && <p className="text-[10px] text-amber-400/80 mt-0.5">🎲 Đổ đôi lần {state.doubles}</p>}
+                </div>
+                {/* Dice */}
+                <div className="flex justify-center gap-2" aria-label={`Xúc xắc ${state.dice.join(" và ")}`} role="img">
+                  {state.dice.map((n, i) => (
+                    <div key={i} className={`monopoly-die${diceRolling ? " monopoly-die-rolling" : ""}`} style={diceRolling ? { animationDelay: `${i * 70}ms` } : {}}>
+                      <span className="text-2xl" aria-hidden="true">{n > 0 ? ["⚀","⚁","⚂","⚃","⚄","⚅"][n-1] : "◇"}</span>
+                    </div>
+                  ))}
+                </div>
+                {state.dice.some(n => n > 0) && (
+                  <p className="text-xs text-amber-200/60">= {state.dice.reduce((s,n)=>s+n,0)}{state.dice[0] === state.dice[1] ? " 🎲 Đôi!" : ""}</p>
+                )}
+                {state.utilityDice && <p className="text-[10px] text-amber-200/60">Dịch vụ: {state.utilityDice.join("+")}={state.utilityDice.reduce((s,n)=>s+n,0)}</p>}
+                {state.lastCard && !cardOverlay && <p className="max-w-[180px] rounded border border-amber-700/40 bg-stone-950/60 px-2 py-1 text-[10px] text-amber-100/80 leading-snug">{state.lastCard}</p>}
+                {/* Mini leaderboard */}
+                <div className="space-y-0.5 w-full">
+                  {[...state.players.map((pl, idx) => ({ pl, idx, nw: playerNetWorth[idx] }))]
+                    .filter(x => !x.pl.bankrupt)
+                    .sort((a, b) => b.nw - a.nw)
+                    .map(({ pl, idx, nw }, rank) => (
+                      <div key={idx} className={`flex items-center gap-1 rounded px-1.5 py-0.5 text-[9px] ${idx === currentActor ? "bg-amber-900/40" : "bg-stone-900/30"}`}>
+                        <span className="text-amber-400/60 w-3 shrink-0">{rank+1}</span>
+                        <span className="shrink-0">{TOKENS[idx]}</span>
+                        <span className="truncate flex-1 text-left text-amber-200/70">{pl.name}</span>
+                        <span className="font-mono font-bold text-amber-100/90 tabular-nums shrink-0">${nw.toLocaleString("vi-VN")}</span>
+                      </div>
+                    ))
+                  }
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
       <aside className="space-y-4">
-        {state.started && room.status === "Playing" && <div key={state.phase} className="animate-game-action-enter space-y-3 rounded-xl border border-amber-800 p-4">
-          <h2 className="font-semibold">{PHASES[state.phase]}</h2>
-          {!deciding && <p className="text-sm text-amber-200/70">Chờ {state.players[currentActor]?.name} quyết định.</p>}
+        {state.started && room.status === "Playing" && (() => {
+          const phaseColors: Record<string, string> = {
+            Roll: "border-amber-500/60 bg-amber-950/30",
+            Buy: "border-emerald-500/60 bg-emerald-950/30",
+            Auction: "border-violet-500/60 bg-violet-950/30",
+            Debt: "border-red-500/60 bg-red-950/30",
+            Trade: "border-sky-500/60 bg-sky-950/30",
+            BuildingDemand: "border-orange-500/60 bg-orange-950/20",
+            Inheritance: "border-teal-500/60 bg-teal-950/20",
+            End: "border-stone-600/60 bg-stone-900/30",
+          };
+          const phaseIcons: Record<string, string> = {
+            Roll: "🎲", Buy: "🏠", Auction: "🔨", Debt: "💸", Trade: "🤝",
+            BuildingDemand: "🏗", Inheritance: "📜", End: "✓",
+          };
+          return <div key={state.phase} className={`animate-game-action-enter space-y-3 rounded-xl border p-4 ${phaseColors[state.phase] ?? "border-amber-800"}`}>
+          <h2 className="font-semibold flex items-center gap-2">
+            <span>{phaseIcons[state.phase] ?? "▶"}</span>
+            <span>{PHASES[state.phase]}</span>
+            {deciding && <span className="ml-auto text-[10px] text-amber-400/70 monopoly-actor-badge font-bold">Lượt bạn</span>}
+          </h2>
+          {!deciding && <p className="text-sm text-amber-200/60">⏳ Chờ {state.players[currentActor]?.name}…</p>}
           <div className="flex flex-wrap gap-2">
             {state.phase === "Roll" && <>{action("🎲 Đổ xúc xắc", "ROLL", false, deciding ? "monopoly-roll-btn-ready" : "")}{player?.inJail && <>{action("Nộp 50 ra tù", "PAY_JAIL", player.cash < 50)}{action("Dùng thẻ ra tù", "JAIL_CARD", player.jailCards.length === 0)}</>}</>}
             {state.phase === "Buy" && <>{action(`🏠 Mua với giá ${map.tiles[state.players[state.turn].position].price}`, "BUY", false, deciding ? "monopoly-action-pulse" : "")}{action("Đưa ra đấu giá", "DECLINE")}</>}
@@ -265,7 +314,7 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
             {state.trade.offered.some(i => state.properties[i].mortgaged) && <><p>Nhận đất thế chấp: chấp nhận thường sẽ giữ thế chấp và trả 10% lãi.</p><button className={buttonClass} disabled={!deciding}
               onClick={() => send({type:"ACCEPT",redeemReceived:true})}>Chấp nhận và giải chấp ngay</button></>}
           </div>}
-        </div>}
+        </div>; })()}
         <div key={selected} className="animate-game-action-enter rounded-xl border border-amber-900 overflow-hidden">
           {/* Color group header strip */}
           {GROUP_COLORS[tile.group] && <div className={`h-2.5 w-full ${GROUP_COLORS[tile.group]}`} />}
