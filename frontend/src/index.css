@@ -2195,6 +2195,24 @@ button[draggable="true"]:active { cursor: grabbing; }
 }
 .monopoly-tile-jailrelease { animation: monopolyTileJailRelease 0.9s ease-out var(--anim-delay, 0ms) both; }
 
+/* GoToJail trigger: tile 30 flashes red before teleport */
+@keyframes monopolyTileGoToJailTrigger {
+  0%   { background-color: rgba(220,38,38,0); box-shadow: none; }
+  20%  { background-color: rgba(220,38,38,0.5); box-shadow: 0 0 22px rgba(220,38,38,0.85); }
+  100% { background-color: rgba(220,38,38,0); box-shadow: none; }
+}
+.monopoly-tile-gotojail-trigger { animation: monopolyTileGoToJailTrigger 0.55s ease-out both; }
+
+/* In-jail token: subtle red pulse on token at jail tile */
+@keyframes monopolyTokenInJail {
+  0%, 100% { filter: none; }
+  50%       { filter: drop-shadow(0 0 5px rgba(220,38,38,0.75)) drop-shadow(0 0 2px rgba(220,38,38,0.4)); }
+}
+.monopoly-token-in-jail {
+  display: inline-block;
+  animation: monopolyTokenInJail 2.2s ease-in-out infinite;
+}
+
 /* Departure tile dim fade */
 @keyframes monopolyTileDepart {
   0%   { background-color: rgba(var(--lr,251),var(--lg,191),var(--lb,36),0.22); box-shadow: inset 0 0 10px rgba(var(--lr,251),var(--lg,191),var(--lb,36),0.28); }
@@ -2756,6 +2774,8 @@ button[draggable="true"]:active { cursor: grabbing; }
   .monopoly-tile-passgo { animation: none !important; background-color: rgba(52,211,153,0.1); }
   .monopoly-tile-jail-land { animation: none !important; background-color: rgba(220,38,38,0.15); }
   .monopoly-tile-jailrelease { animation: none !important; background-color: rgba(52,211,153,0.1); }
+  .monopoly-tile-gotojail-trigger { animation: none !important; background-color: rgba(220,38,38,0.12); }
+  .monopoly-token-in-jail { animation: none !important; filter: drop-shadow(0 0 3px rgba(220,38,38,0.5)); }
   .monopoly-tile-depart { animation: none !important; }
   .monopoly-token-jail-land { animation: none !important; }
   .monopoly-actor-badge { animation: none !important; }

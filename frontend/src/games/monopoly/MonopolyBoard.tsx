@@ -92,7 +92,7 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
   const prevPositionRef = useRef<Record<number, number>>({});
   const prevInJailRef = useRef<Record<number, boolean>>({});
   const [doublesFlash, setDoublesFlash] = useState(false);
-  const [moveTiles, setMoveTiles] = useState<Map<number, {type: 'trail'|'land'|'passgo'|'jail'|'depart'|'jailrelease'; delay: number; mover: number; totalSteps: number}>>(new Map());
+  const [moveTiles, setMoveTiles] = useState<Map<number, {type: 'trail'|'land'|'passgo'|'jail'|'depart'|'jailrelease'|'gotojail_trigger'; delay: number; mover: number; totalSteps: number}>>(new Map());
   const [logFilter, setLogFilter] = useState("");
   const [logShowAll, setLogShowAll] = useState(false);
 
@@ -181,7 +181,7 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
     const parts = positionKey ? positionKey.split(",").map(Number) : [];
     const jailParts = inJailKey ? inJailKey.split(",").map(Number) : [];
     if (!parts.length) return;
-    const next = new Map<number, {type: 'trail'|'land'|'passgo'|'jail'|'depart'|'jailrelease'; delay: number; mover: number; totalSteps: number}>();
+    const next = new Map<number, {type: 'trail'|'land'|'passgo'|'jail'|'depart'|'jailrelease'|'gotojail_trigger'; delay: number; mover: number; totalSteps: number}>();
     parts.forEach((pos, i) => {
       const prev = prevPositionRef.current[i];
       const wasInJail = prevInJailRef.current[i] ?? false;
@@ -198,9 +198,12 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
             const type = isLast ? 'land' : (idx === 0 ? 'passgo' : 'trail');
             next.set(idx, { type, delay: (k - 1) * stepMs, mover: i, totalSteps: steps });
           }
+        } else if (pos === 10) {
+          // GoToJail: flash tile 30 (the trigger) first, then jail with a delay
+          next.set(30, { type: 'gotojail_trigger', delay: 0, mover: i, totalSteps: 0 });
+          next.set(10, { type: 'jail', delay: 260, mover: i, totalSteps: 0 });
         } else {
-          // GoToJail teleport (pos===10) or other big jump
-          next.set(pos, { type: pos === 10 ? 'jail' : 'land', delay: 0, mover: i, totalSteps: 0 });
+          next.set(pos, { type: 'land', delay: 0, mover: i, totalSteps: 0 });
         }
       }
       prevPositionRef.current[i] = pos;
@@ -362,7 +365,7 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
             const tokenAnimDelay = isLanding ? moveData!.delay + 80 : 0;
             return <button type="button" key={t.index} data-monopoly-tile="1" data-group={t.group} style={tileStyle} onClick={() => setSelected(t.index)}
               aria-pressed={selected === t.index} aria-label={`Ô ${t.index}: ${t.name}${p.owner !== null ? `, chủ ${state.players[p.owner]?.name}` : ""}`}
-              className={`relative flex min-h-0 flex-col overflow-hidden border text-[9px] leading-tight text-stone-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white transition-[box-shadow,transform] duration-150 active:scale-95 hover:brightness-125 ${selected === t.index ? "border-amber-200 bg-amber-900" : "border-emerald-800/70 bg-stone-900/80"} ${flashTiles.has(t.index) ? "monopoly-tile-just-purchased" : ""} ${monopolyTileSet.has(t.index) ? "ring-1 ring-inset ring-amber-300/50" : ""} ${moveData ? (moveData.type === 'land' ? "monopoly-tile-player-land" : moveData.type === 'jail' ? "monopoly-tile-jail-land" : moveData.type === 'passgo' ? "monopoly-tile-passgo" : moveData.type === 'depart' ? "monopoly-tile-depart" : moveData.type === 'jailrelease' ? "monopoly-tile-jailrelease" : "monopoly-tile-trail") : ""} ${p.buildings > 0 ? "monopoly-tile-built" : ""} ${p.buildings === 5 ? "monopoly-tile-hotel" : ""} ${isAffordable ? "monopoly-tile-affordable" : ""} ${dangerTileSet.has(t.index) ? "monopoly-tile-danger" : ""} ${currentPlayerTileIdx === t.index ? "monopoly-tile-current-player" : ""}`}>
+              className={`relative flex min-h-0 flex-col overflow-hidden border text-[9px] leading-tight text-stone-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white transition-[box-shadow,transform] duration-150 active:scale-95 hover:brightness-125 ${selected === t.index ? "border-amber-200 bg-amber-900" : "border-emerald-800/70 bg-stone-900/80"} ${flashTiles.has(t.index) ? "monopoly-tile-just-purchased" : ""} ${monopolyTileSet.has(t.index) ? "ring-1 ring-inset ring-amber-300/50" : ""} ${moveData ? (moveData.type === 'land' ? "monopoly-tile-player-land" : moveData.type === 'jail' ? "monopoly-tile-jail-land" : moveData.type === 'passgo' ? "monopoly-tile-passgo" : moveData.type === 'depart' ? "monopoly-tile-depart" : moveData.type === 'jailrelease' ? "monopoly-tile-jailrelease" : moveData.type === 'gotojail_trigger' ? "monopoly-tile-gotojail-trigger" : "monopoly-tile-trail") : ""} ${p.buildings > 0 ? "monopoly-tile-built" : ""} ${p.buildings === 5 ? "monopoly-tile-hotel" : ""} ${isAffordable ? "monopoly-tile-affordable" : ""} ${dangerTileSet.has(t.index) ? "monopoly-tile-danger" : ""} ${currentPlayerTileIdx === t.index ? "monopoly-tile-current-player" : ""}`}>
               <span aria-hidden="true" className={`h-2 w-full shrink-0 ${GROUP_COLORS[t.group] ?? "bg-stone-700"}`} />
               {/* Special tile icon overlay */}
               {!t.group && ({"Go":"🏁","Jail":"⛓","FreeParking":"🅿","GoToJail":"🚔","Chance":"🎲","CommunityChest":"📦","IncomeTax":"💸","LuxuryTax":"💎","Railroad":"🚂","Utility":"⚡"} as Record<string,string>)[t.kind] && (
@@ -396,8 +399,12 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
                   ? <>{TOKENS[occupants[0]]}<span className="text-[8px] bg-stone-800 border border-stone-600 rounded-full px-1 ml-0.5">+{occupants.length - 1}</span></>
                   : occupants.map(oi => {
                       const isMover = moveData?.mover === oi;
+                      const isInJailHere = t.index === 10 && (state.players[oi]?.inJail ?? false);
+                      const tokenClass = isMover
+                        ? (moveData!.type === 'jail' ? "monopoly-token-jail-land" : "monopoly-token-land")
+                        : isInJailHere ? "monopoly-token-in-jail" : "";
                       return <span key={oi}
-                        className={isMover ? (moveData!.type === 'jail' ? "monopoly-token-jail-land" : "monopoly-token-land") : ""}
+                        className={tokenClass}
                         style={isMover && isLanding ? { animationDelay: `${tokenAnimDelay}ms` } : undefined}
                       >{TOKENS[oi]}</span>;
                     })
