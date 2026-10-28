@@ -614,12 +614,19 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
             return <div className="space-y-3 rounded-lg border border-violet-800/50 bg-violet-950/30 p-3">
               <div className="flex items-start justify-between">
                 <div>
-                  <div className="text-xs text-violet-400/70 uppercase tracking-wider">Đấu giá</div>
+                  <div className="text-xs text-violet-400/70 uppercase tracking-wider">🔨 Đấu giá</div>
                   <div className="font-bold text-violet-100">{auctionName}</div>
+                  {auc.tile !== undefined && map.tiles[auc.tile]?.group && (
+                    <div className="flex items-center gap-1 mt-0.5">
+                      <span className={`w-2 h-2 rounded-sm inline-block ${GROUP_COLORS[map.tiles[auc.tile].group] ?? "bg-stone-600"}`} />
+                      <span className="text-[10px] text-violet-300/50">{map.tiles[auc.tile].group}</span>
+                    </div>
+                  )}
                 </div>
                 <div className="text-right">
                   <div className="text-[10px] text-violet-400/60">Giá hiện tại</div>
                   <div className="text-xl font-black text-violet-300 tabular-nums">${auc.bid.toLocaleString("vi-VN")}</div>
+                  {auc.tile !== undefined && <div className="text-[10px] text-violet-400/50">${map.tiles[auc.tile]?.price ?? 0} gốc</div>}
                 </div>
               </div>
               {/* Leader + passed status */}
@@ -639,12 +646,20 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
               </div>
               {buildAuctionTiles.length > 0 && <label className="block text-sm text-violet-200/70">Đất xây <select aria-label="Đất xây sau đấu giá" className="w-full rounded bg-stone-900 p-1.5 mt-0.5" value={biddingTile}
                 onChange={e => setSelected(Number(e.target.value))}>{buildAuctionTiles.map(index => <option key={index} value={index}>{map.tiles[index].name}</option>)}</select></label>}
-              <div className="flex items-center gap-2">
-                <label className="text-sm text-violet-200/70 shrink-0">Giá đấu</label>
-                <input aria-label="Giá đấu" className="w-28 rounded bg-stone-900 border border-stone-700 p-1.5 text-sm" type="number" min={minimumBid} max={player?.cash ?? 0} value={Math.max(bid,minimumBid)} onChange={e => setBid(Number(e.target.value))} />
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-2">
+                  <label className="text-sm text-violet-200/70 shrink-0">Giá đấu</label>
+                  <input aria-label="Giá đấu" className="flex-1 rounded bg-stone-900 border border-stone-700 p-1.5 text-sm" type="number" min={minimumBid} max={player?.cash ?? 0} value={Math.max(bid,minimumBid)} onChange={e => setBid(Number(e.target.value))} />
+                </div>
+                {player && (
+                  <div className="text-[10px] text-violet-300/50 flex justify-between">
+                    <span>Tiền sau đấu: ${Math.max(0, player.cash - Math.max(bid, minimumBid)).toLocaleString("vi-VN")}</span>
+                    <span>Tối thiểu: ${minimumBid}</span>
+                  </div>
+                )}
               </div>
               <div className="flex gap-2">
-                <button className={`${buttonClass} flex-1`} disabled={!deciding} onClick={() => send({type:"BID",amount:Math.max(bid,minimumBid),...(biddingTile !== undefined ? {tile:biddingTile} : {})})}>🔨 Trả giá</button>
+                <button className={`${buttonClass} flex-1`} disabled={!deciding} onClick={() => send({type:"BID",amount:Math.max(bid,minimumBid),...(biddingTile !== undefined ? {tile:biddingTile} : {})})}>🔨 Trả giá · ${Math.max(bid,minimumBid)}</button>
                 {action("Bỏ qua", "PASS")}
               </div>
             </div>;
