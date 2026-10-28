@@ -624,20 +624,73 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
                 )}
               </div>
             )}
-            {tile.rents && (
-              <div className="rounded-lg overflow-hidden border border-amber-900/40 text-sm">
-                {tile.rents.map((rent, i) => (
-                  <div key={i} className={`flex justify-between items-center px-2 py-1 ${i > 0 ? "border-t border-amber-900/25" : ""} ${property.buildings === i ? "bg-amber-900/40" : i % 2 === 0 ? "bg-stone-900/30" : ""}`}>
-                    <span className="text-amber-200/70 text-xs">
-                      {i === 0 ? "Đất trống" : i === 5 ? "🏨 Khách sạn" : `${"🏠".repeat(i)}`}
-                    </span>
-                    <span className={`font-mono font-bold tabular-nums ${property.buildings === i ? "text-amber-300" : "text-amber-100"}`}>${rent}</span>
+            {tile.rents && (() => {
+              const hasMonopoly = tile.group && monopolyTileSet.has(selected);
+              const effectiveRent = property.owner !== null && !property.mortgaged && tile.rents
+                ? (hasMonopoly && property.buildings === 0 ? tile.rents[0] * 2 : tile.rents[property.buildings])
+                : null;
+              return (
+                <>
+                  {effectiveRent !== null && (
+                    <div className="flex items-center justify-between rounded bg-amber-900/30 border border-amber-700/40 px-2 py-1.5">
+                      <span className="text-xs text-amber-400/70">Thuê hiện tại</span>
+                      <span className="font-bold text-amber-300 tabular-nums">${effectiveRent}</span>
+                    </div>
+                  )}
+                  <div className="rounded-lg overflow-hidden border border-amber-900/40 text-sm">
+                    {tile.rents.map((rent, i) => {
+                      const isActive = property.buildings === i;
+                      const showDouble = hasMonopoly && i === 0;
+                      return (
+                        <div key={i} className={`flex justify-between items-center px-2 py-1 ${i > 0 ? "border-t border-amber-900/25" : ""} ${isActive ? "bg-amber-900/40" : i % 2 === 0 ? "bg-stone-900/30" : ""}`}>
+                          <span className="text-amber-200/70 text-xs">
+                            {i === 0 ? "Đất trống" : i === 5 ? "🏨 Khách sạn" : `${"🏠".repeat(i)}`}
+                          </span>
+                          <span className={`font-mono font-bold tabular-nums ${isActive ? "text-amber-300" : "text-amber-100"}`}>
+                            ${showDouble ? rent * 2 : rent}{showDouble ? <span className="text-[9px] text-amber-400/60 ml-0.5">×2</span> : null}
+                          </span>
+                        </div>
+                      );
+                    })}
                   </div>
-                ))}
-              </div>
-            )}
-            {tile.kind === "Railroad" && <p className="text-xs text-amber-200/60 rounded bg-stone-900/40 px-2 py-1">1/2/3/4 ga: $25/$50/$100/$200</p>}
-            {tile.kind === "Utility" && <p className="text-xs text-amber-200/60 rounded bg-stone-900/40 px-2 py-1">1/2 công ty: 4× / 10× tổng xúc xắc</p>}
+                </>
+              );
+            })()}
+            {tile.kind === "Railroad" && (() => {
+              const ownerRR = property.owner;
+              const rrCount = ownerRR !== null ? map.tiles.filter(t => t.kind === "Railroad" && state.properties[t.index].owner === ownerRR).length : 0;
+              const rrRents = [25, 50, 100, 200];
+              const effectiveRR = ownerRR !== null && !property.mortgaged ? rrRents[rrCount - 1] : null;
+              return (
+                <div className="rounded bg-stone-900/40 px-2 py-2 text-xs text-amber-200/60 space-y-1">
+                  <div className="grid grid-cols-4 gap-1 text-center">
+                    {rrRents.map((r, n) => (
+                      <div key={n} className={`rounded py-0.5 ${rrCount === n+1 && ownerRR !== null ? "bg-amber-800/50 text-amber-300 font-bold" : ""}`}>
+                        <div className="opacity-50">{n+1}ga</div>
+                        <div>${r}</div>
+                      </div>
+                    ))}
+                  </div>
+                  {effectiveRR !== null && <div className="text-center text-amber-300/80 font-semibold">Thuê hiện tại: ${effectiveRR}</div>}
+                </div>
+              );
+            })()}
+            {tile.kind === "Utility" && (() => {
+              const ownerUtil = property.owner;
+              const utilCount = ownerUtil !== null ? map.tiles.filter(t => t.kind === "Utility" && state.properties[t.index].owner === ownerUtil).length : 0;
+              return (
+                <div className="rounded bg-stone-900/40 px-2 py-2 text-xs text-amber-200/60 space-y-1">
+                  <div className="grid grid-cols-2 gap-1 text-center">
+                    {[["1 công ty", "4×"], ["2 công ty", "10×"]].map(([label, mult], n) => (
+                      <div key={n} className={`rounded py-1 ${utilCount === n+1 && ownerUtil !== null ? "bg-amber-800/50 text-amber-300 font-bold" : ""}`}>
+                        <div className="opacity-50">{label}</div>
+                        <div>{mult} xúc xắc</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
             {/* Occupants on this tile */}
             {(() => {
               const here = state.players.map((pl, pi) => !pl.bankrupt && pl.position === selected ? { pl, pi } : null).filter(Boolean) as { pl: typeof state.players[0]; pi: number }[];
