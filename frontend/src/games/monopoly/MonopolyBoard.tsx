@@ -1009,6 +1009,18 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
                 </>
               );
             })()}
+            {/* Building ROI hint */}
+            {tile.kind === "Street" && tile.houseCost > 0 && tile.rents && tile.rents.length >= 2 && property.owner !== null && !property.mortgaged && (() => {
+              const rentGain = tile.rents[1] - (monopolyTileSet.has(selected) ? tile.rents[0] * 2 : tile.rents[0]);
+              if (rentGain <= 0) return null;
+              const roiTurns = Math.ceil(tile.houseCost / rentGain);
+              return (
+                <div className="text-[9px] text-stone-500 flex items-center gap-1" title="Nhà đầu tiên: số lần thuê để thu hồi vốn">
+                  <span>📐 ROI nhà đầu:</span>
+                  <span className="font-mono text-stone-400">+${rentGain}/lượt → {roiTurns} lần</span>
+                </div>
+              );
+            })()}
             {tile.kind === "Railroad" && (() => {
               const ownerRR = property.owner;
               const rrCount = ownerRR !== null ? map.tiles.filter(t => t.kind === "Railroad" && state.properties[t.index].owner === ownerRR).length : 0;
@@ -1242,12 +1254,17 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
       return (
         <div className="flex flex-wrap gap-2 items-center rounded-xl border border-stone-800/40 bg-stone-950/30 px-4 py-2 text-[10px]">
           <span className="text-stone-500 shrink-0">Chưa mua:</span>
-          {unowned.map(t => (
-            <button key={t.index} type="button" onClick={() => setSelected(t.index)}
-              className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 border border-black/20 ${GROUP_COLORS[t.group] ?? "bg-stone-700"} text-stone-900 hover:brightness-110 transition-all`}>
-              {t.name} <span className="font-bold">${t.price}</span>
-            </button>
-          ))}
+          {unowned.map(t => {
+            const afforders = state.players.filter((pl, pi) => !pl.bankrupt && pl.cash >= t.price).length;
+            return (
+              <button key={t.index} type="button" onClick={() => setSelected(t.index)}
+                title={`${afforders} người có thể mua`}
+                className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 border border-black/20 ${GROUP_COLORS[t.group] ?? "bg-stone-700"} text-stone-900 hover:brightness-110 transition-all`}>
+                {t.name} <span className="font-bold">${t.price}</span>
+                {afforders > 0 && <span className="ml-0.5 text-stone-700 text-[8px]">×{afforders}</span>}
+              </button>
+            );
+          })}
         </div>
       );
     })()}
