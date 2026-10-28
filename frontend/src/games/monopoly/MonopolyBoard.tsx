@@ -632,6 +632,44 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
                   )}
                   {!canPay && <div className="px-3 pb-2 text-[10px] text-red-400/60">Tiền mặt không đủ — bán nhà hoặc thế chấp đất.</div>}
                 </div>
+                {!canPay && player && deciding && (() => {
+                  const needed = debt.amount - player.cash;
+                  const myTiles = map.tiles.filter(t => state.properties[t.index].owner === seat);
+                  const sellable = myTiles
+                    .filter(t => state.properties[t.index].buildings > 0)
+                    .map(t => ({ t, val: Math.floor((t.houseCost ?? 0) / 2) * state.properties[t.index].buildings }))
+                    .sort((a, b) => b.val - a.val)
+                    .slice(0, 3);
+                  const mortgageable = myTiles
+                    .filter(t => !state.properties[t.index].mortgaged && state.properties[t.index].buildings === 0)
+                    .map(t => ({ t, val: Math.floor(t.price / 2) }))
+                    .sort((a, b) => b.val - a.val)
+                    .slice(0, 3);
+                  if (!sellable.length && !mortgageable.length) return null;
+                  return (
+                    <div className="rounded border border-red-900/30 bg-red-950/20 p-2 space-y-1">
+                      <div className="text-[9px] text-red-400/50 uppercase tracking-wide">⚡ Gợi ý thanh khoản (thiếu ${needed})</div>
+                      {sellable.map(({ t, val }) => (
+                        <button key={t.index} type="button" onClick={() => setSelected(t.index)}
+                          className="w-full flex items-center gap-1.5 text-[10px] rounded px-1.5 py-0.5 hover:bg-red-950/40 text-left transition-colors">
+                          <span className="text-red-400/60 shrink-0">🔨 Bán</span>
+                          <span className={`w-2 h-2 rounded-sm shrink-0 ${GROUP_COLORS[t.group] ?? "bg-stone-600"}`} />
+                          <span className="flex-1 truncate text-amber-200/60">{t.name}</span>
+                          <span className="font-mono text-emerald-400/70 shrink-0">+${val}</span>
+                        </button>
+                      ))}
+                      {mortgageable.map(({ t, val }) => (
+                        <button key={t.index} type="button" onClick={() => setSelected(t.index)}
+                          className="w-full flex items-center gap-1.5 text-[10px] rounded px-1.5 py-0.5 hover:bg-red-950/40 text-left transition-colors">
+                          <span className="text-red-400/60 shrink-0">🔒 TC</span>
+                          <span className={`w-2 h-2 rounded-sm shrink-0 ${GROUP_COLORS[t.group] ?? "bg-stone-600"}`} />
+                          <span className="flex-1 truncate text-amber-200/60">{t.name}</span>
+                          <span className="font-mono text-emerald-400/70 shrink-0">+${val}</span>
+                        </button>
+                      ))}
+                    </div>
+                  );
+                })()}
                 {action("💸 Thanh toán", "SETTLE", false, deciding ? "monopoly-action-pulse" : "")}
                 {action("💀 Tuyên bố phá sản", "BANKRUPT")}
               </>;
