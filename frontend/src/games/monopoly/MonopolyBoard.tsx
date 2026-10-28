@@ -303,7 +303,7 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
             const isAffordable = player && !player.bankrupt && p.owner === null && t.price > 0 && t.price <= player.cash && state.phase === "Buy" && state.players[state.turn]?.position === t.index;
             return <button type="button" key={t.index} data-monopoly-tile="1" data-group={t.group} style={boardPosition(t.index)} onClick={() => setSelected(t.index)}
               aria-pressed={selected === t.index} aria-label={`Ô ${t.index}: ${t.name}${p.owner !== null ? `, chủ ${state.players[p.owner]?.name}` : ""}`}
-              className={`relative flex min-h-0 flex-col overflow-hidden border text-[9px] leading-tight text-stone-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white transition-[box-shadow,transform] duration-150 active:scale-95 hover:brightness-125 ${selected === t.index ? "border-amber-200 bg-amber-900" : "border-emerald-800/70 bg-stone-900/80"} ${flashTiles.has(t.index) ? "monopoly-tile-just-purchased" : ""} ${monopolyTileSet.has(t.index) ? "ring-1 ring-inset ring-amber-300/50" : ""} ${movedTiles.has(t.index) ? "monopoly-tile-player-land" : ""} ${p.buildings > 0 ? "monopoly-tile-built" : ""} ${p.buildings === 5 ? "monopoly-tile-hotel" : ""} ${isAffordable ? "ring-2 ring-emerald-400/60" : ""} ${dangerTileSet.has(t.index) ? "monopoly-tile-danger" : ""}`}>
+              className={`relative flex min-h-0 flex-col overflow-hidden border text-[9px] leading-tight text-stone-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white transition-[box-shadow,transform] duration-150 active:scale-95 hover:brightness-125 ${selected === t.index ? "border-amber-200 bg-amber-900" : "border-emerald-800/70 bg-stone-900/80"} ${flashTiles.has(t.index) ? "monopoly-tile-just-purchased" : ""} ${monopolyTileSet.has(t.index) ? "ring-1 ring-inset ring-amber-300/50" : ""} ${movedTiles.has(t.index) ? "monopoly-tile-player-land" : ""} ${p.buildings > 0 ? "monopoly-tile-built" : ""} ${p.buildings === 5 ? "monopoly-tile-hotel" : ""} ${isAffordable ? "monopoly-tile-affordable" : ""} ${dangerTileSet.has(t.index) ? "monopoly-tile-danger" : ""}`}>
               <span aria-hidden="true" className={`h-2 w-full shrink-0 ${GROUP_COLORS[t.group] ?? "bg-stone-700"}`} />
               {/* Special tile icon overlay */}
               {!t.group && ({"Go":"🏁","Jail":"⛓","FreeParking":"🅿","GoToJail":"🚔","Chance":"🎲","CommunityChest":"📦","IncomeTax":"💸","LuxuryTax":"💎","Railroad":"🚂","Utility":"⚡"} as Record<string,string>)[t.kind] && (
@@ -955,7 +955,10 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
                   return <span className="text-sm font-bold text-emerald-400 tabular-nums shrink-0">${rent}/thuê</span>;
                 })()}
               </div>
-              <p className="text-xs text-amber-200/50">Ô {selected} · {tile.group || tile.kind}</p>
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <p className="text-xs text-amber-200/50">Ô {selected} · {tile.group || tile.kind}</p>
+                {isAffordable && <span className="text-[9px] bg-emerald-900/50 text-emerald-300 border border-emerald-700/40 rounded-full px-1.5 py-0.5 font-semibold">✓ Bạn có thể mua</span>}
+              </div>
             </div>}
             {tile.price > 0 && (
               <div className="grid grid-cols-3 gap-2 text-sm">
