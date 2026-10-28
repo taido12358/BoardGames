@@ -268,9 +268,24 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
                 <p className="max-w-[200px] text-xs text-emerald-100/60">Mua đất · Xây nhà · Thương lượng<br />Phá sản đối thủ để chiến thắng</p>
               </>
             ) : state.winner ? (
-              <div className="space-y-2">
-                <p className="monopoly-winner-banner text-2xl font-black text-amber-300">🏆 {state.players[Number(state.winner.slice(1))]?.name}</p>
-                <p className="text-xs text-amber-200/60">Chiến thắng!</p>
+              <div className="w-full space-y-3">
+                <div className="space-y-1">
+                  <p className="monopoly-winner-banner text-2xl font-black text-amber-300">🏆 {state.players[Number(state.winner.slice(1))]?.name}</p>
+                  <p className="text-xs text-amber-400/60">Chiến thắng!</p>
+                </div>
+                <div className="w-full space-y-0.5">
+                  {[...state.players.map((pl, idx) => ({ pl, idx, nw: playerNetWorth[idx] }))]
+                    .sort((a, b) => b.nw - a.nw)
+                    .map(({ pl, idx, nw }, rank) => (
+                      <div key={idx} className={`flex items-center gap-1.5 rounded px-2 py-1 text-[10px] ${rank === 0 ? "bg-amber-900/50 border border-amber-700/40" : pl.bankrupt ? "opacity-40" : "bg-stone-900/40"}`}>
+                        <span className={`font-bold w-4 shrink-0 ${rank === 0 ? "text-amber-400" : "text-stone-500"}`}>{rank === 0 ? "🥇" : rank === 1 ? "🥈" : rank === 2 ? "🥉" : `${rank+1}.`}</span>
+                        <span className="shrink-0">{TOKENS[idx]}</span>
+                        <span className="truncate flex-1 text-left text-amber-200/80">{pl.name}</span>
+                        <span className={`font-mono font-bold tabular-nums shrink-0 ${pl.bankrupt ? "text-stone-500" : "text-amber-100"}`}>{pl.bankrupt ? "💀" : `$${nw.toLocaleString("vi-VN")}`}</span>
+                      </div>
+                    ))
+                  }
+                </div>
               </div>
             ) : (
               <div role="status" aria-live="polite" className="w-full space-y-3">
@@ -415,14 +430,49 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
               </div>
             </div>;
           })()}
-          {state.trade && <div className="space-y-2 text-sm">
-            <p>{state.players[state.trade.from].name} đưa: {names(state.trade.offered)} + {state.trade.cashOffered}.</p>
-            <p>Đổi lấy: {names(state.trade.requested)} + {state.trade.cashRequested}.</p>
-            {(state.trade.offeredCards?.length > 0 || state.trade.requestedCards?.length > 0) && <p>Thẻ ra tù: đưa {state.trade.offeredCards.length}, nhận {state.trade.requestedCards.length}.</p>}
-            {action("Chấp nhận", "ACCEPT")} {action("Từ chối", "REJECT")}
-            {state.trade.offered.some(i => state.properties[i].mortgaged) && <><p>Nhận đất thế chấp: chấp nhận thường sẽ giữ thế chấp và trả 10% lãi.</p><button className={buttonClass} disabled={!deciding}
-              onClick={() => send({type:"ACCEPT",redeemReceived:true})}>Chấp nhận và giải chấp ngay</button></>}
-          </div>}
+          {state.trade && (() => {
+            const tr = state.trade;
+            const TradeParty = ({ label, playerIdx, tiles, cash, cards }: { label: string; playerIdx: number; tiles: number[]; cash: number; cards: number }) => (
+              <div className="rounded-lg bg-stone-900/50 border border-stone-700/40 p-2.5 space-y-1.5">
+                <div className="flex items-center gap-1.5 text-xs text-amber-200/60">
+                  <span>{TOKENS[playerIdx]}</span>
+                  <span className="font-semibold text-amber-200/90">{state.players[playerIdx]?.name}</span>
+                  <span className="ml-auto text-amber-400/50">{label}</span>
+                </div>
+                {cash > 0 && <div className="text-sm font-bold text-emerald-300">${cash.toLocaleString("vi-VN")}</div>}
+                {cards > 0 && <div className="text-xs text-amber-300/70">🎫 ×{cards} thẻ ra tù</div>}
+                {tiles.length > 0 && (
+                  <div className="flex flex-wrap gap-1">
+                    {tiles.map(ti => {
+                      const t2 = map.tiles[ti];
+                      return <button key={ti} onClick={() => setSelected(ti)} title={t2.name}
+                        className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] border border-black/20 ${GROUP_COLORS[t2.group] ?? "bg-stone-600"} text-stone-900 font-medium ${state.properties[ti].mortgaged ? "opacity-50 line-through" : ""}`}>
+                        {t2.name}
+                      </button>;
+                    })}
+                  </div>
+                )}
+                {tiles.length === 0 && cash === 0 && cards === 0 && <span className="text-[10px] text-stone-500 italic">Không đưa gì</span>}
+              </div>
+            );
+            return <div className="space-y-2 rounded-lg border border-sky-800/50 bg-sky-950/20 p-3">
+              <div className="text-xs text-sky-400/70 uppercase tracking-wider font-semibold">🤝 Giao dịch</div>
+              <TradeParty label="đưa" playerIdx={tr.from} tiles={tr.offered} cash={tr.cashOffered} cards={tr.offeredCards?.length ?? 0} />
+              <div className="text-center text-lg text-sky-400/50">⇄</div>
+              <TradeParty label="nhận" playerIdx={tr.to} tiles={tr.requested} cash={tr.cashRequested} cards={tr.requestedCards?.length ?? 0} />
+              <div className="flex gap-2 pt-1">
+                {action("✓ Chấp nhận", "ACCEPT", false, deciding ? "monopoly-action-pulse" : "")}
+                {action("✗ Từ chối", "REJECT")}
+              </div>
+              {tr.offered.some(ti => state.properties[ti].mortgaged) && (
+                <div className="rounded bg-amber-950/50 border border-amber-800/40 p-2 text-xs text-amber-200/70">
+                  Nhận đất thế chấp — chấp nhận sẽ giữ TC + trả 10% lãi.
+                  <button className={`${buttonClass} w-full mt-1.5 text-xs py-1`} disabled={!deciding}
+                    onClick={() => send({type:"ACCEPT",redeemReceived:true})}>Chấp nhận + giải chấp ngay</button>
+                </div>
+              )}
+            </div>;
+          })()}
         </div>; })()}
         <div key={selected} className="animate-game-action-enter rounded-xl border border-amber-900 overflow-hidden">
           {/* Color group header strip */}
