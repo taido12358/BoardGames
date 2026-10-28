@@ -326,7 +326,12 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
               {t.index === 10 && state.players.some(pl => pl.inJail && !pl.bankrupt) && (
                 <span className="absolute top-0.5 right-0.5 text-[8px] bg-red-950/80 border border-red-800/60 rounded px-0.5 leading-tight">⛓</span>
               )}
-              <span className="mt-auto text-xs" aria-hidden="true">{occupants.map(i => <span key={i} className="monopoly-token-land">{TOKENS[i]}</span>)}</span>
+              <span className="mt-auto text-xs relative" aria-hidden="true">
+                {occupants.length > 2
+                  ? <>{TOKENS[occupants[0]]}<span className="text-[8px] bg-stone-800 border border-stone-600 rounded-full px-1 ml-0.5">+{occupants.length - 1}</span></>
+                  : occupants.map(i => <span key={i} className="monopoly-token-land">{TOKENS[i]}</span>)
+                }
+              </span>
             </button>;
           })}
           <div className="col-start-2 col-end-11 row-start-2 row-end-11 flex flex-col items-center justify-center gap-3 overflow-auto p-4 text-center relative">
@@ -516,7 +521,7 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
             Roll: "🎲", Buy: "🏠", Auction: "🔨", Debt: "💸", Trade: "🤝",
             BuildingDemand: "🏗", Inheritance: "📜", End: "✓",
           };
-          return <div key={state.phase} className={`animate-game-action-enter space-y-3 rounded-xl border p-4 ${phaseColors[state.phase] ?? "border-amber-800"} ${deciding ? "monopoly-my-turn" : ""}`}>
+          return <div key={state.phase} className={`space-y-3 rounded-xl border p-4 ${phaseColors[state.phase] ?? "border-amber-800"} ${deciding ? "monopoly-my-turn monopoly-turn-enter" : "animate-game-action-enter"}`}>
           <h2 className="font-semibold flex items-center gap-2">
             <span>{phaseIcons[state.phase] ?? "▶"}</span>
             <span>{PHASES[state.phase]}</span>
