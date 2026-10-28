@@ -276,9 +276,10 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
           {map.tiles.map(t => {
             const p = state.properties[t.index];
             const occupants = state.players.map((who,i) => !who.bankrupt && who.position === t.index ? i : -1).filter(i => i >= 0);
+            const isAffordable = player && !player.bankrupt && p.owner === null && t.price > 0 && t.price <= player.cash && state.phase === "Buy" && state.players[state.turn]?.position === t.index;
             return <button type="button" key={t.index} data-monopoly-tile="1" data-group={t.group} style={boardPosition(t.index)} onClick={() => setSelected(t.index)}
               aria-pressed={selected === t.index} aria-label={`Ô ${t.index}: ${t.name}${p.owner !== null ? `, chủ ${state.players[p.owner]?.name}` : ""}`}
-              className={`relative flex min-h-0 flex-col overflow-hidden border text-[9px] leading-tight text-stone-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white transition-[box-shadow,transform] duration-150 active:scale-95 hover:brightness-125 ${selected === t.index ? "border-amber-200 bg-amber-900" : "border-emerald-800/70 bg-stone-900/80"} ${flashTiles.has(t.index) ? "monopoly-tile-just-purchased" : ""} ${monopolyTileSet.has(t.index) ? "ring-1 ring-inset ring-amber-300/50" : ""} ${movedTiles.has(t.index) ? "monopoly-tile-player-land" : ""} ${p.buildings > 0 ? "monopoly-tile-built" : ""}`}>
+              className={`relative flex min-h-0 flex-col overflow-hidden border text-[9px] leading-tight text-stone-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white transition-[box-shadow,transform] duration-150 active:scale-95 hover:brightness-125 ${selected === t.index ? "border-amber-200 bg-amber-900" : "border-emerald-800/70 bg-stone-900/80"} ${flashTiles.has(t.index) ? "monopoly-tile-just-purchased" : ""} ${monopolyTileSet.has(t.index) ? "ring-1 ring-inset ring-amber-300/50" : ""} ${movedTiles.has(t.index) ? "monopoly-tile-player-land" : ""} ${p.buildings > 0 ? "monopoly-tile-built" : ""} ${isAffordable ? "ring-2 ring-emerald-400/60" : ""}`}>
               <span aria-hidden="true" className={`h-2 w-full shrink-0 ${GROUP_COLORS[t.group] ?? "bg-stone-700"}`} />
               {/* Special tile icon overlay */}
               {!t.group && ({"Go":"🏁","Jail":"⛓","FreeParking":"🅿","GoToJail":"🚔","Chance":"🎲","CommunityChest":"📦","IncomeTax":"💸","LuxuryTax":"💎","Railroad":"🚂","Utility":"⚡"} as Record<string,string>)[t.kind] && (
@@ -383,10 +384,11 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
                   const curPos = activePlayers.findIndex(x => x.idx === state.turn);
                   const next = activePlayers[(curPos + 1) % activePlayers.length];
                   return next && next.idx !== state.turn ? (
-                    <div className="flex items-center gap-1.5 text-[10px] text-stone-500 px-1">
-                      <span>Tiếp:</span>
-                      <span>{TOKENS[next.idx]}</span>
-                      <span className="text-stone-400">{next.pl.name}</span>
+                    <div className="flex items-center gap-1.5 text-[10px] text-stone-500 border border-stone-800/40 rounded px-2 py-1">
+                      <span className="shrink-0 text-stone-600">Tiếp:</span>
+                      <span className="shrink-0">{TOKENS[next.idx]}</span>
+                      <span className="text-stone-400 truncate flex-1 text-left">{next.pl.name}</span>
+                      <span className="font-mono text-stone-500 shrink-0">${next.pl.cash.toLocaleString("vi-VN")}</span>
                     </div>
                   ) : null;
                 })()}
@@ -403,10 +405,13 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
                   const isDouble = state.dice[0] === state.dice[1];
                   const actorTile = map.tiles[state.players[currentActor]?.position];
                   return (
-                    <div className="space-y-1 text-xs text-amber-200/60">
-                      <p>= {sum}{isDouble ? " 🎲 Đôi!" : ""}</p>
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-center gap-2">
+                        <span className={`text-2xl font-black tabular-nums ${isDouble ? "text-amber-300" : "text-amber-100/80"}`}>{sum}</span>
+                        {isDouble && <span className="text-[10px] bg-amber-800/60 text-amber-300 rounded px-1.5 py-0.5 font-bold">Đôi!</span>}
+                      </div>
                       {actorTile && <button type="button" onClick={() => setSelected(state.players[currentActor]?.position)}
-                        className="text-[10px] rounded border border-amber-800/30 bg-stone-900/50 px-2 py-0.5 hover:bg-amber-900/30 transition-colors">
+                        className="w-full text-[10px] rounded border border-amber-800/30 bg-stone-900/50 px-2 py-0.5 hover:bg-amber-900/30 transition-colors text-amber-200/60">
                         {({"Go":"🏁","Jail":"⛓","FreeParking":"🅿","GoToJail":"🚔","Chance":"🎲","CommunityChest":"📦","IncomeTax":"💸","LuxuryTax":"💎"} as Record<string,string>)[actorTile.kind] ?? "📍"} {actorTile.name}
                       </button>}
                     </div>
