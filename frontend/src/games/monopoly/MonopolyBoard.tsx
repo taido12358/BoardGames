@@ -221,16 +221,25 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
     <header className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-amber-900/40 bg-stone-950/60 px-4 py-3">
       <div>
         <h1 className="text-xl font-black tracking-wide text-amber-300">🏦 CỜ TỈ PHÚ</h1>
-        <p className="text-xs text-amber-300/50 mt-0.5">{map.edition} · Kho: {state.houses} nhà · {state.hotels} KS</p>
+        <p className="text-xs text-amber-300/50 mt-0.5">{map.edition}</p>
       </div>
-      <div className="flex items-center gap-3">
-        {state.started && !state.winner && (
-          <div className="text-xs text-amber-200/60 text-right">
-            <span className="block">Pha: <span className="font-bold text-amber-300">{PHASES[state.phase] ?? state.phase}</span></span>
-            {state.doubles > 0 && <span className="text-amber-400/70">🎲×{state.doubles} liên tiếp</span>}
+      {/* Bank stock + phase chips */}
+      {state.started && (
+        <div className="hidden sm:flex items-center gap-2 text-[10px]">
+          <span className="rounded bg-stone-900/60 border border-stone-700/40 px-2 py-1 text-stone-300">🏠 {state.houses}</span>
+          <span className="rounded bg-stone-900/60 border border-stone-700/40 px-2 py-1 text-stone-300">🏨 {state.hotels}</span>
+          {!state.winner && <span className="rounded bg-amber-900/40 border border-amber-700/40 px-2 py-1 text-amber-300 font-semibold">{PHASES[state.phase] ?? state.phase}</span>}
+          {state.doubles > 0 && <span className="rounded bg-amber-900/30 border border-amber-800/30 px-2 py-1 text-amber-400/80">🎲×{state.doubles}</span>}
+        </div>
+      )}
+      <div className="flex items-center gap-2">
+        {seat >= 0 && player && !player.bankrupt && state.started && (
+          <div className="text-right text-[10px] text-amber-200/60 hidden md:block">
+            <div>{map.tiles[player.position]?.name ?? "—"}</div>
+            <div className="font-bold text-amber-300">${player.cash.toLocaleString("vi-VN")}</div>
           </div>
         )}
-        <div className="text-sm text-amber-200/70">
+        <div className="text-sm text-amber-200/70 font-semibold">
           {replayRoom ? "📼 Bản ghi" : seat < 0 ? "👁 Xem" : `${TOKENS[seat]} ${player?.name ?? "—"}`}
         </div>
       </div>
@@ -374,7 +383,21 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
           {!deciding && <p className="text-sm text-amber-200/60">⏳ Chờ {state.players[currentActor]?.name}…</p>}
           <div className="flex flex-wrap gap-2">
             {state.phase === "Roll" && <>{action("🎲 Đổ xúc xắc", "ROLL", false, deciding ? "monopoly-roll-btn-ready" : "")}{player?.inJail && <>{action("Nộp 50 ra tù", "PAY_JAIL", player.cash < 50)}{action("Dùng thẻ ra tù", "JAIL_CARD", player.jailCards.length === 0)}</>}</>}
-            {state.phase === "Buy" && <>{action(`🏠 Mua với giá ${map.tiles[state.players[state.turn].position].price}`, "BUY", false, deciding ? "monopoly-action-pulse" : "")}{action("Đưa ra đấu giá", "DECLINE")}</>}
+            {state.phase === "Buy" && (() => {
+              const buyTile = map.tiles[state.players[state.turn].position];
+              const buyProp = state.properties[state.players[state.turn].position];
+              return <>
+                {buyTile.group && <div className={`w-full flex items-center gap-2 rounded-lg p-2 border border-black/20 ${GROUP_COLORS[buyTile.group] ?? "bg-stone-700"}`}>
+                  <div className="text-stone-900">
+                    <div className="font-bold text-sm leading-tight">{buyTile.name}</div>
+                    <div className="text-[10px] opacity-70">{buyTile.group} · {buyProp.owner === null ? "Chưa ai mua" : state.players[buyProp.owner]?.name}</div>
+                  </div>
+                  <span className="ml-auto text-stone-900 font-black text-lg">${buyTile.price}</span>
+                </div>}
+                {action(`🏠 Mua · $${buyTile.price}`, "BUY", false, deciding ? "monopoly-action-pulse" : "")}
+                {action("🔨 Đưa ra đấu giá", "DECLINE")}
+              </>;
+            })()}
             {state.phase === "End" && action(state.extraRoll ? "↩ Tiếp tục lượt đổ đôi" : "✓ Kết thúc lượt", "END", false, deciding ? "monopoly-action-pulse" : "")}
             {state.phase === "Debt" && state.payments[0] && (() => {
               const debt = state.payments[0];
