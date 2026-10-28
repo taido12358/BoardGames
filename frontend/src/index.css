@@ -2073,8 +2073,8 @@ button[draggable="true"]:active { cursor: grabbing; }
 
 @keyframes monopolyTokenLand {
   0%   { transform: scale(1) translateY(0); filter: none; }
-  30%  { transform: scale(1.7) translateY(-9px); filter: drop-shadow(0 0 10px rgba(251,191,36,0.95)) drop-shadow(0 0 4px rgba(255,255,255,0.5)); }
-  55%  { transform: scale(0.8) translateY(3px);  filter: drop-shadow(0 0 4px rgba(251,191,36,0.4)); }
+  30%  { transform: scale(1.7) translateY(-9px); filter: drop-shadow(0 0 10px rgba(var(--lr,251),var(--lg,191),var(--lb,36),0.95)) drop-shadow(0 0 4px rgba(255,255,255,0.5)); }
+  55%  { transform: scale(0.8) translateY(3px);  filter: drop-shadow(0 0 4px rgba(var(--lr,251),var(--lg,191),var(--lb,36),0.4)); }
   76%  { transform: scale(1.15) translateY(-2px); filter: none; }
   100% { transform: scale(1) translateY(0); filter: none; }
 }
@@ -2130,10 +2130,10 @@ button[draggable="true"]:active { cursor: grabbing; }
 }
 .monopoly-tile-just-purchased { animation: monopolyTilePurchase 1.2s ease-out both; }
 @keyframes monopolyTilePlayerLand {
-  0%   { background-color: rgba(251,191,36,0); box-shadow: none; transform: scale(1); }
-  16%  { background-color: rgba(251,191,36,0.48); box-shadow: 0 0 24px rgba(251,191,36,0.8), inset 0 0 18px rgba(251,191,36,0.5); transform: scale(1.03); }
-  40%  { background-color: rgba(251,191,36,0.22); box-shadow: 0 0 12px rgba(251,191,36,0.35); transform: scale(1); }
-  100% { background-color: rgba(251,191,36,0); box-shadow: none; transform: scale(1); }
+  0%   { background-color: rgba(var(--lr,251),var(--lg,191),var(--lb,36),0); box-shadow: none; transform: scale(1); }
+  16%  { background-color: rgba(var(--lr,251),var(--lg,191),var(--lb,36),0.48); box-shadow: 0 0 24px rgba(var(--lr,251),var(--lg,191),var(--lb,36),0.8), inset 0 0 18px rgba(var(--lr,251),var(--lg,191),var(--lb,36),0.5); transform: scale(1.03); }
+  40%  { background-color: rgba(var(--lr,251),var(--lg,191),var(--lb,36),0.22); box-shadow: 0 0 12px rgba(var(--lr,251),var(--lg,191),var(--lb,36),0.35); transform: scale(1); }
+  100% { background-color: rgba(var(--lr,251),var(--lg,191),var(--lb,36),0); box-shadow: none; transform: scale(1); }
 }
 .monopoly-tile-player-land { animation: monopolyTilePlayerLand 1.1s ease-out var(--anim-delay, 0ms) both; }
 .monopoly-tile-player-land::after {
@@ -2141,7 +2141,7 @@ button[draggable="true"]:active { cursor: grabbing; }
   position: absolute;
   inset: -1px;
   border-radius: 3px;
-  border: 2px solid rgba(251,191,36,0.9);
+  border: 2px solid rgba(var(--lr,251),var(--lg,191),var(--lb,36),0.9);
   pointer-events: none;
   animation: monopolyLandRipple 0.75s ease-out var(--anim-delay, 0ms) both;
 }
@@ -2215,6 +2215,8 @@ button[draggable="true"]:active { cursor: grabbing; }
 .monopoly-steps-badge {
   animation: monopolyStepsBadge 1.3s ease-out both;
   white-space: nowrap;
+  color: rgba(var(--lr,251),var(--lg,191),var(--lb,36),0.95);
+  text-shadow: 0 0 6px rgba(var(--lr,251),var(--lg,191),var(--lb,36),0.8);
 }
 
 /* Cash delta floating notification */

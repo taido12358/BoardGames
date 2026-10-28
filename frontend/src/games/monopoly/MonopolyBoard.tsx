@@ -12,6 +12,10 @@ interface MonopolyBoardProps {
   replayRoom?: RoomDto<MonopolyMap, MonopolyState>;
 }
 const TOKENS = ["🚗", "🚢", "🎩", "🐕", "🐈", "👢", "🦆", "🛒"];
+const GROUP_GLOW_RGB: Record<string, [number,number,number]> = {
+  Brown:[146,64,14], LightBlue:[125,211,252], Pink:[244,114,182], Orange:[249,115,22],
+  Red:[220,38,38], Yellow:[253,224,71], Green:[5,150,105], DarkBlue:[29,78,216],
+};
 const PHASES: Record<string, string> = { Roll: "Đổ xúc xắc", Buy: "Mua tài sản", End: "Kết thúc lượt", Auction: "Đấu giá", BuildingDemand: "Xác nhận nhu cầu xây", Debt: "Thanh toán nợ", Trade: "Giao dịch", Inheritance: "Nhận tài sản thế chấp", Finished: "Đã kết thúc" };
 const buttonClass = "rounded border border-amber-700 bg-amber-950 px-3 py-2 text-sm text-amber-100 hover:bg-amber-800 disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-200";
 
@@ -329,7 +333,10 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
             const isAffordable = player && !player.bankrupt && p.owner === null && t.price > 0 && t.price <= player.cash && state.phase === "Buy" && state.players[state.turn]?.position === t.index;
             const moveData = moveTiles.get(t.index);
             const isLanding = moveData?.type === 'land' || moveData?.type === 'jail';
-            const tileStyle = moveData ? { ...boardPosition(t.index), '--anim-delay': `${moveData.delay}ms` } as React.CSSProperties : boardPosition(t.index);
+            const glowRgb = (isLanding && t.group) ? GROUP_GLOW_RGB[t.group] : null;
+            const tileStyle = moveData
+              ? { ...boardPosition(t.index), '--anim-delay': `${moveData.delay}ms`, ...(glowRgb ? { '--lr': glowRgb[0], '--lg': glowRgb[1], '--lb': glowRgb[2] } : {}) } as React.CSSProperties
+              : boardPosition(t.index);
             const tokenAnimDelay = isLanding ? moveData!.delay + 80 : 0;
             return <button type="button" key={t.index} data-monopoly-tile="1" data-group={t.group} style={tileStyle} onClick={() => setSelected(t.index)}
               aria-pressed={selected === t.index} aria-label={`Ô ${t.index}: ${t.name}${p.owner !== null ? `, chủ ${state.players[p.owner]?.name}` : ""}`}
