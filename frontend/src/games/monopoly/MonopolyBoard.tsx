@@ -599,11 +599,36 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
         <div key={selected} className="animate-game-action-enter rounded-xl border border-amber-900 overflow-hidden">
           {/* Color group header strip */}
           {GROUP_COLORS[tile.group] && <div className={`h-2.5 w-full ${GROUP_COLORS[tile.group]}`} />}
+          {/* Special tile header for corner/special tiles */}
+          {!tile.group && tile.kind !== "Street" && tile.kind !== "Railroad" && tile.kind !== "Utility" && (() => {
+            const SPECIAL: Record<string, { icon: string; color: string; desc: string }> = {
+              Go: { icon: "🏁", color: "bg-emerald-900/50 border-emerald-700/40", desc: "Khi qua ô này: nhận $200 từ ngân hàng." },
+              Jail: { icon: "⛓", color: "bg-stone-800/70 border-stone-600/50", desc: "Chỉ thăm tù. Người bị tù đứng đây nhưng KHÔNG được qua." },
+              FreeParking: { icon: "🅿️", color: "bg-sky-900/40 border-sky-700/30", desc: "Ô trung lập — không có hiệu ứng gì." },
+              GoToJail: { icon: "🚔", color: "bg-red-900/50 border-red-700/40", desc: "Di chuyển thẳng đến tù, không qua ô Xuất Phát." },
+              Chance: { icon: "🎲", color: "bg-amber-900/40 border-amber-700/30", desc: "Rút một thẻ May Mắn và thực hiện theo chỉ dẫn." },
+              CommunityChest: { icon: "📦", color: "bg-indigo-900/40 border-indigo-700/30", desc: "Rút một thẻ Quỹ Cộng Đồng và thực hiện theo chỉ dẫn." },
+              IncomeTax: { icon: "💸", color: "bg-red-900/40 border-red-700/30", desc: `Nộp thuế thu nhập $${tile.price} cho ngân hàng.` },
+              LuxuryTax: { icon: "💎", color: "bg-purple-900/40 border-purple-700/30", desc: `Nộp thuế xa xỉ $${tile.price} cho ngân hàng.` },
+            };
+            const s = SPECIAL[tile.kind];
+            if (!s) return null;
+            return <div className={`p-3 border-b ${s.color}`}>
+              <div className="flex items-center gap-2">
+                <span className="text-2xl">{s.icon}</span>
+                <div>
+                  <div className="font-bold text-sm">{tile.name}</div>
+                  <div className="text-[10px] text-amber-200/50">Ô {selected}</div>
+                </div>
+              </div>
+              <p className="mt-2 text-xs text-amber-200/70">{s.desc}</p>
+            </div>;
+          })()}
           <div className="p-4 space-y-3">
-            <div>
+            {(tile.group || tile.kind === "Street" || tile.kind === "Railroad" || tile.kind === "Utility") && <div>
               <h2 className="font-bold text-amber-100">{tile.name}</h2>
               <p className="text-xs text-amber-200/50">Ô {selected} · {tile.group || tile.kind}</p>
-            </div>
+            </div>}
             {tile.price > 0 && (
               <div className="grid grid-cols-3 gap-2 text-sm">
                 <div className="rounded-lg bg-stone-900/60 px-2 py-1.5 text-center">
