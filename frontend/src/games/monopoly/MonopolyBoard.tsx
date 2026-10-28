@@ -266,7 +266,7 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
             const occupants = state.players.map((who,i) => !who.bankrupt && who.position === t.index ? i : -1).filter(i => i >= 0);
             return <button type="button" key={t.index} data-monopoly-tile="1" data-group={t.group} style={boardPosition(t.index)} onClick={() => setSelected(t.index)}
               aria-pressed={selected === t.index} aria-label={`Ô ${t.index}: ${t.name}${p.owner !== null ? `, chủ ${state.players[p.owner]?.name}` : ""}`}
-              className={`relative flex min-h-0 flex-col overflow-hidden border text-[9px] leading-tight text-stone-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white transition-[box-shadow,transform] duration-150 ${selected === t.index ? "border-amber-200 bg-amber-900" : "border-emerald-800/70 bg-stone-900/80"} ${flashTiles.has(t.index) ? "monopoly-tile-just-purchased" : ""} ${monopolyTileSet.has(t.index) ? "ring-1 ring-inset ring-amber-300/50" : ""} ${movedTiles.has(t.index) ? "monopoly-tile-player-land" : ""}`}>
+              className={`relative flex min-h-0 flex-col overflow-hidden border text-[9px] leading-tight text-stone-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white transition-[box-shadow,transform] duration-150 active:scale-95 hover:brightness-125 ${selected === t.index ? "border-amber-200 bg-amber-900" : "border-emerald-800/70 bg-stone-900/80"} ${flashTiles.has(t.index) ? "monopoly-tile-just-purchased" : ""} ${monopolyTileSet.has(t.index) ? "ring-1 ring-inset ring-amber-300/50" : ""} ${movedTiles.has(t.index) ? "monopoly-tile-player-land" : ""}`}>
               <span aria-hidden="true" className={`h-2 w-full shrink-0 ${GROUP_COLORS[t.group] ?? "bg-stone-700"}`} />
               {/* Special tile icon overlay */}
               {!t.group && ({"Go":"🏁","Jail":"⛓","FreeParking":"🅿","GoToJail":"🚔","Chance":"🎲","CommunityChest":"📦","IncomeTax":"💸","LuxuryTax":"💎"} as Record<string,string>)[t.kind] && (
@@ -294,11 +294,23 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
           })}
           <div className="col-start-2 col-end-11 row-start-2 row-end-11 flex flex-col items-center justify-center gap-3 overflow-auto p-4 text-center">
             {!state.started ? (
-              <>
-                <div className="text-5xl" aria-hidden="true">🏦</div>
-                <h2 className="text-3xl font-black tracking-widest text-amber-300">CỜ TỈ PHÚ</h2>
-                <p className="max-w-[200px] text-xs text-emerald-100/60">Mua đất · Xây nhà · Thương lượng<br />Phá sản đối thủ để chiến thắng</p>
-              </>
+              <div className="w-full space-y-4 text-left">
+                <div className="text-center">
+                  <div className="text-5xl mb-2" aria-hidden="true">🏦</div>
+                  <h2 className="text-2xl font-black tracking-widest text-amber-300">CỜ TỈ PHÚ</h2>
+                  <p className="text-xs text-emerald-100/40 mt-1">{map.edition}</p>
+                </div>
+                <div className="space-y-1">
+                  {state.players.map((pl, pi) => (
+                    <div key={pi} className={`flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm ${pi === seat ? "bg-amber-900/40 border border-amber-700/30" : "bg-stone-900/40"}`}>
+                      <span className="text-lg">{TOKENS[pi]}</span>
+                      <span className="font-medium">{pl.name}</span>
+                      {pi === seat && <span className="ml-auto text-[10px] text-amber-400/70">(Bạn)</span>}
+                    </div>
+                  ))}
+                </div>
+                <p className="text-center text-xs text-emerald-100/40">Mua đất · Xây nhà · Phá sản đối thủ</p>
+              </div>
             ) : state.winner ? (
               <div className="w-full space-y-3">
                 <div className="space-y-1">
