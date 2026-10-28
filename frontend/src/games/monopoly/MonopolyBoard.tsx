@@ -244,6 +244,7 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
           <span className="rounded bg-stone-900/60 border border-stone-700/40 px-2 py-1 text-stone-300">🏨 {state.hotels}</span>
           {!state.winner && <span className="rounded bg-amber-900/40 border border-amber-700/40 px-2 py-1 text-amber-300 font-semibold">{PHASES[state.phase] ?? state.phase}</span>}
           {state.doubles > 0 && <span className="rounded bg-amber-900/30 border border-amber-800/30 px-2 py-1 text-amber-400/80">🎲×{state.doubles}</span>}
+          <span className="rounded bg-stone-900/40 border border-stone-700/30 px-2 py-1 text-stone-400">#{state.log.length}</span>
         </div>
       )}
       <div className="flex items-center gap-2">
@@ -269,8 +270,8 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
               className={`relative flex min-h-0 flex-col overflow-hidden border text-[9px] leading-tight text-stone-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white transition-[box-shadow,transform] duration-150 active:scale-95 hover:brightness-125 ${selected === t.index ? "border-amber-200 bg-amber-900" : "border-emerald-800/70 bg-stone-900/80"} ${flashTiles.has(t.index) ? "monopoly-tile-just-purchased" : ""} ${monopolyTileSet.has(t.index) ? "ring-1 ring-inset ring-amber-300/50" : ""} ${movedTiles.has(t.index) ? "monopoly-tile-player-land" : ""}`}>
               <span aria-hidden="true" className={`h-2 w-full shrink-0 ${GROUP_COLORS[t.group] ?? "bg-stone-700"}`} />
               {/* Special tile icon overlay */}
-              {!t.group && ({"Go":"🏁","Jail":"⛓","FreeParking":"🅿","GoToJail":"🚔","Chance":"🎲","CommunityChest":"📦","IncomeTax":"💸","LuxuryTax":"💎"} as Record<string,string>)[t.kind] && (
-                <span className="text-sm leading-none mx-auto">{({"Go":"🏁","Jail":"⛓","FreeParking":"🅿","GoToJail":"🚔","Chance":"🎲","CommunityChest":"📦","IncomeTax":"💸","LuxuryTax":"💎"} as Record<string,string>)[t.kind]}</span>
+              {!t.group && ({"Go":"🏁","Jail":"⛓","FreeParking":"🅿","GoToJail":"🚔","Chance":"🎲","CommunityChest":"📦","IncomeTax":"💸","LuxuryTax":"💎","Railroad":"🚂","Utility":"⚡"} as Record<string,string>)[t.kind] && (
+                <span className="text-sm leading-none mx-auto">{({"Go":"🏁","Jail":"⛓","FreeParking":"🅿","GoToJail":"🚔","Chance":"🎲","CommunityChest":"📦","IncomeTax":"💸","LuxuryTax":"💎","Railroad":"🚂","Utility":"⚡"} as Record<string,string>)[t.kind]}</span>
               )}
               {t.kind === "Go" && <span className="text-[6px] text-emerald-400 font-bold leading-none">+$200</span>}
               <span className="p-0.5">{t.name}</span>
@@ -340,7 +341,11 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
                     {state.extraRoll && <span className="text-[10px] bg-amber-800/60 text-amber-300 rounded px-1.5 py-0.5 font-bold animate-pulse">🎲 Đôi! +lượt</span>}
                   </div>
                   <p className="font-bold text-sm">{TOKENS[currentActor]} {state.players[currentActor]?.name}</p>
-                  <p className="text-xs text-amber-300/70">{PHASES[state.phase] ?? state.phase}</p>
+                  <div className="flex items-center justify-between mt-0.5">
+                    <p className="text-xs text-amber-300/70">{PHASES[state.phase] ?? state.phase}</p>
+                    {state.players[currentActor] && <p className="text-[10px] text-amber-200/60 font-mono">${state.players[currentActor].cash.toLocaleString("vi-VN")}</p>}
+                  </div>
+                  {state.players[currentActor] && <button type="button" onClick={() => setSelected(state.players[currentActor].position)} className="text-[10px] text-amber-200/40 hover:text-amber-300/70 truncate text-left mt-0.5 w-full">{map.tiles[state.players[currentActor].position]?.name ?? ""}</button>}
                   {state.doubles >= 3 && <p className="text-[10px] text-red-400/80 mt-0.5">⚠️ 3 đôi liên tiếp → vào tù!</p>}
                 </div>
                 {/* Next player preview */}
@@ -633,7 +638,8 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
         </div>; })()}
         <div key={selected} className="animate-game-action-enter rounded-xl border border-amber-900 overflow-hidden">
           {/* Color group header strip */}
-          {GROUP_COLORS[tile.group] && <div className={`h-2.5 w-full ${GROUP_COLORS[tile.group]}`} />}
+          {GROUP_COLORS[tile.group] && <div className={`h-2.5 w-full ${GROUP_COLORS[tile.group]} ${property.mortgaged ? "opacity-30" : ""}`} />}
+          {property.mortgaged && <div className="bg-red-950/60 border-b border-red-800/50 px-3 py-1 flex items-center gap-1.5 text-[10px] text-red-400/90"><span>🔒</span><span>Đất đang thế chấp — không thu được thuê</span></div>}
           {/* Special tile header for corner/special tiles */}
           {!tile.group && tile.kind !== "Street" && tile.kind !== "Railroad" && tile.kind !== "Utility" && (() => {
             const SPECIAL: Record<string, { icon: string; color: string; desc: string }> = {
@@ -661,7 +667,11 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
           })()}
           <div className="p-4 space-y-3">
             {(tile.group || tile.kind === "Street" || tile.kind === "Railroad" || tile.kind === "Utility") && <div>
-              <h2 className="font-bold text-amber-100">{tile.name}</h2>
+              <h2 className="font-bold text-amber-100 flex items-center gap-1.5">
+                {tile.kind === "Railroad" && <span>🚂</span>}
+                {tile.kind === "Utility" && <span>⚡</span>}
+                {tile.name}
+              </h2>
               <p className="text-xs text-amber-200/50">Ô {selected} · {tile.group || tile.kind}</p>
             </div>}
             {tile.price > 0 && (
@@ -970,16 +980,19 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
                   )}
                 </div>
               )}
-              {/* Buildings summary */}
-              {(() => {
+              {/* Property count + buildings summary */}
+              {owned.length > 0 && (() => {
                 const houses = owned.filter(t => state.properties[t.index].buildings > 0 && state.properties[t.index].buildings < 5).reduce((s,t) => s + state.properties[t.index].buildings, 0);
                 const hotels = owned.filter(t => state.properties[t.index].buildings === 5).length;
-                return (houses > 0 || hotels > 0) ? (
-                  <div className="flex gap-2 text-[10px]">
+                const mortgaged = owned.filter(t => state.properties[t.index].mortgaged).length;
+                return (
+                  <div className="flex flex-wrap gap-2 text-[10px]">
+                    <span className="text-amber-200/50">{owned.length} đất</span>
                     {houses > 0 && <span className="text-emerald-400">🏠×{houses}</span>}
                     {hotels > 0 && <span className="text-red-400">🏨×{hotels}</span>}
+                    {mortgaged > 0 && <span className="text-red-400/60">🔒×{mortgaged}</span>}
                   </div>
-                ) : null;
+                );
               })()}
               {/* Property chips by color */}
               {owned.length > 0 && (
