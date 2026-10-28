@@ -536,6 +536,7 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
                 ) : null;
               })()}
               {deciding && player && !player.inJail && (() => {
+                const DICE_PROB = [0,0,1,2,3,4,5,6,5,4,3,2,1]; // index = steps, value = count out of 36
                 const pos = player.position;
                 const dangers = Array.from({ length: 11 }, (_, i) => (pos + i + 2) % 40)
                   .map(idx => ({ idx, tile: map.tiles[idx], prop: state.properties[idx] }))
@@ -544,7 +545,9 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
                     const isMonop = monopolyTileSet.has(idx);
                     const rent = isMonop && prop.buildings === 0 ? tile.rents[0] * 2 : tile.rents[prop.buildings];
                     const steps = ((idx - pos + 40) % 40);
-                    return { idx, tile, prop, rent, steps };
+                    const prob = DICE_PROB[steps] ?? 0;
+                    const ev = Math.round(rent * prob / 36);
+                    return { idx, tile, prop, rent, steps, prob, ev };
                   })
                   .sort((a, b) => b.rent - a.rent)
                   .slice(0, 3);
@@ -552,12 +555,13 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
                 return (
                   <div className="w-full space-y-1">
                     <div className="text-[9px] text-amber-400/40 uppercase tracking-wide">⚠️ Nguy hiểm phía trước</div>
-                    {dangers.map(({ idx, tile, prop, rent, steps }) => (
+                    {dangers.map(({ idx, tile, prop, rent, steps, prob, ev }) => (
                       <button key={idx} type="button" onClick={() => setSelected(idx)}
                         className="w-full flex items-center gap-1.5 rounded border border-red-900/30 bg-red-950/20 px-2 py-1 text-[10px] hover:bg-red-950/40 transition-colors text-left">
                         <span className="text-stone-500 shrink-0 w-5 text-right">+{steps}</span>
                         <span className={`w-2 h-2 rounded-sm shrink-0 ${GROUP_COLORS[tile.group] ?? "bg-stone-600"}`} />
                         <span className="flex-1 truncate text-amber-200/60">{tile.name}</span>
+                        <span className="text-stone-600 shrink-0 text-[9px]">{prob ? `${Math.round(prob/36*100)}%` : ""}</span>
                         <span className="text-red-300/80 font-mono font-bold shrink-0">${rent}</span>
                         <span className="shrink-0">{TOKENS[prop.owner]}</span>
                       </button>
@@ -1014,6 +1018,25 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
                 </>
               )}
             </div>
+            {/* Players standing on this tile who owe rent */}
+            {property.owner !== null && property.owner !== seat && !property.mortgaged && (() => {
+              const debtors = state.players.map((pl, pi) => ({ pl, pi })).filter(({ pl, pi }) => !pl.bankrupt && pl.position === selected && pi !== property.owner);
+              if (!debtors.length) return null;
+              const isMonop = monopolyTileSet.has(selected);
+              const rent = isMonop && property.buildings === 0 ? tile.rents[0] * 2 : tile.rents?.[property.buildings] ?? 0;
+              return (
+                <div className="rounded border border-orange-800/40 bg-orange-950/20 px-2 py-1.5 space-y-1">
+                  <div className="text-[9px] text-orange-400/70 uppercase tracking-wide">💸 Đang đứng · nợ thuê</div>
+                  {debtors.map(({ pl, pi }) => (
+                    <div key={pi} className="flex items-center gap-1.5 text-[10px]">
+                      <span>{TOKENS[pi]}</span>
+                      <span className="flex-1 text-amber-200/70">{pl.name}</span>
+                      <span className="font-bold text-orange-300">${rent.toLocaleString("vi-VN")}</span>
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
             {/* Color group sibling tiles */}
             {tile.group && groupTiles[tile.group] && groupTiles[tile.group].length > 1 && (
               <div className="space-y-1">
