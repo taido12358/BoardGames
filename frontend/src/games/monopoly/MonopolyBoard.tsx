@@ -78,6 +78,8 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
   const [newBankrupts, setNewBankrupts] = useState<Set<number>>(new Set());
   const prevPositionRef = useRef<Record<number, number>>({});
   const [movedTiles, setMovedTiles] = useState<Set<number>>(new Set());
+  const [logFilter, setLogFilter] = useState("");
+  const [logShowAll, setLogShowAll] = useState(false);
 
   const cashKey = (gameState?.players ?? []).map(p => p.cash).join(",");
   const ownerKey = (gameState?.properties ?? []).map(p => p.owner ?? -1).join(",");
@@ -1164,6 +1166,23 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
                   })()}
                 </div>
               )}
+              {/* NW vs average */}
+              {!p.bankrupt && (() => {
+                const activePlayers = state.players.filter(pl => !pl.bankrupt);
+                if (activePlayers.length < 2) return null;
+                const avgNw = Math.round(state.players.reduce((s, _, idx) => s + (state.players[idx].bankrupt ? 0 : playerNetWorth[idx]), 0) / activePlayers.length);
+                if (!avgNw) return null;
+                const diff = nw - avgNw;
+                const pct = Math.round(Math.abs(diff) / avgNw * 100);
+                if (pct < 1) return null;
+                const up = diff >= 0;
+                return (
+                  <div className={`text-[9px] font-semibold rounded px-1 py-0.5 w-fit ${up ? "bg-emerald-900/40 text-emerald-400" : "bg-red-900/30 text-red-400"}`}
+                    title={`Trung bình: $${avgNw.toLocaleString("vi-VN")}`}>
+                    {up ? "▲" : "▼"}{pct}% so TB
+                  </div>
+                );
+              })()}
               {/* Property count + buildings summary */}
               {owned.length > 0 && (() => {
                 const houses = owned.filter(t => state.properties[t.index].buildings > 0 && state.properties[t.index].buildings < 5).reduce((s,t) => s + state.properties[t.index].buildings, 0);
@@ -1225,15 +1244,45 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
         <span>📋 Nhật ký ván đấu</span>
         <span className="ml-auto text-[10px] text-amber-400/50">{state.log.length} sự kiện</span>
       </summary>
-      <ol ref={logRef} className="mt-3 max-h-52 overflow-y-auto space-y-0.5 text-sm text-amber-200/80">
-        {state.log.map((line, i) => (
-          <li key={i} className={`flex items-start gap-1.5 rounded px-1 py-0.5 ${i >= logNewStart ? "monopoly-log-entry bg-amber-900/20" : "hover:bg-stone-900/30"}`}>
-            <span className="shrink-0 text-[9px] mt-1 text-stone-600 tabular-nums w-5 text-right select-none">{i+1}</span>
-            <span className="shrink-0 text-[11px] mt-0.5 opacity-70">{logIcon(line)}</span>
-            <span className="text-xs leading-relaxed">{line}</span>
-          </li>
-        ))}
-      </ol>
+      <div className="mt-2 flex items-center gap-2">
+        <input
+          aria-label="Lọc nhật ký"
+          type="search"
+          placeholder="Tìm sự kiện…"
+          value={logFilter}
+          onChange={e => setLogFilter(e.target.value)}
+          className="flex-1 min-w-0 rounded bg-stone-900 border border-stone-700/50 px-2 py-1 text-xs text-amber-100 placeholder-stone-600 focus:outline-none focus:border-amber-700"
+        />
+        {logFilter && (
+          <button type="button" onClick={() => setLogFilter("")} className="text-[10px] text-stone-500 hover:text-amber-300 shrink-0">✕</button>
+        )}
+        <button type="button" onClick={() => setLogShowAll(v => !v)} className="text-[10px] text-amber-400/50 hover:text-amber-300 shrink-0 whitespace-nowrap">
+          {logShowAll ? "↑ Thu gọn" : `Tất cả ${state.log.length}`}
+        </button>
+      </div>
+      {(() => {
+        const filtered = logFilter
+          ? state.log.map((line, i) => ({ line, i })).filter(({ line }) => line.toLowerCase().includes(logFilter.toLowerCase()))
+          : state.log.map((line, i) => ({ line, i }));
+        const visible = logShowAll ? filtered : filtered.slice(-40);
+        const truncated = filtered.length > visible.length;
+        return (
+          <>
+            {truncated && (
+              <p className="mt-1 text-[10px] text-stone-600 text-center">Hiển thị 40/{filtered.length} mục mới nhất</p>
+            )}
+            <ol ref={logRef} className="mt-1 max-h-52 overflow-y-auto space-y-0.5 text-sm text-amber-200/80">
+              {visible.map(({ line, i }) => (
+                <li key={i} className={`flex items-start gap-1.5 rounded px-1 py-0.5 ${i >= logNewStart ? "monopoly-log-entry bg-amber-900/20" : "hover:bg-stone-900/30"}`}>
+                  <span className="shrink-0 text-[9px] mt-1 text-stone-600 tabular-nums w-5 text-right select-none">{i+1}</span>
+                  <span className="shrink-0 text-[11px] mt-0.5 opacity-70">{logIcon(line)}</span>
+                  <span className="text-xs leading-relaxed">{line}</span>
+                </li>
+              ))}
+            </ol>
+          </>
+        );
+      })()}
     </details>
     {cardOverlay && (
       <div className={`monopoly-card-overlay monopoly-card-${cardOverlay.kind}`} onClick={() => setCardOverlay(null)} role="dialog" aria-modal="true" aria-label="Rút thẻ">
