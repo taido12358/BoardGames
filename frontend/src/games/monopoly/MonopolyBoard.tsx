@@ -1088,10 +1088,10 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
               {p.inJail && (
                 <div className="flex items-center gap-1.5 rounded bg-red-950/50 border border-red-800/40 px-2 py-1">
                   <span className="text-xs">⛓</span>
-                  <span className="text-[10px] text-red-300/80">Trong tù</span>
-                  <div className="ml-auto flex gap-0.5">
-                    {[1,2,3].map(n => (
-                      <span key={n} className={`w-2 h-2 rounded-full ${n <= p.jailAttempts ? "bg-red-500" : "bg-stone-700"}`} />
+                  <span className="text-[10px] text-red-300/80">Tù — thử {p.jailAttempts}/3</span>
+                  <div className="ml-auto flex gap-0.5" title={`${3 - p.jailAttempts} lượt thử còn lại`}>
+                    {[0,1,2].map(n => (
+                      <span key={n} className={`w-2.5 h-2.5 rounded-full border ${n < p.jailAttempts ? "bg-red-500 border-red-400" : "bg-stone-700 border-stone-600"}`} />
                     ))}
                   </div>
                 </div>
@@ -1143,19 +1143,31 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
                   </div>
                 );
               })()}
-              {/* Property chips by color */}
-              {owned.length > 0 && (
-                <div className="flex flex-wrap gap-0.5">
-                  {owned.map(t => (
-                    <button key={t.index}
-                      className={`w-3.5 h-3.5 rounded-sm border border-black/30 transition-transform hover:scale-150 hover:z-10 relative ${GROUP_COLORS[t.group] ?? "bg-stone-600"} ${state.properties[t.index].mortgaged ? "opacity-30" : ""} ${monopolyTileSet.has(t.index) ? "ring-1 ring-amber-300/70" : ""}`}
-                      onClick={() => setSelected(t.index)}
-                      title={`${t.name}${state.properties[t.index].mortgaged ? " (TC)" : ""}${state.properties[t.index].buildings > 0 ? ` 🏠×${state.properties[t.index].buildings}` : ""}`}
-                      aria-label={`Xem ${t.name}`}
-                    />
-                  ))}
-                </div>
-              )}
+              {/* Property chips by color (grouped) */}
+              {owned.length > 0 && (() => {
+                const byGroup: Record<string, typeof owned> = {};
+                owned.forEach(t => {
+                  const g = t.group || t.kind;
+                  if (!byGroup[g]) byGroup[g] = [];
+                  byGroup[g].push(t);
+                });
+                return (
+                  <div className="flex flex-wrap gap-x-1.5 gap-y-0.5">
+                    {Object.entries(byGroup).map(([g, tiles]) => (
+                      <div key={g} className="flex gap-0.5 items-center">
+                        {tiles.map(t => (
+                          <button key={t.index}
+                            className={`w-3.5 h-3.5 rounded-sm border border-black/30 transition-transform hover:scale-150 hover:z-10 relative ${GROUP_COLORS[t.group] ?? "bg-stone-600"} ${state.properties[t.index].mortgaged ? "opacity-30" : ""} ${monopolyTileSet.has(t.index) ? "ring-1 ring-amber-300/70" : ""}`}
+                            onClick={() => setSelected(t.index)}
+                            title={`${t.name}${state.properties[t.index].mortgaged ? " (TC)" : ""}${state.properties[t.index].buildings > 0 ? ` 🏠×${state.properties[t.index].buildings}` : ""}`}
+                            aria-label={`Xem ${t.name}`}
+                          />
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
               {/* Monopoly badges */}
               {playerMonopolies[i].length > 0 && (
                 <div className="flex flex-wrap gap-1">
