@@ -325,7 +325,7 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
             const isAffordable = player && !player.bankrupt && p.owner === null && t.price > 0 && t.price <= player.cash && state.phase === "Buy" && state.players[state.turn]?.position === t.index;
             const moveData = moveTiles.get(t.index);
             const isLanding = moveData?.type === 'land' || moveData?.type === 'jail';
-            const tileStyle = moveData ? { ...boardPosition(t.index), animationDelay: `${moveData.delay}ms` } : boardPosition(t.index);
+            const tileStyle = moveData ? { ...boardPosition(t.index), '--anim-delay': `${moveData.delay}ms` } as React.CSSProperties : boardPosition(t.index);
             const tokenAnimDelay = isLanding ? moveData!.delay + 80 : 0;
             return <button type="button" key={t.index} data-monopoly-tile="1" data-group={t.group} style={tileStyle} onClick={() => setSelected(t.index)}
               aria-pressed={selected === t.index} aria-label={`Ô ${t.index}: ${t.name}${p.owner !== null ? `, chủ ${state.players[p.owner]?.name}` : ""}`}
