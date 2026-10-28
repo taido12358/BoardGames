@@ -264,6 +264,7 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
           {state.doubles > 0 && <span className="rounded bg-amber-900/30 border border-amber-800/30 px-2 py-1 text-amber-400/80">🎲×{state.doubles}</span>}
           {state.players.some(p => p.inJail && !p.bankrupt) && <span className="rounded bg-red-900/30 border border-red-800/30 px-2 py-1 text-red-400/80">⛓×{state.players.filter(p => p.inJail && !p.bankrupt).length}</span>}
           <span className="rounded bg-stone-900/40 border border-stone-700/30 px-2 py-1 text-stone-400">#{state.log.length}</span>
+          {state.roundCount !== undefined && <span className="rounded bg-stone-900/40 border border-stone-700/30 px-2 py-1 text-stone-500" title="Vòng hiện tại">⟳{state.roundCount}</span>}
         </div>
       )}
       <div className="flex items-center gap-2">
@@ -859,6 +860,28 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
               <TradeParty label="đưa" playerIdx={tr.from} tiles={tr.offered} cash={tr.cashOffered} cards={tr.offeredCards?.length ?? 0} />
               <div className="text-center text-lg text-sky-400/50">⇄</div>
               <TradeParty label="nhận" playerIdx={tr.to} tiles={tr.requested} cash={tr.cashRequested} cards={tr.requestedCards?.length ?? 0} />
+              {/* NW impact summary */}
+              {(() => {
+                const tileValue = (idx: number) => {
+                  const t2 = map.tiles[idx]; const pr = state.properties[idx];
+                  return pr.mortgaged ? Math.floor(t2.price / 4) : Math.floor(t2.price / 2);
+                };
+                const offeredVal = tr.offered.reduce((s, ti) => s + tileValue(ti), 0) + tr.cashOffered;
+                const requestedVal = tr.requested.reduce((s, ti) => s + tileValue(ti), 0) + tr.cashRequested;
+                const fromGain = requestedVal - offeredVal;
+                const toGain = offeredVal - requestedVal;
+                if (!offeredVal && !requestedVal) return null;
+                return (
+                  <div className="grid grid-cols-2 gap-2 text-[10px]">
+                    {[{ idx: tr.from, gain: fromGain }, { idx: tr.to, gain: toGain }].map(({ idx, gain }) => (
+                      <div key={idx} className={`rounded px-2 py-1 text-center border ${gain >= 0 ? "bg-emerald-950/30 border-emerald-800/30" : "bg-red-950/20 border-red-800/20"}`}>
+                        <div className="text-stone-500">{TOKENS[idx]}</div>
+                        <div className={`font-bold font-mono ${gain >= 0 ? "text-emerald-400" : "text-red-400"}`}>{gain >= 0 ? "+" : ""}{gain.toLocaleString("vi-VN")}</div>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
               <div className="flex gap-2 pt-1">
                 {action("✓ Chấp nhận", "ACCEPT", false, deciding ? "monopoly-action-pulse" : "")}
                 {action("✗ Từ chối", "REJECT")}
