@@ -245,6 +245,9 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
     }).flat()
   );
 
+  // Current player's tile — pulse ring during Roll phase
+  const currentPlayerTileIdx = deciding && state.phase === "Roll" && player && !player.bankrupt ? player.position : -1;
+
   // Danger tiles: positions 2-12 ahead of current player during their Roll turn
   const dangerTileSet: Set<number> = deciding && state.phase === "Roll" && player && !player.inJail
     ? new Set(Array.from({ length: 11 }, (_, i) => (player.position + i + 2) % 40)
@@ -329,7 +332,7 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
             const tokenAnimDelay = isLanding ? moveData!.delay + 80 : 0;
             return <button type="button" key={t.index} data-monopoly-tile="1" data-group={t.group} style={tileStyle} onClick={() => setSelected(t.index)}
               aria-pressed={selected === t.index} aria-label={`Ô ${t.index}: ${t.name}${p.owner !== null ? `, chủ ${state.players[p.owner]?.name}` : ""}`}
-              className={`relative flex min-h-0 flex-col overflow-hidden border text-[9px] leading-tight text-stone-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white transition-[box-shadow,transform] duration-150 active:scale-95 hover:brightness-125 ${selected === t.index ? "border-amber-200 bg-amber-900" : "border-emerald-800/70 bg-stone-900/80"} ${flashTiles.has(t.index) ? "monopoly-tile-just-purchased" : ""} ${monopolyTileSet.has(t.index) ? "ring-1 ring-inset ring-amber-300/50" : ""} ${moveData ? (moveData.type === 'land' ? "monopoly-tile-player-land" : moveData.type === 'jail' ? "monopoly-tile-jail-land" : moveData.type === 'passgo' ? "monopoly-tile-passgo" : moveData.type === 'depart' ? "monopoly-tile-depart" : moveData.type === 'jailrelease' ? "monopoly-tile-jailrelease" : "monopoly-tile-trail") : ""} ${p.buildings > 0 ? "monopoly-tile-built" : ""} ${p.buildings === 5 ? "monopoly-tile-hotel" : ""} ${isAffordable ? "monopoly-tile-affordable" : ""} ${dangerTileSet.has(t.index) ? "monopoly-tile-danger" : ""}`}>
+              className={`relative flex min-h-0 flex-col overflow-hidden border text-[9px] leading-tight text-stone-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white transition-[box-shadow,transform] duration-150 active:scale-95 hover:brightness-125 ${selected === t.index ? "border-amber-200 bg-amber-900" : "border-emerald-800/70 bg-stone-900/80"} ${flashTiles.has(t.index) ? "monopoly-tile-just-purchased" : ""} ${monopolyTileSet.has(t.index) ? "ring-1 ring-inset ring-amber-300/50" : ""} ${moveData ? (moveData.type === 'land' ? "monopoly-tile-player-land" : moveData.type === 'jail' ? "monopoly-tile-jail-land" : moveData.type === 'passgo' ? "monopoly-tile-passgo" : moveData.type === 'depart' ? "monopoly-tile-depart" : moveData.type === 'jailrelease' ? "monopoly-tile-jailrelease" : "monopoly-tile-trail") : ""} ${p.buildings > 0 ? "monopoly-tile-built" : ""} ${p.buildings === 5 ? "monopoly-tile-hotel" : ""} ${isAffordable ? "monopoly-tile-affordable" : ""} ${dangerTileSet.has(t.index) ? "monopoly-tile-danger" : ""} ${currentPlayerTileIdx === t.index ? "monopoly-tile-current-player" : ""}`}>
               <span aria-hidden="true" className={`h-2 w-full shrink-0 ${GROUP_COLORS[t.group] ?? "bg-stone-700"}`} />
               {/* Special tile icon overlay */}
               {!t.group && ({"Go":"🏁","Jail":"⛓","FreeParking":"🅿","GoToJail":"🚔","Chance":"🎲","CommunityChest":"📦","IncomeTax":"💸","LuxuryTax":"💎","Railroad":"🚂","Utility":"⚡"} as Record<string,string>)[t.kind] && (

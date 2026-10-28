@@ -2084,6 +2084,24 @@ button[draggable="true"]:active { cursor: grabbing; }
   animation: monopolyTokenLand 0.68s cubic-bezier(0.22, 0.61, 0.36, 1) both;
 }
 
+/* Current player tile — pulsing gold ring during Roll phase */
+@keyframes monopolyCurrentPlayerPulse {
+  0%, 100% { box-shadow: 0 0 0 2px rgba(251,191,36,0.55), 0 0 8px rgba(251,191,36,0.35); }
+  50%       { box-shadow: 0 0 0 3px rgba(251,191,36,0.85), 0 0 18px rgba(251,191,36,0.6); }
+}
+.monopoly-tile-current-player {
+  animation: monopolyCurrentPlayerPulse 1.1s ease-in-out infinite;
+  z-index: 2;
+}
+.monopoly-tile-current-player::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 2px;
+  border: 1px solid rgba(251,191,36,0.5);
+  pointer-events: none;
+}
+
 /* Tile group-colored hover glow via data-group attribute */
 [data-monopoly-tile][data-group="Brown"]:hover:not([aria-pressed="true"]) { box-shadow: inset 0 0 14px rgba(146,64,14,0.5), 0 0 10px rgba(146,64,14,0.4); }
 [data-monopoly-tile][data-group="LightBlue"]:hover:not([aria-pressed="true"]) { box-shadow: inset 0 0 14px rgba(125,211,252,0.45), 0 0 10px rgba(125,211,252,0.4); }
@@ -2712,6 +2730,7 @@ button[draggable="true"]:active { cursor: grabbing; }
   .monopoly-tile-danger { animation: none !important; box-shadow: inset 0 0 10px rgba(239,68,68,0.4); }
   .monopoly-tile-hotel { animation: none !important; box-shadow: inset 0 0 12px rgba(239,68,68,0.45); }
   .monopoly-tile-affordable { animation: none !important; box-shadow: 0 0 0 2px rgba(52,211,153,0.45); }
+  .monopoly-tile-current-player { animation: none !important; box-shadow: 0 0 0 2px rgba(251,191,36,0.6); }
   .monopoly-winner-confetti::before, .monopoly-winner-confetti::after { animation: none !important; opacity: 0; }
   .monopoly-cash-delta { animation: none !important; opacity: 0; }
   [data-monopoly-tile]:active:not(:disabled) { transform: none; }
