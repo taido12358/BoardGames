@@ -302,7 +302,7 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
             const isAffordable = player && !player.bankrupt && p.owner === null && t.price > 0 && t.price <= player.cash && state.phase === "Buy" && state.players[state.turn]?.position === t.index;
             return <button type="button" key={t.index} data-monopoly-tile="1" data-group={t.group} style={boardPosition(t.index)} onClick={() => setSelected(t.index)}
               aria-pressed={selected === t.index} aria-label={`Ô ${t.index}: ${t.name}${p.owner !== null ? `, chủ ${state.players[p.owner]?.name}` : ""}`}
-              className={`relative flex min-h-0 flex-col overflow-hidden border text-[9px] leading-tight text-stone-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white transition-[box-shadow,transform] duration-150 active:scale-95 hover:brightness-125 ${selected === t.index ? "border-amber-200 bg-amber-900" : "border-emerald-800/70 bg-stone-900/80"} ${flashTiles.has(t.index) ? "monopoly-tile-just-purchased" : ""} ${monopolyTileSet.has(t.index) ? "ring-1 ring-inset ring-amber-300/50" : ""} ${movedTiles.has(t.index) ? "monopoly-tile-player-land" : ""} ${p.buildings > 0 ? "monopoly-tile-built" : ""} ${isAffordable ? "ring-2 ring-emerald-400/60" : ""} ${dangerTileSet.has(t.index) ? "monopoly-tile-danger" : ""}`}>
+              className={`relative flex min-h-0 flex-col overflow-hidden border text-[9px] leading-tight text-stone-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white transition-[box-shadow,transform] duration-150 active:scale-95 hover:brightness-125 ${selected === t.index ? "border-amber-200 bg-amber-900" : "border-emerald-800/70 bg-stone-900/80"} ${flashTiles.has(t.index) ? "monopoly-tile-just-purchased" : ""} ${monopolyTileSet.has(t.index) ? "ring-1 ring-inset ring-amber-300/50" : ""} ${movedTiles.has(t.index) ? "monopoly-tile-player-land" : ""} ${p.buildings > 0 ? "monopoly-tile-built" : ""} ${p.buildings === 5 ? "monopoly-tile-hotel" : ""} ${isAffordable ? "ring-2 ring-emerald-400/60" : ""} ${dangerTileSet.has(t.index) ? "monopoly-tile-danger" : ""}`}>
               <span aria-hidden="true" className={`h-2 w-full shrink-0 ${GROUP_COLORS[t.group] ?? "bg-stone-700"}`} />
               {/* Special tile icon overlay */}
               {!t.group && ({"Go":"🏁","Jail":"⛓","FreeParking":"🅿","GoToJail":"🚔","Chance":"🎲","CommunityChest":"📦","IncomeTax":"💸","LuxuryTax":"💎","Railroad":"🚂","Utility":"⚡"} as Record<string,string>)[t.kind] && (
@@ -748,6 +748,28 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
                     ⚠️ {TOKENS[auc.leader!]} {state.players[auc.leader!]?.name} sẽ độc quyền nhóm {aucTile.group}!
                   </div>
                 ) : null;
+              })()}
+              {/* Bidder capacity */}
+              {(() => {
+                const active = state.players.map((pl, pi) => ({ pl, pi })).filter(({ pl, pi }) => !pl.bankrupt && !passed.includes(pi));
+                if (active.length <= 1) return null;
+                return (
+                  <div className="space-y-0.5">
+                    <div className="text-[9px] text-violet-400/40 uppercase tracking-wide">Khả năng đấu giá</div>
+                    {active.map(({ pl, pi }) => {
+                      const canBid = pl.cash >= minimumBid;
+                      const isLeader = pi === auc.leader;
+                      return (
+                        <div key={pi} className={`flex items-center gap-1.5 text-[10px] rounded px-1.5 py-0.5 ${isLeader ? "bg-violet-900/30" : canBid ? "bg-stone-900/30" : "opacity-40"}`}>
+                          <span className="shrink-0">{TOKENS[pi]}</span>
+                          <span className="flex-1 truncate text-stone-400">{pl.name}</span>
+                          {isLeader && <span className="text-violet-400 shrink-0 text-[9px]">👑</span>}
+                          <span className={`font-mono shrink-0 ${canBid ? "text-violet-300/70" : "text-red-400/60"}`}>${pl.cash.toLocaleString("vi-VN")}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
               })()}
               {buildAuctionTiles.length > 0 && <label className="block text-sm text-violet-200/70">Đất xây <select aria-label="Đất xây sau đấu giá" className="w-full rounded bg-stone-900 p-1.5 mt-0.5" value={biddingTile}
                 onChange={e => setSelected(Number(e.target.value))}>{buildAuctionTiles.map(index => <option key={index} value={index}>{map.tiles[index].name}</option>)}</select></label>}
