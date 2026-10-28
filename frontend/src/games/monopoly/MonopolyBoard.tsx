@@ -485,13 +485,16 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
             const firstOwner = state.properties[tiles[0]]?.owner;
             const isMonopoly = firstOwner !== null && tiles.every(idx => state.properties[idx].owner === firstOwner);
             const ownedCount = tiles.filter(idx => state.properties[idx].owner !== null).length;
+            const maxHotelRent = Math.max(...tiles.map(idx => map.tiles[idx].rents?.[5] ?? 0));
             return (
               <button key={group} type="button" onClick={() => tiles[0] !== undefined && setSelected(tiles[0])}
+                title={`Max hotel rent: $${maxHotelRent}`}
                 className="flex items-center gap-1 text-[10px] text-amber-200/60 hover:text-amber-200/90 transition-colors">
                 <span className={`w-3 h-3 rounded-sm inline-block ${cls} ${isMonopoly ? "ring-1 ring-amber-300/60" : ""}`} />
                 <span>{group}</span>
                 {isMonopoly && <span>{TOKENS[firstOwner!]}👑</span>}
                 {!isMonopoly && ownedCount > 0 && <span className="text-stone-600">{ownedCount}/{tiles.length}</span>}
+                {maxHotelRent > 0 && <span className="text-stone-700 text-[8px]">🏨{maxHotelRent}</span>}
               </button>
             );
           })}
@@ -1260,10 +1263,10 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
         const isActor = i === currentActor;
         const rank = rankMap[i];
         return (
-          <div key={i} className={`relative rounded-xl border overflow-hidden ${
+          <div key={i} className={`relative rounded-xl border overflow-hidden transition-[border-color,box-shadow] duration-200 hover:brightness-105 ${
             p.bankrupt ? "border-stone-800 opacity-40" :
             isActor ? "border-amber-400 bg-amber-950/60 monopoly-player-active" :
-            isMe ? "border-amber-700/70 bg-amber-950/30" : "border-amber-900/50 bg-stone-950/40"
+            isMe ? "border-amber-700/70 bg-amber-950/30 hover:border-amber-600/80" : "border-amber-900/50 bg-stone-950/40 hover:border-amber-800/60"
           } ${newBankrupts.has(i) ? "monopoly-bankrupt-enter" : ""}`}>
             {/* Net-worth progress bar: cash (gold) + equity (amber) */}
             {!p.bankrupt && (() => {
