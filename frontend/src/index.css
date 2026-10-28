@@ -2134,6 +2134,15 @@ button[draggable="true"]:active { cursor: grabbing; }
 }
 .monopoly-tile-jail-land { animation: monopolyTileJailLand 1.5s ease-out both; }
 
+/* Jail liberation burst (player escapes jail — green burst on tile 10) */
+@keyframes monopolyTileJailRelease {
+  0%   { background-color: rgba(52,211,153,0); box-shadow: none; }
+  22%  { background-color: rgba(52,211,153,0.5); box-shadow: 0 0 28px rgba(52,211,153,0.85), inset 0 0 20px rgba(52,211,153,0.5); }
+  65%  { background-color: rgba(52,211,153,0.18); box-shadow: 0 0 10px rgba(52,211,153,0.3); }
+  100% { background-color: rgba(52,211,153,0); box-shadow: none; }
+}
+.monopoly-tile-jailrelease { animation: monopolyTileJailRelease 0.9s ease-out both; }
+
 /* Departure tile dim fade */
 @keyframes monopolyTileDepart {
   0%   { background-color: rgba(251,191,36,0.22); box-shadow: inset 0 0 10px rgba(251,191,36,0.28); }
@@ -2680,6 +2689,7 @@ button[draggable="true"]:active { cursor: grabbing; }
   .monopoly-tile-trail { animation: none !important; background-color: rgba(251,191,36,0.08); }
   .monopoly-tile-passgo { animation: none !important; background-color: rgba(52,211,153,0.1); }
   .monopoly-tile-jail-land { animation: none !important; background-color: rgba(220,38,38,0.15); }
+  .monopoly-tile-jailrelease { animation: none !important; background-color: rgba(52,211,153,0.1); }
   .monopoly-tile-depart { animation: none !important; }
   .monopoly-token-jail-land { animation: none !important; }
   .monopoly-actor-badge { animation: none !important; }

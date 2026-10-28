@@ -77,7 +77,8 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
   const prevBankruptRef = useRef<Record<number, boolean>>({});
   const [newBankrupts, setNewBankrupts] = useState<Set<number>>(new Set());
   const prevPositionRef = useRef<Record<number, number>>({});
-  const [moveTiles, setMoveTiles] = useState<Map<number, {type: 'trail'|'land'|'passgo'|'jail'|'depart'; delay: number}>>(new Map());
+  const prevInJailRef = useRef<Record<number, boolean>>({});
+  const [moveTiles, setMoveTiles] = useState<Map<number, {type: 'trail'|'land'|'passgo'|'jail'|'depart'|'jailrelease'; delay: number}>>(new Map());
   const [logFilter, setLogFilter] = useState("");
   const [logShowAll, setLogShowAll] = useState(false);
 
@@ -152,16 +153,20 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
   }, [bankruptKey]);
 
   const positionKey = (gameState?.players ?? []).map(p => p.position).join(",");
+  const inJailKey = (gameState?.players ?? []).map(p => p.inJail ? 1 : 0).join(",");
   useEffect(() => {
     const parts = positionKey ? positionKey.split(",").map(Number) : [];
+    const jailParts = inJailKey ? inJailKey.split(",").map(Number) : [];
     if (!parts.length) return;
-    const next = new Map<number, {type: 'trail'|'land'|'passgo'|'jail'|'depart'; delay: number}>();
+    const next = new Map<number, {type: 'trail'|'land'|'passgo'|'jail'|'depart'|'jailrelease'; delay: number}>();
     parts.forEach((pos, i) => {
       const prev = prevPositionRef.current[i];
+      const wasInJail = prevInJailRef.current[i] ?? false;
       if (prev !== undefined && prev !== pos) {
         const steps = (pos - prev + 40) % 40;
-        // Departure flash on the tile the player just left
-        next.set(prev, { type: 'depart', delay: 0 });
+        // Departure flash — green liberation burst if leaving jail, else amber dim
+        const departType = (wasInJail && prev === 10 && steps <= 12) ? 'jailrelease' : 'depart';
+        next.set(prev, { type: departType, delay: 0 });
         if (steps > 0 && steps <= 12) {
           for (let k = 1; k <= steps; k++) {
             const idx = (prev + k) % 40;
@@ -175,13 +180,14 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
         }
       }
       prevPositionRef.current[i] = pos;
+      prevInJailRef.current[i] = jailParts[i] === 1;
     });
     if (!next.size) return;
     setMoveTiles(next);
     const maxDelay = Math.max(...Array.from(next.values()).map(v => v.delay));
     const t = setTimeout(() => setMoveTiles(new Map()), maxDelay + 1300);
     return () => clearTimeout(t);
-  }, [positionKey]);
+  }, [positionKey, inJailKey]);
 
   if (!room) return null;
   const map = room.map as MonopolyMap | null;
@@ -323,7 +329,7 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
             const tokenAnimDelay = isLanding ? moveData!.delay + 80 : 0;
             return <button type="button" key={t.index} data-monopoly-tile="1" data-group={t.group} style={tileStyle} onClick={() => setSelected(t.index)}
               aria-pressed={selected === t.index} aria-label={`Ô ${t.index}: ${t.name}${p.owner !== null ? `, chủ ${state.players[p.owner]?.name}` : ""}`}
-              className={`relative flex min-h-0 flex-col overflow-hidden border text-[9px] leading-tight text-stone-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white transition-[box-shadow,transform] duration-150 active:scale-95 hover:brightness-125 ${selected === t.index ? "border-amber-200 bg-amber-900" : "border-emerald-800/70 bg-stone-900/80"} ${flashTiles.has(t.index) ? "monopoly-tile-just-purchased" : ""} ${monopolyTileSet.has(t.index) ? "ring-1 ring-inset ring-amber-300/50" : ""} ${moveData ? (moveData.type === 'land' ? "monopoly-tile-player-land" : moveData.type === 'jail' ? "monopoly-tile-jail-land" : moveData.type === 'passgo' ? "monopoly-tile-passgo" : moveData.type === 'depart' ? "monopoly-tile-depart" : "monopoly-tile-trail") : ""} ${p.buildings > 0 ? "monopoly-tile-built" : ""} ${p.buildings === 5 ? "monopoly-tile-hotel" : ""} ${isAffordable ? "monopoly-tile-affordable" : ""} ${dangerTileSet.has(t.index) ? "monopoly-tile-danger" : ""}`}>
+              className={`relative flex min-h-0 flex-col overflow-hidden border text-[9px] leading-tight text-stone-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white transition-[box-shadow,transform] duration-150 active:scale-95 hover:brightness-125 ${selected === t.index ? "border-amber-200 bg-amber-900" : "border-emerald-800/70 bg-stone-900/80"} ${flashTiles.has(t.index) ? "monopoly-tile-just-purchased" : ""} ${monopolyTileSet.has(t.index) ? "ring-1 ring-inset ring-amber-300/50" : ""} ${moveData ? (moveData.type === 'land' ? "monopoly-tile-player-land" : moveData.type === 'jail' ? "monopoly-tile-jail-land" : moveData.type === 'passgo' ? "monopoly-tile-passgo" : moveData.type === 'depart' ? "monopoly-tile-depart" : moveData.type === 'jailrelease' ? "monopoly-tile-jailrelease" : "monopoly-tile-trail") : ""} ${p.buildings > 0 ? "monopoly-tile-built" : ""} ${p.buildings === 5 ? "monopoly-tile-hotel" : ""} ${isAffordable ? "monopoly-tile-affordable" : ""} ${dangerTileSet.has(t.index) ? "monopoly-tile-danger" : ""}`}>
               <span aria-hidden="true" className={`h-2 w-full shrink-0 ${GROUP_COLORS[t.group] ?? "bg-stone-700"}`} />
               {/* Special tile icon overlay */}
               {!t.group && ({"Go":"🏁","Jail":"⛓","FreeParking":"🅿","GoToJail":"🚔","Chance":"🎲","CommunityChest":"📦","IncomeTax":"💸","LuxuryTax":"💎","Railroad":"🚂","Utility":"⚡"} as Record<string,string>)[t.kind] && (
