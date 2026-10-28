@@ -25,8 +25,10 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
   const [bid, setBid] = useState(10);
   const [diceRolling, setDiceRolling] = useState(false);
   const [cardOverlay, setCardOverlay] = useState<{ text: string; kind: "chance" | "community" | "other" } | null>(null);
+  const [paymentOverlay, setPaymentOverlay] = useState<{ payer: number; payee: number | null; amount: number } | null>(null);
   const prevDiceKey = useRef<string>("");
   const prevCard = useRef<string>("");
+  const prevPaymentRef = useRef<string>("");
 
   const gameState = (room?.state ?? null) as MonopolyState | null;
   const diceKey = gameState?.dice?.some(n => n > 0) ? (gameState.dice ?? []).join(",") : "";
@@ -49,6 +51,18 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
     const t = setTimeout(() => setCardOverlay(null), 3500);
     return () => clearTimeout(t);
   }, [lastCardText]);
+
+  const paymentKey = (gameState?.payments ?? []).map(p => `${p.from}:${p.to ?? "bank"}:${p.amount}`).join("|");
+  useEffect(() => {
+    if (!paymentKey || paymentKey === prevPaymentRef.current) return;
+    prevPaymentRef.current = paymentKey;
+    const payments = gameState?.payments ?? [];
+    const big = payments.find(p => p.amount >= 100);
+    if (!big) return;
+    setPaymentOverlay({ payer: big.from, payee: big.to, amount: big.amount });
+    const t = setTimeout(() => setPaymentOverlay(null), 2800);
+    return () => clearTimeout(t);
+  }, [paymentKey, gameState?.payments]);
 
   const [cashDeltas, setCashDeltas] = useState<{ id: number; player: number; amount: number }[]>([]);
   const [flashTiles, setFlashTiles] = useState<Set<number>>(new Set());
@@ -303,12 +317,28 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
             ) : (
               <div role="status" aria-live="polite" className="w-full space-y-3">
                 {/* Current player */}
-                <div className="rounded-lg bg-stone-900/60 border border-amber-800/30 px-3 py-2">
-                  <p className="text-xs text-amber-200/50 mb-1">Lượt hiện tại</p>
+                <div className={`rounded-lg border px-3 py-2 ${state.extraRoll ? "bg-amber-900/30 border-amber-600/50" : "bg-stone-900/60 border-amber-800/30"}`}>
+                  <div className="flex items-center justify-between mb-1">
+                    <p className="text-xs text-amber-200/50">Lượt hiện tại</p>
+                    {state.extraRoll && <span className="text-[10px] bg-amber-800/60 text-amber-300 rounded px-1.5 py-0.5 font-bold animate-pulse">🎲 Đôi! +lượt</span>}
+                  </div>
                   <p className="font-bold text-sm">{TOKENS[currentActor]} {state.players[currentActor]?.name}</p>
                   <p className="text-xs text-amber-300/70">{PHASES[state.phase] ?? state.phase}</p>
-                  {state.extraRoll && <p className="text-[10px] text-amber-400/80 mt-0.5">🎲 Đổ đôi lần {state.doubles}</p>}
+                  {state.doubles >= 3 && <p className="text-[10px] text-red-400/80 mt-0.5">⚠️ 3 đôi liên tiếp → vào tù!</p>}
                 </div>
+                {/* Next player preview */}
+                {(() => {
+                  const activePlayers = state.players.map((pl, idx) => ({ pl, idx })).filter(x => !x.pl.bankrupt);
+                  const curPos = activePlayers.findIndex(x => x.idx === state.turn);
+                  const next = activePlayers[(curPos + 1) % activePlayers.length];
+                  return next && next.idx !== state.turn ? (
+                    <div className="flex items-center gap-1.5 text-[10px] text-stone-500 px-1">
+                      <span>Tiếp:</span>
+                      <span>{TOKENS[next.idx]}</span>
+                      <span className="text-stone-400">{next.pl.name}</span>
+                    </div>
+                  ) : null;
+                })()}
                 {/* Dice */}
                 <div className="flex justify-center gap-2" aria-label={`Xúc xắc ${state.dice.join(" và ")}`} role="img">
                   {state.dice.map((n, i) => (
@@ -771,6 +801,17 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
             </p>
             <p className="text-lg leading-relaxed text-stone-100">{cardOverlay.text}</p>
             <p className="mt-4 text-xs text-stone-500">Nhấn để đóng</p>
+          </div>
+        </div>
+      </div>
+    )}
+    {paymentOverlay && (
+      <div className="fixed inset-x-0 bottom-6 flex justify-center pointer-events-none z-50" aria-live="assertive">
+        <div className="animate-game-action-enter rounded-xl border border-red-700/60 bg-red-950/90 backdrop-blur px-5 py-3 text-center shadow-2xl shadow-red-900/40">
+          <div className="text-xs text-red-400/70 uppercase tracking-widest mb-1">💸 Thanh toán</div>
+          <div className="text-2xl font-black text-red-300 tabular-nums">${paymentOverlay.amount.toLocaleString("vi-VN")}</div>
+          <div className="text-xs text-red-200/60 mt-1">
+            {TOKENS[paymentOverlay.payer]} {state.players[paymentOverlay.payer]?.name} → {paymentOverlay.payee === null ? "🏦 Ngân hàng" : `${TOKENS[paymentOverlay.payee]} ${state.players[paymentOverlay.payee]?.name}`}
           </div>
         </div>
       </div>
