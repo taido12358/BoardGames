@@ -297,20 +297,27 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
             {!state.started ? (
               <div className="w-full space-y-4 text-left">
                 <div className="text-center">
-                  <div className="text-5xl mb-2" aria-hidden="true">🏦</div>
-                  <h2 className="text-2xl font-black tracking-widest text-amber-300">CỜ TỈ PHÚ</h2>
-                  <p className="text-xs text-emerald-100/40 mt-1">{map.edition}</p>
+                  <div className="text-4xl mb-1 animate-pulse" aria-hidden="true">🏦</div>
+                  <h2 className="text-xl font-black tracking-widest text-amber-300">CỜ TỈ PHÚ</h2>
+                  <p className="text-[10px] text-emerald-100/30 mt-0.5">{map.edition}</p>
                 </div>
                 <div className="space-y-1">
-                  {state.players.map((pl, pi) => (
-                    <div key={pi} className={`flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm ${pi === seat ? "bg-amber-900/40 border border-amber-700/30" : "bg-stone-900/40"}`}>
-                      <span className="text-lg">{TOKENS[pi]}</span>
-                      <span className="font-medium">{pl.name}</span>
-                      {pi === seat && <span className="ml-auto text-[10px] text-amber-400/70">(Bạn)</span>}
-                    </div>
-                  ))}
+                  {state.players.map((pl, pi) => {
+                    const connected = room.seats?.[pi]?.connected ?? false;
+                    return (
+                      <div key={pi} className={`flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm border ${pi === seat ? "bg-amber-900/40 border-amber-700/40" : "bg-stone-900/40 border-stone-800/30"}`}>
+                        <span className="text-base">{TOKENS[pi]}</span>
+                        <span className="font-medium flex-1 truncate">{pl.name}</span>
+                        <span className={`w-2 h-2 rounded-full shrink-0 ${connected ? "bg-emerald-400" : "bg-stone-600"}`} title={connected ? "Online" : "Offline"} />
+                        {pi === seat && <span className="text-[9px] text-amber-400/60">(Bạn)</span>}
+                      </div>
+                    );
+                  })}
                 </div>
-                <p className="text-center text-xs text-emerald-100/40">Mua đất · Xây nhà · Phá sản đối thủ</p>
+                <div className="text-center space-y-1">
+                  <p className="text-[10px] text-emerald-100/30">⏳ Chờ chủ phòng bắt đầu…</p>
+                  <p className="text-[10px] text-emerald-100/20">Mua đất · Xây nhà · Phá sản đối thủ</p>
+                </div>
               </div>
             ) : state.winner ? (
               <div className="w-full space-y-3">
@@ -321,14 +328,25 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
                 <div className="w-full space-y-0.5">
                   {[...state.players.map((pl, idx) => ({ pl, idx, nw: playerNetWorth[idx] }))]
                     .sort((a, b) => b.nw - a.nw)
-                    .map(({ pl, idx, nw }, rank) => (
-                      <div key={idx} className={`flex items-center gap-1.5 rounded px-2 py-1 text-[10px] ${rank === 0 ? "bg-amber-900/50 border border-amber-700/40" : pl.bankrupt ? "opacity-40" : "bg-stone-900/40"}`}>
-                        <span className={`font-bold w-4 shrink-0 ${rank === 0 ? "text-amber-400" : "text-stone-500"}`}>{rank === 0 ? "🥇" : rank === 1 ? "🥈" : rank === 2 ? "🥉" : `${rank+1}.`}</span>
-                        <span className="shrink-0">{TOKENS[idx]}</span>
-                        <span className="truncate flex-1 text-left text-amber-200/80">{pl.name}</span>
-                        <span className={`font-mono font-bold tabular-nums shrink-0 ${pl.bankrupt ? "text-stone-500" : "text-amber-100"}`}>{pl.bankrupt ? "💀" : `$${nw.toLocaleString("vi-VN")}`}</span>
-                      </div>
-                    ))
+                    .map(({ pl, idx, nw }, rank) => {
+                      const equity = nw - pl.cash;
+                      return (
+                        <div key={idx} className={`rounded border px-2 py-1.5 text-[10px] ${rank === 0 ? "bg-amber-900/50 border-amber-700/40" : pl.bankrupt ? "opacity-40 border-transparent bg-stone-900/20" : "bg-stone-900/40 border-stone-800/20"}`}>
+                          <div className="flex items-center gap-1.5">
+                            <span className={`font-bold w-4 shrink-0 ${rank === 0 ? "text-amber-400" : "text-stone-500"}`}>{rank === 0 ? "🥇" : rank === 1 ? "🥈" : rank === 2 ? "🥉" : `${rank+1}.`}</span>
+                            <span className="shrink-0">{TOKENS[idx]}</span>
+                            <span className="truncate flex-1 text-left text-amber-200/80">{pl.name}</span>
+                            <span className={`font-mono font-bold tabular-nums shrink-0 ${pl.bankrupt ? "text-stone-500" : "text-amber-100"}`}>{pl.bankrupt ? "💀" : `$${nw.toLocaleString("vi-VN")}`}</span>
+                          </div>
+                          {!pl.bankrupt && (
+                            <div className="flex gap-2 ml-5 mt-0.5 text-[9px] text-stone-500">
+                              <span className="text-yellow-400/60">${pl.cash.toLocaleString("vi-VN")} tiền</span>
+                              {equity > 0 && <span className="text-amber-600/60">+${equity.toLocaleString("vi-VN")} tài sản</span>}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })
                   }
                 </div>
               </div>
