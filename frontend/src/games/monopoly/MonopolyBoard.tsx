@@ -223,6 +223,12 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
     }).flat()
   );
 
+  // Danger tiles: positions 2-12 ahead of current player during their Roll turn
+  const dangerTileSet: Set<number> = deciding && state.phase === "Roll" && player && !player.inJail
+    ? new Set(Array.from({ length: 11 }, (_, i) => (player.position + i + 2) % 40)
+        .filter(idx => { const pr = state.properties[idx]; return pr.owner !== null && pr.owner !== seat && !pr.mortgaged; }))
+    : new Set<number>();
+
   const logIcon = (line: string) => {
     const l = line.toLowerCase();
     if (l.includes("phá sản")) return "💀";
@@ -296,7 +302,7 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
             const isAffordable = player && !player.bankrupt && p.owner === null && t.price > 0 && t.price <= player.cash && state.phase === "Buy" && state.players[state.turn]?.position === t.index;
             return <button type="button" key={t.index} data-monopoly-tile="1" data-group={t.group} style={boardPosition(t.index)} onClick={() => setSelected(t.index)}
               aria-pressed={selected === t.index} aria-label={`Ô ${t.index}: ${t.name}${p.owner !== null ? `, chủ ${state.players[p.owner]?.name}` : ""}`}
-              className={`relative flex min-h-0 flex-col overflow-hidden border text-[9px] leading-tight text-stone-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white transition-[box-shadow,transform] duration-150 active:scale-95 hover:brightness-125 ${selected === t.index ? "border-amber-200 bg-amber-900" : "border-emerald-800/70 bg-stone-900/80"} ${flashTiles.has(t.index) ? "monopoly-tile-just-purchased" : ""} ${monopolyTileSet.has(t.index) ? "ring-1 ring-inset ring-amber-300/50" : ""} ${movedTiles.has(t.index) ? "monopoly-tile-player-land" : ""} ${p.buildings > 0 ? "monopoly-tile-built" : ""} ${isAffordable ? "ring-2 ring-emerald-400/60" : ""}`}>
+              className={`relative flex min-h-0 flex-col overflow-hidden border text-[9px] leading-tight text-stone-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white transition-[box-shadow,transform] duration-150 active:scale-95 hover:brightness-125 ${selected === t.index ? "border-amber-200 bg-amber-900" : "border-emerald-800/70 bg-stone-900/80"} ${flashTiles.has(t.index) ? "monopoly-tile-just-purchased" : ""} ${monopolyTileSet.has(t.index) ? "ring-1 ring-inset ring-amber-300/50" : ""} ${movedTiles.has(t.index) ? "monopoly-tile-player-land" : ""} ${p.buildings > 0 ? "monopoly-tile-built" : ""} ${isAffordable ? "ring-2 ring-emerald-400/60" : ""} ${dangerTileSet.has(t.index) ? "monopoly-tile-danger" : ""}`}>
               <span aria-hidden="true" className={`h-2 w-full shrink-0 ${GROUP_COLORS[t.group] ?? "bg-stone-700"}`} />
               {/* Special tile icon overlay */}
               {!t.group && ({"Go":"🏁","Jail":"⛓","FreeParking":"🅿","GoToJail":"🚔","Chance":"🎲","CommunityChest":"📦","IncomeTax":"💸","LuxuryTax":"💎","Railroad":"🚂","Utility":"⚡"} as Record<string,string>)[t.kind] && (
@@ -1285,6 +1291,22 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
                         ))}
                       </div>
                     ))}
+                  </div>
+                );
+              })()}
+              {/* Total rent income potential */}
+              {owned.length > 0 && !p.bankrupt && (() => {
+                const totalRent = owned.reduce((s, t) => {
+                  const pr = state.properties[t.index];
+                  if (pr.mortgaged || !t.rents) return s;
+                  const isMonop = monopolyTileSet.has(t.index);
+                  const rent = isMonop && pr.buildings === 0 ? t.rents[0] * 2 : t.rents[pr.buildings];
+                  return s + rent;
+                }, 0);
+                if (!totalRent) return null;
+                return (
+                  <div className="text-[9px] text-amber-200/40 flex items-center gap-1" title="Tổng thuê tiềm năng (mỗi lần đổ)">
+                    <span>💰</span><span className="font-mono">${totalRent.toLocaleString("vi-VN")}</span><span className="text-stone-600">thuê/lượt</span>
                   </div>
                 );
               })()}
