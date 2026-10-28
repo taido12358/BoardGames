@@ -674,6 +674,18 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
                   </span>
                 ))}
               </div>
+              {/* Monopoly warning */}
+              {auc.tile !== undefined && auc.leader !== null && (() => {
+                const aucTile = map.tiles[auc.tile];
+                if (!aucTile?.group) return null;
+                const groupAll = groupTiles[aucTile.group] ?? [];
+                const ownedByLeader = groupAll.filter(idx => state.properties[idx].owner === auc.leader || idx === auc.tile);
+                return ownedByLeader.length === groupAll.length ? (
+                  <div className="text-[10px] rounded border border-red-800/40 bg-red-950/30 px-2 py-1 text-red-300/80">
+                    ⚠️ {TOKENS[auc.leader!]} {state.players[auc.leader!]?.name} sẽ độc quyền nhóm {aucTile.group}!
+                  </div>
+                ) : null;
+              })()}
               {buildAuctionTiles.length > 0 && <label className="block text-sm text-violet-200/70">Đất xây <select aria-label="Đất xây sau đấu giá" className="w-full rounded bg-stone-900 p-1.5 mt-0.5" value={biddingTile}
                 onChange={e => setSelected(Number(e.target.value))}>{buildAuctionTiles.map(index => <option key={index} value={index}>{map.tiles[index].name}</option>)}</select></label>}
               <div className="space-y-1.5">
