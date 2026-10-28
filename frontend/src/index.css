@@ -2084,6 +2084,17 @@ button[draggable="true"]:active { cursor: grabbing; }
   animation: monopolyTokenLand 0.68s cubic-bezier(0.22, 0.61, 0.36, 1) both;
 }
 
+/* Doubles flash on dice container */
+@keyframes monopolyDoublesFlash {
+  0%   { filter: drop-shadow(0 0 0px rgba(167,139,250,0)); }
+  22%  { filter: drop-shadow(0 0 12px rgba(167,139,250,0.95)) drop-shadow(0 0 24px rgba(167,139,250,0.5)); }
+  65%  { filter: drop-shadow(0 0 6px rgba(167,139,250,0.5)); }
+  100% { filter: drop-shadow(0 0 0px rgba(167,139,250,0)); }
+}
+.monopoly-doubles-flash {
+  animation: monopolyDoublesFlash 0.85s ease-out both;
+}
+
 /* Board border pulse during dice rolling */
 @keyframes monopolyBoardRolling {
   0%, 100% { box-shadow: inset 0 0 40px rgba(0,0,0,0.35), 0 0 12px rgba(251,191,36,0.18); }
@@ -2755,6 +2766,7 @@ button[draggable="true"]:active { cursor: grabbing; }
   .monopoly-tile-affordable { animation: none !important; box-shadow: 0 0 0 2px rgba(52,211,153,0.45); }
   .monopoly-tile-current-player { animation: none !important; box-shadow: 0 0 0 2px rgba(251,191,36,0.6); }
   .monopoly-board-rolling { animation: none !important; }
+  .monopoly-doubles-flash { animation: none !important; filter: drop-shadow(0 0 8px rgba(167,139,250,0.5)); }
   .monopoly-steps-badge { animation: none !important; opacity: 0; }
   .monopoly-winner-confetti::before, .monopoly-winner-confetti::after { animation: none !important; opacity: 0; }
   .monopoly-cash-delta { animation: none !important; opacity: 0; }
