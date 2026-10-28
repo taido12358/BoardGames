@@ -709,6 +709,12 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
           })()}
         </div>; })()}
         <div key={selected} className="animate-game-action-enter rounded-xl border border-amber-900 overflow-hidden">
+          {/* Tile navigation bar */}
+          <div className="flex items-center justify-between px-3 py-1.5 bg-stone-950/60 border-b border-amber-900/30">
+            <button type="button" onClick={() => setSelected((selected + 39) % 40)} className="text-[10px] text-amber-200/40 hover:text-amber-200/80 px-1">‹ {map.tiles[(selected + 39) % 40]?.name ?? ""}</button>
+            <span className="text-[10px] text-amber-200/30 tabular-nums">Ô {selected}/40</span>
+            <button type="button" onClick={() => setSelected((selected + 1) % 40)} className="text-[10px] text-amber-200/40 hover:text-amber-200/80 px-1">{map.tiles[(selected + 1) % 40]?.name ?? ""} ›</button>
+          </div>
           {/* Color group header strip */}
           {GROUP_COLORS[tile.group] && <div className={`h-2.5 w-full ${GROUP_COLORS[tile.group]} ${property.mortgaged ? "opacity-30" : ""}`} />}
           {property.mortgaged && <div className="bg-red-950/60 border-b border-red-800/50 px-3 py-1 flex items-center gap-1.5 text-[10px] text-red-400/90"><span>🔒</span><span>Đất đang thế chấp — không thu được thuê</span></div>}
@@ -739,11 +745,18 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
           })()}
           <div className="p-4 space-y-3">
             {(tile.group || tile.kind === "Street" || tile.kind === "Railroad" || tile.kind === "Utility") && <div>
-              <h2 className="font-bold text-amber-100 flex items-center gap-1.5">
-                {tile.kind === "Railroad" && <span>🚂</span>}
-                {tile.kind === "Utility" && <span>⚡</span>}
-                {tile.name}
-              </h2>
+              <div className="flex items-start justify-between gap-2">
+                <h2 className="font-bold text-amber-100 flex items-center gap-1.5">
+                  {tile.kind === "Railroad" && <span>🚂</span>}
+                  {tile.kind === "Utility" && <span>⚡</span>}
+                  {tile.name}
+                </h2>
+                {tile.price > 0 && property.owner !== null && !property.mortgaged && tile.rents && (() => {
+                  const isMonop = monopolyTileSet.has(selected);
+                  const rent = isMonop && property.buildings === 0 ? tile.rents[0] * 2 : tile.rents[property.buildings];
+                  return <span className="text-sm font-bold text-emerald-400 tabular-nums shrink-0">${rent}/thuê</span>;
+                })()}
+              </div>
               <p className="text-xs text-amber-200/50">Ô {selected} · {tile.group || tile.kind}</p>
             </div>}
             {tile.price > 0 && (
