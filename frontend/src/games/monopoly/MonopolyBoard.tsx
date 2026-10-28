@@ -60,6 +60,8 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
   const [logNewStart, setLogNewStart] = useState<number>(Number.MAX_SAFE_INTEGER);
   const prevBankruptRef = useRef<Record<number, boolean>>({});
   const [newBankrupts, setNewBankrupts] = useState<Set<number>>(new Set());
+  const prevPositionRef = useRef<Record<number, number>>({});
+  const [movedTiles, setMovedTiles] = useState<Set<number>>(new Set());
 
   const cashKey = (gameState?.players ?? []).map(p => p.cash).join(",");
   const ownerKey = (gameState?.properties ?? []).map(p => p.owner ?? -1).join(",");
@@ -122,6 +124,22 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
     const t = setTimeout(() => setNewBankrupts(new Set()), 2000);
     return () => clearTimeout(t);
   }, [bankruptKey]);
+
+  const positionKey = (gameState?.players ?? []).map(p => p.position).join(",");
+  useEffect(() => {
+    const parts = positionKey ? positionKey.split(",").map(Number) : [];
+    if (!parts.length) return;
+    const moved = new Set<number>();
+    parts.forEach((pos, i) => {
+      const prev = prevPositionRef.current[i];
+      if (prev !== undefined && prev !== pos) moved.add(pos);
+      prevPositionRef.current[i] = pos;
+    });
+    if (!moved.size) return;
+    setMovedTiles(moved);
+    const t = setTimeout(() => setMovedTiles(new Set()), 900);
+    return () => clearTimeout(t);
+  }, [positionKey]);
 
   if (!room) return null;
   const map = room.map as MonopolyMap | null;
@@ -225,7 +243,7 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
             const occupants = state.players.map((who,i) => !who.bankrupt && who.position === t.index ? i : -1).filter(i => i >= 0);
             return <button type="button" key={t.index} data-monopoly-tile="1" data-group={t.group} style={boardPosition(t.index)} onClick={() => setSelected(t.index)}
               aria-pressed={selected === t.index} aria-label={`Ô ${t.index}: ${t.name}${p.owner !== null ? `, chủ ${state.players[p.owner]?.name}` : ""}`}
-              className={`relative flex min-h-0 flex-col overflow-hidden border text-[9px] leading-tight text-stone-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white transition-[box-shadow,transform] duration-150 ${selected === t.index ? "border-amber-200 bg-amber-900" : "border-emerald-800/70 bg-stone-900/80"} ${flashTiles.has(t.index) ? "monopoly-tile-just-purchased" : ""} ${monopolyTileSet.has(t.index) ? "ring-1 ring-inset ring-amber-300/50" : ""}`}>
+              className={`relative flex min-h-0 flex-col overflow-hidden border text-[9px] leading-tight text-stone-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white transition-[box-shadow,transform] duration-150 ${selected === t.index ? "border-amber-200 bg-amber-900" : "border-emerald-800/70 bg-stone-900/80"} ${flashTiles.has(t.index) ? "monopoly-tile-just-purchased" : ""} ${monopolyTileSet.has(t.index) ? "ring-1 ring-inset ring-amber-300/50" : ""} ${movedTiles.has(t.index) ? "monopoly-tile-player-land" : ""}`}>
               <span aria-hidden="true" className={`h-2 w-full shrink-0 ${GROUP_COLORS[t.group] ?? "bg-stone-700"}`} />
               <span className="p-0.5">{t.name}</span>
               {t.price > 0 && <span>{t.price}</span>}
@@ -323,7 +341,23 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
             {state.phase === "Roll" && <>{action("🎲 Đổ xúc xắc", "ROLL", false, deciding ? "monopoly-roll-btn-ready" : "")}{player?.inJail && <>{action("Nộp 50 ra tù", "PAY_JAIL", player.cash < 50)}{action("Dùng thẻ ra tù", "JAIL_CARD", player.jailCards.length === 0)}</>}</>}
             {state.phase === "Buy" && <>{action(`🏠 Mua với giá ${map.tiles[state.players[state.turn].position].price}`, "BUY", false, deciding ? "monopoly-action-pulse" : "")}{action("Đưa ra đấu giá", "DECLINE")}</>}
             {state.phase === "End" && action(state.extraRoll ? "↩ Tiếp tục lượt đổ đôi" : "✓ Kết thúc lượt", "END", false, deciding ? "monopoly-action-pulse" : "")}
-            {state.phase === "Debt" && <><p className="w-full text-sm">Nợ {state.payments[0]?.amount} cho {state.payments[0]?.to === null ? "ngân hàng" : state.players[state.payments[0]?.to ?? -1]?.name}. Bán nhà hoặc thế chấp để thanh toán.</p>{action("Thanh toán", "SETTLE")}{action("Tuyên bố phá sản", "BANKRUPT")}</>}
+            {state.phase === "Debt" && state.payments[0] && (() => {
+              const debt = state.payments[0];
+              const creditor = debt.to === null ? null : state.players[debt.to];
+              const canPay = player && player.cash >= debt.amount;
+              return <>
+                <div className="w-full rounded-lg border border-red-800/50 bg-red-950/40 p-3 space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-red-400/70 uppercase tracking-wider">Khoản nợ</span>
+                    <span className="text-xl font-black text-red-300 tabular-nums">${debt.amount.toLocaleString("vi-VN")}</span>
+                  </div>
+                  <div className="text-sm text-red-200/80">→ {creditor ? `${TOKENS[debt.to!]} ${creditor.name}` : "🏦 Ngân hàng"}</div>
+                  {!canPay && <div className="text-[10px] text-red-400/60">Tiền mặt không đủ — bán nhà hoặc thế chấp đất.</div>}
+                </div>
+                {action("💸 Thanh toán", "SETTLE", false, deciding ? "monopoly-action-pulse" : "")}
+                {action("💀 Tuyên bố phá sản", "BANKRUPT")}
+              </>;
+            })()}
             {state.phase === "Inheritance" && inheritedTile && <>
               <p className="w-full text-sm">Thừa kế {inheritedTile.name}: trả {inheritanceInterest} lãi để giữ thế chấp, hoặc {inheritedTile.price / 2 + inheritanceInterest} để giải chấp ngay.</p>
               {action(`Giữ thế chấp · ${inheritanceInterest}`, "KEEP_INHERITED")}
@@ -338,14 +372,49 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
               onChange={e => setSelected(Number(e.target.value))}>{demandTiles.map(index => <option key={index} value={index}>{map.tiles[index].name} · {map.tiles[index].houseCost}</option>)}</select></label>}
             <button className={buttonClass} disabled={!deciding} onClick={() => send({type:"REQUEST_BUILD",tile:requestedTile})}>Tôi muốn mua</button> {action("Không mua đợt này", "SKIP_BUILD")}
           </div>}
-          {state.auction && <div className="space-y-2">
-            <p>{state.auction.kind === "House" ? "Nhà của ngân hàng" : state.auction.kind === "Hotel" ? "Khách sạn của ngân hàng" : map.tiles[state.auction.tile].name} · Giá hiện tại: {state.auction.bid}</p>
-            <p className="text-sm">Người dẫn: {state.auction.leader === null ? "Chưa có" : state.players[state.auction.leader].name}</p>
-            {buildAuctionTiles.length > 0 && <label className="block text-sm">Đất xây sau đấu giá <select aria-label="Đất xây sau đấu giá" className="w-full rounded bg-stone-900 p-2" value={biddingTile}
-              onChange={e => setSelected(Number(e.target.value))}>{buildAuctionTiles.map(index => <option key={index} value={index}>{map.tiles[index].name}</option>)}</select></label>}
-            <label className="block text-sm">Giá đấu <input aria-label="Giá đấu" className="w-28 rounded bg-stone-900 p-2" type="number" min={minimumBid} max={player?.cash ?? 0} value={Math.max(bid,minimumBid)} onChange={e => setBid(Number(e.target.value))} /></label>
-            <button className={buttonClass} disabled={!deciding} onClick={() => send({type:"BID",amount:Math.max(bid,minimumBid),...(biddingTile !== undefined ? {tile:biddingTile} : {})})}>Trả giá</button> {action("Bỏ đấu giá", "PASS")}
-          </div>}
+          {state.auction && (() => {
+            const auc = state.auction;
+            const auctionName = auc.kind === "House" ? "🏠 Nhà" : auc.kind === "Hotel" ? "🏨 Khách sạn" : map.tiles[auc.tile]?.name ?? "?";
+            const leader = auc.leader !== null ? state.players[auc.leader] : null;
+            const passed = auc.passed ?? [];
+            return <div className="space-y-3 rounded-lg border border-violet-800/50 bg-violet-950/30 p-3">
+              <div className="flex items-start justify-between">
+                <div>
+                  <div className="text-xs text-violet-400/70 uppercase tracking-wider">Đấu giá</div>
+                  <div className="font-bold text-violet-100">{auctionName}</div>
+                </div>
+                <div className="text-right">
+                  <div className="text-[10px] text-violet-400/60">Giá hiện tại</div>
+                  <div className="text-xl font-black text-violet-300 tabular-nums">${auc.bid.toLocaleString("vi-VN")}</div>
+                </div>
+              </div>
+              {/* Leader + passed status */}
+              <div className="flex flex-wrap gap-1.5">
+                {leader ? (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-violet-900/60 border border-violet-700/50 px-2 py-0.5 text-[10px] text-violet-200">
+                    👑 {TOKENS[auc.leader!]} {leader.name}
+                  </span>
+                ) : (
+                  <span className="text-[10px] text-violet-400/50 italic">Chưa có người dẫn</span>
+                )}
+                {passed.map(pi => (
+                  <span key={pi} className="inline-flex items-center gap-1 rounded-full bg-stone-900/60 border border-stone-700/40 px-2 py-0.5 text-[10px] text-stone-400 line-through">
+                    {TOKENS[pi]} {state.players[pi]?.name}
+                  </span>
+                ))}
+              </div>
+              {buildAuctionTiles.length > 0 && <label className="block text-sm text-violet-200/70">Đất xây <select aria-label="Đất xây sau đấu giá" className="w-full rounded bg-stone-900 p-1.5 mt-0.5" value={biddingTile}
+                onChange={e => setSelected(Number(e.target.value))}>{buildAuctionTiles.map(index => <option key={index} value={index}>{map.tiles[index].name}</option>)}</select></label>}
+              <div className="flex items-center gap-2">
+                <label className="text-sm text-violet-200/70 shrink-0">Giá đấu</label>
+                <input aria-label="Giá đấu" className="w-28 rounded bg-stone-900 border border-stone-700 p-1.5 text-sm" type="number" min={minimumBid} max={player?.cash ?? 0} value={Math.max(bid,minimumBid)} onChange={e => setBid(Number(e.target.value))} />
+              </div>
+              <div className="flex gap-2">
+                <button className={`${buttonClass} flex-1`} disabled={!deciding} onClick={() => send({type:"BID",amount:Math.max(bid,minimumBid),...(biddingTile !== undefined ? {tile:biddingTile} : {})})}>🔨 Trả giá</button>
+                {action("Bỏ qua", "PASS")}
+              </div>
+            </div>;
+          })()}
           {state.trade && <div className="space-y-2 text-sm">
             <p>{state.players[state.trade.from].name} đưa: {names(state.trade.offered)} + {state.trade.cashOffered}.</p>
             <p>Đổi lấy: {names(state.trade.requested)} + {state.trade.cashRequested}.</p>
