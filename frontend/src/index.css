@@ -1972,6 +1972,14 @@ button[draggable="true"]:active { cursor: grabbing; }
   100% { transform: translateY(0) rotate(0deg) scale(1); }
 }
 
+/* ─── Monopoly: Board felt texture ──────────────────────────────────── */
+.monopoly-board-felt {
+  background-image:
+    radial-gradient(circle at 50% 50%, rgba(20,83,45,0.22) 0%, transparent 70%),
+    repeating-linear-gradient(45deg, rgba(20,83,45,0.04) 0px, rgba(20,83,45,0.04) 1px, transparent 1px, transparent 8px),
+    repeating-linear-gradient(-45deg, rgba(20,83,45,0.04) 0px, rgba(20,83,45,0.04) 1px, transparent 1px, transparent 8px);
+}
+
 .monopoly-die {
   display: inline-flex;
   align-items: center;

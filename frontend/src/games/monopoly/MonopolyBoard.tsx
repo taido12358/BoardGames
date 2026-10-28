@@ -254,6 +254,7 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
           <span className="rounded bg-stone-900/60 border border-stone-700/40 px-2 py-1 text-stone-300">🏨 {state.hotels}</span>
           {!state.winner && <span className="rounded bg-amber-900/40 border border-amber-700/40 px-2 py-1 text-amber-300 font-semibold">{PHASES[state.phase] ?? state.phase}</span>}
           {state.doubles > 0 && <span className="rounded bg-amber-900/30 border border-amber-800/30 px-2 py-1 text-amber-400/80">🎲×{state.doubles}</span>}
+          {state.players.some(p => p.inJail && !p.bankrupt) && <span className="rounded bg-red-900/30 border border-red-800/30 px-2 py-1 text-red-400/80">⛓×{state.players.filter(p => p.inJail && !p.bankrupt).length}</span>}
           <span className="rounded bg-stone-900/40 border border-stone-700/30 px-2 py-1 text-stone-400">#{state.log.length}</span>
         </div>
       )}
@@ -270,7 +271,7 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
       </div>
     </header>
     <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
-      <div className="overflow-x-auto rounded-xl border border-emerald-700/60 bg-emerald-950 p-2 shadow-inner shadow-emerald-900/40">
+      <div className="overflow-x-auto rounded-xl border border-emerald-700/60 bg-emerald-950 p-2 shadow-inner shadow-emerald-900/40 monopoly-board-felt">
         <div className="grid min-w-[660px] grid-cols-11 grid-rows-11 gap-0.5 aspect-square" aria-label="Bàn cờ 40 ô">
           {map.tiles.map(t => {
             const p = state.properties[t.index];
@@ -303,7 +304,7 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
               <span className="mt-auto text-xs" aria-hidden="true">{occupants.map(i => <span key={i} className="monopoly-token-land">{TOKENS[i]}</span>)}</span>
             </button>;
           })}
-          <div className="col-start-2 col-end-11 row-start-2 row-end-11 flex flex-col items-center justify-center gap-3 overflow-auto p-4 text-center">
+          <div className="col-start-2 col-end-11 row-start-2 row-end-11 flex flex-col items-center justify-center gap-3 overflow-auto p-4 text-center relative">
             {!state.started ? (
               <div className="w-full space-y-4 text-left">
                 <div className="text-center">
