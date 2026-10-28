@@ -268,6 +268,10 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
               aria-pressed={selected === t.index} aria-label={`Ô ${t.index}: ${t.name}${p.owner !== null ? `, chủ ${state.players[p.owner]?.name}` : ""}`}
               className={`relative flex min-h-0 flex-col overflow-hidden border text-[9px] leading-tight text-stone-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white transition-[box-shadow,transform] duration-150 ${selected === t.index ? "border-amber-200 bg-amber-900" : "border-emerald-800/70 bg-stone-900/80"} ${flashTiles.has(t.index) ? "monopoly-tile-just-purchased" : ""} ${monopolyTileSet.has(t.index) ? "ring-1 ring-inset ring-amber-300/50" : ""} ${movedTiles.has(t.index) ? "monopoly-tile-player-land" : ""}`}>
               <span aria-hidden="true" className={`h-2 w-full shrink-0 ${GROUP_COLORS[t.group] ?? "bg-stone-700"}`} />
+              {/* Special tile icon overlay */}
+              {!t.group && ({"Go":"🏁","Jail":"⛓","FreeParking":"🅿","GoToJail":"🚔","Chance":"🎲","CommunityChest":"📦","IncomeTax":"💸","LuxuryTax":"💎"} as Record<string,string>)[t.kind] && (
+                <span className="text-sm leading-none mx-auto">{({"Go":"🏁","Jail":"⛓","FreeParking":"🅿","GoToJail":"🚔","Chance":"🎲","CommunityChest":"📦","IncomeTax":"💸","LuxuryTax":"💎"} as Record<string,string>)[t.kind]}</span>
+              )}
               <span className="p-0.5">{t.name}</span>
               {t.price > 0 && <span>{t.price}</span>}
               {p.owner !== null && (
@@ -730,17 +734,35 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
               ) : null;
             })()}
             {/* Ownership */}
-            <div>
+            <div className="space-y-2">
               {property.owner === null ? (
                 <span className="text-xs text-amber-200/40 italic">Chưa có chủ</span>
               ) : (
-                <div className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-sm border ${property.owner === seat ? "bg-amber-900/50 border-amber-700/60" : "bg-stone-900/60 border-stone-700/50"}`}>
-                  <span>{TOKENS[property.owner]}</span>
-                  <span className="font-medium">{state.players[property.owner]?.name}</span>
-                  {property.mortgaged && <span className="text-[10px] text-red-400/80 ml-0.5">🔒TC</span>}
-                  {property.buildings === 5 && <span className="ml-0.5">🏨</span>}
-                  {property.buildings > 0 && property.buildings < 5 && <span className="text-xs ml-0.5">{"🏠".repeat(property.buildings)}</span>}
-                </div>
+                <>
+                  <div className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-sm border ${property.owner === seat ? "bg-amber-900/50 border-amber-700/60" : "bg-stone-900/60 border-stone-700/50"}`}>
+                    <span>{TOKENS[property.owner]}</span>
+                    <span className="font-medium">{state.players[property.owner]?.name}</span>
+                    {property.mortgaged && <span className="text-[10px] text-red-400/80 ml-0.5">🔒TC</span>}
+                    {property.buildings === 5 && <span className="ml-0.5">🏨</span>}
+                    {property.buildings > 0 && property.buildings < 5 && <span className="text-xs ml-0.5">{"🏠".repeat(property.buildings)}</span>}
+                  </div>
+                  {/* Group ownership progress */}
+                  {tile.group && groupTiles[tile.group] && (() => {
+                    const groupAll = groupTiles[tile.group];
+                    const owned = groupAll.filter(idx => state.properties[idx].owner === property.owner);
+                    return (
+                      <div className="flex items-center gap-1.5 text-[10px] text-amber-200/50">
+                        <span>{tile.group}:</span>
+                        <div className="flex gap-0.5">
+                          {groupAll.map(idx => (
+                            <span key={idx} className={`w-2.5 h-2.5 rounded-sm inline-block ${GROUP_COLORS[tile.group] ?? "bg-stone-600"} ${state.properties[idx].owner === property.owner ? "opacity-100" : "opacity-20"}`} />
+                          ))}
+                        </div>
+                        <span>{owned.length}/{groupAll.length}{owned.length === groupAll.length ? " 👑" : ""}</span>
+                      </div>
+                    );
+                  })()}
+                </>
               )}
             </div>
             {property.owner === seat && canManage && (
