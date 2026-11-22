@@ -24,8 +24,8 @@ services:
       # Repo mounted at the SAME host path so docker compose build paths resolve correctly
       - /home/taido/boardgame:/home/taido/boardgame
       # Git credentials (read-only) — needed for private repos
-      - /root/.gitconfig:/root/.gitconfig:ro
-      - /root/.ssh:/root/.ssh:ro
+      - /home/taido/.gitconfig:/root/.gitconfig:ro
+      - /home/taido/.ssh:/root/.ssh:ro
     environment:
       BRANCH:        ${WATCH_BRANCH:-master}
       POLL_INTERVAL: ${POLL_INTERVAL:-60}         # seconds between checks
