@@ -2,7 +2,7 @@
 
 ## Branch
 
-- Branch chính: `master`. Không commit trực tiếp lên `master` — mọi thay đổi đi qua branch + PR.
+- Branch chính: `master`. Các phiên AI mặc định đồng bộ, commit và push lên `master` theo [skill Git của dự án](../../.agents/skills/boardgames-git-workflow/SKILL.md). Dùng branch và PR khi người dùng yêu cầu hoặc GitHub bắt buộc.
 - Đặt tên branch: `<loại>/<mô-tả-ngắn-kebab-case>`
 
 | Loại | Dùng khi |
