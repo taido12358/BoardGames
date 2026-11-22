@@ -166,9 +166,8 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
     return () => clearTimeout(t);
   }, [bankruptKey]);
 
-  const diceKey = (gameState?.state as MonopolyState | undefined)?.dice?.join(',') ?? '';
   useEffect(() => {
-    const s = gameState?.state as MonopolyState | undefined;
+    const s = gameState;
     if (!s?.dice || s.dice.length < 2 || s.dice[0] === 0 || s.dice[0] !== s.dice[1]) return;
     setDoublesFlash(true);
     const t = setTimeout(() => setDoublesFlash(false), 950);
@@ -241,7 +240,7 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
   const send = (move: MonopolyMove) => makeMove(room.id, move);
   const action = (label: string, type: string, disabled = false, extraClass = "") => <button key={type} className={`${buttonClass}${extraClass ? ` ${extraClass}` : ""}`}
     disabled={!deciding || disabled} onClick={() => send({ type })}>{label}</button>;
-  const names = (ids: number[]) => ids.map(i => map.tiles[i]?.name ?? "?").join(", ") || "Không có đất";
+
 
   // ── Net worth = cash + estimated property equity ─────────────────────────
   const playerNetWorth = state.players.map((p, i) => {
@@ -630,7 +629,7 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
                   .filter(({ tile, prop }) => prop.owner !== null && prop.owner !== seat && !prop.mortgaged && Array.isArray(tile.rents))
                   .map(({ idx, tile, prop }) => {
                     const isMonop = monopolyTileSet.has(idx);
-                    const rent = isMonop && prop.buildings === 0 ? tile.rents[0] * 2 : tile.rents[prop.buildings];
+                    const rent = isMonop && prop.buildings === 0 ? tile.rents![0] * 2 : tile.rents![prop.buildings];
                     const steps = ((idx - pos + 40) % 40);
                     const prob = DICE_PROB[steps] ?? 0;
                     const ev = Math.round(rent * prob / 36);
@@ -642,7 +641,7 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
                 return (
                   <div className="w-full space-y-1">
                     <div className="text-[9px] text-amber-400/40 uppercase tracking-wide">⚠️ Nguy hiểm phía trước</div>
-                    {dangers.map(({ idx, tile, prop, rent, steps, prob, ev }) => (
+                    {dangers.map(({ idx, tile, prop, rent, steps, prob }) => (
                       <button key={idx} type="button" onClick={() => setSelected(idx)}
                         className="w-full flex items-center gap-1.5 rounded border border-red-900/30 bg-red-950/20 px-2 py-1 text-[10px] hover:bg-red-950/40 transition-colors text-left">
                         <span className="text-stone-500 shrink-0 w-5 text-right">+{steps}</span>
@@ -650,7 +649,7 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
                         <span className="flex-1 truncate text-amber-200/60">{tile.name}</span>
                         <span className="text-stone-600 shrink-0 text-[9px]">{prob ? `${Math.round(prob/36*100)}%` : ""}</span>
                         <span className="text-red-300/80 font-mono font-bold shrink-0">${rent}</span>
-                        <span className="shrink-0">{TOKENS[prop.owner]}</span>
+                        <span className="shrink-0">{prop.owner !== null ? TOKENS[prop.owner] : ""}</span>
                       </button>
                     ))}
                   </div>
@@ -1053,7 +1052,7 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
               </div>
               <div className="flex items-center gap-1.5 flex-wrap">
                 <p className="text-xs text-amber-200/50">Ô {selected} · {tile.group || tile.kind}</p>
-                {isAffordable && <span className="text-[9px] bg-emerald-900/50 text-emerald-300 border border-emerald-700/40 rounded-full px-1.5 py-0.5 font-semibold">✓ Bạn có thể mua</span>}
+                {property.owner === null && tile.price > 0 && (player?.cash ?? 0) >= tile.price && <span className="text-[9px] bg-emerald-900/50 text-emerald-300 border border-emerald-700/40 rounded-full px-1.5 py-0.5 font-semibold">✓ Bạn có thể mua</span>}
               </div>
             </div>}
             {tile.price > 0 && (
@@ -1220,7 +1219,7 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
               const debtors = state.players.map((pl, pi) => ({ pl, pi })).filter(({ pl, pi }) => !pl.bankrupt && pl.position === selected && pi !== property.owner);
               if (!debtors.length) return null;
               const isMonop = monopolyTileSet.has(selected);
-              const rent = isMonop && property.buildings === 0 ? tile.rents[0] * 2 : tile.rents?.[property.buildings] ?? 0;
+              const rent = isMonop && property.buildings === 0 ? (tile.rents?.[0] ?? 0) * 2 : tile.rents?.[property.buildings] ?? 0;
               return (
                 <div className="rounded border border-orange-800/40 bg-orange-950/20 px-2 py-1.5 space-y-1">
                   <div className="text-[9px] text-orange-400/70 uppercase tracking-wide">💸 Đang đứng · nợ thuê</div>
@@ -1399,7 +1398,7 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
         <div className="flex flex-wrap gap-2 items-center rounded-xl border border-stone-800/40 bg-stone-950/30 px-4 py-2 text-[10px]">
           <span className="text-stone-500 shrink-0">Chưa mua:</span>
           {unowned.map(t => {
-            const afforders = state.players.filter((pl, pi) => !pl.bankrupt && pl.cash >= t.price).length;
+            const afforders = state.players.filter((pl) => !pl.bankrupt && pl.cash >= t.price).length;
             return (
               <button key={t.index} type="button" onClick={() => setSelected(t.index)}
                 title={`${afforders} người có thể mua`}
@@ -1419,7 +1418,6 @@ export default function MonopolyBoard({ makeMove, onLeave, onRematch, rematching
         return state.players.map((p, i) => {
         const owned = map.tiles.filter(t => state.properties[t.index].owner === i);
         const nw = playerNetWorth[i];
-        const nwPct = Math.min(100, Math.round((nw / maxNetWorth) * 100));
         const isMe = i === seat;
         const isActor = i === currentActor;
         const rank = rankMap[i];

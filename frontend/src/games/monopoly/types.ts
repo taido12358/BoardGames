@@ -24,6 +24,7 @@ export interface MonopolyState {
   utilityDice?: number[] | null;
   houses: number; hotels: number; winner: string | null; lastCard: string; log: string[];
   payments: { from: number; to: number | null; amount: number }[];
+  roundCount?: number;
   inheritedMortgages?: { owner: number; tile: number }[];
   buildingDemand?: { kind: string; actor: number; eligibleTiles: Record<string, number[]>;
     requests: Record<string, number>; responded: number[]; resumePhase: string } | null;
